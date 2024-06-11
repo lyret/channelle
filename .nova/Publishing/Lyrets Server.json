@@ -1,0 +1,10 @@
+{
+  "identifier" : "6F4B2032-2F93-492C-B131-5BDBBEA8EA74",
+  "ignoredFilePatterns" : [
+    ".dist",
+    ".gitignore"
+  ],
+  "remotePath" : "\/Users\/lyret\/Server\/channelle",
+  "server" : "Lyrets Server",
+  "usesPublishing" : true
+}

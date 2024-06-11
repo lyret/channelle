@@ -1,0 +1,14 @@
+{
+  "extension" : {
+    "identifier" : "panic.JavaScript",
+    "name" : "JavaScript"
+  },
+  "extensionTemplate" : "nodeDebug",
+  "extensionValues" : {
+    "launchArgs" : [
+      "--enable-source-maps"
+    ],
+    "request" : "launch",
+    "scriptPath" : ".dist\/server"
+  }
+}
