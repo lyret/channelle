@@ -1,0 +1,80 @@
+@charset "utf-8";
+
+/* Fonts and external resources */
+@font-face {
+  font-family: "Modak";
+  src: url("./assets/fonts/modak.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Chentalle";
+  src: url("./assets/fonts/chentalle.otf") format("opentype");
+}
+@font-face {
+  font-family: "ThisCafe";
+  src: url("./assets/fonts/this_cafe.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Wildplants";
+  src: url("./assets/fonts/wildplants.ttf") format("truetype");
+}
+.is-plants {
+  font-family: "Wildplants" !important;
+}
+@font-face {
+  font-family: "Flowery";
+  src: url("./assets/fonts/flowery.ttf") format("truetype");
+}
+.is-flowers {
+  font-family: "Flowery" !important;
+}
+
+/* Sass variable overrides */
+
+// Responsive breakpoints
+$tablet: 600px;
+
+// Fonts
+$title-family: "Chentalle";
+$family-monospace: "Modak";
+// $family-primary: "FuturaHandwritten";
+$family-secondary: "ThisCafe";
+
+// Colors
+$primary: #000000;
+$link: #0194F7;
+$info: #999999;
+$success: #06A933;
+$warning: #F6B223;
+$danger: #E51C24;
+$background: #ffffff;
+
+/* Import Bulma and extensions */
+@import "../node_modules/bulma/bulma.sass";
+@import "../node_modules/@creativebulma/bulma-divider/src/sass/index.sass";
+
+/* Custom styles */
+
+body,
+html {
+  background-color: $background;
+}
+
+th {
+  text-align: left !important;
+}
+
+.has-hover-effect {
+  transition: transform 300ms;
+}
+
+.has-hover-effect:hover {
+  transform: scale(1.02);
+}
+
+.is-sticky {
+  position: fixed;
+  left: 0;
+  right: 0;
+  width: 100vw;
+  bottom: 0;
+}
