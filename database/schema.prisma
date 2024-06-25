@@ -1,0 +1,20 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url  	= env("DATABASE_URL")
+}
+
+model Participant {
+  id		Int  	@id @default(autoincrement())
+  name  	String
+  online	Boolean? @default(dbgenerated("'false'"))
+}
+
+model Scene {
+  id   		Int @id @default(autoincrement())
+  order 	Int @default(0)
+  layout 	String
+}
