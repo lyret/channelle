@@ -1,11 +1,8 @@
 <script lang="ts">
 	import { blur } from "svelte/transition";
 	import { openPanels } from "~/stores/ui";
-	import { createAPIStore } from "~/stores";
 	import Header from "../components/content/Header.svelte";
-	
-	const participants = createAPIStore("participant");
-	
+	import ParticipantsList from "../components/ParticipantsList.svelte";
 </script>
 
 <!-- Header -->
@@ -21,8 +18,7 @@
 		{/if}
 		{#if $openPanels["participants"]}
 			<div class="column">
-				Deltagare
-				{JSON.stringify({participants: $participants}, null, 4)}
+				<ParticipantsList/>
 			</div>
 		{/if}
 		{#if $openPanels["chatt"]}

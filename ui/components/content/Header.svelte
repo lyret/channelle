@@ -1,11 +1,13 @@
 <script>
+	import { currentParticipant } from "~/stores/connection";
 	import { blur } from 'svelte/transition'
 	import { openPanels, togglePanel } from "~/stores/ui";
 	import imgSrc from "../../assets/images/plum.png";
 </script>
 
-<div class="image-container has-text-centered"  style="height:80px" in:blur={{ duration: 500 }} >
+<div class="image-container has-text-centered"  style="height:120px" in:blur={{ duration: 500 }} >
 	<img src={imgSrc} alt="logotyp" style="height:80px" />
+	<p>{$currentParticipant.name}</p>
 </div>
 <div class="tabs is-centered" in:blur={{ duration: 700 }} >
   <ul>
