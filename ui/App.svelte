@@ -2,10 +2,10 @@
 	import { connectionStatus, currentParticipant } from "~/stores/connection";
 	import { route } from "~/stores/url";
 
-	import ManagePage from "./pages/Manage.svelte";
-	import Loader from "./components/general/Loader.svelte";
-	import Authenticate from "./components/Authenticate.svelte";
-	import Blocked from "./components/Blocked.svelte";
+	import ManagePage from "~/pages/Manage.svelte";
+	import Loader from "~/components/app/Loader.svelte";
+	import Authenticate from "~/components/app/Authenticate.svelte";
+	import Blocked from "~/components/app/Blocked.svelte";
 </script>
 
 {#if $connectionStatus == "blocked"}

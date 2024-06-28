@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { blur } from "svelte/transition";
 	import { openPanels } from "~/stores/ui";
-	import Header from "../components/content/Header.svelte";
-	import ParticipantsList from "../components/ParticipantsList.svelte";
+	import Header from "~/components/manage/Header.svelte";
+	import ParticipantsList from "~/components/manage/ParticipantsList.svelte";
 </script>
 
 <!-- Header -->
