@@ -1,0 +1,5 @@
+**/*.md
+package-lock.json
+.nova
+.bin
+node_modules

@@ -54,6 +54,7 @@
     "esbuild-svelte": "^0.7.3",
     "prettier": "^3.3.2",
     "prettier-plugin-prisma": "^5.0.0",
+    "prettier-plugin-svelte": "^3.2.5",
     "sass": "^1.32.8"
   }
 }
