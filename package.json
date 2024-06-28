@@ -36,6 +36,8 @@
     "koa-static": "^5.0.0",
     "leaflet": "^1.7.1",
     "luxon": "^3.0.0",
+    "mediasoup": "^3.14.8",
+    "mediasoup-client": "^3.7.12",
     "prisma": "^5.15.1",
     "socket.io": "^4.6.1",
     "socket.io-client": "^4.0.0",
