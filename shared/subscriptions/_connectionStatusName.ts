@@ -1,2 +1,2 @@
 /** Any possible connection status */
-export type ConnectionStatusName = 'connected' | 'disconnected'
+export type ConnectionStatusName = 'connected' | 'disconnected' | 'blocked';

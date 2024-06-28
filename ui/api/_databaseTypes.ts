@@ -1,7 +1,8 @@
-// Export database as types, making sure not to pollute the client side code with nodejs
+// Export database as types, making sure not to pollute the client side code with executable nodejs code
 export type {
   RepositoryTypes,
   RepositoryName,
   OperationName,
   RepositoryOperationTypes,
-} from '../../database'
+  DataTypes,
+} from '../../database';

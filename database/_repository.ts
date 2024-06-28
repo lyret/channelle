@@ -1,6 +1,6 @@
-import * as IO from 'socket.io'
-import { Prisma } from '@prisma/client'
-import { client, Client } from './_client'
+import * as IO from 'socket.io';
+import { Prisma } from '@prisma/client';
+import { client, Client } from './_client';
 
 /** Possible repository database operations */
 export const RepositoryOperations = [
@@ -9,7 +9,14 @@ export const RepositoryOperations = [
   'create',
   'update',
   'delete',
-] as const
+] as const;
+
+/** Possible repository database operations that modifies the database */
+export const RepositoryOperationsThatIntroducesChanges = [
+  'create',
+  'update',
+  'delete',
+];
 
 /** Repository implementation */
 export class Repository<
@@ -24,81 +31,81 @@ export class Repository<
   ModelIdType = ModelProjectionType[ModelIdField],
 > {
   // Public members for types
-  public readonly __ModelName: ModelName
-  public readonly __ModelType: ModelType
-  public readonly __ModelIdField: ModelIdField
-  public readonly __ModelProjectionType: ModelProjectionType
-  public readonly __ModelIdType: ModelIdType
+  public readonly __ModelName: ModelName;
+  public readonly __ModelType: ModelType;
+  public readonly __ModelIdField: ModelIdField;
+  public readonly __ModelProjectionType: ModelProjectionType;
+  public readonly __ModelIdType: ModelIdType;
 
   // Private fields
-  private _modelName: ModelName
-  private _repoName: Lowercase<ModelName>
-  private _modelIdField: ModelIdField
-  private _model: ModelType
+  private _modelName: ModelName;
+  private _repoName: Lowercase<ModelName>;
+  private _modelIdField: ModelIdField;
+  private _model: ModelType;
 
   // Shared IO server between all repositories
 
-  private static _io: IO.Server
+  private static _io: IO.Server;
 
   protected get io(): IO.Server {
     if (!Repository._io) {
-      throw new Error('No IO Server exists!')
+      throw new Error('No IO Server exists!');
     }
-    return Repository._io
+    return Repository._io;
   }
 
   public static setIO(io: IO.Server): void {
-    this._io = io
+    this._io = io;
   }
 
   // Shared collection of all created repositories
   public static _allRepositories: {
-    [key: string]: Repository<any, any, any, any>
-  } = {}
+    [key: string]: Repository<any, any, any, any>;
+  } = {};
 
   // Constructor
 
   constructor(key: ModelName, idField: ModelIdField) {
-    this._modelName = key
-    this._repoName = this._modelName.toLowerCase() as Lowercase<ModelName>
-    this._modelIdField = idField
-    this._model = client[key.toLowerCase()]
-    Repository._allRepositories[key.toLowerCase()] = this
+    this._modelName = key;
+    this._repoName = this._modelName.toLowerCase() as Lowercase<ModelName>;
+    this._modelIdField = idField;
+    this._model = client[key.toLowerCase()];
+    Repository._allRepositories[key.toLowerCase()] = this;
   }
 
   // Emittance
 
   public async emitAll(socket?: IO.Socket) {
-    const path = `/${this._repoName}`
-    const target = socket ? socket.id : path
-    const data = await this.operate('findMany', {} as any)
+    const path = `/${this._repoName}`;
+    const target = socket ? socket.id : path;
+    const data = await this.operate('findMany', {} as any);
     console.log(
       `[${this._modelName.toUpperCase()}] Emitting all documents to`,
       target
-    )
-    this.io.to(target).emit(path, data)
+    );
+    this.io.to(target).emit(path, data);
   }
 
   public async emitOne(id: ModelIdType, socket?: IO.Socket) {
-    const path = `/${this._repoName}/${id}`
-    const target = socket ? socket.id : path
+    const path = `/${this._repoName}/${id}`;
+    const target = socket ? socket.id : path;
 
     const data = await this.operate('findFirst', {
       where: { [this._modelIdField]: id },
-    } as any)
+    } as any);
 
     if (data) {
       console.log(
         `[${this._modelName.toUpperCase()}] Emitting one document to`,
         target
-      )
-      this.io.to(target).emit(path, data)
+      );
+      this.io.to(target).emit(path, data);
     } else {
       console.log(
         `[${this._modelName.toUpperCase()}] Emitting that the document with id ${id} is missing or deleted to`,
         target
-      )
-      this.io.to(target).emit(path, undefined)
+      );
+      this.io.to(target).emit(path, undefined);
     }
   }
 
@@ -111,13 +118,14 @@ export class Repository<
     args: Prisma.Args<ModelType, Operation>
   ) {
     try {
-      const result = await (this._model[operation] as any)(args)
-      return result
+      const result = await (this._model[operation] as any)(args);
+
+      return result;
     } catch (error) {
       console.error(
         `[${this._modelName.toUpperCase()}] Operation error: ${error}`
-      )
-      return undefined
+      );
+      return undefined;
     }
   }
 }
