@@ -1,5 +1,3 @@
-import type { Socket } from 'socket.io-client';
-import { io } from 'socket.io-client';
 import Emittery from 'emittery';
 import { createSubscriptionPath } from '~/../shared';
 import type {
@@ -7,40 +5,40 @@ import type {
   RepositoryName,
   RepositoryOperationTypes,
   RepositoryTypes,
-  DataTypes,
 } from './_databaseTypes';
 import type {
   ConnectionStatusName,
   SubscriptionMessage,
 } from './_connectionTypes';
+import { Subscription } from './_subscription';
 
-export function createSubscription<Name extends RepositoryName>(
+export function createSocketSubscription<Name extends RepositoryName>(
   repository: Name,
   id?: undefined,
   args?: RepositoryOperationTypes<Name, 'findMany'>['Args']
-): Subscription<
+): SocketSubscription<
   Name,
   RepositoryTypes[Name],
   RepositoryOperationTypes<Name, 'findMany'>['Result']
 >;
-export function createSubscription<Name extends RepositoryName>(
+export function createSocketSubscription<Name extends RepositoryName>(
   repository: Name,
   id?: RepositoryTypes[Name]['ModelIdType'],
   args?: RepositoryOperationTypes<Name, 'findFirst'>['Args']
-): Subscription<
+): SocketSubscription<
   Name,
   RepositoryTypes[Name],
   RepositoryOperationTypes<Name, 'findFirst'>['Result']
 >;
 
-export function createSubscription<Name extends RepositoryName>(
+export function createSocketSubscription<Name extends RepositoryName>(
   repository: Name,
   id?: RepositoryTypes[Name]['ModelIdType'] | undefined,
   args?: RepositoryOperationTypes<Name, 'findFirst' | 'findMany'>['Args']
 ) {
   // Create a subscription to a specific document
   if (id) {
-    return new Subscription<
+    return new SocketSubscription<
       Name,
       RepositoryTypes[Name],
       RepositoryOperationTypes<Name, 'findFirst'>['Result'] | null
@@ -49,7 +47,7 @@ export function createSubscription<Name extends RepositoryName>(
 
   // Create a subscription to all documents in the collection
   else {
-    return new Subscription<
+    return new SocketSubscription<
       Name,
       RepositoryTypes[Name],
       RepositoryOperationTypes<Name, 'findMany'>['Result']
@@ -57,7 +55,7 @@ export function createSubscription<Name extends RepositoryName>(
   }
 }
 
-export class Subscription<
+export class SocketSubscription<
   Name extends RepositoryName,
   Types extends RepositoryTypes[Name] = RepositoryTypes[Name],
   ResultValue extends
@@ -65,68 +63,7 @@ export class Subscription<
     | RepositoryOperationTypes<Name, 'findMany'>['Result'] =
     | (RepositoryOperationTypes<Name, 'findFirst'>['Result'] | null)
     | RepositoryOperationTypes<Name, 'findMany'>['Result'],
-> {
-  //#region static subscription fields
-  private static _socket: Socket;
-  private static _connectionStatus: ConnectionStatusName = 'disconnected';
-  public static _eventEmitter: Emittery = new Emittery(); // NOTE: preferable not public
-
-  private static setConnectionStatus(status: ConnectionStatusName) {
-    this._connectionStatus = status;
-    console.log(`[SUBSCRIPTION] connection status: ${status}`);
-    this._eventEmitter.emit('status', status);
-  }
-
-  private static getSocket(): Socket {
-    if (!this._socket) {
-      this._socket = io();
-
-      // When the socket is connected...
-      this._socket.on('connect', () => {
-        this.setConnectionStatus('connected');
-        if (localStorage.getItem('participant-id')) {
-          Subscription.registerParticipation();
-        }
-      });
-      this._socket.on('disconnect', () => {
-        this.setConnectionStatus('disconnected');
-      });
-    }
-    return this._socket;
-  }
-
-  public static registerParticipation() {
-    Subscription.getSocket().emit(
-      'registerParticipant',
-      localStorage.getItem('participant-id')
-    );
-    this._socket.once(
-      'registerParticipant',
-      (response: {
-        ok: boolean;
-        data: DataTypes['participant'];
-        error?: string;
-      }) => {
-        if (response.ok) {
-          console.log('[SUBSCRIPTION] registered existing participantion');
-        } else {
-          console.log(
-            '[SUBSCRIPTION] failed to registered existing participantion'
-          );
-        }
-      }
-    );
-  }
-
-  public static get status(): string {
-    return Subscription._connectionStatus;
-  }
-
-  public static connect(): void {
-    this.getSocket();
-  }
-  //#endregion
-
+> extends Subscription {
   private readonly _baseMessage: Pick<SubscriptionMessage, 'repository' | 'id'>;
   private readonly _defaultValue: ResultValue;
 
@@ -138,12 +75,6 @@ export class Subscription<
   private onNewData(data: ResultValue) {
     this._value = data || this._defaultValue;
     this._eventEmitter.emit('data', this._value);
-  }
-
-  // Emittance
-
-  private emitEvent(event: string) {
-    Subscription.getSocket().emit(event, this._baseMessage);
   }
 
   private emitOperation<
@@ -184,6 +115,7 @@ export class Subscription<
     details: Pick<SubscriptionMessage, 'id' | 'repository' | 'args'>,
     defaultValue: ResultValue
   ) {
+    super();
     this._baseMessage = details;
     this._value = defaultValue;
     this._defaultValue = defaultValue;
@@ -193,7 +125,9 @@ export class Subscription<
 
   // Handlers
 
-  public onData(handler: Subscription<Name, Types, ResultValue>['_handler']) {
+  public onData(
+    handler: SocketSubscription<Name, Types, ResultValue>['_handler']
+  ) {
     this._eventEmitter.on('data', handler);
   }
 
@@ -224,7 +158,7 @@ export class Subscription<
   public stop() {
     if (this._listening) {
       Subscription.getSocket().off(this.path, this._handler);
-      this.emitEvent('unsubscribe');
+      Subscription.emit('unsubscribe');
       this._listening = false;
       this._eventEmitter.clearListeners('data');
       console.log(
@@ -240,7 +174,7 @@ export class Subscription<
       );
     } else if (!this._listening) {
       Subscription.getSocket().on(this.path, this._handler);
-      this.emitEvent('subscribe');
+      Subscription.emit('subscribe');
       this._listening = true;
       console.log(
         `[SUBSCRIPTION] Started listening to updates at ${this.path}`

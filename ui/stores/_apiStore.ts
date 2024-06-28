@@ -1,5 +1,5 @@
 import {
-  createSubscription,
+  createSocketSubscription,
   RepositoryName,
   RepositoryTypes,
   RepositoryOperationTypes,
@@ -34,7 +34,7 @@ export function createAPIStore<Name extends RepositoryName>(
   | RepositoryOperationTypes<Name, 'findFirst' | 'findMany'>['Result']
   | Array<RepositoryOperationTypes<Name, 'findMany'>['Result']>
 > {
-  const subscription = createSubscription<Name>(name, id, args);
+  const subscription = createSocketSubscription<Name>(name, id, args);
 
   const { subscribe } = readable(subscription.get(), function start(set) {
     // Load any existing data
@@ -64,7 +64,7 @@ export function createDerivedAPIStore<Name extends RepositoryName>(
 ): Readable<RepositoryOperationTypes<Name, 'findFirst'>['Result']> {
   return derived(idStore, (id, set) => {
     id = id || ('ignore-me' as any);
-    const subscription = createSubscription(repository, id);
+    const subscription = createSocketSubscription(repository, id);
 
     // Load any existing data
     set(subscription.get());
