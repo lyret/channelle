@@ -1,4 +1,16 @@
 {
+  "actions" : {
+    "build" : {
+      "postActions" : [
+        {
+          "action" : "build",
+          "taskName" : "Dev",
+          "type" : "runTask"
+        }
+      ]
+    }
+  },
+  "buildBeforeRunning" : true,
   "extension" : {
     "identifier" : "panic.JavaScript",
     "name" : "JavaScript"
@@ -6,9 +18,11 @@
   "extensionTemplate" : "nodeDebug",
   "extensionValues" : {
     "launchArgs" : [
+      "run:debug",
       "--enable-source-maps"
     ],
     "request" : "launch",
-    "scriptPath" : ".dist\/server"
-  }
+    "scriptPath" : "cli.mjs"
+  },
+  "openLogOnRun" : "fail"
 }

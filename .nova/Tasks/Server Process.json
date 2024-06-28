@@ -1,0 +1,16 @@
+{
+  "actions" : {
+    "build" : {
+      "enabled" : true,
+      "script" : "source .zshrc;\nPATH=$PATH:\/usr\/local\/bin;\ncd ~\/Server\/iia;\nnpm ci",
+      "shell" : "\/bin\/zsh"
+    },
+    "run" : {
+      "enabled" : true,
+      "script" : "source .zshrc;\nPATH=$PATH:\/usr\/local\/bin\npm2 restart clients\/iia",
+      "shell" : "\/bin\/zsh"
+    }
+  },
+  "openLogOnRun" : "start",
+  "serverName" : "Lyrets Server"
+}

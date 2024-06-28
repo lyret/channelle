@@ -1,10 +1,14 @@
 {
-  "identifier" : "6F4B2032-2F93-492C-B131-5BDBBEA8EA74",
+  "identifier" : "50E43364-2F7F-4904-93C6-26FB0291B284",
   "ignoredFilePatterns" : [
-    ".dist",
-    ".gitignore"
+    ".git",
+    ".nova",
+    ".gitignore",
+    "node_modules",
+    ".dist"
   ],
-  "remotePath" : "\/Users\/lyret\/Server\/channelle",
+  "localPath" : ".",
+  "remotePath" : "\/Users\/lyret\/Server\/iia",
   "server" : "Lyrets Server",
   "usesPublishing" : true
 }
