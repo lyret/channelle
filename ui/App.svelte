@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { connectionStatus, currentParticipant } from "~/stores/connection";
-	import { route } from "~/stores/url";
+	import { route } from "~/stores/ui/url";
 
 	import ManagePage from "~/pages/Manage.svelte";
 	import Loader from "~/components/app/Loader.svelte";
