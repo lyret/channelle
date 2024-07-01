@@ -2,7 +2,7 @@ const autoPreprocess = require('svelte-preprocess');
 
 module.exports = {
 	compilerOptions: {
-		css: false
+		css: false,
 	},
-    preprocess: autoPreprocess()
-}
+	preprocess: autoPreprocess(),
+};

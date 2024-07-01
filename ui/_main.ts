@@ -7,7 +7,7 @@ import App from './App.svelte';
 enableMediaSoupDebugging();
 
 var mainComponent = new App({
-  target: document.body,
+	target: document.body,
 });
 
 export default mainComponent;

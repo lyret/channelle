@@ -4,20 +4,20 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url  	= env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 model Participant {
-  id		  Int @id @default(autoincrement())
-  name  	String
+  id      Int     @id @default(autoincrement())
+  name    String
   blocked Boolean @default(false)
   actor   Boolean @default(false)
   manager Boolean @default(false)
-  online	Boolean @default(false)
+  online  Boolean @default(false)
 }
 
 model Scene {
-  id   		Int @id @default(autoincrement())
-  order 	Int @default(0)
-  layout 	String
+  id     Int    @id @default(autoincrement())
+  order  Int    @default(0)
+  layout String
 }

@@ -1,13 +1,13 @@
 {
-  "extends": "@tsconfig/svelte/tsconfig.json",
-  "compilerOptions": {
-    "lib": ["es2021", "dom"],
-    "strict": true,
-    "baseUrl": "./ui",
-    "paths": {
-      "~/*": ["./*"]
-    }
-  },
-  "include": ["ui/**/*", "shared/**/*"],
-  "exclude": ["node_modules/*", "public/*", "server/*"]
+	"extends": "@tsconfig/svelte/tsconfig.json",
+	"compilerOptions": {
+		"lib": ["es2021", "dom"],
+		"strict": true,
+		"baseUrl": "./ui",
+		"paths": {
+			"~/*": ["./*"]
+		}
+	},
+	"include": ["ui/**/*", "shared/**/*"],
+	"exclude": ["node_modules/*", "public/*", "server/*"]
 }

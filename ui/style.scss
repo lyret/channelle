@@ -2,34 +2,34 @@
 
 /* Fonts and external resources */
 @font-face {
-  font-family: 'Modak';
-  src: url('./assets/fonts/modak.ttf') format('truetype');
+	font-family: 'Modak';
+	src: url('./assets/fonts/modak.ttf') format('truetype');
 }
 @font-face {
-  font-family: 'Chentalle';
-  src: url('./assets/fonts/chentalle.otf') format('opentype');
+	font-family: 'Chentalle';
+	src: url('./assets/fonts/chentalle.otf') format('opentype');
 }
 @font-face {
-  font-family: 'ThisCafe';
-  src: url('./assets/fonts/this_cafe.ttf') format('truetype');
+	font-family: 'ThisCafe';
+	src: url('./assets/fonts/this_cafe.ttf') format('truetype');
 }
 @font-face {
-  font-family: 'Wildplants';
-  src: url('./assets/fonts/wildplants.ttf') format('truetype');
+	font-family: 'Wildplants';
+	src: url('./assets/fonts/wildplants.ttf') format('truetype');
 }
 .is-plants {
-  font-family: 'Wildplants' !important;
+	font-family: 'Wildplants' !important;
 }
 @font-face {
-  font-family: 'Flowery';
-  src: url('./assets/fonts/flowery.ttf') format('truetype');
+	font-family: 'Flowery';
+	src: url('./assets/fonts/flowery.ttf') format('truetype');
 }
 .is-flowers {
-  font-family: 'Flowery' !important;
+	font-family: 'Flowery' !important;
 }
 
 .is-strikethrough {
-  text-decoration: line-through !important;
+	text-decoration: line-through !important;
 }
 
 /* Sass variable overrides */
@@ -60,25 +60,25 @@ $background: #ffffff;
 
 body,
 html {
-  background-color: $background;
+	background-color: $background;
 }
 
 th {
-  text-align: left !important;
+	text-align: left !important;
 }
 
 .has-hover-effect {
-  transition: transform 300ms;
+	transition: transform 300ms;
 }
 
 .has-hover-effect:hover {
-  transform: scale(1.02);
+	transform: scale(1.02);
 }
 
 .is-sticky {
-  position: fixed;
-  left: 0;
-  right: 0;
-  width: 100vw;
-  bottom: 0;
+	position: fixed;
+	left: 0;
+	right: 0;
+	width: 100vw;
+	bottom: 0;
 }

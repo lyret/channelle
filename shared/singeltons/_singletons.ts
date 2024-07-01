@@ -1,5 +1,5 @@
-import type { PromptDocument } from './prompt'
-import type { HighscoreDocument } from './highscore'
+import type { PromptDocument } from './prompt';
+import type { HighscoreDocument } from './highscore';
 
 /** A singleton is a type of document that exists as a single json file */
 export interface SingletonDocument {}
@@ -9,10 +9,10 @@ export interface SingletonDocument {}
  * @example { [key : singeltonName ] : SingeltonDocumentType }
  */
 export interface SingletonDocuments {
-  prompt: PromptDocument
-  highscore: HighscoreDocument
-  'session-highscore': HighscoreDocument
+	prompt: PromptDocument;
+	highscore: HighscoreDocument;
+	'session-highscore': HighscoreDocument;
 }
 
 /** An available singleton name */
-export type SingletonName = keyof SingletonDocuments
+export type SingletonName = keyof SingletonDocuments;

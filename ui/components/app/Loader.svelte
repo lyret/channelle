@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { blur } from "svelte/transition";
+	import { blur } from 'svelte/transition';
 
 	/** Text to show below the progress bar */
-	export let label: string = "";
+	export let label: string = '';
 
 	// Delays the rendering of the loader to avoid "pop-in" effect
 	const delayEffect = 1000;

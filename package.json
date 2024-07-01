@@ -1,61 +1,61 @@
 {
-  "name": "channelle",
-  "version": "1.0.0",
-  "author": "Viktor Lyresten <viktor@lyresten.se>",
-  "license": "UNLICENSED",
-  "scripts": {
-    "build": "esbuild server/index.ts --bundle --platform=node --sourcemap --packages=external --outdir=.dist/server",
-    "start": "node .dist/server --enable-source-maps",
-    "update-db": "prisma generate",
-    "studio": "prisma studio",
-    "format": "prettier . --write"
-  },
-  "engines": {
-    "node": "^21.0.0",
-    "npm": "^10.0.0"
-  },
-  "prisma": {
-    "schema": "database/schema.prisma"
-  },
-  "dependencies": {
-    "@babel/polyfill": "^7.12.1",
-    "@creativebulma/bulma-divider": "^1.1.0",
-    "@prisma/client": "^5.15.1",
-    "@types/koa": "^2.11.7",
-    "@types/koa-bodyparser": "^4.3.6",
-    "@types/koa-router": "^7.4.1",
-    "@types/koa-static": "^4.0.1",
-    "@types/luxon": "^3.0.1",
-    "@types/node": "^18.15.11",
-    "@types/socket.io": "^2.1.13",
-    "@types/socket.io-client": "^1.4.35",
-    "bulma": "^0.9.2",
-    "emittery": "^1.0.0",
-    "koa": "^2.13.1",
-    "koa-bodyparser": "^4.3.0",
-    "koa-router": "^12.0.0",
-    "koa-static": "^5.0.0",
-    "leaflet": "^1.7.1",
-    "luxon": "^3.0.0",
-    "mediasoup": "^3.14.8",
-    "mediasoup-client": "^3.7.12",
-    "prisma": "^5.15.1",
-    "socket.io": "^4.6.1",
-    "socket.io-client": "^4.0.0",
-    "svelte": "^3.0.0",
-    "svelte-preprocess": "^5.0.0",
-    "typescript": "^5.0.0",
-    "universal-router": "^9.0.1"
-  },
-  "devDependencies": {
-    "@chialab/esbuild-plugin-html": "^0.17.2",
-    "@tsconfig/svelte": "^1.0.13",
-    "esbuild": "^0.21.5",
-    "esbuild-sass-plugin": "^3.3.1",
-    "esbuild-svelte": "^0.7.3",
-    "prettier": "^3.3.2",
-    "prettier-plugin-prisma": "^5.0.0",
-    "prettier-plugin-svelte": "^3.2.5",
-    "sass": "^1.32.8"
-  }
+	"name": "channelle",
+	"version": "1.0.0",
+	"author": "Viktor Lyresten <viktor@lyresten.se>",
+	"license": "UNLICENSED",
+	"scripts": {
+		"build": "esbuild server/index.ts --bundle --platform=node --sourcemap --packages=external --outdir=.dist/server",
+		"start": "node .dist/server --enable-source-maps",
+		"update-db": "prisma generate",
+		"studio": "prisma studio",
+		"format": "prettier . --write"
+	},
+	"engines": {
+		"node": "^21.0.0",
+		"npm": "^10.0.0"
+	},
+	"prisma": {
+		"schema": "database/schema.prisma"
+	},
+	"dependencies": {
+		"@babel/polyfill": "^7.12.1",
+		"@creativebulma/bulma-divider": "^1.1.0",
+		"@prisma/client": "^5.15.1",
+		"@types/koa": "^2.11.7",
+		"@types/koa-bodyparser": "^4.3.6",
+		"@types/koa-router": "^7.4.1",
+		"@types/koa-static": "^4.0.1",
+		"@types/luxon": "^3.0.1",
+		"@types/node": "^18.15.11",
+		"@types/socket.io": "^2.1.13",
+		"@types/socket.io-client": "^1.4.35",
+		"bulma": "^0.9.2",
+		"emittery": "^1.0.0",
+		"koa": "^2.13.1",
+		"koa-bodyparser": "^4.3.0",
+		"koa-router": "^12.0.0",
+		"koa-static": "^5.0.0",
+		"leaflet": "^1.7.1",
+		"luxon": "^3.0.0",
+		"mediasoup": "^3.14.8",
+		"mediasoup-client": "^3.7.12",
+		"prisma": "^5.15.1",
+		"socket.io": "^4.6.1",
+		"socket.io-client": "^4.0.0",
+		"svelte": "^3.0.0",
+		"svelte-preprocess": "^5.0.0",
+		"typescript": "^5.0.0",
+		"universal-router": "^9.0.1"
+	},
+	"devDependencies": {
+		"@chialab/esbuild-plugin-html": "^0.17.2",
+		"@tsconfig/svelte": "^1.0.13",
+		"esbuild": "^0.21.5",
+		"esbuild-sass-plugin": "^3.3.1",
+		"esbuild-svelte": "^0.7.3",
+		"prettier": "^3.3.2",
+		"prettier-plugin-prisma": "^5.0.0",
+		"prettier-plugin-svelte": "^3.2.5",
+		"sass": "^1.32.8"
+	}
 }

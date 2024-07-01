@@ -1,12 +1,12 @@
 {
-  "compilerOptions": {
-    "esModuleInterop": true,
-    "target": "ES6",
-    "module": "esnext",
-    "baseUrl": "./database",
-    "paths": {
-      "~/*": ["./*"]
-    },
-    "moduleResolution": "node"
-  }
+	"compilerOptions": {
+		"esModuleInterop": true,
+		"target": "ES6",
+		"module": "esnext",
+		"baseUrl": "./database",
+		"paths": {
+			"~/*": ["./*"]
+		},
+		"moduleResolution": "node"
+	}
 }
