@@ -1,10 +1,7 @@
 <script lang="ts">
-	import { ProgressRadial } from '@skeletonlabs/skeleton';
-	import Icon from '~/tokens/icon.svelte';
-	import { api, ConnectionStatus } from '~/api';
-	import LocalMedia from '~/components/localMedia.svelte';
-	import RemoteMedia from '~/components/remoteMedia.svelte';
-	import Controls from '~/components/controls.svelte';
+	import LocalMedia from '~/components/watch/LocalMedia.svelte';
+	import RemoteMedia from '~/components/watch/RemoteMedia.svelte';
+	import Actions from '~/components/watch/Actions.svelte';
 
 	function createLayout(
 		matrix: Array<Array<number>>
@@ -50,58 +47,33 @@
 	}
 </script>
 
-<div class="flex flex-col h-screen justify-between">
-	{#if $api.status.connection == ConnectionStatus.Connected}
-		<main class="flex-grow">
-			<div
-				class={`grid grid-cols-${width} grid-rows-${height} gap-2 m-2 h-full`}
-			>
-				{#each layout as row}
-					{#each row as cell}
-						{#if cell}
-							<div class="card variant-ghost w-full h-full">
-								w{width}h{height}
-							</div>
-						{:else}
-							<div class="card variant-ghost w-full h-full">
-								w{width}h{height}
-							</div>
-						{/if}
-					{/each}
+<div>
+	<div class={`fixed-grid has-${width}-cols`}>
+		<div class="grid">
+			{#each layout as row}
+				{#each row as cell}
+					{#if cell}
+						<div class="cell has-background-primary">
+							w{width}h{height}
+						</div>
+					{:else}
+						<div class="cell">
+							w{width}h{height}
+						</div>
+					{/if}
 				{/each}
-				<!-- <div>
-					<LocalMedia />
-				</div>
-				<div>
-					
-				</div> -->
+			{/each}
+			<!-- <div>
+				<LocalMedia />
 			</div>
-		</main>
-		<footer class="fixed bottom-0 w-screen">
-			<div class="mx-10 my-1 text-center">
-				<Controls {left} {right} />
-			</div>
-		</footer>
-	{:else}
-		<div
-			class="w-full h-full flex items-center justify-center text-error-500 font-bold text-center"
-		>
-			{#if $api.status.connection == ConnectionStatus.Failed}
-				<p class="h1">
-					<Icon size={12} name="i-majesticons-skull" /><br />
-					Ingen anslutning<br />
-					<span class="h3">(unable to connect)</span>
-				</p>
-			{:else}
-				<ProgressRadial
-					stroke={70}
-					strokeLinecap="round"
-					track=""
-					meter="stroke-primary-500"
-				/>
-			{/if}
+			<div>
+				
+			</div> -->
 		</div>
-	{/if}
+	</div>
+	<footer>
+		<div class="mt-9">
+			<Actions {left} {right} />
+		</div>
+	</footer>
 </div>
-
-<style lang="postcss"></style>

@@ -2,6 +2,7 @@
 	import { blur } from 'svelte/transition';
 	import { openPanels } from '~/stores/ui';
 	import Header from '~/components/manage/Header.svelte';
+	import Watch from '~/pages/Watch.svelte';
 	import ParticipantsList from '~/components/manage/ParticipantsList.svelte';
 </script>
 
@@ -14,7 +15,7 @@
 >
 	<div class="columns">
 		{#if $openPanels['live']}
-			<div class="column">Live</div>
+			<Watch />
 		{/if}
 		{#if $openPanels['scenes']}
 			<div class="column">Scenes</div>

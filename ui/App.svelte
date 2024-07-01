@@ -6,6 +6,7 @@
 	import { route } from '~/stores/ui/url';
 
 	import ManagePage from '~/pages/Manage.svelte';
+	import WatchPage from '~/pages/Watch.svelte';
 	import Loader from '~/components/app/Loader.svelte';
 	import Authenticate from '~/components/app/Authenticate.svelte';
 	import Blocked from '~/components/app/Blocked.svelte';
@@ -17,7 +18,7 @@
 	{#if !$currentParticipant.name}
 		<Authenticate participant={$currentParticipant} />
 	{:else if $route.group == 'foyer'}
-		<ManagePage />
+		<WatchPage />
 	{:else if $route.group == 'salon'}
 		<ManagePage />
 	{:else if $route.group == 'backstage'}

@@ -1,18 +1,18 @@
-<script>
-	import { api } from '~/api';
+<script lang="ts">
+	import { media } from '~/stores/media';
 
 	export let streamNr = 1;
 
 	$: mediaStream =
-		$api.remoteMediaStreams.length >= streamNr
-			? $api.remoteMediaStreams[streamNr - 1]
+		$media.remoteMediaStreams.length >= streamNr
+			? $media.remoteMediaStreams[streamNr - 1]
 			: undefined;
 
-	function srcObject(node, stream) {
+	function srcObject(node: any, stream: any) {
 		console.log('remote', stream);
 		node.srcObject = stream;
 		return {
-			update(newStream) {
+			update(newStream: any) {
 				if (node.srcObject != newStream) {
 					node.srcObject = newStream;
 				}
@@ -21,19 +21,20 @@
 	}
 </script>
 
-<section
-	class="card variant-filled w-full h-full flex items-center justify-center"
->
+<div class="card">
 	{#if mediaStream}
-		<!-- svelte-ignore a11y-media-has-caption -->
-		<video use:srcObject={mediaStream} controls={true} autoplay playsinline
-		></video>
+		<div class="card-image">
+			<figure class="image is-4by3">
+				<video use:srcObject={mediaStream} controls={true} autoplay playsinline
+				></video>
+			</figure>
+		</div>
 	{:else}
-		<h3 class="h3">no {streamNr} streamer</h3>
+		<h3 class="has-size-3">no {streamNr} streamer</h3>
 	{/if}
-</section>
+</div>
 
-<style lang="postcss">
+<style>
 	video {
 		width: 100%;
 		border-radius: 8px;

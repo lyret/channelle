@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { currentParticipant } from '~/stores/connection';
 	import { blur } from 'svelte/transition';
 	import { openPanels, togglePanel } from '~/stores/ui';

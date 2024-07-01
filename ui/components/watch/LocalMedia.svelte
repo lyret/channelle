@@ -1,13 +1,13 @@
-<script>
-	import { api } from '~/api';
-	import { currentUser } from '~/stores';
-	$: enabled = $api.localMediaStream != undefined;
+<script lang="ts">
+	import { media } from '~/stores/media';
+	import { currentParticipant } from '~/stores/connection';
+	$: enabled = $media.localMediaStream != undefined;
 
-	function srcObject(node, stream) {
+	function srcObject(node: any, stream: any) {
 		console.log('local', stream);
 		node.srcObject = stream;
 		return {
-			update(newStream) {
+			update(newStream: any) {
 				if (node.srcObject != newStream) {
 					node.srcObject = newStream;
 				}
@@ -16,19 +16,28 @@
 	}
 </script>
 
-<section class="card w-full h-full">
+<div class="card">
 	<div class="p-4 space-y-4">
-		<h3 class="h3">{$currentUser.name}</h3>
-		{#if enabled}
-			<!-- svelte-ignore a11y-media-has-caption -->
-			<video
-				use:srcObject={$api.localMediaStream}
-				controls={false}
-				autoplay
-				playsinline
-			></video>
-		{:else}
-			<div class="placeholder" />
-		{/if}
+		<h3 class="is-size-3">{$currentParticipant.name}</h3>
+		<div class="card-image">
+			<figure class="image is-4by3">
+				{#if enabled}
+					<!-- svelte-ignore a11y-media-has-caption -->
+					<video
+						use:srcObject={$media.localMediaStream}
+						controls={false}
+						autoplay
+						playsinline
+					></video>
+				{/if}
+			</figure>
+		</div>
 	</div>
-</section>
+</div>
+
+<style>
+	video {
+		width: 100%;
+		border-radius: 8px;
+	}
+</style>
