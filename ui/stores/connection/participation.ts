@@ -1,9 +1,9 @@
 import { derived } from 'svelte/store';
+import type { ParticipationStatusName, DataTypes } from '~/api';
 import { SocketSubscription, create, findOne } from '~/api';
 import { connectionStatus } from './connectionStatus';
 import { createDerivedAPIStore } from '../_apiStore';
 import { createLocalStore } from '../_localStore';
-import type { ParticipationStatusName } from '~/api';
 
 /**The participant id stored in local storage */
 export const userParticipantId = createLocalStore<number | undefined>(
@@ -41,7 +41,11 @@ export const currentParticipant = derived(
 			}
 		}
 
-		if ($userParticipant) return $userParticipant;
+		if ($userParticipant) {
+			return $userParticipant;
+		} else {
+			return null as any as DataTypes['participant'];
+		}
 	}
 );
 
