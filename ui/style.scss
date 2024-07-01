@@ -1,5 +1,26 @@
 @charset "utf-8";
 
+/* Use Bulma */
+@use 'bulma/sass' with (
+	// Responsive breakpoints
+	$tablet: 600px,
+
+	// Fonts
+	$title-family: 'Chentalle',
+	$family-monospace: 'Modak',
+	$family-secondary: 'ThisCafe',
+
+	// Colors
+	$primary: #a55bd3,
+	$link: #3e9cbf,
+	$info: #a7ecf2,
+	$success: #3fff8c,
+	$warning: #f2c43d,
+	$danger: #f23d06,
+	$background: #fffff
+);
+// $family-primary: "FuturaHandwritten",
+
 /* Fonts and external resources */
 @font-face {
 	font-family: 'Modak';
@@ -32,35 +53,11 @@
 	text-decoration: line-through !important;
 }
 
-/* Sass variable overrides */
-
-// Responsive breakpoints
-$tablet: 600px;
-
-// Fonts
-$title-family: 'Chentalle';
-$family-monospace: 'Modak';
-// $family-primary: "FuturaHandwritten";
-$family-secondary: 'ThisCafe';
-
-// Colors
-$primary: #000000;
-$link: #0194f7;
-$info: #999999;
-$success: #06a933;
-$warning: #f6b223;
-$danger: #e51c24;
-$background: #ffffff;
-
-/* Import Bulma and extensions */
-@import '../node_modules/bulma/bulma.sass';
-@import '../node_modules/@creativebulma/bulma-divider/src/sass/index.sass';
-
 /* Custom styles */
 
 body,
 html {
-	background-color: $background;
+	background-color: #ffffff;
 }
 
 th {
