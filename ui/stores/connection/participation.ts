@@ -1,8 +1,9 @@
 import { derived } from 'svelte/store';
-import { Subscription, create, findOne } from '~/api';
+import { SocketSubscription, create, findOne } from '~/api';
 import { connectionStatus } from './connectionStatus';
 import { createDerivedAPIStore } from '../_apiStore';
 import { createLocalStore } from '../_localStore';
+import type { ParticipationStatusName } from '~/api';
 
 /**The participant id stored in local storage */
 export const userParticipantId = createLocalStore<number | undefined>(
@@ -11,11 +12,12 @@ export const userParticipantId = createLocalStore<number | undefined>(
 );
 
 /** The current user participant */
-const userParticipant = createDerivedAPIStore(userParticipantId, 'participant');
-
-/** Indicates that the given admin information is valid */
 export const currentParticipant = derived(
-	[userParticipantId, connectionStatus, userParticipant],
+	[
+		userParticipantId,
+		connectionStatus,
+		createDerivedAPIStore(userParticipantId, 'participant'),
+	],
 	([$userParticipantId, $connectionStatus, $userParticipant]) => {
 		if ($connectionStatus == 'connected') {
 			if (!$userParticipantId && !$userParticipant) {
@@ -26,7 +28,7 @@ export const currentParticipant = derived(
 					},
 				}).then((partipant) => {
 					userParticipantId.set(partipant.id);
-					Subscription.registerParticipation();
+					SocketSubscription.registerParticipation();
 				});
 			} else {
 				findOne('participant', { where: { id: $userParticipantId } }).then(
@@ -40,5 +42,22 @@ export const currentParticipant = derived(
 		}
 
 		if ($userParticipant) return $userParticipant;
+	}
+);
+
+/** The current user participationStatus */
+export const currentParticipationStatus = derived<
+	[typeof connectionStatus, typeof currentParticipant],
+	ParticipationStatusName
+>(
+	[connectionStatus, currentParticipant],
+	([$connectionStatus, $currentParticipant]) => {
+		if ($currentParticipant && $currentParticipant.blocked) {
+			return 'blocked';
+		}
+		if ($connectionStatus == 'connected') {
+			return 'online';
+		}
+		return 'offline';
 	}
 );

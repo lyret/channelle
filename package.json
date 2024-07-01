@@ -4,9 +4,10 @@
 	"author": "Viktor Lyresten <viktor@lyresten.se>",
 	"license": "UNLICENSED",
 	"scripts": {
+		"init": "prisma generate",
 		"build": "esbuild server/index.ts --bundle --platform=node --sourcemap --packages=external --outdir=.dist/server",
 		"start": "node .dist/server --enable-source-maps",
-		"update-db": "prisma generate",
+		"dev": "npm run build && npm run start",
 		"studio": "prisma studio",
 		"format": "prettier . --write"
 	},

@@ -12,13 +12,13 @@ import { createMediaRepostiory } from './media';
 import { createBundlerMiddleware } from './middlewares/createBundlerMiddleware';
 import { createIOEventHandlers } from './middlewares/createIOEventHandlers';
 
-/** The directory to use for builds */
-const OUT_DIR = Path.resolve(process.cwd(), '.dist', 'ui');
-
 async function SPAFallback(ctx: Koa.Context, next: Koa.Next) {
-	let outFile = await Fs.readFile(Path.resolve(OUT_DIR, 'index.html'), {
-		encoding: 'utf8',
-	});
+	let outFile = await Fs.readFile(
+		Path.resolve(process.cwd(), Config.build.outDir, 'index.html'),
+		{
+			encoding: 'utf8',
+		}
+	);
 
 	outFile = outFile.replaceAll('_main', '/_main');
 	outFile = outFile.replaceAll('style.css', '/style.css');
@@ -33,7 +33,10 @@ async function SPAFallback(ctx: Koa.Context, next: Koa.Next) {
  * Creates and starts the application server
  */
 export async function createServer(): Promise<Http.Server> {
-	console.log('[Config]', JSON.stringify(Config));
+	// Debug output
+	for (const key of Object.keys(Config)) {
+		console.log('[Config]', key, JSON.stringify(Config[key], null, 2));
+	}
 	console.log('[MS Server] media soup version', MediaSoup.version);
 
 	// Create the server object
@@ -49,7 +52,7 @@ export async function createServer(): Promise<Http.Server> {
 	}
 
 	// Serve static files
-	app.use(ServeStatic(OUT_DIR));
+	app.use(ServeStatic(Path.resolve(process.cwd(), Config.build.outDir)));
 
 	// Use the SPA Fallback
 	app.use(SPAFallback);
@@ -83,7 +86,10 @@ export async function createServer(): Promise<Http.Server> {
 
 	// Listen for requests
 	const http = app.listen(Config.web.port);
-	const io = new IO.Server(http);
+	const io = new IO.Server(http, {
+		serveClient: false,
+		path: Config.socket.path,
+	});
 
 	// Initialize a media stream repository
 	await createMediaRepostiory(io);

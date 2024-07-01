@@ -1,13 +1,24 @@
 // TODO: Was created at build time with ES build previously
 
+// Get ENV
+let env: any = {};
+try {
+	env = process.env;
+} catch {}
+
 /** Indicates that this is a run while the solution is still in development */
-const IS_DEVELOPMENT = process.env.NODE_ENV != 'production';
+const IS_DEVELOPMENT = env.NODE_ENV != 'production';
 const IS_PRODUCTION = !IS_DEVELOPMENT;
 const SHOW_WARNINGS = false;
 
 export const Config = {
 	/** Indicates that we are in the production environment */
 	isProduction: IS_PRODUCTION,
+	/** Build Settings */
+	build: {
+		/** The directory to use for builds */
+		outDir: '.dist/ui',
+	},
 	/** Debug Settings */
 	debug: {
 		/** Indicates that we want to show verbose warnings and log messages */
@@ -20,7 +31,7 @@ export const Config = {
 		/** Exposed listening host */
 		host: IS_PRODUCTION ? '0.0.0.0' : 'localhost',
 		/** Exposed listening port */
-		port: process.env.PORT || 3000,
+		port: env.PORT || 3000,
 	},
 	/** Socket IO Settings */
 	socket: {

@@ -158,7 +158,7 @@ export class SocketSubscription<
 	public stop() {
 		if (this._listening) {
 			Subscription.getSocket().off(this.path, this._handler);
-			Subscription.emit('unsubscribe');
+			Subscription.emit('unsubscribe', this._baseMessage);
 			this._listening = false;
 			this._eventEmitter.clearListeners('data');
 			console.log(
@@ -174,7 +174,7 @@ export class SocketSubscription<
 			);
 		} else if (!this._listening) {
 			Subscription.getSocket().on(this.path, this._handler);
-			Subscription.emit('subscribe');
+			Subscription.emit('subscribe', this._baseMessage);
 			this._listening = true;
 			console.log(
 				`[SUBSCRIPTION] Started listening to updates at ${this.path}`

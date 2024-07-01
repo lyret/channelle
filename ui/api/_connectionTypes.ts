@@ -5,4 +5,5 @@ export type {
 	DeviceStatusName,
 	MediaEvents,
 	MediaRequests,
+	ParticipationStatusName,
 } from '../../shared';

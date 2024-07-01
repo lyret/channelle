@@ -9,6 +9,7 @@ export const createSubscriptionPath = (
 		args?: any;
 	}
 ) => {
+	console.log(message);
 	message.id = message.id || message.args?.where?.id || null;
 	return message.id
 		? `/${message.repository}/${message.id}`

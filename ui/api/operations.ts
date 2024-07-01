@@ -4,7 +4,7 @@ import type {
 	RepositoryOperationTypes,
 	RepositoryTypes,
 } from './_databaseTypes';
-import { Subscription } from './socketSubscription';
+import { SocketSubscription } from './socketSubscription';
 
 async function performOperation<
 	Name extends RepositoryName,
@@ -14,7 +14,7 @@ async function performOperation<
 	operation: Operation,
 	args: RepositoryOperationTypes<Name, Operation>['Args']
 ): Promise<RepositoryOperationTypes<Name, Operation>['Result']> {
-	const subscription = new Subscription<
+	const subscription = new SocketSubscription<
 		Name,
 		RepositoryTypes[Name],
 		Array<RepositoryTypes[Name]['ModelProjectionType']>

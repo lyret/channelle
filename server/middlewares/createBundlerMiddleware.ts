@@ -1,8 +1,8 @@
-import { IS_DEVELOPMENT, OUT_DIR } from '../options';
 import Path from 'node:path';
 import Koa from 'koa';
 import ESBuild from 'esbuild';
 import sveltePreprocess from 'svelte-preprocess';
+import { Config } from '../../shared';
 
 /**
  * Generates a Koa Middleware
@@ -21,11 +21,11 @@ export const createBundlerMiddleware = async () => {
 		loader: { '.jpg': 'file', '.png': 'file', '.ttf': 'file', '.otf': 'file' },
 		publicPath: '/',
 		bundle: true,
-		minify: !IS_DEVELOPMENT,
+		minify: Config.isProduction,
 		sourcemap: true,
 		metafile: true,
 		write: true,
-		outfile: Path.resolve(OUT_DIR, 'index.html'),
+		outfile: Path.resolve(process.cwd(), Config.build.outDir, 'index.html'),
 		logLevel: 'error',
 		entryPoints: ['./ui/index.html'],
 		plugins: [

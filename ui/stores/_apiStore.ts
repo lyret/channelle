@@ -42,7 +42,6 @@ export function createAPIStore<Name extends RepositoryName>(
 
 		// Start the subscription
 		subscription.onData((value) => {
-			console.log('HERE ALSO', value);
 			set(value);
 		});
 		subscription.start();
@@ -71,7 +70,6 @@ export function createDerivedAPIStore<Name extends RepositoryName>(
 
 		// Start the subscription
 		subscription.onData((value) => {
-			console.log('DDD', value);
 			set(value);
 		});
 		subscription.start();

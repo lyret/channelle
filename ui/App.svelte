@@ -1,5 +1,8 @@
 <script lang="ts">
-	import { connectionStatus, currentParticipant } from '~/stores/connection';
+	import {
+		currentParticipationStatus,
+		currentParticipant,
+	} from '~/stores/connection';
 	import { route } from '~/stores/ui/url';
 
 	import ManagePage from '~/pages/Manage.svelte';
@@ -8,9 +11,9 @@
 	import Blocked from '~/components/app/Blocked.svelte';
 </script>
 
-{#if $connectionStatus == 'blocked'}
+{#if $currentParticipationStatus == 'blocked'}
 	<Blocked />
-{:else if $connectionStatus == 'connected' && $currentParticipant}
+{:else if $currentParticipationStatus == 'online' && $currentParticipant}
 	{#if !$currentParticipant.name}
 		<Authenticate participant={$currentParticipant} />
 	{:else if $route.group == 'foyer'}

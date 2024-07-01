@@ -70,6 +70,7 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 	// When a subscription starts, it is added on a server side room for that subscription path
 	// The current data is emitted to that single subscriber
 	socket.on('subscribe', async (message: SubscriptionMessage) => {
+		console.log('HERE4', message);
 		const path = createSubscriptionPath(message);
 		const repository: Repository<any, any, any> =
 			Repository._allRepositories[message.repository];

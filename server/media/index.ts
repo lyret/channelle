@@ -1,2 +1,2 @@
 export * from './createMediaRepository';
-export { MediaRepository } from './_MediaRepository';
+export { MediaRepository } from './_mediaRepository';
