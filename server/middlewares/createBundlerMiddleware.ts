@@ -18,7 +18,13 @@ export const createBundlerMiddleware = async () => {
 	const optionsWithPlugins: ESBuild.BuildOptions = {
 		platform: 'browser',
 		external: ['url'],
-		loader: { '.jpg': 'file', '.png': 'file', '.ttf': 'file', '.otf': 'file' },
+		loader: {
+			'.jpg': 'file',
+			'.png': 'file',
+			'.ttf': 'file',
+			'.otf': 'file',
+			'.svg': 'file',
+		},
 		publicPath: '/',
 		bundle: true,
 		minify: Config.isProduction,

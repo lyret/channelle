@@ -20,8 +20,8 @@ async function SPAFallback(ctx: Koa.Context, next: Koa.Next) {
 		}
 	);
 
-	outFile = outFile.replaceAll('_main', '/_main');
-	outFile = outFile.replaceAll('style.css', '/style.css');
+	// outFile = outFile.replaceAll('_main', '/_main');
+	// outFile = outFile.replaceAll('style.css', '/style.css');
 
 	ctx.status = 200;
 	ctx.body = outFile;
