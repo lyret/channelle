@@ -1,26 +1,30 @@
-// TODO: Default Lyret setup, currently unused
+// TODO: Was created at build time with ES build previously
 
-/** Generates a appropriate configuration object depending on the given runtime environment and environment variables */
-export default (isProduction, showWarnings) => ({
+/** Indicates that this is a run while the solution is still in development */
+const IS_DEVELOPMENT = process.env.NODE_ENV != 'production';
+const IS_PRODUCTION = !IS_DEVELOPMENT;
+const SHOW_WARNINGS = false;
+
+export const Config = {
   /** Indicates that we are in the production environment */
-  isProduction: isProduction,
+  isProduction: IS_PRODUCTION,
   /** Debug Settings */
   debug: {
     /** Indicates that we want to show verbose warnings and log messages */
-    verboseOutput: showWarnings,
+    verboseOutput: SHOW_WARNINGS,
   },
   // sslCrt: "/etc/ssl/certs/ssl-cert-snakeoil.pem",
   // sslKey: "/etc/ssl/private/ssl-cert-snakeoil.key",
   /** Web Server Settings */
   web: {
     /** Exposed listening host */
-    host: isProduction ? '0.0.0.0' : 'localhost',
+    host: IS_PRODUCTION ? '0.0.0.0' : 'localhost',
     /** Exposed listening port */
     port: process.env.PORT || 3000,
   },
   /** Socket IO Settings */
   socket: {
-    url: isProduction ? 'https://iia.freaks.se' : 'localhost:3000',
+    url: IS_PRODUCTION ? 'https://iia.freaks.se' : 'localhost:3000',
     path: '/server',
     transports: ['websocket'],
   },
@@ -67,7 +71,7 @@ export default (isProduction, showWarnings) => ({
     /** WebRTC Transport settings **/
     webRTCTransport: {
       listenIps: [
-        isProduction
+        IS_PRODUCTION
           ? {
               ip: '0.0.0.0',
               announcedIp: '81.237.215.202',
@@ -80,4 +84,4 @@ export default (isProduction, showWarnings) => ({
       initialAvailableOutgoingBitrate: 1000000,
     },
   },
-});
+};
