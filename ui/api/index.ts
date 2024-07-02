@@ -1,5 +1,5 @@
 export * from './mediaSubscription';
-export * from './socketSubscription';
+export * from './repositorySubscription';
 export * from './localSubscription';
 export * from './operations';
 

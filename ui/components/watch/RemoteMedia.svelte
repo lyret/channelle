@@ -1,15 +1,9 @@
 <script lang="ts">
-	import { media } from '~/stores/media';
+	import { createMediaStore } from '~/stores';
 
-	export let streamNr = 1;
-
-	$: mediaStream =
-		$media.remoteMediaStreams.length >= streamNr
-			? $media.remoteMediaStreams[streamNr - 1]
-			: undefined;
+	const remoteStreams = createMediaStore('remoteMediaStreams');
 
 	function srcObject(node: any, stream: any) {
-		console.log('remote', stream);
 		node.srcObject = stream;
 		return {
 			update(newStream: any) {
@@ -21,18 +15,24 @@
 	}
 </script>
 
-<div class="card">
-	{#if mediaStream}
-		<div class="card-image">
-			<figure class="image is-4by3">
-				<video use:srcObject={mediaStream} controls={true} autoplay playsinline
-				></video>
-			</figure>
-		</div>
-	{:else}
-		<h3 class="has-size-3">no {streamNr} streamer</h3>
-	{/if}
-</div>
+{#each $remoteStreams as mediaStream}
+	<div class="card">
+		{#if mediaStream}
+			<div class="card-image">
+				<figure class="image is-4by3">
+					<video
+						use:srcObject={mediaStream}
+						controls={true}
+						autoplay
+						playsinline
+					></video>
+				</figure>
+			</div>
+		{:else}
+			<h3 class="has-size-3"></h3>
+		{/if}
+	</div>
+{/each}
 
 <style>
 	video {

@@ -1,15 +1,13 @@
 <script lang="ts">
-	import { update } from '~/api';
+	import { update, MediaSubscription } from '~/api';
+	import { createMediaStore } from '~/stores';
 	import { currentParticipant } from '~/stores/connection';
-	import { media } from '~/stores/media';
 
 	export let left: any;
 	export let right: any;
 
-	// FIXME: re-add
-	// socket.on("newProducer", () => {
-	// AfsSubscribe.disabled = false;
-	//});
+	const isProducingVideo = createMediaStore('isProducingVideo');
+	const isProducingAudio = createMediaStore('isProducingAudio');
 
 	async function updateName() {
 		if ($currentParticipant) {
@@ -37,14 +35,33 @@
 	<button
 		type="button"
 		class={btnClassList}
-		on:click={() => media.publish('camera')}
+		class:has-text-danger={$isProducingVideo}
+		on:click={() =>
+			$isProducingVideo
+				? isProducingVideo.stopPublishVideo()
+				: isProducingVideo.publishVideo()}
 	>
-		<span class="icon"><ion-icon name="videocam-outline"></ion-icon></span>
-		<span>Publish</span>
+		<span class="icon"
+			><ion-icon name={$isProducingVideo ? 'videocam-off' : 'videocam'}
+			></ion-icon></span
+		>
+		<span>{$isProducingVideo ? 'Stäng av kamera' : 'Starta kamera'}</span>
 	</button>
-	<button type="button" class={btnClassList} on:click={() => media.consume()}>
-		<span class="icon"><ion-icon name="videocam-outline"></ion-icon></span>
-		<span>Watch</span>
+	<button
+		type="button"
+		class={btnClassList}
+		class:has-text-danger={$isProducingAudio}
+		on:click={() =>
+			$isProducingAudio
+				? isProducingAudio.stopPublishAudio()
+				: isProducingAudio.publishAudio()}
+	>
+		<span class="icon"
+			><ion-icon name={$isProducingAudio ? 'mic-off' : 'mic'}></ion-icon></span
+		>
+		<span
+			>{$isProducingAudio ? 'Stäng av mikrofonen' : 'Starta mikrofonen'}</span
+		>
 	</button>
 	<!-- <button class="button icon" use:fullScreenAction>
 			<ion-icon name="expand-outline"></ion-icon>

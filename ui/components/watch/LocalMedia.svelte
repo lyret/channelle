@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { media } from '~/stores/media';
 	import { currentParticipant } from '~/stores/connection';
-	$: enabled = $media.localMediaStream != undefined;
+	import { createMediaStore } from '~/stores';
+	const localStream = createMediaStore('localMediaStream');
+	$: enabled = $localStream != undefined;
 
 	function srcObject(node: any, stream: any) {
 		console.log('local', stream);
@@ -24,7 +25,7 @@
 				{#if enabled}
 					<!-- svelte-ignore a11y-media-has-caption -->
 					<video
-						use:srcObject={$media.localMediaStream}
+						use:srcObject={$localStream}
 						controls={false}
 						autoplay
 						playsinline

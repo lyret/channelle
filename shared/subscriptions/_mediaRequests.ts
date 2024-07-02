@@ -6,9 +6,11 @@ import type * as MediaSoup from 'mediasoup-client';
  */
 export type MediaRequests = {
 	server_rtp_capabilities: [{}, MediaSoup.types.RtpCapabilities];
+	remove_producer: [{ audio?: boolean; video?: boolean }, boolean];
+	remove_consumer: [{}, boolean];
 	transport_producer_create: [
 		{ forceTcp: Boolean; rtpCapabilities: MediaSoup.types.RtpCapabilities },
-		unknown,
+		MediaSoup.types.TransportOptions,
 	];
 	transport_producer_connect: [
 		{ dtlsParameters: MediaSoup.types.DtlsParameters },

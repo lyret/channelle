@@ -1,8 +1,8 @@
 import { derived } from 'svelte/store';
 import type { ParticipationStatusName, DataTypes } from '~/api';
-import { SocketSubscription, create, findOne } from '~/api';
+import { RepositorySubscription, create, findOne } from '~/api';
 import { connectionStatus } from './connectionStatus';
-import { createDerivedAPIStore } from '../_apiStore';
+import { createDerivedDataStore } from '../_databaseStore';
 import { createLocalStore } from '../_localStore';
 
 /**The participant id stored in local storage */
@@ -16,7 +16,7 @@ export const currentParticipant = derived(
 	[
 		userParticipantId,
 		connectionStatus,
-		createDerivedAPIStore(userParticipantId, 'participant'),
+		createDerivedDataStore(userParticipantId, 'participant'),
 	],
 	([$userParticipantId, $connectionStatus, $userParticipant]) => {
 		if ($connectionStatus == 'connected') {
@@ -28,7 +28,7 @@ export const currentParticipant = derived(
 					},
 				}).then((partipant) => {
 					userParticipantId.set(partipant.id);
-					SocketSubscription.registerParticipation();
+					RepositorySubscription.registerParticipation();
 				});
 			} else {
 				findOne('participant', { where: { id: $userParticipantId } }).then(

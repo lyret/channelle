@@ -1,53 +1,181 @@
 import * as MediaSoup from 'mediasoup-client';
-import type {
-	DeviceStatusName,
-	MediaEvents,
-	MediaRequests,
-} from './_connectionTypes';
+import Emittery from 'emittery';
+import type { MediaRequests } from './_connectionTypes';
 import { Subscription } from './_subscription';
+
+/** Available events emitted from the API class implementation */
+export type SubscriptionMediaEvents = {
+	/** Possible browser / device status */
+	deviceStatus: 'unknown' | 'unsupported' | 'ok';
+	/** Indicates that this device is consuming */
+	isConsuming: boolean;
+	/** Indicates that this device is producing video */
+	isProducingVideo: boolean;
+	/** Indicates that this device is producing audio */
+	isProducingAudio: boolean;
+	/** Any media stream generated from this device */
+	localMediaStream: MediaStream | undefined;
+	/** Any media streams coming in from other connected users */
+	remoteMediaStreams: Array<MediaStream>;
+};
 
 /** Client side class implementation of the API */
 export class MediaSubscription extends Subscription {
-	private static _deviceStatus: DeviceStatusName;
-	private static _device: MediaSoup.Device;
-	private static _localMediaStream: MediaStream | undefined;
-	private static _remoteMediaStreams: Array<MediaStream> = [];
-	private _rtpCapabilities: MediaSoup.types.RtpCapabilities | undefined;
+	private static _mediaEventEmitter: Emittery<SubscriptionMediaEvents> =
+		new Emittery();
+	private static _videoProducer: MediaSoup.types.Producer;
+	private static _audioProducer: MediaSoup.types.Producer;
+	private static _values: SubscriptionMediaEvents = {
+		deviceStatus: 'unknown',
+		isConsuming: false,
+		isProducingVideo: false,
+		isProducingAudio: false,
+		localMediaStream: undefined,
+		remoteMediaStreams: [],
+	};
+	private static _sendTransport: MediaSoup.types.Transport | undefined =
+		undefined;
+	private static _device: MediaSoup.Device | undefined = undefined;
+	private static _rtpCapabilities: MediaSoup.types.RtpCapabilities | undefined =
+		undefined;
 
-	protected static getDevice(): MediaSoup.Device {
+	/** Returns the current device, or initializes it */
+	public static get device(): MediaSoup.Device {
 		if (!this._device) {
 			this._device = new MediaSoup.Device();
 		}
 		return this._device;
 	}
 
-	/** Emits a new event to any registered listeners */
-	protected static emitLocal<Event extends keyof MediaEvents>(
-		event: Event,
-		data: MediaEvents[Event]
-	) {
-		Subscription.getEmitter().emit(event, data);
+	/** Returns the current Rtp capabilities, or initializes them */
+	public static get rtpCapabilities(): MediaSoup.types.RtpCapabilities {
+		if (!this._rtpCapabilities) {
+			this._rtpCapabilities = MediaSubscription.device.rtpCapabilities;
+		}
+		return this._rtpCapabilities;
 	}
 
+	/** Sets the current device status and emits it to any registered listeners */
+	private static set deviceStatus(
+		value: SubscriptionMediaEvents['deviceStatus']
+	) {
+		MediaSubscription._values.deviceStatus = value;
+		console.log(`[Media Subscription] device status: ${value}`);
+		this.mediaEmit('deviceStatus', value);
+	}
+
+	/** Sets the current consuming status directly and emits it to any registered listeners */
+	private static set isConsuming(
+		value: SubscriptionMediaEvents['isConsuming']
+	) {
+		MediaSubscription._values.isConsuming = value;
+		console.log(`[Media Subscription] consuming: ${value}`);
+		this.mediaEmit('isConsuming', value);
+	}
+
+	/** Sets the current video producing status directly and emits it to any registered listeners */
+	private static set isProducingVideo(
+		value: SubscriptionMediaEvents['isProducingVideo']
+	) {
+		if (this._videoProducer) {
+			if (!value) {
+				this._videoProducer.pause();
+				this.request('remove_producer', { video: true });
+			} else {
+				this._videoProducer.resume();
+			}
+		}
+		MediaSubscription._values.isProducingVideo = value;
+		console.log(`[Media Subscription] producing video: ${value}`);
+		this.mediaEmit('isProducingVideo', value);
+	}
+	/** Sets the current audio producing status directly and emits it to any registered listeners */
+	private static set isProducingAudio(
+		value: SubscriptionMediaEvents['isProducingAudio']
+	) {
+		if (this._audioProducer) {
+			if (!value) {
+				this._audioProducer.pause();
+				this.request('remove_producer', { audio: true });
+			} else {
+				this._audioProducer.resume();
+			}
+		}
+		MediaSubscription._values.isProducingAudio = value;
+		console.log(`[Media Subscription] producing audio: ${value}`);
+		this.mediaEmit('isProducingAudio', value);
+	}
+
+	/** Sets the current local media stream and emits it to any registered listeners */
+	public static set localMediaStream(value: MediaStream | undefined) {
+		MediaSubscription._values.localMediaStream = value;
+		console.log(`[Media Subscription] local media stream:`, value);
+		this.mediaEmit(
+			'localMediaStream',
+			MediaSubscription._values.localMediaStream
+		);
+	}
+
+	/** Sets the current remote media streams and emits them to any registered listeners */
+	public static set remoteMediaStreams(value: Array<MediaStream>) {
+		MediaSubscription._values.remoteMediaStreams = value;
+		console.log(`[Media Subscription] remote media streams:`, value);
+		this.mediaEmit(
+			'remoteMediaStreams',
+			MediaSubscription._values.remoteMediaStreams
+		);
+	}
+
+	// Media Emittance
+
+	public static mediaEmit<Key extends keyof SubscriptionMediaEvents>(
+		event: Key,
+		data: SubscriptionMediaEvents[Key]
+	) {
+		this._mediaEventEmitter.emit(event, data);
+	}
+
+	public static mediaOn<Key extends keyof SubscriptionMediaEvents>(
+		event: Key,
+		handler: (data: SubscriptionMediaEvents[Key]) => void | Promise<void>
+	) {
+		this._mediaEventEmitter.on(event, handler);
+	}
+
+	public static mediaOff<Key extends keyof SubscriptionMediaEvents>(
+		event: Key,
+		handler: (data: SubscriptionMediaEvents[Key]) => void | Promise<void>
+	) {
+		this._mediaEventEmitter.off(event, handler);
+	}
+
+	public static mediaGet<Key extends keyof SubscriptionMediaEvents>(
+		event: Key
+	): SubscriptionMediaEvents[Key] {
+		return this._values[event];
+	}
+
+	// Static Methods
+
 	/** Sends a request through the socket connection and returns the response from the server */
-	private async request<Type extends keyof MediaRequests>(
+	private static async request<Type extends keyof MediaRequests>(
 		type: Type,
 		data?: MediaRequests[Type][0]
 	) {
 		return new Promise<MediaRequests[Type][1]>((resolve, reject) => {
-			console.log('[API] requesting', type);
-			Subscription.emit(
+			console.log('[Media Subscription] requesting', type);
+			Subscription.socketEmit(
 				type,
 				data || {},
 				(
 					response: (MediaRequests[Type][1] & { error: unknown }) | undefined
 				) => {
 					if (response && response.error) {
-						console.log('[API] response error returned from', type);
+						console.log('[Media Subscription]', type, 'Error:');
 						console.error(response.error);
 						reject(response.error);
 					} else {
-						console.log('[API]', type, 'response from server:', response);
+						console.log('[Media Subscription]', type, 'Response:', response);
 						resolve(response as MediaRequests[Type][1]);
 					}
 				}
@@ -56,7 +184,7 @@ export class MediaSubscription extends Subscription {
 	}
 
 	/** Makes sure that the current capabilities are known and loaded */
-	private async loadCapabilities() {
+	private static async loadCapabilities() {
 		// Load local device and router capabilities
 		if (!this._rtpCapabilities) {
 			this._rtpCapabilities = await this.request('server_rtp_capabilities');
@@ -65,146 +193,150 @@ export class MediaSubscription extends Subscription {
 			try {
 				// Browser media display is not supportered
 				if (typeof navigator.mediaDevices.getDisplayMedia === 'undefined') {
-					console.error('[API] Browser Display Media is not supported');
-					MediaSubscription._deviceStatus = 'unsupported';
+					console.error(
+						'[Media Subscription] Browser Display Media is not supported'
+					);
+					MediaSubscription.deviceStatus = 'unsupported';
 				}
-				if (!MediaSubscription.getDevice().canProduce('video')) {
-					console.error('[API] Browser cannot produce video');
+				if (!MediaSubscription.device.canProduce('video')) {
+					console.error('[Media Subscription] Browser cannot produce video');
 					return;
 				}
 			} catch (err: any) {
 				// Unsupported due to error
 				if (err.name === 'UnsupportedError') {
-					console.error('[API] Browser is unsupported due to an error thrown');
-					MediaSubscription._deviceStatus = 'unsupported';
+					console.error(
+						'[Media Subscription] Browser is unsupported due to an error thrown'
+					);
+					MediaSubscription.deviceStatus = 'unsupported';
 				}
 			}
 			// Load given RTP capabilities from the router
-			await MediaSubscription.getDevice().load({
+			await MediaSubscription.device.load({
 				routerRtpCapabilities: this._rtpCapabilities,
 			});
 		}
 	}
 
 	/** Returns the local media stream from the given type */
-	private async getLocalMediaStream(type: 'camera' | 'screen') {
+	private static async getLocalMediaStream(
+		source: 'camera' | 'screen' | 'audio'
+	) {
 		try {
-			if (type == 'camera') {
+			if (source == 'audio') {
+				return await navigator.mediaDevices.getUserMedia({
+					audio: true,
+				});
+			}
+			if (source == 'camera') {
 				return await navigator.mediaDevices.getUserMedia({
 					video: true,
 				});
 			}
-			if (type == 'screen') {
+			if (source == 'screen') {
 				return await navigator.mediaDevices.getDisplayMedia({
 					video: true,
 				});
 			}
 			throw new Error('Unknown type of local media requested');
 		} catch (err) {
-			console.error('[API] Failed to get local media stream');
+			console.error('[Media Subscription] Failed to get local media stream');
 			console.error(err);
 			throw err;
 		}
 	}
 
-	/** Returns the current connection status directly */
-	public static get deviceStatus(): DeviceStatusName {
-		return MediaSubscription._deviceStatus;
-	}
-
-	/** Sets the current device status and emits it to any registered listeners */
-	private static set deviceStatus(value: DeviceStatusName) {
-		MediaSubscription._deviceStatus = value;
-		console.log(`[MEDIA SUBSCRIPTION] device status: ${value}`);
-		MediaSubscription.emitLocal('deviceStatus', value);
-	}
-
-	/** Returns the current local media stream directly */
-	public static get localMediaStream(): MediaStream | undefined {
-		return MediaSubscription._localMediaStream;
-	}
-
-	/** Sets the current local media stream and emits it to any registered listeners */
-	public set localMediaStream(value: MediaStream | undefined) {
-		MediaSubscription._localMediaStream = value;
-		console.log(`[API] local media stream:`, value);
-		MediaSubscription.emitLocal(
-			'localMediaStream',
-			MediaSubscription._localMediaStream
-		);
-	}
-	/** Returns the current remote media stream directly */
-	public static get remoteMediaStreams(): Array<MediaStream> {
-		return MediaSubscription._remoteMediaStreams;
-	}
-
-	/** Sets the current remote media stream and emits it to any registered listeners */
-	public set remoteMediaStreams(value: Array<MediaStream>) {
-		MediaSubscription._remoteMediaStreams = value;
-		console.log(`[API] remote media stream:`, value);
-		MediaSubscription.emitLocal(
-			'remoteMediaStreams',
-			MediaSubscription._remoteMediaStreams
-		);
-	}
-
-	/** Returns the current rtp capabilities directly */
-	public get rtpCapabilities(): MediaSoup.types.RtpCapabilities {
-		return MediaSubscription.getDevice().rtpCapabilities;
-	}
-
-	/** Registers a new event listener */
-	public static on<Event extends keyof MediaEvents>(
-		event: Event,
-		handler: (data: MediaEvents[Event]) => void | Promise<void>
-	) {
-		Subscription.getEmitter().on(event, handler);
-	}
-
-	/** Removes an existing event listener */
-	public static off<Event extends keyof MediaEvents>(
-		event: Event,
-		handler: (data: MediaEvents[Event]) => void | Promise<void>
-	) {
-		Subscription.getEmitter().off(event, handler);
-	}
-
-	/** TODO: Document */
-	public async publish(type: 'camera' | 'screen') {
-		await this.loadCapabilities();
-
+	/** Creates and return a send transport, or use the existing one  */
+	private static async createSendTransport() {
+		if (this._sendTransport) {
+			return this._sendTransport;
+		}
 		const sendOptions = await this.request('transport_producer_create', {
 			forceTcp: false,
-			rtpCapabilities: MediaSubscription.getDevice().rtpCapabilities,
+			rtpCapabilities: this.rtpCapabilities,
 		});
-		const transport = await this.createSendTransport(sendOptions);
-		// TODO: Make the capabilities check more granular
-		const stream = await this.getLocalMediaStream(type);
-		const track = stream.getVideoTracks()[0];
-		const params = { track };
 
-		// TODO: Re-enable simulcast
-		// if (AchkSimulcast.checked) {
-		//   params.encodings = [
-		//     { maxBitrate: 100000 },
-		//     { maxBitrate: 300000 },
-		//     { maxBitrate: 900000 },
-		//   ];
-		//   params.codecOptions = {
-		//     videoGoogleStartBitrate: 1000,
-		//   };
-		// }
+		const transport = this.device.createSendTransport(sendOptions);
+		transport.on('connect', async ({ dtlsParameters }, callback, errback) => {
+			this.request('transport_producer_connect', { dtlsParameters })
+				.then(callback)
+				.catch(errback);
+		});
 
-		await transport.produce(params);
-		this.localMediaStream = stream;
+		transport.on(
+			'produce',
+			async ({ kind, rtpParameters }, callback, errback) => {
+				try {
+					const { id } = await this.request('transport_producer_produce', {
+						transportId: transport.id,
+						kind,
+						rtpParameters,
+					});
+					callback({ id });
+				} catch (err: any) {
+					errback(err);
+				}
+			}
+		);
+
+		transport.on('connectionstatechange', (state) => {
+			switch (state) {
+				case 'connecting':
+					// TODO: report status
+					console.log('[Media Subscription] Send Transport Publishing...');
+					// AtxtPublish.innerHTML = "publishing...";
+					// AfsPublish.disabled = true;
+					// AfsSubscribe.disabled = true;
+					break;
+
+				case 'connected':
+					// TODO: local stream
+					//document.querySelector("#local_video").srcObject = stream;
+					// TODO: report status
+					console.log('[Media Subscription] Send Transport Published');
+					// AtxtPublish.innerHTML = "published";
+					// AfsPublish.disabled = true;
+					// AfsSubscribe.disabled = false;
+					break;
+
+				case 'failed':
+					console.log('[Media Subscription] Send Transport Failed');
+					transport.close();
+					// TODO: report status
+					// AtxtPublish.innerHTML = "failed";
+					// AfsPublish.disabled = false;
+					// AfsSubscribe.disabled = true;
+					break;
+				case 'closed':
+				case 'disconnected':
+				case 'new':
+				default:
+					console.log(
+						'[Media Subscription] TODO:',
+						'unhandled transport state',
+						state
+					);
+					break;
+			}
+		});
+
+		// Return the transport
+		this._sendTransport = transport;
+		return transport;
 	}
 
-	public async consume() {
-		// Get parameters and current
-		// const { consumers } = await this.request("producers_update", {
-		// 	forceTcp: false,
-		// 	rtpCapabilities: this.rtpCapabilities,
-		// });
+	// Start / Stop
+
+	/** Creates a receiver transport to all the current publishing remote sources */
+	public static async consume() {
+		// Make sure to auto update when producers are changed on the server
+		if (!this._values.isConsuming) {
+			this.isConsuming = true;
+			Subscription.socketOn('producers_update', this.consume.bind(this));
+		}
+
+		// Make sure we have loaded capabilities
+
 		await this.loadCapabilities();
 
 		// Create a new receiver transport and request consumers
@@ -212,12 +344,11 @@ export class MediaSubscription extends Subscription {
 			forceTcp: false,
 			rtpCapabilities: this.rtpCapabilities,
 		});
-		const transport = MediaSubscription._device.createRecvTransport(params);
+		const transport = MediaSubscription.device.createRecvTransport(params);
 		const { consumers } = await this.request('transport_receiver_consume');
 
 		// Handle new connection event
 		transport.on('connect', ({ dtlsParameters }, callback, errback) => {
-			console.log('here');
 			this.request('transport_receiver_connect', {
 				transportId: transport.id,
 				dtlsParameters,
@@ -256,6 +387,7 @@ export class MediaSubscription extends Subscription {
 		// Start consuming
 		const streams: Array<MediaStream> = [];
 		for (const { id, producerId, kind, rtpParameters } of consumers) {
+			console.log('CON', kind);
 			const consumer = await transport.consume({
 				id,
 				producerId,
@@ -269,69 +401,57 @@ export class MediaSubscription extends Subscription {
 		this.remoteMediaStreams = streams;
 	}
 
-	public async createSendTransport(options: any) {
-		const transport =
-			MediaSubscription.getDevice().createSendTransport(options);
-		transport.on('connect', async ({ dtlsParameters }, callback, errback) => {
-			this.request('transport_producer_connect', { dtlsParameters })
-				.then(callback)
-				.catch(errback);
-		});
+	public static async stopConsume() {
+		if (this._values.isConsuming) {
+			this.isConsuming = false;
+			await this.request('remove_consumer');
+			Subscription.socketOff('producers_update', this.consume.bind(this));
+		}
+	}
 
-		transport.on(
-			'produce',
-			async ({ kind, rtpParameters }, callback, errback) => {
-				try {
-					const { id } = await this.request('transport_producer_produce', {
-						transportId: transport.id,
-						kind,
-						rtpParameters,
-					});
-					callback({ id });
-				} catch (err: any) {
-					errback(err);
-				}
-			}
-		);
+	/** Starts publishing video */
+	public static async publishVideo() {
+		await this.loadCapabilities();
+		const transport = await this.createSendTransport();
 
-		transport.on('connectionstatechange', (state) => {
-			switch (state) {
-				case 'connecting':
-					// TODO: report status
-					console.log('publishing...');
-					// AtxtPublish.innerHTML = "publishing...";
-					// AfsPublish.disabled = true;
-					// AfsSubscribe.disabled = true;
-					break;
+		// TODO: Make the capabilities check more granular
+		const videoStream = await this.getLocalMediaStream('camera');
+		const track = videoStream.getVideoTracks()[0];
+		//const audioTrack = audioStream.getAudioTracks()[0];
 
-				case 'connected':
-					// TODO: local stream
-					//document.querySelector("#local_video").srcObject = stream;
-					// TODO: report status
-					console.log('published');
-					// AtxtPublish.innerHTML = "published";
-					// AfsPublish.disabled = true;
-					// AfsSubscribe.disabled = false;
-					break;
+		// TODO: Re-enable simulcast
+		// if (AchkSimulcast.checked) {
+		//   params.encodings = [
+		//     { maxBitrate: 100000 },
+		//     { maxBitrate: 300000 },
+		//     { maxBitrate: 900000 },
+		//   ];
+		//   params.codecOptions = {
+		//     videoGoogleStartBitrate: 1000,
+		//   };
+		// }
 
-				case 'failed':
-					console.log('failed');
-					transport.close();
-					// TODO: report status
-					// AtxtPublish.innerHTML = "failed";
-					// AfsPublish.disabled = false;
-					// AfsSubscribe.disabled = true;
-					break;
-				case 'closed':
-				case 'disconnected':
-				case 'new':
-				default:
-					console.log('TODO:', 'unhandled transport state', state);
-					break;
-			}
-		});
+		this.isProducingVideo = true;
+		this._videoProducer = await transport.produce({ track });
+		//await transport.produce({ track: audioTrack });
+		this.localMediaStream = videoStream;
+	}
+	public static async stopPublishVideo() {
+		this.isProducingVideo = false;
+	}
 
-		// Return the transport
-		return transport;
+	/** Starts publishing audio */
+	public static async publishAudio() {
+		await this.loadCapabilities();
+		const transport = await this.createSendTransport();
+
+		const audioStream = await this.getLocalMediaStream('audio');
+		const track = audioStream.getAudioTracks()[0];
+
+		this.isProducingAudio = true;
+		this._audioProducer = await transport.produce({ track });
+	}
+	public static async stopPublishAudio() {
+		this.isProducingAudio = false;
 	}
 }

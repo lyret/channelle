@@ -18,7 +18,8 @@ export class MediaRepository {
 			consumers: Array<MediaSoup.types.Consumer>;
 		}
 	>;
-	private _producers: Map<string, MediaSoup.types.Producer>;
+	private _videoProducers: Map<string, MediaSoup.types.Producer>;
+	private _audioProducers: Map<string, MediaSoup.types.Producer>;
 
 	// Shared IO server between all repositories
 
@@ -47,26 +48,71 @@ export class MediaRepository {
 		this._mediaRouter = mediaRouter;
 		this._producerTransports = new Map();
 		this._receiverTransports = new Map();
-		this._producers = new Map();
+		this._videoProducers = new Map();
+		this._audioProducers = new Map();
 		// Set as singelton
 		MediaRepository._implementation = this;
 	}
 
 	// CRUD Operations
 
-	/** Remove the media entries for a given id */
-	public remove(id: string) {
-		// Remove producer entry
-		if (this._producers.has(id)) {
-			this._producers.delete(id);
-			console.log(`[MEDIA] ${id} no`);
+	public addAsProducer(socketId: string, producer: MediaSoup.types.Producer) {
+		if (producer.kind == 'audio') {
+			if (this._audioProducers.has(socketId)) {
+				this._audioProducers.get(socketId).close();
+			}
+			this._audioProducers.set(socketId, producer);
+		} else {
+			if (this._videoProducers.has(socketId)) {
+				this._videoProducers.get(socketId).close();
+			}
+			this._videoProducers.set(socketId, producer);
 		}
 
-		// Remove any receiver transport
-		if (this._receiverTransports.has(id)) {
-			const { transport } = this._receiverTransports.get(id)!;
+		// Emit that producers has changed
+		console.log(`[MEDIA] ${socketId} is producing new ${producer.kind}`);
+		this.io.emit('producers_update');
+	}
+
+	/** Remove all production media entries for a given socket id */
+	public removeAsProducer(
+		socketId: string,
+		options?: { video?: boolean; audio?: boolean; leaving?: boolean }
+	) {
+		if (
+			// Remove any video or audio producer
+			this._videoProducers.has(socketId) ||
+			this._audioProducers.has(socketId)
+		) {
+			if (!options || options.video || options.leaving) {
+				this._videoProducers.get(socketId)?.close();
+				this._videoProducers.delete(socketId);
+			}
+			if (!options || options.audio || options.leaving) {
+				this._audioProducers.get(socketId)?.close();
+				this._audioProducers.delete(socketId);
+			}
+
+			// Emit that producers has changed
+			console.log(`[MEDIA] ${socketId} is no longer a producer`);
+			this.io.emit('producers_update');
+		}
+
+		// Remove any producer transport
+		if (this._producerTransports.has(socketId) && options.leaving) {
+			const transport = this._producerTransports.get(socketId)!;
 			transport.close();
-			this._receiverTransports.delete(id);
+			this._producerTransports.delete(socketId);
+		}
+	}
+
+	/** Remove all consumtion media entries for a given socket id */
+	public removeAsConsumer(socketId: string) {
+		// Remove any receiver transport
+		if (this._receiverTransports.has(socketId)) {
+			const { transport } = this._receiverTransports.get(socketId)!;
+			transport.close();
+			this._receiverTransports.delete(socketId);
 		}
 	}
 
@@ -81,9 +127,16 @@ export class MediaRepository {
 		}) => Promise<MediaRequests[Type][1]> | MediaRequests[Type][1];
 	} {
 		return {
-			// NOTE: should be removed and replaced with a "sign in" or "on connection"
 			server_rtp_capabilities: () => {
 				return this._mediaRouter.rtpCapabilities;
+			},
+			remove_producer: ({ socket, data }) => {
+				this.removeAsProducer(socket.id, data);
+				return true;
+			},
+			remove_consumer: ({ socket }) => {
+				this.removeAsConsumer(socket.id);
+				return true;
 			},
 			transport_producer_create: async ({ socket }) => {
 				const { transport, params } = await createWebRTCTransport(
@@ -107,8 +160,7 @@ export class MediaRepository {
 						rtpParameters,
 					});
 
-				this._producers.set(socket.id, producer);
-				//this.io.emit('producers_update', results);
+				this.addAsProducer(socket.id, producer);
 				return { id: producer.id };
 			},
 			transport_producer_connect: async ({ data, socket }) => {
@@ -150,9 +202,12 @@ export class MediaRepository {
 					[];
 				const consumers: Array<MediaSoup.types.Consumer> = [];
 
-				for (const [userId, producer] of this._producers.entries()) {
+				for (const [socketId, producer] of [
+					...this._videoProducers.entries(),
+					...this._audioProducers.entries(),
+				]) {
 					// Skip self consumption
-					if (socket.id == userId) {
+					if (socket.id == socketId) {
 						continue;
 					}
 					// Fail if unable to consume
@@ -163,13 +218,13 @@ export class MediaRepository {
 						})
 					) {
 						throw new Error(
-							'Can not consume from producer from user ' + userId
+							'Can not consume from producer from socket ' + socketId
 						);
 					}
 					const consumer = await transport.consume({
 						producerId: producer.id,
 						rtpCapabilities: options.rtpCapabilities,
-						paused: producer.kind === 'video',
+						paused: true,
 					});
 					// TODO: re-enable simulcast
 					// if (consumer.type === "simulcast") {

@@ -1,5 +1,5 @@
 import type { ConnectionStatusName } from '~/api';
-import { SocketSubscription } from '~/api';
+import { RepositorySubscription } from '~/api';
 import { readable } from 'svelte/store';
 
 /** Store interface */
@@ -21,13 +21,13 @@ function createConnectionStore(): ConnectionStore {
 				set(value);
 			};
 			// Listen to any status updates from the websocket connection
-			SocketSubscription._eventEmitter.on('status', handler);
+			RepositorySubscription.subscriptionOn('status', handler);
 
 			// Start a connection greedily when this store is subscribed to, which not done otherwise...
-			SocketSubscription.connect();
+			RepositorySubscription.connect();
 
 			return function stop() {
-				SocketSubscription._eventEmitter.off('status', handler);
+				RepositorySubscription.subscriptionOff('status', handler);
 			};
 		}
 	);

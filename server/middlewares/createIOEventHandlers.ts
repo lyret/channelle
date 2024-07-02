@@ -62,7 +62,8 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 		}
 
 		// Remove media stream entries
-		MediaRepository.Singelton.remove(socket.id);
+		MediaRepository.Singelton.removeAsProducer(socket.id, { leaving: true });
+		MediaRepository.Singelton.removeAsConsumer(socket.id);
 
 		console.log(`[IO] ${socket.id} left...`);
 	});
@@ -70,7 +71,6 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 	// When a subscription starts, it is added on a server side room for that subscription path
 	// The current data is emitted to that single subscriber
 	socket.on('subscribe', async (message: SubscriptionMessage) => {
-		console.log('HERE4', message);
 		const path = createSubscriptionPath(message);
 		const repository: Repository<any, any, any> =
 			Repository._allRepositories[message.repository];
@@ -143,9 +143,14 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 	for (const [type, handler] of Object.entries(
 		MediaRepository.Singelton.requestHandlers()
 	)) {
-		// this.registerRequestHandler(socket, type, handler);
 		socket.on(type, async (data: any, callback) => {
 			try {
+				// Get any participant registered for the requesting socket
+				// if (onlineParticipants.has(socket.id)) {
+				// 	const participantId = onlineParticipants.get(socket.id);
+				//
+				// }
+
 				const response = await handler({ data, socket });
 				console.log(`[MEDIA] Request ${type} returning:`, response);
 				callback(response);

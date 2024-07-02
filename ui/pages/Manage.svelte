@@ -13,20 +13,38 @@
 	class="p-3 container is-widescreen"
 	in:blur={{ delay: 0, duration: 1000 }}
 >
-	<div class="columns">
+	<div class="grid">
 		{#if $openPanels['live']}
-			<Watch />
+			<div class="cell"><Watch /></div>
 		{/if}
 		{#if $openPanels['scenes']}
-			<div class="column">Scenes</div>
+			<div class="cell">
+				<h1 class="subtitle">Scenes</h1>
+				<div class="notification is-info">
+					<div class="fixed-grid has-3-cols">
+						<div class="grid">
+							<div class="cell has-background-primary">1</div>
+							<div class="cell">2</div>
+							<div class="cell">3</div>
+							<div class="cell">4</div>
+							<div class="cell">5</div>
+							<div class="cell">6</div>
+						</div>
+					</div>
+				</div>
+				<button class="button is-success is-fullwidth is-dark"
+					><span class="icon"><ion-icon name="add-circle"></ion-icon></span
+					><span>Lägg till scen</span></button
+				>
+			</div>
 		{/if}
 		{#if $openPanels['participants']}
-			<div class="column">
+			<div class="cell">
 				<ParticipantsList />
 			</div>
 		{/if}
 		{#if $openPanels['chatt']}
-			<div class="column">Chatt</div>
+			<div class="cell">Chatt</div>
 		{/if}
 	</div>
 </main>
