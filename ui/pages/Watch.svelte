@@ -1,10 +1,7 @@
 <script lang="ts">
-	import LocalMedia from '~/components/watch/LocalMedia.svelte';
-	import RemoteMedia from '~/components/watch/RemoteMedia.svelte';
+	import MediaView from '~/components/watch/MediaView.svelte';
 	import Actions from '~/components/watch/Actions.svelte';
-	import { createDatabaseStore, createMediaStore } from '~/stores';
-
-	const participants = createDatabaseStore('participant');
+	import { mediaParticipants } from '~/stores/media';
 
 	function createLayout(
 		matrix: Array<Array<number>>
@@ -75,9 +72,9 @@
 		</div>
 	</div>
 	<h1 class="title">Remote Media</h1>
-	<RemoteMedia />
-	<h1 class="title">Local Media</h1>
-	<LocalMedia />
+	{#each $mediaParticipants as participant}
+		<MediaView stream={participant.stream} {participant} />
+	{/each}
 	<footer>
 		<div class="mt-9">
 			<Actions {left} {right} />

@@ -34,6 +34,7 @@
 	>
 	<button
 		type="button"
+		disabled={!$currentParticipant.allowedVideo}
 		class={btnClassList}
 		class:has-text-danger={$isProducingVideo}
 		on:click={() =>
@@ -50,6 +51,7 @@
 	<button
 		type="button"
 		class={btnClassList}
+		disabled={!$currentParticipant.allowedAudio}
 		class:has-text-danger={$isProducingAudio}
 		on:click={() =>
 			$isProducingAudio

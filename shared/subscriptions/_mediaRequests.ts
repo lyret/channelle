@@ -51,6 +51,7 @@ export type MediaRequests = {
 				id: string;
 				kind: MediaSoup.types.MediaKind;
 				rtpParameters: MediaSoup.types.RtpParameters;
+				participantId: number;
 			}>;
 		},
 	];

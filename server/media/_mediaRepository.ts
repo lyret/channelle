@@ -2,11 +2,15 @@ import * as MediaSoup from 'mediasoup';
 import * as SocketIO from 'socket.io';
 import { createWebRTCTransport } from './_webRtcTransport';
 import { MediaRequests } from '../../shared';
+import { Repository } from '../../database';
 
 /** Media Repository implementation, keep tracks of media streams */
 export class MediaRepository {
 	private static _implementation: MediaRepository;
 	private _mediaRouter: MediaSoup.types.Router;
+
+	// Linked participant ids
+	private _linkedParticipants: Map<string, number> = new Map();
 
 	// Media entries
 	private _producerTransports: Map<string, MediaSoup.types.WebRtcTransport>;
@@ -54,18 +58,47 @@ export class MediaRepository {
 		MediaRepository._implementation = this;
 	}
 
-	// CRUD Operations
+	// Operations
 
-	public addAsProducer(socketId: string, producer: MediaSoup.types.Producer) {
+	public async addAsProducer(
+		socketId: string,
+		producer: MediaSoup.types.Producer
+	) {
 		if (producer.kind == 'audio') {
+			// Close previous producer
 			if (this._audioProducers.has(socketId)) {
 				this._audioProducers.get(socketId).close();
 			}
+			// Update database
+			if (this._linkedParticipants.has(socketId)) {
+				await Repository._allRepositories['participant'].operate('update', {
+					where: { id: this._linkedParticipants.get(socketId)! },
+					data: { producingAudio: true },
+				});
+				Repository._allRepositories['participant'].emitOne(
+					Number(this._linkedParticipants.get(socketId)!)
+				);
+				Repository._allRepositories['participant'].emitAll();
+			}
+			// Update audio producer collection
 			this._audioProducers.set(socketId, producer);
 		} else {
+			// Close previous producer
 			if (this._videoProducers.has(socketId)) {
 				this._videoProducers.get(socketId).close();
 			}
+			// Update database
+			if (this._linkedParticipants.has(socketId)) {
+				await Repository._allRepositories['participant'].operate('update', {
+					where: { id: this._linkedParticipants.get(socketId)! },
+					data: { producingVideo: true },
+				});
+				Repository._allRepositories['participant'].emitOne(
+					Number(this._linkedParticipants.get(socketId)!)
+				);
+				Repository._allRepositories['participant'].emitAll();
+			}
+			// Update video producer collection
 			this._videoProducers.set(socketId, producer);
 		}
 
@@ -74,8 +107,24 @@ export class MediaRepository {
 		this.io.emit('producers_update');
 	}
 
-	/** Remove all production media entries for a given socket id */
-	public removeAsProducer(
+	public enterParticipant(socketId: string, participantId: number) {
+		this._linkedParticipants.set(socketId, participantId);
+	}
+
+	/** Remove participant, producer and consumer entries from the given socket id */
+	public leaveParticipant(socketId: string) {
+		// Remove producer entries
+		this.removeAsProducer(socketId, { leaving: true });
+
+		// Remove linked participant id
+		this._linkedParticipants.delete(socketId);
+
+		// Remove consumption entries
+		this.removeAsConsumer(socketId);
+	}
+
+	/** Remove production media entries for a given socket id */
+	public async removeAsProducer(
 		socketId: string,
 		options?: { video?: boolean; audio?: boolean; leaving?: boolean }
 	) {
@@ -87,10 +136,32 @@ export class MediaRepository {
 			if (!options || options.video || options.leaving) {
 				this._videoProducers.get(socketId)?.close();
 				this._videoProducers.delete(socketId);
+				// Update database
+				if (this._linkedParticipants.has(socketId)) {
+					await Repository._allRepositories['participant'].operate('update', {
+						where: { id: this._linkedParticipants.get(socketId)! },
+						data: { producingVideo: false },
+					});
+					Repository._allRepositories['participant'].emitOne(
+						Number(this._linkedParticipants.get(socketId)!)
+					);
+					Repository._allRepositories['participant'].emitAll();
+				}
 			}
 			if (!options || options.audio || options.leaving) {
 				this._audioProducers.get(socketId)?.close();
 				this._audioProducers.delete(socketId);
+				// Update database
+				if (this._linkedParticipants.has(socketId)) {
+					await Repository._allRepositories['participant'].operate('update', {
+						where: { id: this._linkedParticipants.get(socketId)! },
+						data: { producingAudio: false },
+					});
+					Repository._allRepositories['participant'].emitOne(
+						Number(this._linkedParticipants.get(socketId)!)
+					);
+					Repository._allRepositories['participant'].emitAll();
+				}
 			}
 
 			// Emit that producers has changed
@@ -106,9 +177,9 @@ export class MediaRepository {
 		}
 	}
 
-	/** Remove all consumtion media entries for a given socket id */
+	/** Remove consumption media entries for a given socket id */
 	public removeAsConsumer(socketId: string) {
-		// Remove any receiver transport
+		// Remove any receiver transports for the given socket
 		if (this._receiverTransports.has(socketId)) {
 			const { transport } = this._receiverTransports.get(socketId)!;
 			transport.close();
@@ -240,6 +311,7 @@ export class MediaRepository {
 						id: consumer.id,
 						kind: consumer.kind,
 						rtpParameters: consumer.rtpParameters,
+						participantId: this._linkedParticipants.get(socketId)!,
 						//type: consumer.type,
 						//producerPaused: consumer.producerPaused,
 					});

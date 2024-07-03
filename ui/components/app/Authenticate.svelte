@@ -16,18 +16,18 @@
 </script>
 
 <div class="has-text-centered p-12 notification is-rounded">
-	<h1 class="title">Who are you?</h1>
+	<h1 class="is-family-secondary is-size-3">Vem e du?</h1>
 	<input
 		type="text"
-		class="input is-rounded is-large is-centered"
+		class="input is-rounded is-centered"
 		bind:value={name}
-		placeholder="My name is..."
+		placeholder="Jag heter..."
 		class:is-disabled={loading}
 	/>
 	<button
-		class="button is-rounded is-primary mt-4 is-large is-centered"
+		class="button is-rounded is-primary mt-4 is-centered is-family-monospace"
 		on:click={onClick}
-		class:is-loading={loading}>Enter</button
+		class:is-loading={loading}>Enter Channelle</button
 	>
 </div>
 

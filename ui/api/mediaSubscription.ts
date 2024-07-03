@@ -16,7 +16,7 @@ export type SubscriptionMediaEvents = {
 	/** Any media stream generated from this device */
 	localMediaStream: MediaStream | undefined;
 	/** Any media streams coming in from other connected users */
-	remoteMediaStreams: Array<MediaStream>;
+	remoteMediaStreams: Record<number, MediaStream>;
 };
 
 /** Client side class implementation of the API */
@@ -31,7 +31,7 @@ export class MediaSubscription extends Subscription {
 		isProducingVideo: false,
 		isProducingAudio: false,
 		localMediaStream: undefined,
-		remoteMediaStreams: [],
+		remoteMediaStreams: {},
 	};
 	private static _sendTransport: MediaSoup.types.Transport | undefined =
 		undefined;
@@ -117,7 +117,7 @@ export class MediaSubscription extends Subscription {
 	}
 
 	/** Sets the current remote media streams and emits them to any registered listeners */
-	public static set remoteMediaStreams(value: Array<MediaStream>) {
+	public static set remoteMediaStreams(value: Record<string, MediaStream>) {
 		MediaSubscription._values.remoteMediaStreams = value;
 		console.log(`[Media Subscription] remote media streams:`, value);
 		this.mediaEmit(
@@ -385,18 +385,22 @@ export class MediaSubscription extends Subscription {
 		});
 
 		// Start consuming
-		const streams: Array<MediaStream> = [];
-		for (const { id, producerId, kind, rtpParameters } of consumers) {
-			console.log('CON', kind);
+		const streams: Record<string, MediaStream> = {};
+		for (const {
+			id,
+			producerId,
+			kind,
+			rtpParameters,
+			participantId,
+		} of consumers) {
 			const consumer = await transport.consume({
 				id,
 				producerId,
 				kind,
 				rtpParameters,
 			});
-			const stream = new MediaStream();
-			stream.addTrack(consumer.track);
-			streams.push(stream);
+			streams[participantId] = streams[participantId] || new MediaStream();
+			streams[participantId].addTrack(consumer.track);
 		}
 		this.remoteMediaStreams = streams;
 	}

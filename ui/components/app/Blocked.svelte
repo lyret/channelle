@@ -7,7 +7,7 @@
 			><ion-icon name="hand-left"></ion-icon></span
 		>
 	</h1>
-	<h1 class="title">Ported</h1>
+	<h1 class="title">Du är portad</h1>
 </div>
 
 <style>

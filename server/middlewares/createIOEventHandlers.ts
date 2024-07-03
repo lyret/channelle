@@ -37,6 +37,11 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 					data: { online: true },
 				}
 			);
+
+			// Link to current media data status
+			MediaRepository.Singelton.enterParticipant(socket.id, Number(id));
+
+			// Emit changes to participant
 			Repository._allRepositories['participant'].emitOne(Number(id));
 			Repository._allRepositories['participant'].emitAll();
 
@@ -61,9 +66,8 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 			} catch {}
 		}
 
-		// Remove media stream entries
-		MediaRepository.Singelton.removeAsProducer(socket.id, { leaving: true });
-		MediaRepository.Singelton.removeAsConsumer(socket.id);
+		// Remove media stream entries from this socket
+		MediaRepository.Singelton.leaveParticipant(socket.id);
 
 		console.log(`[IO] ${socket.id} left...`);
 	});
