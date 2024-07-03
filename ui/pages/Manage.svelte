@@ -2,6 +2,7 @@
 	import { blur } from 'svelte/transition';
 	import { openPanels } from '~/stores/ui';
 	import Header from '~/components/manage/Header.svelte';
+	import ChatList from '~/components/chat/ChatList.svelte';
 	import Watch from '~/pages/Watch.svelte';
 	import ParticipantsList from '~/components/manage/ParticipantsList.svelte';
 </script>
@@ -44,7 +45,9 @@
 			</div>
 		{/if}
 		{#if $openPanels['chatt']}
-			<div class="cell">Chatt</div>
+			<div class="cell">
+				<ChatList />
+			</div>
 		{/if}
 	</div>
 </main>

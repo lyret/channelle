@@ -36,7 +36,7 @@ export const createBundlerMiddleware = async () => {
 		entryPoints: ['./ui/index.html'],
 		plugins: [
 			htmlPlugin(),
-			sassPlugin(),
+			sassPlugin({}),
 			esbuildSvelte({
 				preprocess: sveltePreprocess(),
 			}),

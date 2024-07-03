@@ -15,7 +15,10 @@
 		loading = true;
 		console.log(participant);
 		if (!ask || confirm(ask)) {
-			await update('participant', { where: { id: participant.id }, data });
+			await update('participant', {
+				where: { id: participant.id },
+				data: data,
+			});
 		}
 		loading = false;
 	}
@@ -169,7 +172,7 @@
 						on:click={() =>
 							doUpdate(participant, {
 								name:
-									prompt('Enter a new name', participant.name) ||
+									prompt('Skriv nytt namn', participant.name) ||
 									participant.name,
 							})}
 					>

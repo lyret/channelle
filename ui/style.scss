@@ -13,15 +13,14 @@
 	// Colors
 	$primary: #a55bd3,
 	$link: #3e9cbf,
-	$info: #a7ecf2,
+	$info: #f23d06,
 	$success: #21c40a,
 	$warning: #f2c43d,
 	$danger: #f23d06,
 	$background: #fffff
 );
 // $family-primary: "FuturaHandwritten",
-@import '../node_modules/bulma-list/sass/bulma-list.sass';
-
+@use './bulma-list.scss';
 /* Fonts and external resources */
 @font-face {
 	font-family: 'Modak';

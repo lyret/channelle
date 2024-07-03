@@ -20,6 +20,14 @@ model Participant {
   allowedAudio  Boolean @default(true)
 }
 
+model Message {
+  id     Int    @id @default(autoincrement())
+  backstage  Boolean    @default(true)
+  createdAt DateTime @default(now())
+  participantId Int
+  message String
+}
+
 model Scene {
   id     Int    @id @default(autoincrement())
   order  Int    @default(0)

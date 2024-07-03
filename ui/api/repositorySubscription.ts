@@ -1,7 +1,7 @@
 import type {
 	OperationName,
 	RepositoryName,
-	RepositoryOperationTypes,
+	RepositoryTypes,
 } from './_databaseTypes';
 import type { SubscriptionMessage } from './_connectionTypes';
 import { Subscription } from './_subscription';
@@ -11,13 +11,10 @@ export class RepositorySubscription<
 	Name extends RepositoryName,
 	Kind extends 'first' | 'all' = 'all',
 	DataValue extends
-		| (RepositoryOperationTypes<Name, 'findFirst'>['Result'] | null)
-		| RepositoryOperationTypes<
-				Name,
-				'findMany'
-		  >['Result'] = Kind extends 'first'
-		? RepositoryOperationTypes<Name, 'findFirst'>['Result'] | null
-		: RepositoryOperationTypes<Name, 'findMany'>['Result'],
+		| (RepositoryTypes[Name]['Operations']['findFirst']['Result'] | null)
+		| RepositoryTypes[Name]['Operations']['findMany']['Result'] = Kind extends 'first'
+		? RepositoryTypes[Name]['Operations']['findFirst']['Result'] | null
+		: RepositoryTypes[Name]['Operations']['findMany']['Result'],
 > extends Subscription<{ data: DataValue }> {
 	/** Message properties common for all communication */
 	private readonly _defaultMessage: Pick<
@@ -64,10 +61,10 @@ export class RepositorySubscription<
 
 	public async operate<
 		Operation extends OperationName,
-		Result extends RepositoryOperationTypes<Name, Operation>['Result'],
+		Result extends RepositoryTypes[Name]['Operations'][Operation]['Result'],
 	>(
 		operation: Operation,
-		args: RepositoryOperationTypes<Name, Operation>['Args']
+		args: RepositoryTypes[Name]['Operations'][Operation]['Args']
 	): Promise<Result> {
 		console.log(
 			`[Repository Subscription] Performing operation "${operation}" on ${this.path}`

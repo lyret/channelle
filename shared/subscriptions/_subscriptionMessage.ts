@@ -1,6 +1,5 @@
 import type {
 	RepositoryName,
-	RepositoryOperationTypes,
 	RepositoryTypes,
 	OperationName,
 } from '../../database';
@@ -24,5 +23,5 @@ export interface SubscriptionMessage<
 	id?: RepositoryTypes[Name]['ModelIdType'];
 
 	/** Any arguments passed along the message */
-	args?: RepositoryOperationTypes<Name, Operation>['Args'];
+	args?: RepositoryTypes[Name]['Operations'][Operation]['Args'];
 }

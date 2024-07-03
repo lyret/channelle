@@ -1,7 +1,8 @@
+import type { Prisma } from '@prisma/client';
 import type {
 	RepositoryName,
 	OperationName,
-	RepositoryOperationTypes,
+	RepositoryTypes,
 } from './_databaseTypes';
 import { RepositorySubscription } from './repositorySubscription';
 
@@ -11,8 +12,8 @@ async function performOperation<
 >(
 	repository: Name,
 	operation: Operation,
-	args: RepositoryOperationTypes<Name, Operation>['Args']
-): Promise<RepositoryOperationTypes<Name, Operation>['Result']> {
+	args: Prisma.Args<RepositoryTypes[Name]['ModelType'], Operation>
+): Promise<RepositoryTypes[Name]['Operations'][Operation]['Result']> {
 	const subscription = new RepositorySubscription<Name, 'all'>({ repository });
 
 	return await subscription.operate(operation, args);
@@ -20,28 +21,28 @@ async function performOperation<
 
 export async function findOne<Name extends RepositoryName>(
 	repository: Name,
-	args: RepositoryOperationTypes<Name, 'findFirst'>['Args']
+	args: RepositoryTypes[Name]['Operations']['findFirst']['Args']
 ) {
 	return performOperation(repository, 'findFirst', args);
 }
 
 export async function create<Name extends RepositoryName>(
 	repository: Name,
-	args: RepositoryOperationTypes<Name, 'create'>['Args']
+	args: RepositoryTypes[Name]['Operations']['create']['Args']
 ) {
 	return performOperation(repository, 'create', args);
 }
 
 export async function update<Name extends RepositoryName>(
 	repository: Name,
-	args: RepositoryOperationTypes<Name, 'update'>['Args']
+	args: RepositoryTypes[Name]['Operations']['update']['Args']
 ) {
 	return performOperation(repository, 'update', args);
 }
 
 export async function remove<Name extends RepositoryName>(
 	repository: Name,
-	args: RepositoryOperationTypes<Name, 'delete'>['Args']
+	args: RepositoryTypes[Name]['Operations']['delete']['Args']
 ) {
 	return performOperation(repository, 'delete', args);
 }

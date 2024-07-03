@@ -1,8 +1,4 @@
-import type {
-	RepositoryName,
-	RepositoryTypes,
-	RepositoryOperationTypes,
-} from '~/api';
+import type { RepositoryName, RepositoryTypes } from '~/api';
 import { RepositorySubscription } from '~/api';
 import type { Readable } from 'svelte/store';
 import { readable, derived } from 'svelte/store';
@@ -16,13 +12,13 @@ interface DatabaseStore<T> {
 export function createDatabaseStore<Name extends RepositoryName>(
 	name: Name,
 	id?: undefined
-): DatabaseStore<RepositoryOperationTypes<Name, 'findMany'>['Result']>;
+): DatabaseStore<RepositoryTypes[Name]['Operations']['findMany']['Result']>;
 
 /** Creates a readable Svelte Store for a specific entry in the given repository */
 export function createDatabaseStore<Name extends RepositoryName>(
 	name: Name,
 	id?: RepositoryTypes[Name]['ModelIdType']
-): DatabaseStore<RepositoryOperationTypes<Name, 'findFirst'>['Result']>;
+): DatabaseStore<RepositoryTypes[Name]['Operations']['findFirst']['Result']>;
 
 // Function implementation
 export function createDatabaseStore<
@@ -33,8 +29,8 @@ export function createDatabaseStore<
 	id?: IdType
 ): DatabaseStore<
 	IdType extends RepositoryTypes[Name]['ModelIdType']
-		? RepositoryOperationTypes<Name, 'findFirst' | 'findMany'>['Result']
-		: RepositoryOperationTypes<Name, 'findMany'>['Result']
+		? RepositoryTypes[Name]['Operations']['findFirst' | 'findMany']['Result']
+		: RepositoryTypes[Name]['Operations']['findMany']['Result']
 > {
 	const subscription = new RepositorySubscription<Name>({
 		repository,
@@ -65,7 +61,7 @@ export function createDatabaseStore<
 export function createDerivedDataStore<Name extends RepositoryName>(
 	idStore: Readable<RepositoryTypes[Name]['ModelIdType'] | undefined>,
 	repository: Name
-): Readable<RepositoryOperationTypes<Name, 'findFirst'>['Result'] | null> {
+): Readable<RepositoryTypes[Name]['Operations']['findFirst']['Result'] | null> {
 	return derived(idStore, ($id, set) => {
 		if (!$id) {
 			set(null);

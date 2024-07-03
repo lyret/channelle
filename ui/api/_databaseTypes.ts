@@ -3,6 +3,5 @@ export type {
 	RepositoryTypes,
 	RepositoryName,
 	OperationName,
-	RepositoryOperationTypes,
 	DataTypes,
 } from '../../database';
