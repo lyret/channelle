@@ -2,6 +2,7 @@
 	import { create } from '~/api';
 	import { currentParticipant } from '~/stores/connection';
 	export let makeBackstage: boolean = false;
+	export let isLarge: boolean = false;
 	let inputValue: string = '';
 	let loading = false;
 	$: disabled = loading || !inputValue.length;
@@ -29,6 +30,7 @@
 			<input
 				type="text"
 				class="input is-rounded is-fullwidth"
+				class:is-large={isLarge}
 				bind:value={inputValue}
 				placeholder="..."
 			/>
@@ -37,6 +39,7 @@
 			<button
 				type="submit"
 				class="button is-dark is-rounded"
+				class:is-large={isLarge}
 				{disabled}
 				class:is-loading={loading}
 				class:is-success={!loading && !disabled && !makeBackstage}

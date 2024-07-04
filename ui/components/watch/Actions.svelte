@@ -2,6 +2,7 @@
 	import { update, MediaSubscription } from '~/api';
 	import { createMediaStore } from '~/stores';
 	import { currentParticipant } from '~/stores/connection';
+	import ChatInput from '~/components/chat/ChatInput.svelte';
 
 	export let left: any;
 	export let right: any;
@@ -12,42 +13,41 @@
 	async function updateName() {
 		if ($currentParticipant) {
 			const currentName = $currentParticipant.name;
-			const newName = window.prompt('New name', currentName) || currentName;
+			const newName =
+				window.prompt('Byt namn till...', currentName) || currentName;
 			await update('participant', {
 				where: { id: $currentParticipant.id },
 				data: { name: newName },
 			});
 		}
 	}
-	const btnClassList = 'button is-primary';
+	const btnClassList = 'button is-dark is-rounded';
 </script>
 
-<div class="buttons has-addons is-centered">
-	<button class={btnClassList} on:click={left}>
-		<span class="icon"
-			><ion-icon name="arrow-back-circle-outline"></ion-icon></span
-		>
-	</button>
+<div class="buttons is-centered is-fullwidth">
 	<button class={btnClassList} on:click={updateName}>
 		<span class="icon"><ion-icon name="person-circle-outline"></ion-icon></span>
 		<span>{$currentParticipant?.name} </span></button
 	>
-	<button
-		type="button"
-		disabled={!$currentParticipant.allowedVideo}
-		class={btnClassList}
-		class:has-text-danger={$isProducingVideo}
-		on:click={() =>
-			$isProducingVideo
-				? isProducingVideo.stopPublishVideo()
-				: isProducingVideo.publishVideo()}
-	>
-		<span class="icon"
-			><ion-icon name={$isProducingVideo ? 'videocam-off' : 'videocam'}
-			></ion-icon></span
+	{#if $currentParticipant.actor || $currentParticipant.manager}
+		<button
+			type="button"
+			disabled={!$currentParticipant.allowedVideo}
+			class={btnClassList}
+			class:has-text-info={!$isProducingVideo}
+			class:has-text-danger={$isProducingVideo}
+			on:click={() =>
+				$isProducingVideo
+					? isProducingVideo.stopPublishVideo()
+					: isProducingVideo.publishVideo()}
 		>
-		<span>{$isProducingVideo ? 'Stäng av kamera' : 'Starta kamera'}</span>
-	</button>
+			<span class="icon"
+				><ion-icon name={$isProducingVideo ? 'videocam-off' : 'videocam'}
+				></ion-icon></span
+			>
+			<span>{$isProducingVideo ? 'Stäng av kameran' : 'Starta kameran'}</span>
+		</button>
+	{/if}
 	<button
 		type="button"
 		class={btnClassList}
@@ -65,15 +65,19 @@
 			>{$isProducingAudio ? 'Stäng av mikrofonen' : 'Starta mikrofonen'}</span
 		>
 	</button>
+	<ChatInput />
 	<!-- <button class="button icon" use:fullScreenAction>
 			<ion-icon name="expand-outline"></ion-icon>
 			<span>Fullscreen</span>
 		</button> -->
-	<button class={btnClassList} on:click={right}>
-		<span class="icon"
-			><ion-icon name="arrow-forward-circle-outline"></ion-icon></span
+	{#if $currentParticipant.actor || $currentParticipant.manager}
+		<a class={btnClassList} href="/backstage" target="_blank">
+			<span>Gå Backstage</span>
+			<span class="icon"
+				><ion-icon name="arrow-forward-circle-outline"></ion-icon></span
+			></a
 		>
-	</button>
+	{/if}
 </div>
 
 <!-- <div>

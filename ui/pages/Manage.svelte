@@ -3,7 +3,6 @@
 	import { openPanels } from '~/stores/ui';
 	import Header from '~/components/manage/Header.svelte';
 	import ChatList from '~/components/chat/ChatList.svelte';
-	import Watch from '~/pages/Watch.svelte';
 	import ParticipantsList from '~/components/manage/ParticipantsList.svelte';
 </script>
 
@@ -15,9 +14,7 @@
 	in:blur={{ delay: 0, duration: 1000 }}
 >
 	<div class="grid">
-		{#if $openPanels['live']}
-			<div class="cell"><Watch /></div>
-		{/if}
+		{#if $openPanels['live']}{/if}
 		{#if $openPanels['scenes']}
 			<div class="cell">
 				<h1 class="subtitle">Scenes</h1>

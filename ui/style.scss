@@ -13,14 +13,15 @@
 	// Colors
 	$primary: #a55bd3,
 	$link: #3e9cbf,
-	$info: #f23d06,
+	$info: #ff9247,
 	$success: #21c40a,
 	$warning: #f2c43d,
-	$danger: #f23d06,
+	$danger: #b83334,
 	$background: #fffff
 );
 // $family-primary: "FuturaHandwritten",
 @use './bulma-list.scss';
+@use './watch-grid.scss';
 /* Fonts and external resources */
 @font-face {
 	font-family: 'Modak';
