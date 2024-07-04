@@ -3,17 +3,20 @@ import { derived } from 'svelte/store';
 import { currentParticipant } from '../connection';
 import { createMediaStore } from '../_mediaStore';
 import { createDatabaseStore } from '../_databaseStore';
+import { createMediaLayoutStore } from './mediaLayout';
 
-const remoteVideoStreams = createMediaStore('remoteMediaStreams');
+const remoteMediaStreams = createMediaStore('remoteMediaStreams');
 const localMediaStream = createMediaStore('localMediaStream');
 const participants = createDatabaseStore('participant');
+const layout = createMediaLayoutStore();
 
 /** Store value */
-type MediaParticipants = Array<
-	DataTypes['participant'] & {
-		stream: MediaStream;
-	}
->;
+type MediaParticipants = {
+	video: Record<DataTypes['participant']['id'], MediaStream>;
+	audio: Array<MediaStream>;
+	actors: Record<DataTypes['participant']['id'], DataTypes['participant']>;
+	online: Array<DataTypes['participant']>;
+};
 
 /** Store interface */
 interface MediaParticipantsStore {
@@ -23,59 +26,78 @@ interface MediaParticipantsStore {
 /** Creates a Svelte Store for tracking remote media stream coming from individual participants */
 function createMediaParticipantsStore(): MediaParticipantsStore {
 	const { subscribe } = derived(
-		[remoteVideoStreams, participants, currentParticipant, localMediaStream],
+		[
+			remoteMediaStreams,
+			participants,
+			currentParticipant,
+			localMediaStream,
+			layout,
+		],
 		([
-			$remoteVideoStreams,
+			$remoteMediaStreams,
 			$participants,
 			$currentParticipant,
 			$localMediaStream,
+			$layout,
 		]) => {
-			// Join remote video streams and participants
-			const results: MediaParticipants = (
-				Object.entries($remoteVideoStreams)
-					// Map participants to stream
-					.map(([participantId, stream]) => {
-						const foundParticipant = $participants.find(
-							(p) => p.id == Number(participantId)
-						);
-						if (!foundParticipant) {
-							return undefined;
-						}
-						return { ...foundParticipant, stream };
-					})
-					// Remove streams where the participant was not found
-					.filter((entry) => entry !== undefined) as MediaParticipants
-			).filter((entry) => {
-				// Remove entries that are producing audio even when not allowed
-				if (entry.stream.getAudioTracks().length && !entry.allowedAudio) {
-					return false;
-				}
-				// Remove entries that are producing video even when not allowed
-				if (entry.stream.getVideoTracks().length && !entry.allowedVideo) {
-					return false;
-				}
-				return true;
-			});
+			const results: MediaParticipants = {
+				audio: [],
+				video: {},
+				actors: {},
+				online: [],
+			};
+			const layoutedActorsRecord: Record<number, true | undefined> =
+				$layout.layout
+					.flat()
+					.filter((e) => e.type == 'actor' && e.id)
+					.map((e: any) => e.id)
+					.reduce((obj, nr) => ({ [nr]: true, ...obj }), {});
 
-			// Add any local stream
-			if (
-				$localMediaStream &&
-				$currentParticipant &&
-				$currentParticipant.producingVideo
-			) {
-				results.push({
-					stream: $localMediaStream!,
-					...$currentParticipant,
-				});
+			for (const participant of $participants) {
+				if (participant.blocked) {
+					continue;
+				}
+				if (participant.online) {
+					results.online.push(participant);
+				}
+				// Actor
+				if (participant.actor) {
+					results.actors[participant.id] = participant;
+
+					// Should be streaming
+					if (layoutedActorsRecord[participant.id]) {
+						// Remote media
+						if (
+							$remoteMediaStreams[participant.id] &&
+							participant.allowedVideo
+						) {
+							results.video[participant.id] =
+								$remoteMediaStreams[participant.id];
+							results.audio.push($remoteMediaStreams[participant.id]);
+						}
+						// Local media
+						else if (
+							participant.id == $currentParticipant.id &&
+							$localMediaStream &&
+							participant.allowedVideo
+						) {
+							results.video[participant.id] = $localMediaStream;
+						}
+					}
+				} else {
+					if (
+						$remoteMediaStreams[participant.id] &&
+						$layout.allowVisitorAudio &&
+						participant.allowedAudio
+					) {
+						results.audio.push($remoteMediaStreams[participant.id]);
+					}
+				}
 			}
+
 			// Return results
-			console.log({
-				results,
-				$remoteVideoStreams,
-				$participants,
-				$currentParticipant,
-				$localMediaStream,
-			});
+			console.log(results, $localMediaStream);
+
 			return results;
 		}
 	);

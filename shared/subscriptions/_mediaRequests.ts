@@ -1,10 +1,23 @@
 import type * as MediaSoup from 'mediasoup-client';
 
+/** Media layout entry */
+export type MediaLayoutEntry = { type: 'actor'; id: number } | { type: 'chat' };
+
+/** Media layout object */
+export type MediaLayout = {
+	name?: string;
+	curtains?: boolean;
+	allowChat?: boolean;
+	allowVisitorAudio?: boolean;
+	layout: Array<Array<MediaLayoutEntry>>;
+};
+
 /**
  * Possible requests and returned data available through the socket connection
  * requestType: [parameterData, returnedData]
  */
 export type MediaRequests = {
+	media_layout: [MediaLayout | undefined, MediaLayout];
 	server_rtp_capabilities: [{}, MediaSoup.types.RtpCapabilities];
 	remove_producer: [{ audio?: boolean; video?: boolean }, boolean];
 	remove_consumer: [{}, boolean];

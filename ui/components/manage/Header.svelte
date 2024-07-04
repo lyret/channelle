@@ -20,7 +20,7 @@
 				>s t i n a o c h v i k</span
 			>
 		</li>
-		<li class:is-active={$openPanels['live']}>
+		<!-- <li class:is-active={$openPanels['live']}>
 			<a on:click={() => togglePanel('live')}
 				><span class="icon"><ion-icon name="play"></ion-icon></span> Live
 				<span class="icon"
@@ -31,10 +31,10 @@
 					></ion-icon></span
 				>
 			</a>
-		</li>
+		</li> -->
 		<li class:is-active={$openPanels['scenes']}>
 			<a on:click={() => togglePanel('scenes')}
-				><span class="icon"><ion-icon name="albums"></ion-icon></span> Scener
+				><span class="icon"><ion-icon name="albums"></ion-icon></span> Scenen
 				<span class="icon"
 					><ion-icon
 						name={$openPanels['scenes']

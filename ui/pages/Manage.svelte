@@ -4,6 +4,7 @@
 	import Header from '~/components/manage/Header.svelte';
 	import ChatList from '~/components/chat/ChatList.svelte';
 	import ParticipantsList from '~/components/manage/ParticipantsList.svelte';
+	import SceneSelector from '~/components/manage/SceneSelector.svelte';
 </script>
 
 <!-- Header -->
@@ -17,23 +18,7 @@
 		{#if $openPanels['live']}{/if}
 		{#if $openPanels['scenes']}
 			<div class="cell">
-				<h1 class="subtitle">Scenes</h1>
-				<div class="notification is-info">
-					<div class="fixed-grid has-3-cols">
-						<div class="grid">
-							<div class="cell has-background-primary">1</div>
-							<div class="cell">2</div>
-							<div class="cell">3</div>
-							<div class="cell">4</div>
-							<div class="cell">5</div>
-							<div class="cell">6</div>
-						</div>
-					</div>
-				</div>
-				<button class="button is-success is-fullwidth is-dark"
-					><span class="icon"><ion-icon name="add-circle"></ion-icon></span
-					><span>Lägg till scen</span></button
-				>
+				<SceneSelector />
 			</div>
 		{/if}
 		{#if $openPanels['participants']}

@@ -1,12 +1,12 @@
 <script lang="ts">
+	import { blur } from 'svelte/transition';
 	import { update, MediaSubscription } from '~/api';
 	import { createMediaStore } from '~/stores';
 	import { currentParticipant } from '~/stores/connection';
 	import ChatInput from '~/components/chat/ChatInput.svelte';
+	import { createMediaLayoutStore } from '~/stores/media';
 
-	export let left: any;
-	export let right: any;
-
+	let layout = createMediaLayoutStore();
 	const isProducingVideo = createMediaStore('isProducingVideo');
 	const isProducingAudio = createMediaStore('isProducingAudio');
 
@@ -25,7 +25,7 @@
 </script>
 
 <div class="buttons is-centered is-fullwidth">
-	<button class={btnClassList} on:click={updateName}>
+	<button class={btnClassList} transition:blur on:click={updateName}>
 		<span class="icon"><ion-icon name="person-circle-outline"></ion-icon></span>
 		<span>{$currentParticipant?.name} </span></button
 	>
@@ -34,6 +34,7 @@
 			type="button"
 			disabled={!$currentParticipant.allowedVideo}
 			class={btnClassList}
+			transition:blur
 			class:has-text-info={!$isProducingVideo}
 			class:has-text-danger={$isProducingVideo}
 			on:click={() =>
@@ -48,30 +49,36 @@
 			<span>{$isProducingVideo ? 'Stäng av kameran' : 'Starta kameran'}</span>
 		</button>
 	{/if}
-	<button
-		type="button"
-		class={btnClassList}
-		disabled={!$currentParticipant.allowedAudio}
-		class:has-text-danger={$isProducingAudio}
-		on:click={() =>
-			$isProducingAudio
-				? isProducingAudio.stopPublishAudio()
-				: isProducingAudio.publishAudio()}
-	>
-		<span class="icon"
-			><ion-icon name={$isProducingAudio ? 'mic-off' : 'mic'}></ion-icon></span
+	{#if $currentParticipant.actor || $layout.allowVisitorAudio}
+		<button
+			type="button"
+			class={btnClassList}
+			transition:blur
+			disabled={!$currentParticipant.allowedAudio}
+			class:has-text-danger={$isProducingAudio}
+			on:click={() =>
+				$isProducingAudio
+					? isProducingAudio.stopPublishAudio()
+					: isProducingAudio.publishAudio()}
 		>
-		<span
-			>{$isProducingAudio ? 'Stäng av mikrofonen' : 'Starta mikrofonen'}</span
-		>
-	</button>
-	<ChatInput />
-	<button class="button icon">
+			<span class="icon"
+				><ion-icon name={$isProducingAudio ? 'mic-off' : 'mic'}
+				></ion-icon></span
+			>
+			<span
+				>{$isProducingAudio ? 'Stäng av mikrofonen' : 'Starta mikrofonen'}</span
+			>
+		</button>
+	{/if}
+	{#if $layout.allowChat}
+		<ChatInput />
+	{/if}
+	<!-- <button class="button icon">
 		<ion-icon name="expand-outline"></ion-icon>
 		<span>Fullscreen</span>
-	</button>
+	</button> -->
 	{#if $currentParticipant.actor || $currentParticipant.manager}
-		<a class={btnClassList} href="/backstage" target="_blank">
+		<a class={btnClassList} transition:blur href="/backstage" target="_blank">
 			<span>Gå Backstage </span>
 			<span class="icon"
 				><ion-icon name="arrow-forward-circle-outline"></ion-icon></span

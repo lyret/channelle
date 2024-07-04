@@ -1,75 +1,40 @@
 <script lang="ts">
+	import { slide } from 'svelte/transition';
 	import MediaView from '~/components/watch/MediaView.svelte';
+	import MediaAudio from '~/components/watch/MediaAudio.svelte';
 	import ChatView from '~/components/watch/ChatView.svelte';
 	import Actions from '~/components/watch/Actions.svelte';
-	import { mediaParticipants } from '~/stores/media';
+	import { createMediaLayoutStore, mediaParticipants } from '~/stores/media';
+	//@ts-ignore
+	import imgSrc from '../assets/images/curtains.jpg';
 
 	let muted: boolean = true;
 
-	function createLayout(
-		matrix: Array<Array<number>>
-	): [number, number, Array<Array<number>>] {
-		// Determine width and height of the matrix
-		const height = Math.max(matrix.length, 1);
-		const width = Math.max(matrix.length ? matrix[0].length : 0, 1);
+	let layout = createMediaLayoutStore();
 
-		// Verify that the width is the same for each row
-		for (const row of matrix) {
-			if (row.length != width) {
-				throw new Error('Each row in a layout must be of the same width');
-			}
-		}
-
-		// Return layout
-		return [width, height, matrix];
-	}
-
-	const layouts = [
-		createLayout([[0, 1, 2]]),
-		createLayout([[0, 88, 1]]),
-		createLayout([
-			[0, -1],
-			[1, 2],
-		]),
-	];
-	let selectedLayout = 1;
-	$: [width, height, layout] = layouts[selectedLayout];
-	function left() {
-		if (selectedLayout - 1 < 0) {
-			selectedLayout = layouts.length - 1;
-			return;
-		}
-		selectedLayout = selectedLayout - 1;
-	}
-	function right() {
-		if (selectedLayout + 1 == layouts.length) {
-			selectedLayout = 0;
-			return;
-		}
-		selectedLayout = selectedLayout + 1;
-	}
+	$: matrix = $layout.layout || [];
+	$: height = Math.max(matrix.length, 1);
+	$: width = Math.max(matrix.length ? matrix[0].length : 0, 1);
 </script>
 
 <div class="watch-container">
 	<div class={`watch-grid cols-${width} rows-${height}`}>
-		{#each layout as row}
-			{#each row as cell}
-				{#if cell == 88}
+		{#each matrix as row}
+			{#each row as entry}
+				{#if entry.type == 'chat'}
 					<div class="watch-cell">
 						<ChatView />
 					</div>
-				{:else if cell >= 0}
-					{#if cell < $mediaParticipants.length}
+				{:else if entry.type == 'actor' && entry.id}
+					{#if $mediaParticipants.video[entry.id]}
 						<div class="watch-cell">
-							<MediaView
-								stream={$mediaParticipants[cell].stream}
-								participant={$mediaParticipants[cell]}
-								{muted}
-							/>
+							<MediaView stream={$mediaParticipants.video[entry.id]} />
 						</div>
 					{:else}
 						<div class="watch-cell">
-							<h1 class="title has-text-white">...</h1>
+							<h1 class="title has-text-white">
+								{$mediaParticipants.actors[entry.id]?.name || '...'}
+							</h1>
 						</div>
 					{/if}
 				{:else}
@@ -79,9 +44,18 @@
 		{/each}
 	</div>
 	<div class="watch-actions">
-		<Actions {left} {right} />
+		<Actions />
 	</div>
+	{#if $layout.curtains}
+		<!-- svelte-ignore a11y-missing-attribute -->
+		<img class="watch-curtains" src={imgSrc} transition:slide={{ axis: 'y' }} />
+	{/if}
 </div>
+
+{#each $mediaParticipants.audio as stream}
+	<MediaAudio {muted} {stream} />
+{/each}
+
 {#if muted}
 	<div class="watch-overlay">
 		<button

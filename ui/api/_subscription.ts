@@ -29,7 +29,8 @@ export class Subscription<
 	}
 
 	/** Returns the web socket used for all subscriptions, initiates a connection when needed */
-	private static connection(): SocketIO.Socket {
+	public static connection(): SocketIO.Socket {
+		// FIXME: should not be public
 		if (!this._socket) {
 			const { url, path, transports } = CONFIG.socket;
 			this._socket = io(url, {
@@ -144,7 +145,7 @@ export class Subscription<
 			'registerParticipant',
 			localStorage.getItem('participant-id')
 		);
-		this._socket.once(
+		Subscription.connection().once(
 			'registerParticipant',
 			(response: {
 				ok: boolean;

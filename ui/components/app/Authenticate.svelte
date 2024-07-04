@@ -25,9 +25,9 @@
 		class:is-disabled={loading}
 	/>
 	<button
-		class="button is-rounded is-primary mt-4 is-centered is-family-monospace"
+		class="button is-rounded is-primary mt-4 is-centered has-family-title"
 		on:click={onClick}
-		class:is-loading={loading}>Enter Channelle</button
+		class:is-loading={loading}>Fortsätt...</button
 	>
 </div>
 
