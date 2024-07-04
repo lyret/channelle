@@ -9,7 +9,6 @@ import {
 	createSubscriptionPath,
 } from '../../shared/subscriptions';
 import { MediaRepository } from '../media';
-import { Config } from '../../shared';
 
 /** A map between online participants and connected sockets */
 const onlineParticipants = new Map<string, number>();
@@ -162,7 +161,7 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 				console.error('[MEDIA] error responding to', type);
 				console.error(err);
 				callback({
-					error: Config.isProduction ? err : new Error('Server Error'),
+					error: CONFIG.isProduction ? err : new Error('Server Error'),
 				});
 			}
 		});

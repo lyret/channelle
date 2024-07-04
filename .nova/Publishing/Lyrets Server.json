@@ -5,7 +5,8 @@
     ".nova",
     ".gitignore",
     "node_modules",
-    ".dist"
+    ".dist",
+    ".env"
   ],
   "localPath" : ".",
   "remotePath" : "\/Users\/lyret\/Server\/iia",

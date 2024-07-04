@@ -1,14 +1,13 @@
 import * as MediaSoup from 'mediasoup';
-import { Config } from '../../shared/config';
 
 /** Creates and returns a MediaSoup worker processes */
 export async function createMediaSoupWorker() {
 	const worker = await MediaSoup.createWorker({
-		logLevel: Config.mediasoup.worker
+		logLevel: CONFIG.mediasoup.worker
 			.logLevel as MediaSoup.types.WorkerLogLevel,
-		logTags: Config.mediasoup.worker.logTags as MediaSoup.types.WorkerLogTag[],
-		rtcMinPort: Config.mediasoup.worker.rtcMinPort,
-		rtcMaxPort: Config.mediasoup.worker.rtcMaxPort,
+		logTags: CONFIG.mediasoup.worker.logTags as MediaSoup.types.WorkerLogTag[],
+		rtcMinPort: CONFIG.mediasoup.worker.rtcMinPort,
+		rtcMaxPort: CONFIG.mediasoup.worker.rtcMaxPort,
 	});
 
 	// Handle worker process interruptions

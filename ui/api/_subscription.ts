@@ -1,7 +1,6 @@
 //@ts-ignore
 import { io } from 'socket.io-client';
 import Emittery from 'emittery';
-import { Config } from '~/../shared';
 import type { DataTypes } from './_databaseTypes';
 import type { ConnectionStatusName } from './_connectionTypes';
 
@@ -32,7 +31,7 @@ export class Subscription<
 	/** Returns the web socket used for all subscriptions, initiates a connection when needed */
 	private static connection(): SocketIO.Socket {
 		if (!this._socket) {
-			const { url, path, transports } = Config.socket;
+			const { url, path, transports } = CONFIG.socket;
 			this._socket = io(url, {
 				path,
 				transports,

@@ -7,18 +7,24 @@ import BodyParser from 'koa-bodyparser';
 import ServeStatic from 'koa-static';
 import * as IO from 'socket.io';
 import { Repository } from '../database';
-import { Config } from '../shared';
 import { createMediaRepostiory } from './media';
-import { createBundlerMiddleware } from './middlewares/createBundlerMiddleware';
 import { createIOEventHandlers } from './middlewares/createIOEventHandlers';
+import { createClientBuildContext } from '../_createClientBuildContext.mjs';
 
-async function SPAFallback(ctx: Koa.Context, next: Koa.Next) {
+async function ClientAccessMiddleware(ctx: Koa.Context, next: Koa.Next) {
 	let outFile = await Fs.readFile(
-		Path.resolve(process.cwd(), Config.build.outDir, 'index.html'),
+		Path.resolve(process.cwd(), CONFIG.build.clientOutput, 'index.html'),
 		{
 			encoding: 'utf8',
 		}
 	);
+
+	// Rebuild the Client
+	if (!CONFIG.isProduction) {
+		const context = await createClientBuildContext(CONFIG);
+		await context.rebuild();
+		await context.dispose();
+	}
 
 	// outFile = outFile.replaceAll('_main', '/_main');
 	// outFile = outFile.replaceAll('style.css', '/style.css');
@@ -33,10 +39,6 @@ async function SPAFallback(ctx: Koa.Context, next: Koa.Next) {
  * Creates and starts the application server
  */
 export async function createServer(): Promise<Http.Server> {
-	// Debug output
-	for (const key of Object.keys(Config)) {
-		console.log('[Config]', key, JSON.stringify(Config[key], null, 2));
-	}
 	console.log('[MS Server] media soup version', MediaSoup.version);
 
 	// Create the server object
@@ -45,50 +47,17 @@ export async function createServer(): Promise<Http.Server> {
 	// Parse bodies
 	app.use(BodyParser({ enableTypes: ['text'] }));
 
-	// Re-bundle the application GUI either once, or on each request when in development
-	const bundlerMiddleware = await createBundlerMiddleware();
-	if (!Config.isProduction) {
-		app.use((ctx, next) => bundlerMiddleware(ctx, next));
-	}
-
 	// Serve static files
-	app.use(ServeStatic(Path.resolve(process.cwd(), Config.build.outDir)));
+	app.use(ServeStatic(Path.resolve(process.cwd(), CONFIG.build.clientOutput)));
 
-	// Use the SPA Fallback
-	app.use(SPAFallback);
-
-	// FIXME: Singeltons are removed for now
-	// ...from options file
-	/** Where to store singleton information between runs  */
-	//export const SINGLETON_PATH = (id: string) =>
-	//    Path.resolve(process.cwd(), `.dist/singeltons/${id}`);
-	// ...at same location
-	// Add endpoints for singlepoints
-	// createSingletonEndpoint(app, 'prompt', {
-	//   title: '',
-	//   body: '',
-	//   dark: false,
-	//   important: false,
-	//   visible: false,
-	// })
-	// createSingletonEndpoint(app, 'highscore', {
-	//   name: 'all-time',
-	//   entries: [
-	//     { name: 'ingen', points: 0 },
-	//     { name: 'ingen', points: 0 },
-	//     { name: 'ingen', points: 0 },
-	//   ],
-	// })
-	// createSingletonEndpoint(app, 'session-highscore', {
-	//   name: '',
-	//   entries: [],
-	// })
+	// Serve the client interface
+	app.use(ClientAccessMiddleware);
 
 	// Listen for requests
-	const http = app.listen(Config.web.port);
+	const http = app.listen(CONFIG.web.port);
 	const io = new IO.Server(http, {
 		serveClient: false,
-		path: Config.socket.path,
+		path: CONFIG.socket.path,
 	});
 
 	// Initialize a media stream repository

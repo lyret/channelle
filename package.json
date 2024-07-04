@@ -1,11 +1,12 @@
 {
 	"name": "channelle",
+	"description": "A multimedia communication application for online teather",
 	"version": "1.0.0",
 	"author": "Viktor Lyresten <viktor@lyresten.se>",
 	"license": "UNLICENSED",
 	"scripts": {
 		"init": "prisma generate",
-		"build": "esbuild server/index.ts --bundle --platform=node --sourcemap --packages=external --outdir=.dist/server",
+		"build": "node cli.mjs -b",
 		"start": "node .dist/server --enable-source-maps",
 		"dev": "npm run build && npm run start",
 		"studio": "prisma studio",
@@ -20,6 +21,7 @@
 	},
 	"dependencies": {
 		"@babel/polyfill": "^7.12.1",
+		"@craftamap/esbuild-plugin-html": "^0.7.0",
 		"@prisma/client": "^5.15.1",
 		"bulma": "^1.0.1",
 		"bulma-list": "^2.1.0",
@@ -28,16 +30,14 @@
 		"koa-bodyparser": "^4.3.0",
 		"koa-router": "^12.0.0",
 		"koa-static": "^5.0.0",
-		"leaflet": "^1.7.1",
 		"luxon": "^3.0.0",
 		"mediasoup": "^3.14.8",
 		"mediasoup-client": "^3.7.12",
 		"prisma": "^5.15.1",
+		"public-ip": "^6.0.2",
 		"socket.io": "^4.6.1",
 		"socket.io-client": "^4.0.0",
 		"svelte": "^4.2.18",
-		"svelte-preprocess": "^5.0.0",
-		"typescript": "^5.0.0",
 		"universal-router": "^9.0.1"
 	},
 	"devDependencies": {
@@ -51,12 +51,14 @@
 		"@types/node": "^18.15.11",
 		"@types/socket.io": "^2.1.13",
 		"@types/socket.io-client": "^1.4.35",
+		"dotenv": "^16.4.5",
 		"esbuild": "^0.21.5",
 		"esbuild-sass-plugin": "^3.3.1",
 		"esbuild-svelte": "^0.7.3",
 		"prettier": "^3.3.2",
 		"prettier-plugin-prisma": "^5.0.0",
 		"prettier-plugin-svelte": "^3.2.5",
-		"sass": "^1.32.8"
+		"svelte-preprocess": "^5.0.0",
+		"typescript": "^5.0.0"
 	}
 }

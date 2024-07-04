@@ -66,13 +66,13 @@
 		>
 	</button>
 	<ChatInput />
-	<!-- <button class="button icon" use:fullScreenAction>
-			<ion-icon name="expand-outline"></ion-icon>
-			<span>Fullscreen</span>
-		</button> -->
+	<button class="button icon">
+		<ion-icon name="expand-outline"></ion-icon>
+		<span>Fullscreen</span>
+	</button>
 	{#if $currentParticipant.actor || $currentParticipant.manager}
 		<a class={btnClassList} href="/backstage" target="_blank">
-			<span>Gå Backstage</span>
+			<span>Gå Backstage </span>
 			<span class="icon"
 				><ion-icon name="arrow-forward-circle-outline"></ion-icon></span
 			></a
