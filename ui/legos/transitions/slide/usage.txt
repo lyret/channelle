@@ -1,0 +1,15 @@
+<script>
+import { slide } from "svelte-legos";
+
+</script>
+
+<div transition:slide />
+
+<!-- or with options -->
+
+<div transition:slide={{
+  delay // number
+  duration // number
+  easing // svelte/easing
+  direction // "top" | "top-right" | "right" | "bottom-right" | "bottom" | "bottom-left" | "left" | "top-left"
+}} />

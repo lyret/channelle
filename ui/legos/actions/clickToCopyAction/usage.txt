@@ -1,0 +1,29 @@
+<script>
+import { clickToCopyAction } from "svelte-legos";
+
+function handleCopyDone() {
+  // handle copy done here
+}
+
+function handleCopyError() {
+  // handle copy error here
+}
+</script>
+
+<button
+  use:clickToCopyAction="Text to copy"
+  on:copy-done={handleCopyDone}
+  on:copy-error={handleCopyError}
+>
+  Click to copy
+</button>
+
+<!-- or use a getter function -->
+
+<button
+  use:clickToCopyAction={() => "Text to copy"}
+  on:copy-done={handleCopyDone}
+  on:copy-error={handleCopyError}
+>
+  Click to copy
+</button>

@@ -1,0 +1,5 @@
+<script>
+import { draggableAction } from "svelte-legos";
+</script>
+
+<div class="box" use:draggableAction />

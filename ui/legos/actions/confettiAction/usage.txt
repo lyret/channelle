@@ -1,0 +1,15 @@
+<script>
+import { confettiAction } from "svelte-legos";
+</script>
+
+<button
+  use:confettiAction
+>
+  Confetti
+</button>
+
+<button
+  use:confettiAction={{ type: 'school-pride' }}
+>
+  School Pride
+</button>
