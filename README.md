@@ -31,97 +31,84 @@
   - Python version >= 3.7 with PIP
   
 
-  
-  ## Ej upphämtade anteckningar:
-  
-  Arkitektur/designspråk:
-  
-  En ruta är video/skärmdelning/bild mm
-  Rutor kan vara livevideo
-  Rutor tillhör publiken, skådespelare, tekniker mm
-  
-  Vision:
-  Att kunna starta upp en teater på nätet. Mötet mellan material och publik via skärmen står i centrum.
-  Plattformen ska bli ett sammanhang där konstskapare som inte är i stånd att visa på en fysisk teater och som har idéer för att göra live konst genom skärmen kan få till publikmöten med en mindre men engagerad publik snabbt.
-  Det är också en plats där publik kan se experimentell scenkonst utan att ta sig en fysisk kvarterteater. Plattformen kommer således specifikt vända sig till publik och skapare på landsbygd nationellt såväl som internationellt och ha ett särskilt öga för grupper och individer som har svårt att befinna sig i de “stora” sammanhangen.
-  
-  Avgränsningar:
-  Inte en streamingtjänst för ursprunlig icke-digital konst
-  
-  Användarkrav:
-  Kunna koppla upp sig enkelt utan att vara tekniskt skillad
-  Inte veta exakt innehållsmässigt - kreatörer ska kunna jobba på en show innan den är klar.
-  Plattformen ska skapar relation med publiken genom all sin kommunikation
-  
-  Produktkrav:
-  Plattformen är ett alternativ till etablerade kommersiella digitala plattformar,
-  
-  Funktionskrav:
-  Internationellt språk (svenska och engelska)
-  Tillgänglig för besökare utan app
-  Enbart stream/live
-  Kunna hålla föreställningar
-  Fri tillgång eller med biljett
-  Planeringsverktyg för skådesplare med översikt
-  Foton på ensamblen
-  Beskrivning, kontakt mm
-  Kunna arkivera och spara ner foton/video med mera
-  Blogg funktion
-  Foaljé med chattfunktion (se inspiration i projektpresentationen)
-  Betalmöjlighet för biljetter (se frågor)
-  
-  ## Server
-  
-  SFU: Selective Forwarding Unit
-  https://bloggeek.me/webrtcglossary/sfu/
-  
-  - Receives media streams and forwards them to everyone else
-  
-  ## Deployment
-  
-  Enligt driftsättningsplan på DO
-  Droplet: 1-2kr/timmen (16gb, 4tb transfer)
-  Transfer bör räcka för 4h (3000 tittare)
-  Tittare kan vara tusentals
-  
-  https://mediasoup.discourse.group/t/experience-with-mediasoup/1578/19
-  
-  - Media soup kräver en c++ binär som fetchas vid npm i, kan disablas med
-  `MEDIASOUP_SKIP_WORKER_PREBUILT_DOWNLOAD="true"`
-  
-  https://mediasoup.org/documentation/v3/mediasoup/installation/
+  ### Historia
+
+  Förstudie.
+
+ I Förstudien skrevs 
+
   
 
-  https://drive.google.com/drive/u/0/folders/1IGvUmZ_BV2lnH8xwlYpB1FkVgGohCiBG
+  # Svelte Legos
   
-  ————————————————————————————————————————————————————
+  Collection of essential Svelte Composition Utilities
+  <br>
+  <br>
   
-  https://github.com/lyret/iia
+  ## 🚀 Features
   
-  https://drive.google.com/drive/u/0/folders/1IGvUmZ_BV2lnH8xwlYpB1FkVgGohCiBG
+  - 🎪 [**Interactive docs & demos**](https://svelte-legos.surge.sh)
+  - ⚡ **Fully tree shakeable**: Only take what you want, [bundle size]
+  - 🦾 **Type Strong**: Written in [TypeScript](https://www.typescriptlang.org/), with [TS Docs](https://github.com/microsoft/tsdoc)
+  - 🔋 **SSR Friendly**
+  - 🌎 **No bundler required**: Usable via CDN
+  - 🔩 **Flexible**: Configurable event filters and targets
   
-  Slutsatser:
+  ## 🦄 Usage
   
-  MiroTalk är för svårt att modifera för att användas till ändamålet
+  ```svelte
+  <script lang="ts">
+  import { counterStore } from "svelte-legos";
   
-  Mediasoup verkar ge bättre prestanda än Jitsi
+  const { counter, inc, dec, set, reset } = counterStore();
+  </script>
   
+  <button on:click={() => inc()}>Increment</button>
   
-  Inspiration och källor:
+  {counter}
   
-  https://github.com/mkhahani/mediasoup-sample-app/blob/master/server.js
+  <button on:click={() => dec()}>Decrement</button>
+  ```
   
-  https://github.com/edumeet/edumeet/tree/master/server
+  ```svelte
+  <script lang="ts">
+  import { clickOutsideAction } from "svelte-legos";
   
-  https://github.com/versatica/mediasoup-demo
+  let hidden = false;
   
-  ————————————————————————————————————————————————————
+  function handleClickOutside() {
+    hidden = !hidden;
+  }
+  </script>
   
-  Om Jitsi blir aktuellt:
+  <div class="modal" use:clickOutsideAction on:clickoutside={handleClickOutside} />
+  ```
   
-  https://www.thecodingartist.com/blogs/creating-custom-jitsi-ui-using-vuejs/
+  Refer to [functions list](https://svelte-legos.surge.sh/guides) or [documentations](https://svelte-legos.surge.sh) for more details.
   
+  ## 📦 Install
   
+  ```bash
+  npm i svelte-legos
+  ```
   
+  ## Local setup
   
+  ```bash
+  npm run start:dev
+  ```
+  
+  ## 🌸 Thanks
+  
+  This project is heavily inspired by the following awesome projects.
+  
+  - [vueuse/vueuse](https://github.com/vueuse/vueuse)
+  - [streamich/react-use](https://github.com/streamich/react-use)
+  - [u3u/vue-hooks](https://github.com/u3u/vue-hooks)
+  - [logaretm/vue-use-web](https://github.com/logaretm/vue-use-web)
+  - [kripod/react-hooks](https://github.com/kripod/react-hooks)
+  
+  ## License
+  
+  [MIT](LICENSE.md)
   

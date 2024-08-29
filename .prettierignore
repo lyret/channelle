@@ -1,5 +1,4 @@
 **/*.md
+**/node_modules
 package-lock.json
-.nova
-.bin
-node_modules
+.dist

@@ -1,13 +1,22 @@
 {
 	"extends": "@tsconfig/svelte/tsconfig.json",
 	"compilerOptions": {
+		"allowJs": true,
+		"checkJs": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"resolveJsonModule": true,
 		"lib": ["es2021", "dom"],
 		"strict": true,
+		"skipLibCheck": true,
+		"sourceMap": true,
 		"baseUrl": "./ui",
 		"paths": {
-			"~/*": ["./*"]
-		}
+			"~/*": ["./*"],
+			"$lib/*": ["./legos/*"]
+		},
+		"outDir": "./.dist"
 	},
-	"include": ["ui/**/*", "shared/**/*"],
+	"include": ["ui/**/*", "shared/**/*", "./global.d.ts"],
 	"exclude": ["node_modules/*", "public/*", "server/*"]
 }
