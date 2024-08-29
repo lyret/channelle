@@ -1,0 +1,11 @@
+{
+    "explorer.excludeGitIgnore": false,
+    "search.useGlobalIgnoreFiles": true,
+    "search.useParentIgnoreFiles": true,
+    "files.exclude": {
+        ".nova": false,
+        ".vscode": true,
+        ".dist": true,
+        "node_modules": true
+    }
+}

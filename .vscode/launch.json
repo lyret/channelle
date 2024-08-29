@@ -1,0 +1,30 @@
+{
+    "configurations": [
+        {
+            "name": "Server",
+            "request": "launch",
+            "runtimeArgs": [
+                "run-script",
+                "dev"
+            ],
+            "runtimeExecutable": "npm",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node"
+        },
+        {
+            "type": "chrome",
+            "name": "Client",
+            "request": "launch",
+            "webRoot": "${workspaceFolder}/.dist/ui",
+            "url": "http://localhost:3000"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Server/Client",
+            "configurations": ["Server", "Client"]
+        }
+    ]
+}
