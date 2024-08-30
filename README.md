@@ -83,6 +83,8 @@
   
   <div class="modal" use:clickOutsideAction on:clickoutside={handleClickOutside} />
   ```
+  https://github.com/ankurrsinghal/svelte-legos
+  https://svelte-legos.surge.sh/guides/
   
   Refer to [functions list](https://svelte-legos.surge.sh/guides) or [documentations](https://svelte-legos.surge.sh) for more details.
   

@@ -48,6 +48,14 @@ export class Subscription<
 			this._socket.on('disconnect', () => {
 				this.status = 'disconnected';
 			});
+
+			// Add debugging events
+			if (CONFIG.runtime.debug) {
+				// Reload the browser when requested by the server
+				this._socket.on('debug-refresh-needed', () => {
+					window.location.reload();
+				});
+			}
 		}
 		return this._socket;
 	}

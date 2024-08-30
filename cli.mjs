@@ -1,46 +1,70 @@
-import Path from 'node:path';
+import { BroadcastChannel } from 'broadcast-channel';
 import { createConfiguration } from './_createConfiguration.mjs';
 import { createClientBuildContext } from './_createClientBuildContext.mjs';
 import { createServerBuildContext } from './_createServerBuildContext.mjs';
+import { runServerCode } from './_runServerCode.mjs';
+
+// Create the global runtime configuration
+const CONFIG = await createConfiguration();
+
+// Create Broadcast Channel used for IPC messages regarding debugging events
+const channel = new BroadcastChannel(`cli-debug`);
 
 // ------------------------------------------
 // On file execution
 // ------------------------------------------
 
-// Create the configuration
-const config = await createConfiguration();
-
-// Create build contexts
-const serverContext = await createServerBuildContext(config);
-const clientContext = await createClientBuildContext(config);
-
-// Build both server and client once
-if (process.env.BUILD == 'true') {
+// Client
+if (CONFIG.runtime.watch) {
 	try {
-		console.log('[BUILD] Building server code');
-		await serverContext.rebuild();
-		await serverContext.dispose();
+		const clientContext = await createClientBuildContext(CONFIG, () => {
+			if (CONFIG.runtime.start && CONFIG.runtime.debug) {
+				channel.postMessage('debug-refresh-needed');
+			}
+		});
+		await clientContext.watch();
 	} catch (err) {
-		console.error('[BUILD] The server code is uncompliable');
 		console.error(err);
+		process.exit(1);
 	}
+} else if (CONFIG.runtime.build) {
 	try {
-		console.log('[BUILD] Building client code');
+		const clientContext = await createClientBuildContext(CONFIG);
 		await clientContext.rebuild();
 		await clientContext.dispose();
 	} catch (err) {
-		console.error('[BUILD] The client code is uncompliable');
 		console.error(err);
+		process.exit(1);
 	}
 }
-// Import and start the server directly
-if (process.env.START == 'true') {
+
+// Server
+if (CONFIG.runtime.watch) {
 	try {
-		import(Path.resolve(process.cwd(), config.build.serverOutput, 'index.js'));
+		const serverContext = await createServerBuildContext(CONFIG, () => {
+			if (CONFIG.runtime.start) {
+				runServerCode(CONFIG);
+			}
+		});
+		await serverContext.watch();
 	} catch (err) {
-		console.error('[BUILD] Unable to execute the transpiled server side code');
 		console.error(err);
+		process.exit(1);
 	}
+} else if (CONFIG.runtime.build) {
+	try {
+		const serverContext = await createServerBuildContext(CONFIG);
+		await serverContext.rebuild();
+		await serverContext.dispose();
+	} catch (err) {
+		console.error(err);
+		process.exit(1);
+	}
+}
+
+// Import and start the server directly
+if (CONFIG.runtime.start && !CONFIG.runtime.watch) {
+	await runServerCode(CONFIG);
 }
 
 // ------------------------------------------

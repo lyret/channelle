@@ -1,3 +1,4 @@
+import { BroadcastChannel } from 'broadcast-channel';
 import * as MediaSoup from 'mediasoup';
 import * as Fs from 'fs/promises';
 import * as Path from 'path';
@@ -9,8 +10,10 @@ import * as IO from 'socket.io';
 import { Repository } from '../database';
 import { createMediaRepostiory } from './media';
 import { createIOEventHandlers } from './middlewares/createIOEventHandlers';
-import { createClientBuildContext } from '../_createClientBuildContext.mjs';
 
+/**
+ * Read and sends the index.html file
+ */
 async function ClientAccessMiddleware(ctx: Koa.Context, next: Koa.Next) {
 	let outFile = await Fs.readFile(
 		Path.resolve(process.cwd(), CONFIG.build.clientOutput, 'index.html'),
@@ -18,14 +21,6 @@ async function ClientAccessMiddleware(ctx: Koa.Context, next: Koa.Next) {
 			encoding: 'utf8',
 		}
 	);
-
-	// Rebuild the Client
-	if (!CONFIG.isProduction) {
-		const context = await createClientBuildContext(CONFIG);
-		await context.rebuild();
-		await context.dispose();
-	}
-
 	// outFile = outFile.replaceAll('_main', '/_main');
 	// outFile = outFile.replaceAll('style.css', '/style.css');
 
@@ -68,6 +63,23 @@ export async function createServer(): Promise<Http.Server> {
 
 	// Handle websocket events
 	io.on('connection', createIOEventHandlers);
+
+	// Handle incomming debugging messages from the cli over ipc
+	if (CONFIG.runtime.debug) {
+		const channel = new BroadcastChannel(`cli-debug`);
+		channel.addEventListener('message', (msg: any) => {
+			switch (msg) {
+				// Refresh the connected clients
+				case 'debug-refresh-needed':
+					io.emit('debug-refresh-needed', true);
+					break;
+				// Unhandled messages
+				default:
+					console.log(`[DEBUG] Received unhandled ipc message: ${msg}`);
+					break;
+			}
+		});
+	}
 
 	// Return the http server
 	return http;
