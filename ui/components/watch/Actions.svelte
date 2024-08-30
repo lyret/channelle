@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { fullScreenAction } from '$lib/actions/fullScreenAction';
+	import { isInFullscreen } from '$lib/stores/fullscreenStore';
 	import { blur } from 'svelte/transition';
-	import { update, MediaSubscription } from '~/api';
+	import { update } from '~/api';
 	import { createMediaStore } from '~/stores';
 	import { currentParticipant } from '~/stores/connection';
 	import ChatInput from '~/components/chat/ChatInput.svelte';
@@ -9,6 +11,8 @@
 	let layout = createMediaLayoutStore();
 	const isProducingVideo = createMediaStore('isProducingVideo');
 	const isProducingAudio = createMediaStore('isProducingAudio');
+
+	let isFullscreen = isInFullscreen();
 
 	async function updateName() {
 		if ($currentParticipant) {
@@ -25,6 +29,19 @@
 </script>
 
 <div class="buttons is-centered is-fullwidth">
+	<!-- FULLSCREEN -->
+	<button
+		type="button"
+		class={btnClassList}
+		transition:blur
+		use:fullScreenAction
+	>
+		{#if $isFullscreen}
+			<span class="icon"><ion-icon name={'close-outline'}></ion-icon></span>
+		{:else}
+			<span class="icon"><ion-icon name={'expand-outline'}></ion-icon></span>
+		{/if}
+	</button>
 	<button class={btnClassList} transition:blur on:click={updateName}>
 		<span class="icon"><ion-icon name="person-circle-outline"></ion-icon></span>
 		<span>{$currentParticipant?.name} </span></button

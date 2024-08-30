@@ -1,67 +1,67 @@
-import { defaultDocument } from "$lib/shared";
-import { eventListenerStore } from "$lib/stores/eventListenerStore";
+import { defaultDocument } from '$lib/shared';
+import { eventListenerStore } from '$lib/stores/eventListenerStore';
 
 type FunctionMap = [
-	"requestFullscreen",
-	"exitFullscreen",
-	"fullscreenElement",
-	"fullscreenEnabled",
-	"fullscreenchange",
-	"fullscreenerror"
+	'requestFullscreen',
+	'exitFullscreen',
+	'fullscreenElement',
+	'fullscreenEnabled',
+	'fullscreenchange',
+	'fullscreenerror',
 ];
 
 // from: https://github.com/sindresorhus/screenfull.js/blob/master/src/screenfull.js
 const functionsMap: FunctionMap[] = [
 	[
-		"requestFullscreen",
-		"exitFullscreen",
-		"fullscreenElement",
-		"fullscreenEnabled",
-		"fullscreenchange",
-		"fullscreenerror",
+		'requestFullscreen',
+		'exitFullscreen',
+		'fullscreenElement',
+		'fullscreenEnabled',
+		'fullscreenchange',
+		'fullscreenerror',
 	],
 	// New WebKit
 	[
-		"webkitRequestFullscreen",
-		"webkitExitFullscreen",
-		"webkitFullscreenElement",
-		"webkitFullscreenEnabled",
-		"webkitfullscreenchange",
-		"webkitfullscreenerror",
+		'webkitRequestFullscreen',
+		'webkitExitFullscreen',
+		'webkitFullscreenElement',
+		'webkitFullscreenEnabled',
+		'webkitfullscreenchange',
+		'webkitfullscreenerror',
 	],
 	// Safari iOS WebKit
 	[
-		"webkitEnterFullscreen",
-		"webkitExitFullscreen",
-		"webkitFullscreenElement",
-		"webkitFullscreenEnabled",
-		"webkitfullscreenchange",
-		"webkitfullscreenerror",
+		'webkitEnterFullscreen',
+		'webkitExitFullscreen',
+		'webkitFullscreenElement',
+		'webkitFullscreenEnabled',
+		'webkitfullscreenchange',
+		'webkitfullscreenerror',
 	],
 	// Old WebKit
 	[
-		"webkitRequestFullScreen",
-		"webkitCancelFullScreen",
-		"webkitCurrentFullScreenElement",
-		"webkitCancelFullScreen",
-		"webkitfullscreenchange",
-		"webkitfullscreenerror",
+		'webkitRequestFullScreen',
+		'webkitCancelFullScreen',
+		'webkitCurrentFullScreenElement',
+		'webkitCancelFullScreen',
+		'webkitfullscreenchange',
+		'webkitfullscreenerror',
 	],
 	[
-		"mozRequestFullScreen",
-		"mozCancelFullScreen",
-		"mozFullScreenElement",
-		"mozFullScreenEnabled",
-		"mozfullscreenchange",
-		"mozfullscreenerror",
+		'mozRequestFullScreen',
+		'mozCancelFullScreen',
+		'mozFullScreenElement',
+		'mozFullScreenEnabled',
+		'mozfullscreenchange',
+		'mozfullscreenerror',
 	],
 	[
-		"msRequestFullscreen",
-		"msExitFullscreen",
-		"msFullscreenElement",
-		"msFullscreenEnabled",
-		"MSFullscreenChange",
-		"MSFullscreenError",
+		'msRequestFullscreen',
+		'msExitFullscreen',
+		'msFullscreenElement',
+		'msFullscreenEnabled',
+		'MSFullscreenChange',
+		'MSFullscreenError',
 	],
 ] as any;
 
@@ -79,7 +79,7 @@ export function fullScreenAction<T extends HTMLElement, P extends HTMLElement>(
 		destroy();
 
 		const document = defaultDocument;
-		const mainTarget = target || document?.querySelector("html");
+		const mainTarget = target || document?.querySelector('html');
 		let map: FunctionMap = functionsMap[0];
 
 		let isSupported = false;
@@ -93,17 +93,21 @@ export function fullScreenAction<T extends HTMLElement, P extends HTMLElement>(
 			}
 		}
 
-		const [REQUEST] = map;
+		const [REQUEST, EXIT] = map;
 
 		if (!isSupported) return;
 
 		async function handleClick() {
 			if (mainTarget) {
-				await mainTarget[REQUEST]();
+				if (defaultDocument?.fullscreenElement) {
+					await (document as any)[EXIT]();
+				} else {
+					await (mainTarget as any)[REQUEST]();
+				}
 			}
 		}
 
-		({ stop } = eventListenerStore("click", handleClick, node));
+		({ stop } = eventListenerStore('click', handleClick, node));
 	};
 
 	update(target);
