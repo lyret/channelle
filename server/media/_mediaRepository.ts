@@ -15,7 +15,7 @@ export class MediaRepository {
 	// Current media layout
 	private _mediaLayout: MediaLayout = {
 		layout: [],
-		curtains: true,
+		curtains: false,
 		name: 'curtains',
 	};
 
