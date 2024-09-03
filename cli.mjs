@@ -8,7 +8,7 @@ import { runServerCode } from './_runServerCode.mjs';
 const CONFIG = await createConfiguration();
 
 // Create Broadcast Channel used for IPC messages regarding debugging events
-const channel = new BroadcastChannel(`cli-debug`);
+const channel = new BroadcastChannel(`cli-channel`);
 
 // ------------------------------------------
 // On file execution
@@ -17,9 +17,12 @@ const channel = new BroadcastChannel(`cli-debug`);
 // Client
 if (CONFIG.runtime.watch) {
 	try {
-		const clientContext = await createClientBuildContext(CONFIG, () => {
-			if (CONFIG.runtime.start && CONFIG.runtime.debug) {
-				channel.postMessage('debug-refresh-needed');
+		const clientContext = await createClientBuildContext(CONFIG, (results) => {
+			if (CONFIG.runtime.start && CONFIG.runtime.debug && results.metafile) {
+				channel.postMessage({
+					type: 'build-event',
+					data: results.metafile.outputs,
+				});
 			}
 		});
 		await clientContext.watch();

@@ -66,16 +66,21 @@ export async function createServer(): Promise<Http.Server> {
 
 	// Handle incomming debugging messages from the cli over ipc
 	if (CONFIG.runtime.debug) {
-		const channel = new BroadcastChannel(`cli-debug`);
-		channel.addEventListener('message', (msg: any) => {
-			switch (msg) {
+		const channel = new BroadcastChannel<{ type: 'build-event'; data: any }>(
+			`cli-channel`
+		);
+		channel.addEventListener('message', ({ type, data }) => {
+			switch (type) {
 				// Refresh the connected clients
-				case 'debug-refresh-needed':
-					io.emit('debug-refresh-needed', true);
+				case 'build-event':
+					console.log('HERE!!', data);
+					io.emit('build-event', data);
 					break;
 				// Unhandled messages
 				default:
-					console.log(`[DEBUG] Received unhandled ipc message: ${msg}`);
+					console.log(
+						`[DEBUG] Received unhandled ipc message of type: ${type}`
+					);
 					break;
 			}
 		});
