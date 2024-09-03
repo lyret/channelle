@@ -1,14 +1,10 @@
-# Skärmteaterns Channelle
+# <a property="dct:title" rel="cc:attributionURL" href="https://codeberg.org/lyret/channelle">Channelle</a> by <a rel="cc:attributionURL dct:creator" property="cc:attributionName" href="">Skärmteatern</a> & <a rel="cc:attributionURL dct:creator" property="cc:attributionName" href="https://maskinrepubliken.se/">Maskinrepubliken</a> is licensed under <a href="https://creativecommons.org/licenses/by-nc/4.0/?ref=chooser-v1" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY-NC 4.0</a>
 
 <p style="height:14px!important;margin-left:3px;vertical-align:text-bottom;text-align:center;">
 <img src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1" alt=""><img src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1" alt=""><img src="https://mirrors.creativecommons.org/presskit/icons/nc.svg?ref=chooser-v1" alt=""></p>
 
-<a property="dct:title" rel="cc:attributionURL" href="https://codeberg.org/lyret/channelle">Channelle</a> by <a rel="cc:attributionURL dct:creator" property="cc:attributionName" href="">Skärmteatern</a> & <a rel="cc:attributionURL dct:creator" property="cc:attributionName" href="https://maskinrepubliken.se/">Maskinrepubliken</a> is licensed under <a href="https://creativecommons.org/licenses/by-nc/4.0/?ref=chooser-v1" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY-NC 4.0</a>
-
-
+## Attribution-NonCommercial 4.0 International
 https://creativecommons.org/licenses/by-nc/4.0/
-
-Attribution-NonCommercial 4.0 International
 
 =======================================================================
 
@@ -416,9 +412,9 @@ public licenses.
 
 Creative Commons may be contacted at creativecommons.org.
 
----
+=======================================================================
 
-## Channelle also includes the following works
+## The software also includes or makes substantial use of the following
 
 ### Svelte Legos
 MIT License
