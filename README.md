@@ -1,3 +1,6 @@
+<p style="text-align: center;"><img src="https://i.ibb.co/p0vNs4r/channelle-logo-sept-2024-long.png" alt="channelle-logo-sept-2024-long" border="0"></p>
+
+
 # Skärmteaterns Channelle - scen / mötesrum
 
 ### [Planering](https://docs.google.com/spreadsheets/d/1VxNay7jHiwGuvopK9huBMex3ONTnylXZ8f2xlVaVSyI/edit#gid=2100598513)
