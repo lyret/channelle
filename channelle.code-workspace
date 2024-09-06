@@ -1,10 +1,24 @@
 {
 	"folders": [
 		{
-			"path": "."
+			"name": "channelle",
+			"path": ".",
 		},
 		{
-			"path": "ui"
-		}
-	]
+			"name": "database",
+			"path": "database",
+		},
+		{
+			"name": "shared",
+			"path": "shared",
+		},
+		{
+			"name": "ui",
+			"path": "ui",
+		},
+		{
+			"name": "server",
+			"path": "server",
+		},
+	],
 }
