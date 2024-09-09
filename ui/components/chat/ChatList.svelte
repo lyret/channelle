@@ -111,7 +111,6 @@
 		align-items: normal;
 		align-content: normal;
 		height: 100%;
-		max-height: 800px;
 	}
 	.tab-container {
 		display: block;
