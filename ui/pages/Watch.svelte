@@ -6,7 +6,7 @@
 	import Actions from '~/components/watch/Actions.svelte';
 	import { createMediaLayoutStore, mediaParticipants } from '~/stores/media';
 	//@ts-ignore
-	import imgSrc from '../assets/images/curtains.jpg';
+	import curtainsSrc from '../assets/images/curtains.jpg';
 
 	let muted: boolean = true;
 
@@ -17,6 +17,10 @@
 	$: width = Math.max(matrix.length ? matrix[0].length : 0, 1);
 </script>
 
+<!-- Make sure the curtain image is preloaded -->
+<svelte:head>
+	<link rel="preload" as="image" href={curtainsSrc} />
+</svelte:head>
 <div class="watch-container">
 	<div class={`watch-grid cols-${width} rows-${height}`}>
 		{#each matrix as row}
