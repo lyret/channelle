@@ -5,6 +5,7 @@
 	import ChatList from '~/components/chat/ChatList.svelte';
 	import ParticipantsList from '~/components/manage/ParticipantsList.svelte';
 	import SceneSelector from '~/components/manage/SceneSelector.svelte';
+	import MediaLibraryPane from '~/components/manage/MediaLibraryPane.svelte';
 </script>
 
 <!-- Header -->
@@ -29,6 +30,11 @@
 		{#if $openPanels['chatt']}
 			<div class="cell">
 				<ChatList />
+			</div>
+		{/if}
+		{#if $openPanels['medialibrary']}
+			<div class="cell">
+				<MediaLibraryPane />
 			</div>
 		{/if}
 	</div>

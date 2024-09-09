@@ -20,18 +20,6 @@
 				>s t i n a o c h v i k</span
 			>
 		</li>
-		<!-- <li class:is-active={$openPanels['live']}>
-			<a on:click={() => togglePanel('live')}
-				><span class="icon"><ion-icon name="play"></ion-icon></span> Live
-				<span class="icon"
-					><ion-icon
-						name={$openPanels['live']
-							? 'checkmark-circle-outline'
-							: 'ellipse-outline'}
-					></ion-icon></span
-				>
-			</a>
-		</li> -->
 		<li class:is-active={$openPanels['scenes']}>
 			<a on:click={() => togglePanel('scenes')}
 				><span class="icon"><ion-icon name="albums"></ion-icon></span> Scenen
@@ -63,6 +51,18 @@
 				Chatt<span class="icon"
 					><ion-icon
 						name={$openPanels['chatt']
+							? 'checkmark-circle-outline'
+							: 'ellipse-outline'}
+					></ion-icon></span
+				></a
+			>
+		</li>
+		<li class:is-active={$openPanels['medialibrary']}>
+			<a on:click={() => togglePanel('medialibrary')}
+				><span class="icon"><ion-icon name="images-outline"></ion-icon></span>
+				Mediabibliotek<span class="icon"
+					><ion-icon
+						name={$openPanels['medialibrary']
 							? 'checkmark-circle-outline'
 							: 'ellipse-outline'}
 					></ion-icon></span
