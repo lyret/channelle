@@ -4,15 +4,15 @@
 	import MediaAudio from '~/components/watch/MediaAudio.svelte';
 	import ChatView from '~/components/watch/ChatView.svelte';
 	import Actions from '~/components/watch/Actions.svelte';
-	import { createMediaLayoutStore, mediaParticipants } from '~/stores/media';
-	//@ts-ignore
+	import { createMediaOptionStore, mediaParticipants } from '~/stores/media';
 	import curtainsSrc from '../assets/images/curtains.jpg';
 
 	let muted: boolean = true;
 
-	let layout = createMediaLayoutStore();
+	let curtains = createMediaOptionStore('curtains');
+	let layout = createMediaOptionStore('layout');
 
-	$: matrix = $layout.layout || [];
+	$: matrix = $layout || [];
 	$: height = Math.max(matrix.length, 1);
 	$: width = Math.max(matrix.length ? matrix[0].length : 0, 1);
 </script>
@@ -21,6 +21,7 @@
 <svelte:head>
 	<link rel="preload" as="image" href={curtainsSrc} />
 </svelte:head>
+
 <div class="watch-container">
 	<div class={`watch-grid cols-${width} rows-${height}`}>
 		{#each matrix as row}
@@ -50,9 +51,13 @@
 	<div class="watch-actions">
 		<Actions />
 	</div>
-	{#if $layout.curtains}
+	{#if $curtains}
 		<!-- svelte-ignore a11y-missing-attribute -->
-		<img class="watch-curtains" src={imgSrc} transition:slide={{ axis: 'y' }} />
+		<img
+			class="watch-curtains"
+			src={curtainsSrc}
+			transition:slide={{ axis: 'y' }}
+		/>
 	{/if}
 </div>
 

@@ -3,12 +3,13 @@ import { derived } from 'svelte/store';
 import { currentParticipant } from '../connection';
 import { createMediaStore } from '../_mediaStore';
 import { createDatabaseStore } from '../_databaseStore';
-import { createMediaLayoutStore } from './mediaLayout';
+import { createMediaOptionStore } from './mediaOptions';
 
 const remoteMediaStreams = createMediaStore('remoteMediaStreams');
 const localMediaStream = createMediaStore('localMediaStream');
 const participants = createDatabaseStore('participant');
-const layout = createMediaLayoutStore();
+const layout = createMediaOptionStore('layout');
+const allowVisitorAudio = createMediaOptionStore('allowVisitorAudio');
 
 /** Store value */
 type MediaParticipants = {
@@ -32,6 +33,7 @@ function createMediaParticipantsStore(): MediaParticipantsStore {
 			currentParticipant,
 			localMediaStream,
 			layout,
+			allowVisitorAudio,
 		],
 		([
 			$remoteMediaStreams,
@@ -39,6 +41,7 @@ function createMediaParticipantsStore(): MediaParticipantsStore {
 			$currentParticipant,
 			$localMediaStream,
 			$layout,
+			$allowVisitorAudio,
 		]) => {
 			const results: MediaParticipants = {
 				audio: [],
@@ -46,12 +49,13 @@ function createMediaParticipantsStore(): MediaParticipantsStore {
 				actors: {},
 				online: [],
 			};
-			const layoutedActorsRecord: Record<number, true | undefined> =
-				$layout.layout
-					.flat()
-					.filter((e) => e.type == 'actor' && e.id)
-					.map((e: any) => e.id)
-					.reduce((obj, nr) => ({ [nr]: true, ...obj }), {});
+			const layoutedActorsRecord: Record<number, true | undefined> = (
+				$layout || []
+			)
+				.flat()
+				.filter((e) => e.type == 'actor' && e.id)
+				.map((e: any) => e.id)
+				.reduce((obj, nr) => ({ [nr]: true, ...obj }), {});
 
 			for (const participant of $participants) {
 				if (participant.blocked) {
@@ -87,7 +91,7 @@ function createMediaParticipantsStore(): MediaParticipantsStore {
 				} else {
 					if (
 						$remoteMediaStreams[participant.id] &&
-						$layout.allowVisitorAudio &&
+						$allowVisitorAudio &&
 						participant.allowedAudio
 					) {
 						results.audio.push($remoteMediaStreams[participant.id]);

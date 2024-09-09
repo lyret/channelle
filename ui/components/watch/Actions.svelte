@@ -6,9 +6,10 @@
 	import { createMediaStore } from '~/stores';
 	import { currentParticipant } from '~/stores/connection';
 	import ChatInput from '~/components/chat/ChatInput.svelte';
-	import { createMediaLayoutStore } from '~/stores/media';
+	import { createMediaOptionStore } from '~/stores/media';
 
-	let layout = createMediaLayoutStore();
+	let allowChat = createMediaOptionStore('allowChat');
+	let allowVisitorAudio = createMediaOptionStore('allowVisitorAudio');
 	const isProducingVideo = createMediaStore('isProducingVideo');
 	const isProducingAudio = createMediaStore('isProducingAudio');
 
@@ -66,7 +67,7 @@
 			<span>{$isProducingVideo ? 'Stäng av kameran' : 'Starta kameran'}</span>
 		</button>
 	{/if}
-	{#if $currentParticipant.actor || $layout.allowVisitorAudio}
+	{#if $currentParticipant.actor || $allowVisitorAudio}
 		<button
 			type="button"
 			class={btnClassList}
@@ -87,7 +88,7 @@
 			>
 		</button>
 	{/if}
-	{#if $layout.allowChat}
+	{#if $allowChat}
 		<ChatInput />
 	{/if}
 	<!-- <button class="button icon">

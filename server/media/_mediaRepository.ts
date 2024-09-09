@@ -1,7 +1,7 @@
 import * as MediaSoup from 'mediasoup';
 import * as SocketIO from 'socket.io';
 import { createWebRTCTransport } from './_webRtcTransport';
-import { MediaRequests, MediaLayout } from '../../shared';
+import { MediaRequests, MediaOptions } from '../../shared';
 import { Repository } from '../../database';
 
 /** Media Repository implementation, keep tracks of media streams */
@@ -12,11 +12,10 @@ export class MediaRepository {
 	// Linked participant ids
 	private _linkedParticipants: Map<string, number> = new Map();
 
-	// Current media layout
-	private _mediaLayout: MediaLayout = {
+	// Current configured media options on server launch
+	private _mediaOptions: MediaOptions = {
 		layout: [],
 		curtains: false,
-		name: 'curtains',
 	};
 
 	// Media entries
@@ -205,12 +204,15 @@ export class MediaRepository {
 		}) => Promise<MediaRequests[Type][1]> | MediaRequests[Type][1];
 	} {
 		return {
-			media_layout: ({ data }) => {
-				if (data && data.name) {
-					this._mediaLayout = data;
-					MediaRepository._io?.emit('media_layout_update', this._mediaLayout);
+			options_set: ({ data: { option, value } }) => {
+				if (option) {
+					this._mediaOptions[option] = value as never;
+					MediaRepository._io?.emit('media_options_update', this._mediaOptions);
 				}
-				return this._mediaLayout;
+				return this._mediaOptions[option];
+			},
+			options: () => {
+				return this._mediaOptions;
 			},
 			server_rtp_capabilities: () => {
 				return this._mediaRouter.rtpCapabilities;

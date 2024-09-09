@@ -3,6 +3,6 @@ export type {
 	ConnectionStatusName,
 	SubscriptionMessage,
 	MediaRequests,
-	MediaLayout,
+	MediaOptions,
 	ParticipationStatusName,
 } from '../../shared';

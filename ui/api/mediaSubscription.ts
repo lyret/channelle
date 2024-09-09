@@ -1,6 +1,6 @@
 import * as MediaSoup from 'mediasoup-client';
 import Emittery from 'emittery';
-import type { MediaLayout, MediaRequests } from './_connectionTypes';
+import type { MediaOptions, MediaRequests } from './_connectionTypes';
 import { Subscription } from './_subscription';
 
 /** Available events emitted from the API class implementation */
@@ -325,13 +325,22 @@ export class MediaSubscription extends Subscription {
 		return transport;
 	}
 
-	// Start / Stop
+	// Methods
 
-	public static async layout(
-		layout: MediaLayout | undefined
-	): Promise<MediaLayout> {
-		return this.request('media_layout', layout);
+	public static async getCurrentOptions<
+		K extends keyof MediaOptions,
+	>(): Promise<MediaOptions> {
+		return this.request('options');
 	}
+
+	public static async updateOption<K extends keyof MediaOptions>(
+		option: K,
+		value: MediaOptions[K] | undefined
+	): Promise<MediaOptions[K] | undefined> {
+		return this.request('options_set', { option, value }) as never;
+	}
+
+	// Start / Stop
 
 	/** Creates a receiver transport to all the current publishing remote sources */
 	public static async consume() {

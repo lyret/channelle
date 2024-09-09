@@ -1,2 +1,2 @@
 export * from './mediaParticipants';
-export * from './mediaLayout';
+export * from './mediaOptions';
