@@ -2,18 +2,18 @@
 	import { currentParticipant } from '~/stores/connection';
 	import { blur } from 'svelte/transition';
 	import { openPanels, togglePanel } from '~/stores/ui';
-	import imgSrc from '../../assets/images/plum.png';
+	import flowerSrc from '../../assets/images/flower.png';
 </script>
 
 <div
 	class="image-container has-text-centered"
 	style="height:120px"
-	in:blur={{ duration: 500 }}
+	in:blur={{ duration: 5000, delay: 2000 }}
 >
-	<img src={imgSrc} alt="logotyp" style="height:80px" />
-	<p>{$currentParticipant.name}</p>
+	<img src={flowerSrc} alt="logotyp" class="mt-2" style="height:80px" />
+	<p>Channelle: {$currentParticipant.name}</p>
 </div>
-<div class="tabs is-centered" in:blur={{ duration: 700 }}>
+<div class="tabs is-centered is-primary" in:blur={{ duration: 100 }}>
 	<ul>
 		<li>
 			<span class="is-plants has-text-centered is-size-4 is-hidden-touch"

@@ -1,5 +1,13 @@
 @charset "utf-8";
 
+$primary: #fb00a4;
+$info: #fd584d;
+$link: #3e9cbf;
+$success: #21c40a;
+$warning: #f2c43d;
+$danger: #b83334;
+$background: #a93a3a;
+
 /* Use Bulma */
 @use 'bulma/sass' with (
 	// Responsive breakpoints
@@ -11,13 +19,16 @@
 	$family-secondary: 'ThisCafe',
 
 	// Colors
-	$primary: #a55bd3,
-	$link: #3e9cbf,
-	$info: #ff9247,
-	$success: #21c40a,
-	$warning: #f2c43d,
-	$danger: #b83334,
-	$background: #fffff
+	$primary: $primary,
+	$info: $info,
+	$link: $link,
+	$success: $success,
+	$warning: $warning,
+	$danger: $danger,
+	$background: $background,
+	// Tabs
+	$tabs-link-active-color: $primary,
+	$tabs-link-active-border-bottom-color: $primary
 );
 // $family-primary: "FuturaHandwritten",
 @use './bulma-list.scss';
@@ -58,7 +69,7 @@
 
 body,
 html {
-	background-color: #ffffff;
+	background-color: #000000;
 }
 
 th {

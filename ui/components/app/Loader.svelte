@@ -14,19 +14,23 @@
 
 {#if !hidden}
 	<section
-		class="section"
+		class="section is-flex is-justify-content-center"
 		in:blur={{ duration: 1000 }}
 		out:blur={{ duration: 500 }}
 	>
-		<div class="container">
-			<div class="columns is-centered is-vcentered">
-				<div class="column is-5 has-text-centered">
-					<progress class="progress is-primary" />
-					<p class="is-family-code">
-						{label}
-					</p>
-				</div>
-			</div>
+		<div class="has-text-centered p-12 notification is-rounded">
+			<progress class="progress is-primary" />
+			<p class="is-family-code">
+				{label}
+			</p>
 		</div>
 	</section>
 {/if}
+
+<style>
+	.notification {
+		margin-top: 10%;
+		min-width: 150px;
+		width: 30%;
+	}
+</style>
