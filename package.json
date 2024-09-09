@@ -3,7 +3,7 @@
 	"description": "A multimedia communication application for online theater",
 	"version": "1.0.0",
 	"author": "Viktor Lyresten <viktor@lyresten.se>",
-	"license": "MIT",
+	"license": "CC-BY-NC/4.0",
 	"scripts": {
 		"init": "prisma generate",
 		"dev": "node cli.mjs -dev",
