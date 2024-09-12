@@ -73,7 +73,6 @@ export async function createServer(): Promise<Http.Server> {
 			switch (type) {
 				// Refresh the connected clients
 				case 'build-event':
-					console.log('HERE!!', data);
 					io.emit('build-event', data);
 					break;
 				// Unhandled messages
