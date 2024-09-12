@@ -33,9 +33,11 @@ export async function createClientBuildContext(CONFIG, callback) {
 		loader: {
 			'.jpg': 'file',
 			'.png': 'file',
+			'.gif': 'file',
 			'.ttf': 'file',
 			'.otf': 'file',
 			'.svg': 'file',
+			'.mp4': 'file',
 		},
 		plugins: [
 			EsbuildHtml(),
