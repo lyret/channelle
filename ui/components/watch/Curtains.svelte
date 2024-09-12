@@ -11,7 +11,7 @@
 		var animatedImage = new Image();
 		animatedImage.src = curtainsAnimatedSrc;
 		animatedImage.onload = () => {
-			setTimeout(() => (ref.src = curtainsAnimatedSrc), 2000);
+			setTimeout(() => (ref.src = curtainsAnimatedSrc), 1000);
 		};
 	});
 </script>
@@ -26,13 +26,22 @@
 		bind:this={ref}
 		class="curtains"
 		src={curtainsSrc}
-		transition:slide={{ axis: 'y' }}
+		in:slide={{ axis: 'y', duration: 1000 }}
+		out:slide={{ axis: 'y', duration: 500, delay: 500 }}
 	/>
 </div>
 
 {#if muted}
-	<div class="overlay">
-		<div class="notification">
+	<div
+		class="overlay"
+		in:blur={{ delay: 1200, duration: 500 }}
+		out:blur={{ delay: 0, duration: 500 }}
+	>
+		<div
+			class="notification"
+			in:blur={{ delay: 1200, duration: 500 }}
+			out:blur={{ delay: 0, duration: 500 }}
+		>
 			<button
 				class="button is-large is-dark is-rounded"
 				on:click={() => (muted = false)}>Gå in</button
@@ -43,6 +52,7 @@
 
 <style>
 	.curtains {
+		z-index: 9998;
 		position: fixed;
 		top: 0;
 		left: 0;
@@ -52,6 +62,7 @@
 	}
 
 	.overlay {
+		z-index: 9999;
 		position: fixed;
 		top: 0;
 		left: 0;
