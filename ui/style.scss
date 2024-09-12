@@ -38,9 +38,15 @@ $background: #a93a3a;
 	font-family: 'Modak';
 	src: url('./assets/fonts/modak.ttf') format('truetype');
 }
+.is-family-modak {
+	font-family: 'Modak' !important;
+}
 @font-face {
 	font-family: 'Chentalle';
 	src: url('./assets/fonts/chentalle.otf') format('opentype');
+}
+.is-family-chentalle {
+	font-family: 'Chentalle' !important;
 }
 @font-face {
 	font-family: 'ThisCafe';

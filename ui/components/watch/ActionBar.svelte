@@ -8,12 +8,11 @@
 	import ChatInput from '~/components/chat/ChatInput.svelte';
 	import { createMediaOptionStore } from '~/stores/media';
 
+	let isFullscreen = isInFullscreen();
 	let allowChat = createMediaOptionStore('allowChat');
 	let allowVisitorAudio = createMediaOptionStore('allowVisitorAudio');
-	const isProducingVideo = createMediaStore('isProducingVideo');
-	const isProducingAudio = createMediaStore('isProducingAudio');
-
-	let isFullscreen = isInFullscreen();
+	let isProducingVideo = createMediaStore('isProducingVideo');
+	let isProducingAudio = createMediaStore('isProducingAudio');
 
 	async function updateName() {
 		if ($currentParticipant) {
@@ -26,6 +25,8 @@
 			});
 		}
 	}
+
+	// Class list of all buttons in the action bar
 	const btnClassList = 'button is-dark';
 </script>
 
@@ -88,13 +89,9 @@
 			>
 		</button>
 	{/if}
-	{#if $allowChat}
+	{#if $allowChat || true}
 		<ChatInput />
 	{/if}
-	<!-- <button class="button icon">
-		<ion-icon name="expand-outline"></ion-icon>
-		<span>Fullscreen</span>
-	</button> -->
 	{#if $currentParticipant.actor || $currentParticipant.manager}
 		<a class={btnClassList} transition:blur href="/backstage" target="_blank">
 			<span>Gå Backstage </span>
@@ -104,13 +101,3 @@
 		>
 	{/if}
 </div>
-
-<!-- <div>
-		<button id="btn_screen" on:click={() => {
-			// TODO: Make display media passable so that its permitted
-			console.log(navigator.mediaDevices.getDisplayMedia({
-			  video: true,
-			}));
-			api.publish("screen")}} >Share Screen</button>
-		<span id="screen_status"></span>
-	</div> -->

@@ -2,7 +2,7 @@
 	import MediaView from '~/components/watch/MediaView.svelte';
 	import MediaAudio from '~/components/watch/MediaAudio.svelte';
 	import ChatView from '~/components/watch/ChatView.svelte';
-	import Actions from '~/components/watch/Actions.svelte';
+	import Actions from '~/components/watch/ActionBar.svelte';
 	import Curtains from '~/components/watch/Curtains.svelte';
 	import { createMediaOptionStore, mediaParticipants } from '~/stores/media';
 
@@ -85,6 +85,10 @@
 		flex-grow: 0;
 		flex-shrink: 0;
 		flex-basis: 1;
+
+		border-top: 1px solid var(--bulma-border);
+		z-index: 10;
+		box-shadow: 0px -10px 10px black;
 	}
 
 	.windows {
@@ -101,14 +105,15 @@
 
 	.window {
 		color: white;
-		flex-grow: 1;
-		flex-shrink: 1;
+		flex-grow: 0;
+		flex-shrink: 0;
 		flex-basis: 0;
 		position: relative;
 		margin: 0;
 		padding: 8px;
 		display: block;
 		overflow: none;
+		max-height: 100%;
 	}
 
 	.text-window {

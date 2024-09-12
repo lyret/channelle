@@ -29,16 +29,16 @@
 		<div class="control is-expanded">
 			<input
 				type="text"
-				class="input is-rounded is-fullwidth"
+				class="input is-fullwidth"
 				class:is-large={isLarge}
 				bind:value={inputValue}
-				placeholder="..."
+				placeholder="Skriv ett chattmeddelande"
 			/>
 		</div>
 		<div class="control">
 			<button
 				type="submit"
-				class="button is-dark is-rounded"
+				class="button is-dark"
 				class:is-large={isLarge}
 				{disabled}
 				class:is-loading={loading}

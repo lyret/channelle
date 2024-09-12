@@ -145,7 +145,7 @@
 	.footer {
 		border-top: 1px solid var(--bulma-border);
 		z-index: 10;
-		/* box-shadow: 0px -20px 10px black; */
+		box-shadow: 0px -10px 10px black;
 		width: 100vw;
 		overflow: hidden;
 		-webkit-font-smoothing: antialiased;
