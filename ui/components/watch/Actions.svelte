@@ -26,7 +26,7 @@
 			});
 		}
 	}
-	const btnClassList = 'button is-dark is-rounded';
+	const btnClassList = 'button is-dark';
 </script>
 
 <div class="buttons is-centered is-fullwidth">

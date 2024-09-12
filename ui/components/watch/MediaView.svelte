@@ -1,9 +1,11 @@
 <script lang="ts">
-	export let stream: MediaStream;
-
+	export let stream: MediaStream | undefined;
 	$: streamHasVideo = stream && stream.getVideoTracks().length;
 
 	function srcObject(node: any, stream: any) {
+		if (!stream) {
+			return undefined;
+		}
 		node.srcObject = stream;
 		return {
 			update(newStream: any) {
@@ -17,7 +19,6 @@
 
 {#if streamHasVideo}
 	<video
-		class="watch-video"
 		use:srcObject={stream}
 		controls={false}
 		autoplay
@@ -25,3 +26,13 @@
 		muted={true}
 	></video>
 {/if}
+
+<style>
+	video {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+	}
+</style>
