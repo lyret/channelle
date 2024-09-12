@@ -1,7 +1,23 @@
 <script lang="ts">
-	import { remove } from '~/api';
+	import { onMount } from 'svelte';
+	import { blur, type BlurParams } from 'svelte/transition';
+	import { scrollStore } from '~/legos/stores/scrollStore';
 	import { createDatabaseStore } from '~/stores';
 	import { currentParticipant } from '~/stores/connection';
+
+	let ref: HTMLDivElement;
+	let loaded = false;
+	let hasUnread = false;
+
+	onMount(() => {
+		if (ref) {
+			ref.addEventListener('scroll', () => {
+				if (hasUnread && ref.scrollTop >= ref.scrollHeight - ref.offsetHeight) {
+					hasUnread = false;
+				}
+			});
+		}
+	});
 
 	let allMessages = createDatabaseStore('message');
 	let participants = createDatabaseStore('participant');
@@ -16,15 +32,60 @@
 		const participant = $participants.find((p) => p.id == id);
 		return participant?.name || '';
 	}
+
+	function getBlurAnimationOptions(
+		message: (typeof allowedMessages)[0],
+		index: number
+	): BlurParams {
+		// Make all messages blur the same after the inital load
+		// and make sure that new messages are scrooled into view
+		// if already at the bottom
+		if (loaded) {
+			if (ref && ref.scrollHeight - ref.scrollTop < ref.scrollHeight / 4) {
+				ref.scroll({ top: ref.scrollHeight });
+			} else {
+				hasUnread = true;
+			}
+			return { delay: 0, duration: 700 };
+		}
+		if (index == allowedMessages.length - 1) {
+			loaded = true;
+			if (ref) {
+				ref.scroll({ top: ref.scrollHeight });
+			}
+		}
+
+		// Initial animation
+		return { delay: 0, duration: Math.min(2000, index * 100) };
+	}
 </script>
 
-<div class="chat-container">
+<div class="list-container">
 	<!-- svelte-ignore a11y-no-static-element-interactions -->
 	<!-- svelte-ignore a11y-click-events-have-key-events -->
-	<div class="notification mt-6 mb-6">
+	<div
+		class="notification"
+		in:blur={{ duration: 500 }}
+		bind:this={ref}
+		class:has-unread={hasUnread}
+	>
 		<div class="list">
-			{#each allowedMessages as message}
+			{#if !allowedMessages.length}
 				<div class="list-item">
+					<div class="list-item-content">
+						<div
+							class="list-item-title is-family-chentalle is-size-4 has-text-grey-light"
+						>
+							Här kommer chattmeddelanden att dyka upp..
+						</div>
+					</div>
+				</div>
+			{/if}
+			{#each allowedMessages as message, index}
+				<div
+					class="list-item"
+					in:blur={getBlurAnimationOptions(message, index)}
+				>
 					<div class="list-item-content">
 						<div
 							class:has-text-right={message.participantId ==
@@ -55,16 +116,17 @@
 </div>
 
 <style>
-	.chat-container {
+	.list-container {
 		position: absolute;
 		top: 0;
 		left: 0;
 		width: 100%;
 		height: 100%;
-		overflow: scroll;
-		padding: 16px;
+		padding: 64px 16px 64px 16px;
 	}
 	.notification {
+		max-height: 100%;
+		overflow: scroll;
 		display: block;
 		flex-grow: 1;
 		flex-shrink: 1;
@@ -73,9 +135,13 @@
 		align-self: auto;
 		order: 0;
 		padding: 8px;
+
+		transition: border 0.4s;
 	}
-	.list-item-rounded {
-		border-radius: 12px;
+	.notification.has-unread {
+		border-bottom-width: 4px;
+		border-bottom-color: var(--bulma-success);
+		border-bottom-style: groove;
 	}
 	.list-item-description {
 		font-weight: 900;
