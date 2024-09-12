@@ -5,7 +5,7 @@
 	} from '~/stores/connection';
 	import { route } from '~/stores/ui/url';
 
-	import ManagePage from '~/pages/Manage.svelte';
+	import ManagePage from '~/pages/BackstagePage.svelte';
 	import StagePage from '~/pages/StagePage.svelte';
 	import Loader from '~/components/app/Loader.svelte';
 	import Authenticate from '~/components/app/Authenticate.svelte';
