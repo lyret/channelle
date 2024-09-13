@@ -56,7 +56,7 @@ export async function createConfiguration() {
 		.flat()
 		.find((n) => !n.internal)?.address;
 
-	// Get the public IP of this server
+	// Get the public IP of this server FIXME: hangs forever when not connected to internet
 	const publicIP = await publicIpv4();
 
 	// Determine and define the most important runtime options given

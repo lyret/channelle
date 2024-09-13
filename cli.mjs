@@ -13,7 +13,6 @@ const channel = new BroadcastChannel(`cli-channel`);
 // ------------------------------------------
 // On file execution
 // ------------------------------------------
-
 // Client
 if (CONFIG.runtime.watch) {
 	try {
@@ -68,6 +67,11 @@ if (CONFIG.runtime.watch) {
 // Import and start the server directly
 if (CONFIG.runtime.start && !CONFIG.runtime.watch) {
 	await runServerCode(CONFIG);
+}
+
+// Exit if neither running or watching
+if (!CONFIG.runtime.start && !CONFIG.runtime.watch) {
+	process.exit(0);
 }
 
 // ------------------------------------------
