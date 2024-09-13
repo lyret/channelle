@@ -55,10 +55,14 @@
 			<span class="icon"><ion-icon name={'expand-outline'}></ion-icon></span>
 		{/if}
 	</button>
+
+	<!-- CURRENT USER -->
 	<button class={btnClassList} transition:blur on:click={updateName}>
 		<span class="icon"><ion-icon name="person-circle-outline"></ion-icon></span>
 		<span>{$currentParticipant?.name} </span></button
 	>
+
+	<!-- VIDEO -->
 	{#if $currentParticipant.actor || $currentParticipant.manager}
 		<button
 			type="button"
@@ -79,6 +83,8 @@
 			<span>{$isProducingVideo ? 'Stäng av kameran' : 'Starta kameran'}</span>
 		</button>
 	{/if}
+
+	<!-- AUDIO -->
 	{#if $currentParticipant.actor || $allowVisitorAudio}
 		<button
 			type="button"
@@ -118,12 +124,15 @@
 			<span>🌹</span></button
 		>
 	{/if}
+
+	<!-- BACKSTAGE LINK -->
 	{#if $currentParticipant.actor || $currentParticipant.manager}
 		<a class={btnClassList} transition:blur href="/backstage" target="_blank">
+			<span class="icon"><ion-icon name="speedometer"></ion-icon></span>
 			<span>Gå Backstage </span>
 			<span class="icon"
 				><ion-icon name="arrow-forward-circle-outline"></ion-icon></span
-			></a
-		>
+			>
+		</a>
 	{/if}
 </div>
