@@ -3,15 +3,8 @@
 	import MediaAudio from '~/components/watch/MediaAudio.svelte';
 	import ChatView from '~/components/watch/ChatView.svelte';
 	import Actions from '~/components/watch/ActionBar.svelte';
-	import Curtains from '~/components/watch/Curtains.svelte';
-	import {
-		createMediaOptionStore,
-		mediaParticipants,
-		curtains,
-	} from '~/stores/media';
-
-	let notLoaded: boolean = true;
-	let muted: boolean = true;
+	import { createMediaOptionStore, mediaParticipants } from '~/stores/media';
+	import { blur } from 'svelte/transition';
 
 	let layout = createMediaOptionStore('layout');
 
@@ -20,52 +13,46 @@
 	$: width = Math.max(matrix.length ? matrix[0].length : 0, 1);
 </script>
 
-{#if $curtains || !notLoaded}
-	<!-- CURTAINS -->
-	<Curtains />
-{:else}
-	<!-- WINDOWS, i.e. stage contents -->
-	<main>
-		<div
-			class={`windows window-cols-${width} window-rows-${height}`}
-			style={`
+<main in:blur={{ delay: 500, duration: 1000 }}>
+	<div
+		class={`windows window-cols-${width} window-rows-${height}`}
+		style={`
 			grid-template-columns: repeat(${width}, 1fr);
 			grid-template-rows: repeat(${height}, 1fr);
 		`}
-		>
-			{#each matrix as row}
-				{#each row as entry}
-					{#if entry.type == 'chat'}
+	>
+		{#each matrix as row}
+			{#each row as entry}
+				{#if entry.type == 'chat'}
+					<div class="window">
+						<ChatView />
+					</div>
+				{:else if entry.type == 'actor' && entry.id}
+					{#if $mediaParticipants.video[entry.id]}
 						<div class="window">
-							<ChatView />
+							<MediaView stream={$mediaParticipants.video[entry.id]} />
 						</div>
-					{:else if entry.type == 'actor' && entry.id}
-						{#if $mediaParticipants.video[entry.id]}
-							<div class="window">
-								<MediaView stream={$mediaParticipants.video[entry.id]} />
-							</div>
-						{:else}
-							<div class="window text-window">
-								<h1 class="title has-text-white">
-									{$mediaParticipants.actors[entry.id]?.name || '...'}
-								</h1>
-							</div>
-						{/if}
 					{:else}
-						<div class="window"></div>
+						<div class="window text-window">
+							<h1 class="title has-text-white">
+								{$mediaParticipants.actors[entry.id]?.name || '...'}
+							</h1>
+						</div>
 					{/if}
-				{/each}
+				{:else}
+					<div class="window"></div>
+				{/if}
 			{/each}
-		</div>
-		<div class="footer">
-			<Actions />
-		</div>
-	</main>
+		{/each}
+	</div>
+	<div class="footer">
+		<Actions />
+	</div>
+</main>
 
-	{#each $mediaParticipants.audio as stream}
-		<MediaAudio {muted} {stream} />
-	{/each}
-{/if}
+{#each $mediaParticipants.audio as stream}
+	<MediaAudio {stream} />
+{/each}
 
 <style>
 	main {

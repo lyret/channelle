@@ -9,7 +9,7 @@
 	import MediaLibraryInstrument from '~/components/instruments/MediaLibraryInstrument.svelte';
 </script>
 
-<main>
+<main in:blur={{ delay: 500, duration: 1000 }}>
 	<!-- Header -->
 	<div
 		class="image-container has-text-centered header"

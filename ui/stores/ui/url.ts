@@ -1,7 +1,7 @@
 //@see https://bjornlu.com/blog/simple-svelte-routing-with-reactive-urls/
 
-import { derived, writable, Writable } from 'svelte/store';
-import { router, Route, defaultRoute } from './routes';
+import { derived, writable, type Writable } from 'svelte/store';
+import { router, type Route, defaultRoute } from './routes';
 export type { Route } from './routes';
 export { linkTo, gotoRoute, replaceRoute } from './routes';
 

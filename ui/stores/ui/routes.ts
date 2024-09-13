@@ -1,8 +1,6 @@
 import UniversalRouter, {
-	RouteContext,
-	RouteParams,
-	RouterContext,
-	Routes,
+	type RouteContext,
+	type RouterContext,
 } from 'universal-router';
 import generateUrls from 'universal-router/generateUrls';
 
@@ -28,8 +26,7 @@ const route: <Params = {}>(
 });
 
 const routes = <const>{
-	foyer: route('/', 'foyer'),
-	salon: route('/salon', 'salon'),
+	stage: route('/', 'stage'),
 	backstage: route('/backstage', 'backstage'),
 };
 
