@@ -31,6 +31,7 @@ export async function createClientBuildContext(CONFIG, callback) {
 		treeShaking: true,
 		conditions: ['svelte'],
 		loader: {
+			'.base64': 'dataurl',
 			'.jpg': 'file',
 			'.png': 'file',
 			'.gif': 'file',
