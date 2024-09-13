@@ -338,6 +338,7 @@ export class MediaSubscription extends Subscription {
 		value: MediaOptions[K] | undefined
 	): Promise<MediaOptions[K] | undefined> {
 		return this.request('options_set', { option, value }) as never;
+	}
 
 	public static async addEffect(
 		type: 'applause' | 'flowers',
