@@ -6,12 +6,10 @@
 	import { update } from '~/api';
 	import { createMediaStore } from '~/stores';
 	import { currentParticipant } from '~/stores/connection';
-	import ChatInput from '~/components/chat/ChatInput.svelte';
 	import { createMediaOptionStore } from '~/stores/media';
 	import { createEffectsStore } from '~/stores/particles/effectsStore';
 
 	let isFullscreen = isInFullscreen();
-	let allowChat = createMediaOptionStore('allowChat');
 	let allowVisitorAudio = createMediaOptionStore('allowVisitorAudio');
 	let effectsAreEnabled = createMediaOptionStore('effectsAreEnabled');
 	let isProducingVideo = createMediaStore('isProducingVideo');
@@ -102,8 +100,6 @@
 			>
 		</button>
 	{/if}
-	{#if $allowChat || true}
-		<ChatInput />
 
 	<!-- EFFECTS -->
 	{#if $effectsAreEnabled}

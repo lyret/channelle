@@ -1,13 +1,15 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { blur, type BlurParams } from 'svelte/transition';
-	import { scrollStore } from '~/legos/stores/scrollStore';
 	import { createDatabaseStore } from '~/stores';
 	import { currentParticipant } from '~/stores/connection';
+	import ChatInput from '../chat/ChatInput.svelte';
+	import { createMediaOptionStore } from '~/stores/media';
 
 	let ref: HTMLDivElement;
 	let loaded = false;
 	let hasUnread = false;
+	let allowChat = createMediaOptionStore('allowChat');
 
 	onMount(() => {
 		if (ref) {
@@ -80,39 +82,43 @@
 						</div>
 					</div>
 				</div>
-			{/if}
-			{#each allowedMessages as message, index}
-				<div
-					class="list-item"
-					in:blur={getBlurAnimationOptions(message, index)}
-				>
-					<div class="list-item-content">
-						<div
-							class:has-text-right={message.participantId ==
-								$currentParticipant.id}
-							class="list-item-description is-family-chentalle is-size-6"
-							class:has-text-info-light={message.backstage}
-							class:has-text-grey-light={!message.backstage}
-						>
-							{participantName(message.participantId)} ( {new Date(
-								message.createdAt
-							).getHours()}:{new Date(message.createdAt).getMinutes()}
-							{message.backstage ? 'backstage' : ''}
-							)
-						</div>
-						<div
-							class:is-underlined={message.participantId ==
-								$currentParticipant.id}
-							class="list-item-title"
-							class:has-text-info={message.backstage}
-						>
-							{message.message}
+			{:else}
+				{#each allowedMessages as message, index}
+					<div
+						class="list-item"
+						in:blur={getBlurAnimationOptions(message, index)}
+					>
+						<div class="list-item-content">
+							<div
+								class:has-text-right={message.participantId ==
+									$currentParticipant.id}
+								class="list-item-description is-family-chentalle is-size-6"
+								class:has-text-info-light={message.backstage}
+								class:has-text-grey-light={!message.backstage}
+							>
+								{participantName(message.participantId)} ( {new Date(
+									message.createdAt
+								).getHours()}:{new Date(message.createdAt).getMinutes()}
+								{message.backstage ? 'backstage' : ''}
+								)
+							</div>
+							<div
+								class:is-underlined={message.participantId ==
+									$currentParticipant.id}
+								class="list-item-title"
+								class:has-text-info={message.backstage}
+							>
+								{message.message}
+							</div>
 						</div>
 					</div>
-				</div>
-			{/each}
+				{/each}
+			{/if}
 		</div>
 	</div>
+	{#if $allowChat}
+		<ChatInput />
+	{/if}
 </div>
 
 <style>
@@ -122,20 +128,21 @@
 		left: 0;
 		width: 100%;
 		height: 100%;
-		padding: 64px 16px 64px 16px;
+		padding: 32px 16px 32px 16px;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
 	}
 	.notification {
 		max-height: 100%;
 		overflow: scroll;
 		display: block;
-		flex-grow: 1;
-		flex-shrink: 1;
+		flex-grow: 0;
 		overflow: scroll;
 		flex-basis: auto;
 		align-self: auto;
 		order: 0;
 		padding: 8px;
-
 		transition: border 0.4s;
 	}
 	.notification.has-unread {
