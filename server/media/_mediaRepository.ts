@@ -204,6 +204,14 @@ export class MediaRepository {
 		}) => Promise<MediaRequests[Type][1]> | MediaRequests[Type][1];
 	} {
 		return {
+			effects_add: ({ data: { type, number } }) => {
+				MediaRepository._io?.emit('effects_trigger', { type, number });
+				return undefined;
+			},
+			effects_trigger: () => {
+				// Clients are not allowed to trigger effects directly
+				return undefined;
+			},
 			options_set: ({ data: { option, value } }) => {
 				if (option) {
 					this._mediaOptions[option] = value as never;

@@ -5,6 +5,7 @@
 
 	let selectedLayout = '';
 	let allowVisitorAudio = createMediaOptionStore('allowVisitorAudio');
+	let effectsAreEnabled = createMediaOptionStore('effectsAreEnabled');
 	let curtains = createMediaOptionStore('curtains');
 	let layout = createMediaOptionStore('layout');
 	let allowChat = createMediaOptionStore('allowChat');
@@ -63,6 +64,13 @@
 	on:click={() => {
 		allowVisitorAudio.set(!$allowVisitorAudio);
 	}}>Tillåt ljud från publiken</button
+>
+<button
+	class="button is-dark is-fullwidth"
+	class:is-success={$effectsAreEnabled}
+	on:click={() => {
+		effectsAreEnabled.set(!$effectsAreEnabled);
+	}}>Tillåt blommor och applåder</button
 >
 <hr />
 <h1 class="title">Välj Scenlayout</h1>

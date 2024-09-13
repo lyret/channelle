@@ -38,6 +38,7 @@ export async function createClientBuildContext(CONFIG, callback) {
 			'.otf': 'file',
 			'.svg': 'file',
 			'.mp4': 'file',
+			'.wav': 'file',
 		},
 		plugins: [
 			EsbuildHtml(),

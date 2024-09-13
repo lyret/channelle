@@ -1,8 +1,8 @@
-import { eventListenerStore } from "$lib/stores/eventListenerStore";
-import confetti from "canvas-confetti";
+import { eventListenerStore } from '$lib/stores/eventListenerStore';
+import confetti from 'canvas-confetti';
 
 interface ConfettiActionParams {
-	type: "simple" | "school-pride";
+	type: 'simple' | 'school-pride';
 	particleCount: number;
 	spread: number;
 	origin: {
@@ -12,7 +12,7 @@ interface ConfettiActionParams {
 }
 
 const defaultConfettiParams = {
-	type: "simple",
+	type: 'simple',
 	particleCount: 100,
 	spread: 70,
 	origin: { y: 0.5, x: 0.5 },
@@ -32,11 +32,11 @@ export function confettiAction<T extends HTMLElement>(
 		destroy();
 
 		async function handleClick() {
-			if (params.type === "simple") {
+			if (params.type === 'simple') {
 				confetti(params);
 			} else {
 				const end = Date.now() + 1 * 1000;
-				const colors = ["#bb0000", "#ffffff"];
+				const colors = ['#bb0000', '#ffffff'];
 
 				(function frame() {
 					confetti({
@@ -61,7 +61,7 @@ export function confettiAction<T extends HTMLElement>(
 			}
 		}
 
-		({ stop } = eventListenerStore("click", handleClick, node));
+		({ stop } = eventListenerStore('click', handleClick, node));
 	};
 
 	update({ ...defaultConfettiParams, ...params });

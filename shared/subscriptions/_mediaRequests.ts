@@ -5,6 +5,7 @@ export type MediaOptions = {
 	curtains?: boolean;
 	allowChat?: boolean;
 	allowVisitorAudio?: boolean;
+	effectsAreEnabled?: boolean;
 	layout: Array<Array<{ type: 'actor'; id: number } | { type: 'chat' }>>;
 };
 
@@ -19,6 +20,8 @@ type MediaOptionsRequest<K extends keyof MediaOptions = keyof MediaOptions> = [
  * requestType: [parameterData, returnedData]
  */
 export type MediaRequests = {
+	effects_trigger: [undefined, Record<string, number>];
+	effects_add: [{ type: string; number: number }, undefined];
 	options_set: MediaOptionsRequest;
 	options: [undefined, MediaOptions];
 	server_rtp_capabilities: [{}, MediaSoup.types.RtpCapabilities];

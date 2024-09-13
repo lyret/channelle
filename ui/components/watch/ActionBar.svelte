@@ -1,18 +1,22 @@
 <script lang="ts">
 	import { fullScreenAction } from '$lib/actions/fullScreenAction';
 	import { isInFullscreen } from '$lib/stores/fullscreenStore';
+	import { onMount } from 'svelte';
 	import { blur } from 'svelte/transition';
 	import { update } from '~/api';
 	import { createMediaStore } from '~/stores';
 	import { currentParticipant } from '~/stores/connection';
 	import ChatInput from '~/components/chat/ChatInput.svelte';
 	import { createMediaOptionStore } from '~/stores/media';
+	import { createEffectsStore } from '~/stores/particles/effectsStore';
 
 	let isFullscreen = isInFullscreen();
 	let allowChat = createMediaOptionStore('allowChat');
 	let allowVisitorAudio = createMediaOptionStore('allowVisitorAudio');
+	let effectsAreEnabled = createMediaOptionStore('effectsAreEnabled');
 	let isProducingVideo = createMediaStore('isProducingVideo');
 	let isProducingAudio = createMediaStore('isProducingAudio');
+	let effects = createEffectsStore();
 
 	async function updateName() {
 		if ($currentParticipant) {
@@ -25,6 +29,15 @@
 			});
 		}
 	}
+
+	// Make sure effects are rendered
+	onMount(() => {
+		const stop = effects.subscribe(() => {});
+
+		return () => {
+			stop();
+		};
+	});
 
 	// Class list of all buttons in the action bar
 	const btnClassList = 'button is-dark';
@@ -91,6 +104,23 @@
 	{/if}
 	{#if $allowChat || true}
 		<ChatInput />
+
+	<!-- EFFECTS -->
+	{#if $effectsAreEnabled}
+		<button
+			class={btnClassList + ' is-success is-light'}
+			transition:blur
+			on:click={() => effects.set({ type: 'applause', number: 1 })}
+		>
+			<span>👏</span></button
+		>
+		<button
+			class={btnClassList + ' is-primary is-light'}
+			transition:blur
+			on:click={() => effects.set({ type: 'flowers', number: 1 })}
+		>
+			<span>🌹</span></button
+		>
 	{/if}
 	{#if $currentParticipant.actor || $currentParticipant.manager}
 		<a class={btnClassList} transition:blur href="/backstage" target="_blank">

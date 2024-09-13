@@ -4,12 +4,15 @@
 	import ChatView from '~/components/watch/ChatView.svelte';
 	import Actions from '~/components/watch/ActionBar.svelte';
 	import Curtains from '~/components/watch/Curtains.svelte';
-	import { createMediaOptionStore, mediaParticipants } from '~/stores/media';
+	import {
+		createMediaOptionStore,
+		mediaParticipants,
+		curtains,
+	} from '~/stores/media';
 
 	let notLoaded: boolean = true;
 	let muted: boolean = true;
 
-	let curtains = createMediaOptionStore('curtains');
 	let layout = createMediaOptionStore('layout');
 
 	$: matrix = $layout || [];
