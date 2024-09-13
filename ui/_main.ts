@@ -1,5 +1,5 @@
 import '@babel/polyfill';
-import { enableMediaSoupDebugging } from './functions/enableMediaSoupDebugging';
+import { enableMediaSoupDebugging } from './stores/media/enableMediaSoupDebugging';
 
 import App from './App.svelte';
 
