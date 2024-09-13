@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { create } from '~/api';
 	import { currentParticipant } from '~/stores/connection';
 	export let makeBackstage: boolean = false;
@@ -6,6 +7,8 @@
 	let inputValue: string = '';
 	let loading = false;
 	$: disabled = loading || !inputValue.length;
+
+	let inputRef: HTMLInputElement;
 
 	async function onSubmit(e: SubmitEvent) {
 		e.preventDefault();
@@ -22,6 +25,12 @@
 		loading = false;
 		inputValue = '';
 	}
+
+	onMount(() => {
+		if (inputRef) {
+			inputRef.focus();
+		}
+	});
 </script>
 
 <form on:submit={onSubmit} class="form">
@@ -29,6 +38,7 @@
 		<div class="control is-expanded">
 			<input
 				type="text"
+				bind:this={inputRef}
 				class="input is-fullwidth"
 				class:is-large={isLarge}
 				bind:value={inputValue}
