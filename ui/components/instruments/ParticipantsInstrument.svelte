@@ -13,6 +13,25 @@
 </script>
 
 <h1 class="title is-size-3">Deltagare</h1>
+
+<div class="field has-addons">
+	<p class="control">
+		<button class="button is-small">
+			<span>Tekniker</span>
+		</button>
+	</p>
+	<p class="control">
+		<button class="button is-small">
+			<span>Deltagare</span>
+		</button>
+	</p>
+	<p class="control">
+		<button class="button is-small">
+			<span>Blockerade</span>
+		</button>
+	</p>
+</div>
+
 {#if managers.length}
 	<h2 class="title is-size-6 mb-3 mt-4">Tekniker</h2>
 	{#each managers as participant}
