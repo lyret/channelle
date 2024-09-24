@@ -38,7 +38,8 @@
 	});
 
 	// Class list of all buttons in the action bar
-	const btnClassList = 'button is-dark';
+	const btnClassList = 'button is-dark is-small';
+	const iconClassList = 'icon is-size-4';
 </script>
 
 <div class="buttons is-centered is-fullwidth">
@@ -50,15 +51,21 @@
 		use:fullScreenAction
 	>
 		{#if $isFullscreen}
-			<span class="icon"><ion-icon name={'close-outline'}></ion-icon></span>
+			<span class={iconClassList}
+				><ion-icon name={'close-outline'}></ion-icon></span
+			>
 		{:else}
-			<span class="icon"><ion-icon name={'expand-outline'}></ion-icon></span>
+			<span class={iconClassList}
+				><ion-icon name={'expand-outline'}></ion-icon></span
+			>
 		{/if}
 	</button>
 
 	<!-- CURRENT USER -->
 	<button class={btnClassList} transition:blur on:click={updateName}>
-		<span class="icon"><ion-icon name="person-circle-outline"></ion-icon></span>
+		<span class={iconClassList}
+			><ion-icon name="person-circle-outline"></ion-icon></span
+		>
 		<span>{$currentParticipant?.name} </span></button
 	>
 
@@ -76,7 +83,7 @@
 					? isProducingVideo.stopPublishVideo()
 					: isProducingVideo.publishVideo()}
 		>
-			<span class="icon"
+			<span class={iconClassList}
 				><ion-icon name={$isProducingVideo ? 'videocam-off' : 'videocam'}
 				></ion-icon></span
 			>
@@ -97,11 +104,11 @@
 					? isProducingAudio.stopPublishAudio()
 					: isProducingAudio.publishAudio()}
 		>
-			<span class="icon"
-				><ion-icon name={$isProducingAudio ? 'mic-off' : 'mic'}
-				></ion-icon></span
+			<span class={iconClassList}
+				><ion-icon name={$isProducingAudio ? 'mic-off' : 'mic'}></ion-icon><br
+				/></span
 			>
-			<span
+			<span class=""
 				>{$isProducingAudio ? 'Stäng av mikrofonen' : 'Starta mikrofonen'}</span
 			>
 		</button>
@@ -128,9 +135,10 @@
 	<!-- BACKSTAGE LINK -->
 	{#if $currentParticipant.actor || $currentParticipant.manager}
 		<a class={btnClassList} transition:blur href="/backstage" target="_blank">
-			<span class="icon"><ion-icon name="speedometer"></ion-icon></span>
+			<span class={iconClassList}><ion-icon name="speedometer"></ion-icon></span
+			>
 			<span>Gå Backstage </span>
-			<span class="icon"
+			<span class={iconClassList}
 				><ion-icon name="arrow-forward-circle-outline"></ion-icon></span
 			>
 		</a>
