@@ -47,7 +47,14 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 		if (onlineParticipants.has(socket.id)) {
 			try {
 				const id = onlineParticipants.get(socket.id);
-				userOnlineStatus.set(id, false);
+				onlineParticipants.delete(socket.id);
+				if (
+					Object.values(
+						Object.fromEntries(onlineParticipants.entries())
+					).findIndex((i) => i == id) == -1
+				) {
+					userOnlineStatus.set(id, false);
+				}
 			} catch {}
 		}
 
