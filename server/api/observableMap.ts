@@ -33,6 +33,11 @@ export function observableMap<K extends string | number, V>(
 			_map.clear();
 			_emit();
 		});
+		_socket.on('refresh', () => {
+			const currentData = Object.fromEntries(_map.entries()) as Record<K, V>;
+			console.log('HERE', currentData);
+			_socket.emit('*', currentData);
+		});
 	});
 
 	return {

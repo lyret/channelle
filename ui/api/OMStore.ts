@@ -1,5 +1,4 @@
-import type { ObservableMap, OMEvents } from '~/../server/api/observableMap';
-import Emittery from 'emittery';
+import type { ObservableMap } from '~/../server/api/observableMap';
 import { readable } from 'svelte/store';
 import { ws } from './lib';
 
@@ -35,6 +34,8 @@ export function createOMStore<K extends string | number, V>(
 			_socket.on('*', (data: Record<K, V>) => {
 				_set(data);
 			});
+
+			_socket.emit('refresh');
 
 			return function stop() {
 				_socket.off('connect', _onConnect);
