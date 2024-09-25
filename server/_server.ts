@@ -6,10 +6,11 @@ import * as Http from 'http';
 import Koa from 'koa';
 import BodyParser from 'koa-bodyparser';
 import ServeStatic from 'koa-static';
-import * as IO from 'socket.io';
+
 import { Repository } from '../database';
 import { createMediaRepostiory } from './media';
 import { createIOEventHandlers } from './middlewares/createIOEventHandlers';
+import { http, koa, ws } from './api/lib';
 
 /**
  * Read and sends the index.html file
@@ -34,10 +35,19 @@ async function ClientAccessMiddleware(ctx: Koa.Context, next: Koa.Next) {
  * Creates and starts the application server
  */
 export async function createServer(): Promise<Http.Server> {
+	// Debug output
 	console.log('[MS Server] media soup version', MediaSoup.version);
 
-	// Create the server object
-	const app = new Koa();
+	// Create the koa application
+	const app = koa();
+
+	// Create the http  server
+	const httpServer = http();
+
+	const onlineStatus = observableMap<number, boolean>('online-status');
+
+	// Create the socket io server
+	const io = ws();
 
 	// Parse bodies
 	app.use(BodyParser({ enableTypes: ['text'] }));
@@ -47,13 +57,6 @@ export async function createServer(): Promise<Http.Server> {
 
 	// Serve the client interface
 	app.use(ClientAccessMiddleware);
-
-	// Listen for requests
-	const http = app.listen(CONFIG.web.port);
-	const io = new IO.Server(http, {
-		serveClient: false,
-		path: CONFIG.socket.path,
-	});
 
 	// Initialize a media stream repository
 	await createMediaRepostiory(io);
@@ -86,5 +89,5 @@ export async function createServer(): Promise<Http.Server> {
 	}
 
 	// Return the http server
-	return http;
+	return httpServer;
 }
