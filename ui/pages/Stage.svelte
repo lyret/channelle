@@ -14,6 +14,14 @@
 </script>
 
 <main in:blur={{ delay: 500, duration: 1000 }}>
+	<div class="box has-text-info has-text-weight-bold">
+		<span class="icon is-size-4"><ion-icon name="eye"></ion-icon></span>
+		<span class="is-size-4">&nbsp;Du syns i bild</span>
+		<span class="icon is-size-4"
+			><ion-icon name="volume-medium"></ion-icon></span
+		>
+		<span class="is-size-4">&nbsp;Du hörs</span>
+	</div>
 	<div
 		class={`windows window-cols-${width} window-rows-${height}`}
 		style={`
@@ -91,6 +99,17 @@
 		order: 0;
 		grid-column-gap: 0px;
 		grid-row-gap: 0px;
+	}
+
+	.box {
+		display: flex;
+		align-content: center;
+		align-items: center;
+		justify-content: center;
+		justify-items: center;
+		background-color: black;
+		border-radius: 0;
+		border-bottom: 1px solid var(--bulma-border);
 	}
 
 	.window {
