@@ -24,7 +24,6 @@ export const currentParticipant = derived(
 				create('participant', {
 					data: {
 						name: '',
-						online: true,
 					},
 				}).then((partipant) => {
 					userParticipantId.set(partipant.id);

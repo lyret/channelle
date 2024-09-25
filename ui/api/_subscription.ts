@@ -185,10 +185,10 @@ export class Subscription<
 				error?: string;
 			}) => {
 				if (response.ok) {
-					console.log('[Subscription] registered existing participantion');
+					console.log('[Subscription] registred existing participantion');
 				} else {
 					console.log(
-						'[Subscription] failed to registered existing participantion'
+						'[Subscription] failed to registred existing participantion'
 					);
 				}
 			}

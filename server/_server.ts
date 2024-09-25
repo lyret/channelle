@@ -11,7 +11,6 @@ import { Repository } from '../database';
 import { createMediaRepostiory } from './media';
 import { createIOEventHandlers } from './middlewares/createIOEventHandlers';
 import { http, koa, ws } from './api/lib';
-import { observableMap } from './api';
 
 /**
  * Read and sends the index.html file
@@ -44,8 +43,6 @@ export async function createServer(): Promise<Http.Server> {
 
 	// Create the http  server
 	const httpServer = http();
-
-	const onlineStatus = observableMap<number, boolean>('online-status');
 
 	// Create the socket io server
 	const io = ws();

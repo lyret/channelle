@@ -9,6 +9,7 @@ import {
 	createSubscriptionPath,
 } from '../../shared/subscriptions';
 import { MediaRepository } from '../media';
+import { userOnlineStatus } from '../stores/users';
 
 /** A map between online participants and connected sockets */
 const onlineParticipants = new Map<string, number>();
@@ -29,23 +30,13 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 		try {
 			console.log(`[IO] ${socket.id} registered participant id ${id}`);
 
-			const result = await Repository._allRepositories['participant'].operate(
-				'update',
-				{
-					where: { id: Number(id) },
-					data: { online: true },
-				}
-			);
-
 			// Link to current media data status
 			MediaRepository.Singelton.enterParticipant(socket.id, Number(id));
 
-			// Emit changes to participant
-			Repository._allRepositories['participant'].emitOne(Number(id));
-			Repository._allRepositories['participant'].emitAll();
-
 			onlineParticipants.set(socket.id, id);
-			socket.emit('registerParticipant', { ok: true, data: result });
+			userOnlineStatus.set(id, true);
+
+			socket.emit('registerParticipant', { ok: true });
 		} catch {
 			socket.emit('registerParticipant', { ok: false });
 		}
@@ -56,12 +47,7 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 		if (onlineParticipants.has(socket.id)) {
 			try {
 				const id = onlineParticipants.get(socket.id);
-				Repository._allRepositories['participant'].operate('update', {
-					where: { id: Number(id) },
-					data: { online: false },
-				});
-				Repository._allRepositories['participant'].emitOne(Number(id));
-				Repository._allRepositories['participant'].emitAll();
+				userOnlineStatus.set(id, false);
 			} catch {}
 		}
 

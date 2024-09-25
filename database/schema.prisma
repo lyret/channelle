@@ -13,19 +13,14 @@ model Participant {
   blocked Boolean @default(false)
   actor   Boolean @default(false)
   manager Boolean @default(false)
-  online  Boolean @default(false)
-  producingVideo  Boolean @default(false)
-  producingAudio  Boolean @default(false)
-  allowedVideo  Boolean @default(true)
-  allowedAudio  Boolean @default(true)
 }
 
 model Message {
-  id     Int    @id @default(autoincrement())
-  backstage  Boolean    @default(true)
-  createdAt DateTime @default(now())
+  id            Int      @id @default(autoincrement())
+  backstage     Boolean  @default(true)
+  createdAt     DateTime @default(now())
   participantId Int
-  message String
+  message       String
 }
 
 model Scene {

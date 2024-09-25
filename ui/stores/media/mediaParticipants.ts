@@ -4,6 +4,7 @@ import { currentParticipant } from '../connection';
 import { createMediaStore } from '../_mediaStore';
 import { createDatabaseStore } from '../_databaseStore';
 import { createMediaOptionStore } from './mediaOptions';
+import { userCameraBans, userMicrophoneBans } from '../users';
 
 const remoteMediaStreams = createMediaStore('remoteMediaStreams');
 const localMediaStream = createMediaStore('localMediaStream');
@@ -34,6 +35,8 @@ function createMediaParticipantsStore(): MediaParticipantsStore {
 			localMediaStream,
 			layout,
 			allowVisitorAudio,
+			userCameraBans,
+			userMicrophoneBans,
 		],
 		([
 			$remoteMediaStreams,
@@ -42,6 +45,8 @@ function createMediaParticipantsStore(): MediaParticipantsStore {
 			$localMediaStream,
 			$layout,
 			$allowVisitorAudio,
+			$userCameraBans,
+			$userMicrophoneBans,
 		]) => {
 			const results: MediaParticipants = {
 				audio: [],
@@ -61,9 +66,10 @@ function createMediaParticipantsStore(): MediaParticipantsStore {
 				if (participant.blocked) {
 					continue;
 				}
-				if (participant.online) {
-					results.online.push(participant);
-				}
+				// TODO: this is broken as .online is removed
+				// if (participant.online) {
+				// 	results.online.push(participant);
+				// }
 				// Actor
 				if (participant.actor) {
 					results.actors[participant.id] = participant;
@@ -73,7 +79,7 @@ function createMediaParticipantsStore(): MediaParticipantsStore {
 						// Remote media
 						if (
 							$remoteMediaStreams[participant.id] &&
-							participant.allowedVideo
+							!$userCameraBans[participant.id]
 						) {
 							results.video[participant.id] =
 								$remoteMediaStreams[participant.id];
@@ -83,7 +89,7 @@ function createMediaParticipantsStore(): MediaParticipantsStore {
 						else if (
 							participant.id == $currentParticipant.id &&
 							$localMediaStream &&
-							participant.allowedVideo
+							!$userCameraBans[participant.id]
 						) {
 							results.video[participant.id] = $localMediaStream;
 						}
@@ -92,7 +98,7 @@ function createMediaParticipantsStore(): MediaParticipantsStore {
 					if (
 						$remoteMediaStreams[participant.id] &&
 						$allowVisitorAudio &&
-						participant.allowedAudio
+						!$userMicrophoneBans[participant.id]
 					) {
 						results.audio.push($remoteMediaStreams[participant.id]);
 					}
