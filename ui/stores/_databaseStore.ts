@@ -5,6 +5,8 @@ import { readable, derived } from 'svelte/store';
 
 /** Store interface */
 interface DatabaseStore<T> {
+	/** Returns true if the store value has not yet been updated from the server */
+	isDefault: () => boolean;
 	subscribe: (subscription: (value: T) => void) => () => void;
 }
 
@@ -37,12 +39,15 @@ export function createDatabaseStore<
 		id,
 	});
 
+	let _isDefault: boolean = true;
+
 	const { subscribe } = readable(subscription.data, function start(set) {
 		// Load any existing data
 		set(subscription.data);
 
 		// Start the subscription
 		subscription.on('data', (value) => {
+			_isDefault = false;
 			set(value);
 		});
 		subscription.start();
@@ -53,6 +58,7 @@ export function createDatabaseStore<
 	});
 
 	return {
+		isDefault: () => _isDefault,
 		subscribe: subscribe,
 	};
 }
