@@ -13,6 +13,7 @@
 		"baseUrl": "./ui",
 		"paths": {
 			"~/*": ["./*"],
+			"$ui/device": ["./_device/index.ts"],
 			"$lib/*": ["./legos/*"]
 		},
 		"outDir": "./.dist"

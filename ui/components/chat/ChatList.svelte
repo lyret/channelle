@@ -1,11 +1,39 @@
 <script lang="ts">
-	import { remove } from '~/api';
+	import { onMount } from 'svelte';
+	import { blur, scale, type BlurParams } from 'svelte/transition';
 	import { createDatabaseStore } from '~/stores';
 	import { currentParticipant } from '~/stores/connection';
+	import ChatInput from '../chat/ChatInput.svelte';
+	import { createMediaOptionStore } from '~/stores/media';
+	import { remove } from 'api';
 
-	import ChatInput from './ChatInput.svelte';
+	export let backstageOnly: boolean = false;
 
-	let backstageOnly: boolean = false;
+	let ref: HTMLDivElement;
+	let loaded = false;
+	let hasUnread = false;
+	let allowChat = createMediaOptionStore('allowChat');
+
+	onMount(() => {
+		if (ref) {
+			ref.addEventListener('scroll', () => {
+				console.log(
+					ref.scrollTop > ref.scrollHeight - ref.clientHeight - 60,
+					ref.scrollTop,
+					ref.scrollHeight - ref.clientHeight - 60,
+					ref.scrollHeight,
+					ref.clientHeight
+				);
+				if (
+					hasUnread &&
+					ref.scrollTop >= ref.scrollHeight - ref.clientHeight - 60
+				) {
+					hasUnread = false;
+				}
+			});
+		}
+	});
+
 	let allMessages = createDatabaseStore('message');
 	let participants = createDatabaseStore('participant');
 
@@ -22,119 +50,124 @@
 	function removeMessage(id: number) {
 		remove('message', { where: { id } });
 	}
+
+	onMount(() => {
+		const stop = allMessages.subscribe((data) => {
+			console.log('new messages', data, $allMessages);
+
+			if (loaded) {
+				if (ref && ref.scrollTop > ref.scrollHeight - ref.clientHeight - 60) {
+					setTimeout(() => {
+						ref.scroll({ top: ref.scrollHeight });
+					}, 0);
+				} else {
+					hasUnread = true;
+				}
+			} else if (!allMessages.isDefault()) {
+				loaded = true;
+				setTimeout(() => {
+					if (ref) {
+						ref.scroll({ top: ref.scrollHeight });
+					}
+				}, 0);
+			}
+		});
+
+		return () => {
+			stop();
+		};
+	});
 </script>
 
-<div class="chat-container">
-	{#if backstageAllowed}
-		<div class="tab-container">
-			<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
-			<!-- svelte-ignore a11y-click-events-have-key-events -->
-			<!-- svelte-ignore a11y-click-events-have-key-events -->
-			<!-- svelte-ignore a11y-missing-attribute -->
-			<div class="tabs is-fullwidth">
-				<ul>
-					<li
-						class:is-active={!backstageOnly}
-						on:click={() => (backstageOnly = false)}
+<div class="list-container" bind:this={ref} class:has-unread={hasUnread}>
+	<div class="list">
+		{#if !allowedMessages.length}
+			<div class="list-item">
+				<div class="list-item-content">
+					<div
+						class="list-item-title is-family-title is-size-4 has-text-grey-light"
 					>
-						<a>
-							<span class="icon is-small"
-								><ion-icon name="people"></ion-icon></span
-							>
-							<span>Alla</span>
-						</a>
-					</li>
-					<li
-						class:is-active={backstageOnly}
-						on:click={() => (backstageOnly = true)}
-					>
-						<a class:has-text-info={backstageOnly}>
-							<span class="icon is-small"
-								><ion-icon name="people-circle"></ion-icon></span
-							>
-							<span>Backstage</span>
-						</a>
-					</li>
-				</ul>
-			</div>
-		</div>
-	{/if}
-
-	<!-- svelte-ignore a11y-no-static-element-interactions -->
-	<!-- svelte-ignore a11y-click-events-have-key-events -->
-	<div class="list-container">
-		<div class="list mb-4">
-			{#each allowedMessages as message}
-				<div
-					class="list-item"
-					class:has-background-info-light={message.backstage}
-					class:has-text-right={message.participantId == $currentParticipant.id}
-				>
-					<div class="list-item-content">
-						<div
-							class="list-item-description"
-							class:has-text-info={message.backstage}
-						>
-							{participantName(message.participantId)} ( {new Date(
-								message.createdAt
-							).getHours()}:{new Date(message.createdAt).getMinutes()}
-							)
-						</div>
-						<div class="list-item-title">{message.message}</div>
+						Här kommer chattmeddelanden att dyka upp..
 					</div>
-					{#if $currentParticipant.manager}
-						<div class="list-item-controls">
-							<div class="buttons is-right">
-								<button class="button is-small is-outlined is-danger">
-									<span class="icon" on:click={() => removeMessage(message.id)}>
-										<ion-icon name="trash-bin"></ion-icon>
-									</span>
-								</button>
+				</div>
+			</div>
+		{:else}
+			{#each allowedMessages as message, index}
+				{#key message.id}
+					<div class="list-item">
+						<div class="list-item-content" transition:blur>
+							<div
+								class:has-text-right={message.participantId ==
+									$currentParticipant.id}
+								class="list-item-description is-family-title is-size-6"
+								class:has-text-info-light={message.backstage}
+								class:has-text-grey-light={!message.backstage}
+							>
+								{participantName(message.participantId)} ( {new Date(
+									message.createdAt
+								).getHours()}:{new Date(message.createdAt).getMinutes()}
+								{message.backstage ? 'backstage' : ''}
+								)
+							</div>
+							<div
+								class:is-underlined={message.participantId ==
+									$currentParticipant.id}
+								class="list-item-title"
+								class:has-text-info={message.backstage}
+							>
+								{message.message}
 							</div>
 						</div>
-					{/if}
-				</div>
+						{#if $currentParticipant.manager}
+							<div class="list-item-controls">
+								<div class="buttons is-right">
+									<button class="button is-small is-dark is-danger">
+										<span
+											class="icon"
+											on:click={() => removeMessage(message.id)}
+										>
+											<ion-icon name="trash-bin"></ion-icon>
+										</span>
+									</button>
+								</div>
+							</div>
+						{/if}
+					</div>
+				{/key}
 			{/each}
-		</div>
-	</div>
-	<div class="input-container">
-		<ChatInput makeBackstage={backstageOnly} />
+		{/if}
 	</div>
 </div>
+{#if hasUnread}
+	<div in:blur>
+		<p
+			class="has-text-centered has-text-weight-bold is-family-title h has-text-success"
+		>
+			nya meddelanden!
+		</p>
+	</div>
+{/if}
 
 <style>
-	.chat-container {
-		display: flex;
-		flex-direction: column;
-		flex-wrap: nowrap;
-		justify-content: normal;
-		align-items: normal;
-		align-content: normal;
-		height: 100%;
-	}
-	.tab-container {
+	.list-container {
+		max-height: 100%;
+		overflow: scroll;
 		display: block;
 		flex-grow: 0;
-		flex-shrink: 1;
-		flex-basis: auto;
-		align-self: auto;
-		order: 0;
-	}
-	.list-container {
-		display: block;
-		flex-grow: 1;
-		flex-shrink: 1;
 		overflow: scroll;
 		flex-basis: auto;
 		align-self: auto;
 		order: 0;
+		padding: 8px;
+		transition: border 0.4s;
 	}
-	.input-container {
-		display: block;
-		flex-grow: 0;
-		flex-shrink: 1;
-		flex-basis: auto;
-		align-self: auto;
-		order: 0;
+	.list-container.has-unread {
+		border-bottom-width: 4px;
+		border-bottom-color: var(--bulma-success);
+		border-bottom-style: groove;
+	}
+	.list-item-description {
+		font-weight: 900;
+		letter-spacing: 0.1em;
 	}
 </style>

@@ -70,7 +70,7 @@
 			out:blur={{ duration: 500 }}
 		>
 			<img class="logo" src={flowerSrc} alt="a kalidoscope of a flower " />
-			<h1 class="title is-family-chentalle is-size-1">Chanelle</h1>
+			<h1 class="title is-family-title is-size-1">Chanelle</h1>
 			{#if blocked}
 				<Blocked />
 			{:else if $currentParticipant && !authenticated}

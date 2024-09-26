@@ -3,7 +3,7 @@
 	import { openPanels, togglePanel } from '~/stores/ui';
 	import { currentParticipant } from '~/stores/connection';
 	import flowerSrc from '../assets/images/flower.png';
-	import ChatList from '~/components/chat/ChatList.svelte';
+	import ChatList from '~/components/instruments/ChatInstrument.svelte';
 	import ParticipantsInstrument from '~/components/instruments/ParticipantsInstrument.svelte';
 	import SceneSelectorInstrument from '~/components/instruments/SceneSelectorInstrument.svelte';
 	import MediaLibraryInstrument from '~/components/instruments/MediaLibraryInstrument.svelte';

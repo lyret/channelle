@@ -1,15 +1,19 @@
 <script lang="ts">
+	import { windowSizeStore } from '$ui/device';
 	import { fullScreenAction } from '$lib/actions/fullScreenAction';
 	import { isInFullscreen } from '$lib/stores/fullscreenStore';
 	import { onMount } from 'svelte';
 	import { blur } from 'svelte/transition';
 	import { update } from '~/api';
-	import { createMediaStore } from '~/stores';
+	import { createLocalStore, createMediaStore } from '~/stores';
 	import { currentParticipant } from '~/stores/connection';
 	import { createMediaOptionStore } from '~/stores/media';
 	import { createEffectsStore } from '~/stores/particles/effectsStore';
 	import { userCameraBans, userMicrophoneBans } from '~/stores/users';
 
+	let showSettings = createLocalStore('stage-settings', false);
+	let windowSize = windowSizeStore();
+	$: isMobile = $windowSize.width <= 768;
 	let isFullscreen = isInFullscreen();
 	let allowVisitorAudio = createMediaOptionStore('allowVisitorAudio');
 	let effectsAreEnabled = createMediaOptionStore('effectsAreEnabled');
@@ -39,7 +43,9 @@
 	});
 
 	// Class list of all buttons in the action bar
-	const btnClassList = 'button is-dark is-small';
+	const btnClassList = 'button is-small';
+	const effectBtnClassList =
+		'button effect is-small is-danger is-rounded is-light is-outlined is-warning';
 	const iconClassList = 'icon is-size-4';
 </script>
 
@@ -68,8 +74,10 @@
 			<span class={iconClassList}
 				><ion-icon name="person-circle-outline"></ion-icon></span
 			>
-			<span>{$currentParticipant?.name} </span></button
-		>
+			{#if !isMobile}
+				<span>{$currentParticipant?.name} </span>
+			{/if}
+		</button>
 	</div>
 	<div class="center">
 		<!-- VIDEO -->
@@ -89,7 +97,11 @@
 					><ion-icon name={$isProducingVideo ? 'videocam-off' : 'videocam'}
 					></ion-icon></span
 				>
-				<span>{$isProducingVideo ? 'Stäng av kameran' : 'Starta kameran'}</span>
+				{#if !isMobile}
+					<span
+						>{$isProducingVideo ? 'Stäng av kameran' : 'Starta kameran'}</span
+					>
+				{/if}
 			</button>
 		{/if}
 
@@ -110,54 +122,65 @@
 					><ion-icon name={$isProducingAudio ? 'mic-off' : 'mic'}></ion-icon><br
 					/></span
 				>
-				<span class=""
-					>{$isProducingAudio
-						? 'Stäng av mikrofonen'
-						: 'Starta mikrofonen'}</span
-				>
+				{#if !isMobile}
+					<span class=""
+						>{$isProducingAudio
+							? 'Stäng av mikrofonen'
+							: 'Starta mikrofonen'}</span
+					>
+				{/if}
 			</button>
 		{/if}
 
 		<!-- EFFECTS -->
 		{#if $effectsAreEnabled}
 			<button
-				class={btnClassList + ' is-success is-light'}
+				class={effectBtnClassList}
 				transition:blur
 				on:click={() => effects.set({ type: 'applause', number: 1 })}
 			>
-				<span>👏</span></button
+				<span class={iconClassList}>👏</span></button
 			>
 			<button
-				class={btnClassList + ' is-primary is-light'}
+				class={effectBtnClassList}
 				transition:blur
 				on:click={() => effects.set({ type: 'flowers', number: 1 })}
 			>
-				<span>🌹</span></button
+				<span class={iconClassList}>🌹</span></button
 			>
 		{/if}
 	</div>
 	<div class="right">
 		<!-- BACKSTAGE LINK -->
 		{#if $currentParticipant.actor || $currentParticipant.manager}
-			<a
-				class={btnClassList + ' has-text-info'}
+			<button
+				class={btnClassList}
 				transition:blur
-				href="/backstage"
-				target="_blank"
+				class:has-text-info={$showSettings}
+				on:click={() => showSettings.set(!$showSettings)}
 			>
 				<span class={iconClassList}
 					><ion-icon name="speedometer"></ion-icon></span
 				>
-				<span>Gå Backstage </span>
-				<span class={iconClassList}
-					><ion-icon name="arrow-forward-circle-outline"></ion-icon></span
-				>
-			</a>
+				{#if !isMobile}
+					<span>Inställningar </span>
+				{/if}
+			</button>
 		{/if}
 	</div>
 </div>
 
 <style>
+	.button {
+		background-color: black;
+		border: 1px solid var(--bulma-border);
+	}
+	.button.effect {
+		width: 50px;
+	}
+	.button:hover {
+		border: 1px solid var(--bulma-border);
+	}
 	.buttons {
 		margin-left: 5%;
 		margin-right: 5%;
@@ -166,7 +189,7 @@
 		text-align: left;
 		flex-grow: 1;
 		flex-shrink: 1;
-		flex-basis: 0;
+		flex-basis: 1;
 	}
 	.center {
 		text-align: center;
@@ -179,5 +202,21 @@
 		flex-grow: 1;
 		flex-grow: 1;
 		flex-basis: 0;
+	}
+
+	@media (max-width: 768px) {
+		.buttons {
+			margin-left: 0px;
+			margin-right: 0px;
+		}
+		.right,
+		.left {
+			text-align: left;
+		}
+		.left,
+		.right,
+		.center {
+			flex-grow: 0;
+		}
 	}
 </style>

@@ -8,6 +8,13 @@ $warning: #f2c43d;
 $danger: #b83334;
 $background: #a93a3a;
 
+// Breakpoints:
+// mobile: up to 768px
+// tablet: from 769px to 1024px
+// desktop: from 1024px to 1215px
+// widescreen: from 1216px to 1407px
+// fullhd: from 1408px
+
 /* Use Bulma */
 @use 'bulma/sass' with (
 	// Responsive breakpoints
@@ -45,7 +52,7 @@ $background: #a93a3a;
 	font-family: 'Chentalle';
 	src: url('./assets/fonts/chentalle.otf') format('opentype');
 }
-.is-family-chentalle {
+.is-family-title {
 	font-family: 'Chentalle' !important;
 }
 @font-face {

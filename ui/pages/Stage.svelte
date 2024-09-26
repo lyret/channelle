@@ -1,11 +1,14 @@
 <script lang="ts">
-	import MediaView from '~/components/watch/MediaView.svelte';
-	import MediaAudio from '~/components/watch/MediaAudio.svelte';
-	import ChatView from '~/components/watch/ChatView.svelte';
-	import Actions from '~/components/watch/ActionBar.svelte';
+	import Sidepanel from '~/components/stage/Sidepanel.svelte';
+	import MediaView from '~/components/stage/MediaView.svelte';
+	import MediaAudio from '~/components/stage/MediaAudio.svelte';
+	import ChatView from '~/components/stage/ChatWindow.svelte';
+	import Actions from '~/components/stage/ActionBar.svelte';
 	import { createMediaOptionStore, mediaParticipants } from '~/stores/media';
-	import { blur } from 'svelte/transition';
+	import { blur, fly } from 'svelte/transition';
+	import { createLocalStore } from '~/stores';
 
+	let stageSettings = createLocalStore('stage-settings', false);
 	let layout = createMediaOptionStore('layout');
 
 	$: matrix = $layout || [];
@@ -14,7 +17,7 @@
 </script>
 
 <main in:blur={{ delay: 500, duration: 1000 }}>
-	<div class="box has-text-info has-text-weight-bold">
+	<div class="topbar has-text-info has-text-weight-bold">
 		<span class="icon is-size-4"><ion-icon name="eye"></ion-icon></span>
 		<span class="is-size-4">&nbsp;Du syns i bild</span>
 		<span class="icon is-size-4"
@@ -22,36 +25,45 @@
 		>
 		<span class="is-size-4">&nbsp;Du hörs</span>
 	</div>
-	<div
-		class={`windows window-cols-${width} window-rows-${height}`}
-		style={`
+	<div class="contents">
+		{#if $stageSettings}
+			<div class="sidebar">
+				<div class="notification sidebar-contents" transition:fly>
+					<Sidepanel />
+				</div>
+			</div>
+		{/if}
+		<div
+			class={`windows window-cols-${width} window-rows-${height}`}
+			style={`
 			grid-template-columns: repeat(${width}, 1fr);
 			grid-template-rows: repeat(${height}, 1fr);
 		`}
-	>
-		{#each matrix as row}
-			{#each row as entry}
-				{#if entry.type == 'chat'}
-					<div class="window">
-						<ChatView />
-					</div>
-				{:else if entry.type == 'actor' && entry.id}
-					{#if $mediaParticipants.video[entry.id]}
+		>
+			{#each matrix as row}
+				{#each row as entry}
+					{#if entry.type == 'chat'}
 						<div class="window">
-							<MediaView stream={$mediaParticipants.video[entry.id]} />
+							<ChatView />
 						</div>
+					{:else if entry.type == 'actor' && entry.id}
+						{#if $mediaParticipants.video[entry.id]}
+							<div class="window">
+								<MediaView stream={$mediaParticipants.video[entry.id]} />
+							</div>
+						{:else}
+							<div class="window text-window">
+								<h1 class="title has-text-white">
+									{$mediaParticipants.actors[entry.id]?.name || '...'}
+								</h1>
+							</div>
+						{/if}
 					{:else}
-						<div class="window text-window">
-							<h1 class="title has-text-white">
-								{$mediaParticipants.actors[entry.id]?.name || '...'}
-							</h1>
-						</div>
+						<div class="window"></div>
 					{/if}
-				{:else}
-					<div class="window"></div>
-				{/if}
+				{/each}
 			{/each}
-		{/each}
+		</div>
 	</div>
 	<div class="footer">
 		<Actions />
@@ -72,6 +84,58 @@
 		align-items: normal;
 		align-content: normal;
 	}
+	.contents {
+		flex-shrink: 1;
+		flex-grow: 1;
+		flex-basis: 1;
+		align-self: auto;
+
+		display: flex;
+		flex-direction: row;
+		flex-wrap: nowrap;
+		justify-content: normal;
+		align-items: normal;
+		align-content: normal;
+
+		width: auto;
+		transition: width 2s;
+	}
+
+	.sidebar {
+		flex-shrink: 1;
+		overflow: hidden;
+		position: relative;
+		order: 2;
+		width: 30%;
+		min-width: 300px;
+		max-width: 600px;
+		max-height: 100%;
+		overflow: hidden;
+
+		display: flex;
+		flex-direction: column;
+		align-items: end;
+		justify-items: end;
+		padding: 4px;
+	}
+
+	.sidebar-contents {
+		position: absolute;
+		top: 8px;
+		left: 8px;
+		right: 8px;
+		bottom: 8px;
+		overflow-y: scroll;
+		z-index: 100;
+		background-color: hsla(
+			var(--bulma-notification-h),
+			var(--bulma-notification-s),
+			var(--bulma-notification-background-l),
+			0.8
+		);
+		-webkit-backdrop-filter: blur(10px);
+		backdrop-filter: blur(10px);
+	}
 
 	.footer {
 		background-color: black;
@@ -84,7 +148,7 @@
 		flex-shrink: 0;
 		flex-basis: 1;
 
-		border-top: 1px solid var(--bulma-border);
+		/*border-top: 1px solid var(--bulma-border);*/
 		z-index: 10;
 		box-shadow: 0px -10px 10px black;
 	}
@@ -101,7 +165,8 @@
 		grid-row-gap: 0px;
 	}
 
-	.box {
+	.topbar {
+		margin: 0;
 		display: flex;
 		align-content: center;
 		align-items: center;
