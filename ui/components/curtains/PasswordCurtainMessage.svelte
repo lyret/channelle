@@ -1,0 +1,59 @@
+<script lang="ts">
+	import { onMount } from 'svelte';
+	import { blur, scale } from 'svelte/transition';
+	import { participantScenePassword } from '~/stores/access/scenePassword';
+
+	let inputRef: HTMLInputElement;
+	let inputValue: string = '';
+	let loading: boolean = false;
+	let retrying: boolean = false;
+
+	// Handle the submission
+	async function onClick() {
+		loading = true;
+		participantScenePassword.set(inputValue);
+		setTimeout(() => {
+			inputValue = '';
+			retrying = true;
+			loading = false;
+		}, 1500);
+	}
+
+	// Handle mount
+	onMount(() => {
+		if (inputRef) {
+			inputRef.focus();
+		}
+	});
+</script>
+
+<p class="mb-2 is-size-4 is-family-title has-text-weight-bold">
+	Scenen är låst
+</p>
+<div
+	class="control is-fullwidth is-large is-centered has-text-centered"
+	class:is-loading={loading}
+>
+	<input
+		type="text"
+		bind:this={inputRef}
+		class="input is-large is-centered has-text-centered"
+		bind:value={inputValue}
+		placeholder="Lösenord"
+		class:is-disabled={loading}
+	/>
+	{#if !loading}
+		<button
+			in:scale
+			class="button is-fullwidth is-large is-primary mt-4 is-centered"
+			on:click={onClick}
+			class:is-loading={loading}
+			disabled={!inputValue}
+			>Öppna
+		</button>
+	{/if}
+	{#if retrying}
+		<p in:blur class="my-2 is-size-6 has-text-gray">
+			Fel lösenord, försök igen
+		</p>{/if}
+</div>

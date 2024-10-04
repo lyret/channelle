@@ -17,6 +17,8 @@
 	import Problem from '~/components/curtains/ProblemCurtainMessage.svelte';
 	import ManagePage from '~/pages/Backstage.svelte';
 	import StagePage from '~/pages/Stage.svelte';
+	import { scenePasswordIsOk } from './stores/access/scenePassword';
+	import PasswordCurtainMessage from './components/curtains/PasswordCurtainMessage.svelte';
 
 	let curtainOption = createMediaOptionStore('curtains');
 
@@ -33,8 +35,9 @@
 	$: authenticated = $currentParticipant && $currentParticipant.name;
 	$: renderStage = $route && $route.group == 'stage';
 	$: renderBackstage = $route && $route.group == 'backstage';
+	$: needPassword = !$scenePasswordIsOk && renderStage;
 	$: renderMessages =
-		!determiningState && (!online || !authenticated || blocked);
+		!determiningState && (!online || !authenticated || blocked || needPassword);
 	$: renderContent =
 		!determiningState && !renderMessages && (renderStage || renderBackstage);
 	$: renderCurtains =
@@ -42,6 +45,7 @@
 		(!online ||
 			!authenticated ||
 			blocked ||
+			needPassword ||
 			($curtainOption && renderStage) ||
 			(!renderStage && !renderBackstage));
 </script>
@@ -77,6 +81,8 @@
 				<Authenticate participant={$currentParticipant} />
 			{:else if !online}
 				<Loader label={'Ansluter...'} />
+			{:else if needPassword}
+				<PasswordCurtainMessage />
 			{:else}
 				<Problem />
 			{/if}
@@ -120,6 +126,7 @@
 		);
 		-webkit-backdrop-filter: blur(10px);
 		backdrop-filter: blur(10px);
+		transition: height 2s;
 	}
 
 	img.logo {

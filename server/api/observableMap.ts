@@ -1,5 +1,5 @@
 import EventEmitter from 'node:events';
-import { callWithoutDistruption } from './utils/callWithoutDistruption';
+import { attempt } from './utils/attempt';
 import { ws } from './lib';
 
 /** Creates a new Observable Map */
@@ -68,9 +68,7 @@ export function observableMap<K extends string | number, V>(
 		},
 		subscribe: (handler: (data: Record<K, V>) => any) => {
 			_emitter.on('*', handler);
-			callWithoutDistruption(handler)(
-				Object.fromEntries(_map.entries()) as Record<K, V>
-			);
+			attempt(handler)(Object.fromEntries(_map.entries()) as Record<K, V>);
 			return () => {
 				_emitter.off('*', handler);
 			};

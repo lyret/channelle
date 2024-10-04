@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { blur } from 'svelte/transition';
-	import { openPanels, togglePanel } from '~/stores/ui';
+	import { openInstruments } from '~/stores/ui';
 	import { currentParticipant } from '~/stores/connection';
 	import flowerSrc from '../assets/images/flower.png';
 	import ChatList from '~/components/instruments/ChatInstrument.svelte';
 	import ParticipantsInstrument from '~/components/instruments/ParticipantsInstrument.svelte';
 	import SceneSelectorInstrument from '~/components/instruments/SceneSelectorInstrument.svelte';
 	import MediaLibraryInstrument from '~/components/instruments/MediaLibraryInstrument.svelte';
+	import AccessInstrument from '~/components/instruments/AccessInstrument.svelte';
 </script>
 
 <main in:blur={{ delay: 500, duration: 1000 }}>
@@ -26,51 +27,63 @@
 					>s t i n a o c h v i k</span
 				>
 			</li>
-			<li class:is-active={$openPanels['scenes']}>
-				<a on:click={() => togglePanel('scenes')}
+			<li class:is-active={$openInstruments['scene-settings']}>
+				<a on:click={() => openInstruments.toggle('scene-settings')}
 					><span class="icon"><ion-icon name="albums"></ion-icon></span> Scenen
 					<span class="icon"
 						><ion-icon
-							name={$openPanels['scenes']
+							name={$openInstruments['scene-settings']
 								? 'checkmark-circle-outline'
 								: 'ellipse-outline'}
 						></ion-icon></span
 					></a
 				>
 			</li>
-			<li class:is-active={$openPanels['participants']}>
-				<a on:click={() => togglePanel('participants')}
+			<li class:is-active={$openInstruments['participants']}>
+				<a on:click={() => openInstruments.toggle('participants')}
 					><span class="icon"><ion-icon name="accessibility"></ion-icon></span>
 					Deltagare
 					<span class="icon"
 						><ion-icon
-							name={$openPanels['participants']
+							name={$openInstruments['participants']
 								? 'checkmark-circle-outline'
 								: 'ellipse-outline'}
 						></ion-icon></span
 					></a
 				>
 			</li>
-			<li class:is-active={$openPanels['chatt']}>
-				<a on:click={() => togglePanel('chatt')}
+			<li class:is-active={$openInstruments['chat']}>
+				<a on:click={() => openInstruments.toggle('chat')}
 					><span class="icon"
 						><ion-icon name="chatbox-ellipses"></ion-icon></span
 					>
 					Chatt<span class="icon"
 						><ion-icon
-							name={$openPanels['chatt']
+							name={$openInstruments['chat']
 								? 'checkmark-circle-outline'
 								: 'ellipse-outline'}
 						></ion-icon></span
 					></a
 				>
 			</li>
-			<li class:is-active={$openPanels['medialibrary']}>
-				<a on:click={() => togglePanel('medialibrary')}
+			<li class:is-active={$openInstruments['access']}>
+				<a on:click={() => openInstruments.toggle('access')}
+					><span class="icon"><ion-icon name="key"></ion-icon></span>
+					Tillgång<span class="icon"
+						><ion-icon
+							name={$openInstruments['access']
+								? 'checkmark-circle-outline'
+								: 'ellipse-outline'}
+						></ion-icon></span
+					></a
+				>
+			</li>
+			<li class:is-active={$openInstruments['media-library']}>
+				<a on:click={() => openInstruments.toggle('media-library')}
 					><span class="icon"><ion-icon name="images-outline"></ion-icon></span>
 					Mediabibliotek<span class="icon"
 						><ion-icon
-							name={$openPanels['medialibrary']
+							name={$openInstruments['media-library']
 								? 'checkmark-circle-outline'
 								: 'ellipse-outline'}
 						></ion-icon></span
@@ -88,24 +101,29 @@
 	<!-- Content -->
 	<div
 		in:blur={{ delay: 0, duration: 1000 }}
-		class={`instruments instrument-cols-${Object.values($openPanels).length}`}
+		class={`instruments instrument-cols-${Object.values($openInstruments).length}`}
 	>
-		{#if $openPanels['scenes']}
+		{#if $openInstruments['scene-settings']}
 			<div class="instrument">
 				<SceneSelectorInstrument />
 			</div>
 		{/if}
-		{#if $openPanels['participants']}
+		{#if $openInstruments['participants']}
 			<div class="instrument">
 				<ParticipantsInstrument />
 			</div>
 		{/if}
-		{#if $openPanels['chatt']}
+		{#if $openInstruments['chat']}
 			<div class="instrument">
 				<ChatList />
 			</div>
 		{/if}
-		{#if $openPanels['medialibrary']}
+		{#if $openInstruments['access']}
+			<div class="instrument">
+				<AccessInstrument />
+			</div>
+		{/if}
+		{#if $openInstruments['media-library']}
 			<div class="instrument">
 				<MediaLibraryInstrument />
 			</div>

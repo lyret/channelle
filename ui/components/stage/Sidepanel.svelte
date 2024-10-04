@@ -4,13 +4,8 @@
 	import ParticipantsInstrument from '~/components/instruments/ParticipantsInstrument.svelte';
 	import SceneSelectorInstrument from '~/components/instruments/SceneSelectorInstrument.svelte';
 	import MediaLibraryInstrument from '~/components/instruments/MediaLibraryInstrument.svelte';
-
-	let openPanel:
-		| 'chat'
-		| 'participants'
-		| 'scene-settings'
-		| 'media-library'
-		| undefined;
+	import AccessInstrument from '../instruments/AccessInstrument.svelte';
+	import { focusedInstrument } from '~/stores/ui';
 </script>
 
 <!-- <ParticipantsInstrument /> -->
@@ -18,36 +13,45 @@
 <!-- <main in:blur={{ delay: 500, duration: 1000 }}>
 	
 <!-- Content -->
-{#if openPanel == 'scene-settings'}
+{#if $focusedInstrument == 'scene-settings'}
 	<div class="instrument-control">
-		<a on:click={() => (openPanel = undefined)}>
+		<a on:click={() => ($focusedInstrument = undefined)}>
 			<span class="icon"><ion-icon name="close"></ion-icon></span>
 		</a>
 	</div>
 	<div class="instrument">
 		<SceneSelectorInstrument />
 	</div>
-{:else if openPanel == 'participants'}
+{:else if $focusedInstrument == 'participants'}
 	<div class="instrument-control">
-		<a on:click={() => (openPanel = undefined)}>
+		<a on:click={() => ($focusedInstrument = undefined)}>
 			<span class="icon"><ion-icon name="close"></ion-icon></span>
 		</a>
 	</div>
 	<div class="instrument">
 		<ParticipantsInstrument />
 	</div>
-{:else if openPanel == 'chat'}
+{:else if $focusedInstrument == 'chat'}
 	<div class="instrument-control">
-		<a on:click={() => (openPanel = undefined)}>
+		<a on:click={() => ($focusedInstrument = undefined)}>
 			<span class="icon"><ion-icon name="close"></ion-icon></span>
 		</a>
 	</div>
 	<div class="instrument">
 		<ChatInstrument />
 	</div>
-{:else if openPanel == 'media-library'}
+{:else if $focusedInstrument == 'access'}
 	<div class="instrument-control">
-		<a on:click={() => (openPanel = undefined)}>
+		<a on:click={() => ($focusedInstrument = undefined)}>
+			<span class="icon"><ion-icon name="close"></ion-icon></span>
+		</a>
+	</div>
+	<div class="instrument">
+		<AccessInstrument />
+	</div>
+{:else if $focusedInstrument == 'media-library'}
+	<div class="instrument-control">
+		<a on:click={() => ($focusedInstrument = undefined)}>
 			<span class="icon"><ion-icon name="close"></ion-icon></span>
 		</a>
 	</div>
@@ -58,14 +62,21 @@
 	<div class="select-view mb-4" in:blur={{ duration: 100 }}>
 		<button
 			class="button is-fullwidth mb-4 is-small"
-			on:click={() => (openPanel = 'scene-settings')}
+			on:click={() => ($focusedInstrument = 'scene-settings')}
 			><span class="icon is-size-3"><ion-icon name="albums"></ion-icon></span>
 			<span>Sceninställningar</span></button
 		>
 		<hr />
 		<button
 			class="button is-fullwidth mb-4 is-small"
-			on:click={() => (openPanel = 'participants')}
+			on:click={() => ($focusedInstrument = 'access')}
+			><span class="icon is-size-3"><ion-icon name="key"></ion-icon></span>
+			<span>Tillgång</span></button
+		>
+		<hr />
+		<button
+			class="button is-fullwidth mb-4 is-small"
+			on:click={() => ($focusedInstrument = 'participants')}
 			><span class="icon is-size-3"
 				><ion-icon name="accessibility"></ion-icon></span
 			>
@@ -74,7 +85,7 @@
 		<hr />
 		<button
 			class="button is-fullwidth mb-4 is-small"
-			on:click={() => (openPanel = 'chat')}
+			on:click={() => ($focusedInstrument = 'chat')}
 			><span class="icon is-size-3"
 				><ion-icon name="chatbox-ellipses"></ion-icon></span
 			>

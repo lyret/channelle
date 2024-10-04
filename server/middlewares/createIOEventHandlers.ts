@@ -10,6 +10,7 @@ import {
 } from '../../shared/subscriptions';
 import { MediaRepository } from '../media';
 import { userOnlineStatus } from '../stores/users';
+import { scenePassword } from '../stores/access';
 
 /** A map between online participants and connected sockets */
 const onlineParticipants = new Map<string, number>();
@@ -26,9 +27,14 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 		console.error('[IO] client connection error', err);
 	});
 
-	socket.on('registerParticipant', async (id) => {
+	socket.on('registerParticipant', async ({ id, password }) => {
 		try {
 			console.log(`[IO] ${socket.id} registered participant id ${id}`);
+			console.log('HERE', id, password, scenePassword.get());
+
+			if (password != scenePassword.get()) {
+				return socket.emit('registerParticipant', { ok: false });
+			}
 
 			// Link to current media data status
 			MediaRepository.Singelton.enterParticipant(socket.id, Number(id));

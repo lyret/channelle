@@ -1,2 +1,2 @@
-export * from './openPanels';
+export * from './openInstruments';
 export * from './url';
