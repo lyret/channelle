@@ -1,14 +1,16 @@
 import type * as MediaSoup from 'mediasoup';
+import { mediaSoup } from '../api';
 
 /** Creates and returns a transport object for communicating over WebRTC */
-export async function createWebRTCTransport(
-	mediaRouter: MediaSoup.types.Router
-) {
+export async function createWebRTCTransport() {
 	const { listenIps, maxIncomingBitrate, initialAvailableOutgoingBitrate } =
 		CONFIG.mediasoup.webRTCTransport;
 
+	// Get the router
+	const { router } = await mediaSoup();
+
 	// Create the transport
-	const transport = await mediaRouter.createWebRtcTransport({
+	const transport = await router.createWebRtcTransport({
 		listenIps: listenIps,
 		enableUdp: true,
 		enableTcp: true,

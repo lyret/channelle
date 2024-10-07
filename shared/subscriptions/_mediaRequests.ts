@@ -1,20 +1,5 @@
 import type * as MediaSoup from 'mediasoup-client';
 
-/** All available media options */
-export type MediaOptions = {
-	curtains?: boolean;
-	allowChat?: boolean;
-	allowVisitorAudio?: boolean;
-	effectsAreEnabled?: boolean;
-	layout: Array<Array<{ type: 'actor'; id: number } | { type: 'chat' }>>;
-};
-
-/** Definiton for the request and return values of a media request regarding options */
-type MediaOptionsRequest<K extends keyof MediaOptions = keyof MediaOptions> = [
-	{ option: K; value: MediaOptions[K] | undefined },
-	MediaOptions[K] | undefined,
-];
-
 /**
  * Possible requests and returned data available through the socket connection
  * requestType: [parameterData, returnedData]
@@ -22,8 +7,6 @@ type MediaOptionsRequest<K extends keyof MediaOptions = keyof MediaOptions> = [
 export type MediaRequests = {
 	effects_trigger: [undefined, Record<string, number>];
 	effects_add: [{ type: string; number: number }, undefined];
-	options_set: MediaOptionsRequest;
-	options: [undefined, MediaOptions];
 	server_rtp_capabilities: [{}, MediaSoup.types.RtpCapabilities];
 	remove_producer: [{ audio?: boolean; video?: boolean }, boolean];
 	remove_consumer: [{}, boolean];

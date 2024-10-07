@@ -3,8 +3,6 @@
 	import { blur, scale, type BlurParams } from 'svelte/transition';
 	import { createDatabaseStore } from '~/stores';
 	import { currentParticipant } from '~/stores/connection';
-	import ChatInput from '../chat/ChatInput.svelte';
-	import { createMediaOptionStore } from '~/stores/media';
 	import { remove } from 'api';
 
 	export let backstageOnly: boolean = false;
@@ -12,7 +10,6 @@
 	let ref: HTMLDivElement;
 	let loaded = false;
 	let hasUnread = false;
-	let allowChat = createMediaOptionStore('allowChat');
 
 	onMount(() => {
 		if (ref) {

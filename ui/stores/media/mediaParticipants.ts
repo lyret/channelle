@@ -3,14 +3,13 @@ import { derived } from 'svelte/store';
 import { currentParticipant } from '../connection';
 import { createMediaStore } from '../_mediaStore';
 import { createDatabaseStore } from '../_databaseStore';
-import { createMediaOptionStore } from './mediaOptions';
 import { userCameraBans, userMicrophoneBans } from '../users';
+import { sceneLayout } from '../scene/sceneLayout';
+import { sceneVisitorAudioIsEnabled } from '../scene/sceneVisitorAudioIsEnabled';
 
 const remoteMediaStreams = createMediaStore('remoteMediaStreams');
 const localMediaStream = createMediaStore('localMediaStream');
 const participants = createDatabaseStore('participant');
-const layout = createMediaOptionStore('layout');
-const allowVisitorAudio = createMediaOptionStore('allowVisitorAudio');
 
 /** Store value */
 type MediaParticipants = {
@@ -33,8 +32,8 @@ function createMediaParticipantsStore(): MediaParticipantsStore {
 			participants,
 			currentParticipant,
 			localMediaStream,
-			layout,
-			allowVisitorAudio,
+			sceneLayout,
+			sceneVisitorAudioIsEnabled,
 			userCameraBans,
 			userMicrophoneBans,
 		],
@@ -43,8 +42,8 @@ function createMediaParticipantsStore(): MediaParticipantsStore {
 			$participants,
 			$currentParticipant,
 			$localMediaStream,
-			$layout,
-			$allowVisitorAudio,
+			$sceneLayout,
+			$sceneVisitorAudioIsEnabled,
 			$userCameraBans,
 			$userMicrophoneBans,
 		]) => {
@@ -54,59 +53,63 @@ function createMediaParticipantsStore(): MediaParticipantsStore {
 				actors: {},
 				online: [],
 			};
-			const layoutedActorsRecord: Record<number, true | undefined> = (
-				$layout || []
-			)
-				.flat()
-				.filter((e) => e.type == 'actor' && e.id)
-				.map((e: any) => e.id)
-				.reduce((obj, nr) => ({ [nr]: true, ...obj }), {});
+			try {
+				const layoutedActorsRecord: Record<number, true | undefined> = (
+					$sceneLayout || []
+				)
+					.flat()
+					.filter((e) => e.type == 'actor' && e.id)
+					.map((e: any) => e.id)
+					.reduce((obj, nr) => ({ [nr]: true, ...obj }), {});
 
-			for (const participant of $participants) {
-				if (participant.blocked) {
-					continue;
-				}
-				// TODO: this is broken as .online is removed
-				// if (participant.online) {
-				// 	results.online.push(participant);
-				// }
-				// Actor
-				if (participant.actor) {
-					results.actors[participant.id] = participant;
+				for (const participant of $participants) {
+					if (participant.blocked) {
+						continue;
+					}
+					// TODO: this is broken as .online is removed
+					// if (participant.online) {
+					// 	results.online.push(participant);
+					// }
+					// Actor
+					if (participant.actor) {
+						results.actors[participant.id] = participant;
 
-					// Should be streaming
-					if (layoutedActorsRecord[participant.id]) {
-						// Remote media
+						// Should be streaming
+						if (layoutedActorsRecord[participant.id]) {
+							// Remote media
+							if (
+								$remoteMediaStreams[participant.id] &&
+								!$userCameraBans[participant.id]
+							) {
+								results.video[participant.id] =
+									$remoteMediaStreams[participant.id];
+								results.audio.push($remoteMediaStreams[participant.id]);
+							}
+							// Local media
+							else if (
+								participant.id == $currentParticipant.id &&
+								$localMediaStream &&
+								!$userCameraBans[participant.id]
+							) {
+								results.video[participant.id] = $localMediaStream;
+							}
+						}
+					} else {
 						if (
 							$remoteMediaStreams[participant.id] &&
-							!$userCameraBans[participant.id]
+							$sceneVisitorAudioIsEnabled &&
+							!$userMicrophoneBans[participant.id]
 						) {
-							results.video[participant.id] =
-								$remoteMediaStreams[participant.id];
 							results.audio.push($remoteMediaStreams[participant.id]);
 						}
-						// Local media
-						else if (
-							participant.id == $currentParticipant.id &&
-							$localMediaStream &&
-							!$userCameraBans[participant.id]
-						) {
-							results.video[participant.id] = $localMediaStream;
-						}
-					}
-				} else {
-					if (
-						$remoteMediaStreams[participant.id] &&
-						$allowVisitorAudio &&
-						!$userMicrophoneBans[participant.id]
-					) {
-						results.audio.push($remoteMediaStreams[participant.id]);
 					}
 				}
+			} catch (error) {
+				console.error(error);
 			}
 
 			// Return results
-			console.log(results, $localMediaStream);
+			console.log('MP', { results });
 
 			return results;
 		}

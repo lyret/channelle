@@ -1,10 +1,10 @@
-import type { ObservableMap } from '~/../server/api/observableMap';
+import type { ObservableMapStore as ServerObservableMapStore } from '~/../server/lib/stores/createMapStore';
 import { readable } from 'svelte/store';
 import { ws } from './lib';
 
 /** Store interface */
 type ObservableMapStore<K extends string | number, V> = Pick<
-	ObservableMap<K, V>,
+	ServerObservableMapStore<K, V>,
 	'key' | 'set' | 'delete' | 'clear' | 'subscribe'
 > & {
 	isConnected: () => boolean;

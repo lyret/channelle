@@ -1,14 +1,15 @@
 <script lang="ts">
 	import { createDatabaseStore } from '~/stores';
-	import { createMediaOptionStore } from '~/stores/media';
 	import ParticipantSelect from './ParticipantSelect.svelte';
 
+	import { sceneLayout } from '~/stores/scene/sceneLayout';
+	import { sceneCurtains } from '~/stores/scene/sceneCurtains';
+	import { sceneVisitorAudioIsEnabled } from '~/stores/scene/sceneVisitorAudioIsEnabled';
+	import { sceneEffectsIsEnabled } from '~/stores/scene/sceneEffectsIsEnabled';
+	import { sceneChatIsEnabled } from '~/stores/scene/sceneChatIsEnabled';
+
 	let selectedLayout = '';
-	let allowVisitorAudio = createMediaOptionStore('allowVisitorAudio');
-	let effectsAreEnabled = createMediaOptionStore('effectsAreEnabled');
-	let curtains = createMediaOptionStore('curtains');
-	let layout = createMediaOptionStore('layout');
-	let allowChat = createMediaOptionStore('allowChat');
+
 	let allParticipants = createDatabaseStore('participant');
 	$: actors = $allParticipants.filter((p) => p.actor);
 
@@ -22,8 +23,8 @@
 
 	function selectChat() {
 		selectedLayout = 'chatfocus';
-		allowChat.set(true);
-		layout.set([
+		sceneChatIsEnabled.set(true);
+		sceneLayout.set([
 			[
 				{ type: 'actor', id: chat1 },
 				{ type: 'chat' },
@@ -33,13 +34,13 @@
 	}
 	function selectOneXOne() {
 		selectedLayout = '1x1';
-		allowChat.set(false);
-		layout.set([[{ type: 'actor', id: onexone1 }]]);
+		sceneChatIsEnabled.set(false);
+		sceneLayout.set([[{ type: 'actor', id: onexone1 }]]);
 	}
 	function selectTwoXTwo() {
 		selectedLayout = '2x2';
-		allowChat.set(false);
-		layout.set([
+		sceneChatIsEnabled.set(false);
+		sceneLayout.set([
 			[
 				{ type: 'actor', id: twoxtwo1 },
 				{ type: 'actor', id: twoxtwo2 },
@@ -55,21 +56,21 @@
 <h1 class="title">Sceninställningar</h1>
 <button
 	class="button is-dark is-fullwidth"
-	class:is-success={$curtains}
-	on:click={() => curtains.set(!$curtains)}>Visa ridå</button
+	class:is-success={$sceneCurtains}
+	on:click={() => sceneCurtains.set(!$sceneCurtains)}>Visa ridå</button
 >
 <button
 	class="button is-dark is-fullwidth"
-	class:is-success={$allowVisitorAudio}
+	class:is-success={$sceneVisitorAudioIsEnabled}
 	on:click={() => {
-		allowVisitorAudio.set(!$allowVisitorAudio);
+		sceneVisitorAudioIsEnabled.set(!$sceneVisitorAudioIsEnabled);
 	}}>Tillåt ljud från publiken</button
 >
 <button
 	class="button is-dark is-fullwidth"
-	class:is-success={$effectsAreEnabled}
+	class:is-success={$sceneEffectsIsEnabled}
 	on:click={() => {
-		effectsAreEnabled.set(!$effectsAreEnabled);
+		sceneEffectsIsEnabled.set(!$sceneEffectsIsEnabled);
 	}}>Tillåt blommor och applåder</button
 >
 <hr />

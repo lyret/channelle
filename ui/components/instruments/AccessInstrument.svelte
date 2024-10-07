@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { scenePassword } from '~/stores/access/scenePassword';
+	import { scenePassword } from '~/stores/scene/scenePassword';
 
 	let inputRef: HTMLInputElement;
 	let inputValue: string = '';

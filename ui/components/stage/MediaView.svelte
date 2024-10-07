@@ -20,7 +20,7 @@
 {#if streamHasVideo}
 	<video
 		use:srcObject={stream}
-		controls={false}
+		controls={true}
 		autoplay
 		playsinline
 		muted={true}

@@ -90,7 +90,7 @@ export async function createConfiguration() {
 	const start =
 		cli.start !== undefined ? cli.start : env.START != 'false' || false;
 
-	const announcedIp = production ? publicIP : lanIP || '127.0.0.1';
+	const announcedIp = production ? publicIP : '127.0.0.1'; // lanIP
 
 	console.log();
 	console.log(

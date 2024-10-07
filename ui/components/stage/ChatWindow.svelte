@@ -1,13 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { blur } from 'svelte/transition';
-	import { createMediaOptionStore } from '~/stores/media';
 	import ChatInput from '../chat/ChatInput.svelte';
 	import ChatList from '../chat/ChatList.svelte';
+	import { sceneVisitorAudioIsEnabled } from '~/stores/scene/sceneVisitorAudioIsEnabled';
 
 	let ref: HTMLDivElement;
 	let hasUnread = false;
-	let allowChat = createMediaOptionStore('allowChat');
 
 	onMount(() => {
 		if (ref) {
@@ -22,7 +21,7 @@
 
 <div class="chat-window" in:blur={{ duration: 500 }}>
 	<ChatList />
-	{#if $allowChat}
+	{#if $sceneVisitorAudioIsEnabled}
 		<ChatInput />
 	{/if}
 </div>

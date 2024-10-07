@@ -12,6 +12,9 @@ export const participantScenePassword = createLocalStore<string>(
 export const scenePasswordIsOk = derived(
 	[scenePassword, participantScenePassword],
 	([$scenePassword, $participantScenePassword]) => {
-		return $scenePassword == $participantScenePassword;
+		return (
+			(scenePassword.isConnected() && !$scenePassword) ||
+			$scenePassword == $participantScenePassword
+		);
 	}
 );

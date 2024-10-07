@@ -1,12 +1,12 @@
 import EventEmitter from 'node:events';
-import { attempt } from './utils/attempt';
-import { ws } from './api';
+import { attempt } from '../utils/attempt';
+import { ws } from '../api';
 
-/** Creates a new Observable Value Store */
-export function observableValue<V>(
+/** Creates a new observable store for a single value */
+export function createValueStore<V>(
 	identifier: string,
 	defaultValue: V
-): ObservableValue<V> {
+): ObservableValueStore<V> {
 	const _identifier = identifier;
 	const _io = ws().of(`/${identifier}`);
 	const _emitter: EventEmitter<{ [P in keyof OVEvents<V>]: any }> =
@@ -26,8 +26,8 @@ export function observableValue<V>(
 			_value = value;
 			_emit();
 		});
-		_socket.on('refresh', () => {
-			_socket.emit('*', _value);
+		_socket.on('refresh', (callback) => {
+			callback(_value);
 		});
 	});
 
@@ -51,7 +51,7 @@ export function observableValue<V>(
 }
 
 /** Observable Value Store Interface */
-export type ObservableValue<V> = {
+export type ObservableValueStore<V> = {
 	/** Returns the key for this observable map, unique for server<->client communication */
 	key: string;
 	/** Sets the given value */

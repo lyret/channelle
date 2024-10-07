@@ -6,8 +6,6 @@
 	} from '~/stores/connection';
 	import { blur } from 'svelte/transition';
 	import { route } from '~/stores/ui/url';
-
-	import { createMediaOptionStore } from '~/stores/media';
 	import flowerSrc from '~/assets/images/flower.png';
 
 	import Curtains from '~/components/curtains/Curtains.svelte';
@@ -17,10 +15,10 @@
 	import Problem from '~/components/curtains/ProblemCurtainMessage.svelte';
 	import ManagePage from '~/pages/Backstage.svelte';
 	import StagePage from '~/pages/Stage.svelte';
-	import { scenePasswordIsOk } from './stores/access/scenePassword';
+	import { scenePasswordIsOk } from './stores/scene/scenePassword';
 	import PasswordCurtainMessage from './components/curtains/PasswordCurtainMessage.svelte';
 
-	let curtainOption = createMediaOptionStore('curtains');
+	import { sceneCurtains } from './stores/scene/sceneCurtains';
 
 	// Delays the rendering of any content to avoid the "pop-in" effect
 	// on initial rendering due to initial determination of state
@@ -46,7 +44,7 @@
 			!authenticated ||
 			blocked ||
 			needPassword ||
-			($curtainOption && renderStage) ||
+			($sceneCurtains && renderStage) ||
 			(!renderStage && !renderBackstage));
 </script>
 

@@ -7,16 +7,15 @@
 	import { update } from '~/api';
 	import { createLocalStore, createMediaStore } from '~/stores';
 	import { currentParticipant } from '~/stores/connection';
-	import { createMediaOptionStore } from '~/stores/media';
 	import { createEffectsStore } from '~/stores/particles/effectsStore';
 	import { userCameraBans, userMicrophoneBans } from '~/stores/users';
+	import { sceneVisitorAudioIsEnabled } from '~/stores/scene/sceneVisitorAudioIsEnabled';
+	import { sceneEffectsIsEnabled } from '~/stores/scene/sceneEffectsIsEnabled';
 
 	let showSettings = createLocalStore('stage-settings', false);
 	let windowSize = windowSizeStore();
 	$: isMobile = $windowSize.width <= 768;
 	let isFullscreen = isInFullscreen();
-	let allowVisitorAudio = createMediaOptionStore('allowVisitorAudio');
-	let effectsAreEnabled = createMediaOptionStore('effectsAreEnabled');
 	let isProducingVideo = createMediaStore('isProducingVideo');
 	let isProducingAudio = createMediaStore('isProducingAudio');
 	let effects = createEffectsStore();
@@ -106,7 +105,7 @@
 		{/if}
 
 		<!-- AUDIO -->
-		{#if $currentParticipant.actor || $allowVisitorAudio}
+		{#if $currentParticipant.actor || $sceneVisitorAudioIsEnabled}
 			<button
 				type="button"
 				class={btnClassList}
@@ -133,7 +132,7 @@
 		{/if}
 
 		<!-- EFFECTS -->
-		{#if $effectsAreEnabled}
+		{#if $sceneEffectsIsEnabled}
 			<button
 				class={effectBtnClassList}
 				transition:blur

@@ -8,8 +8,7 @@ import BodyParser from 'koa-bodyparser';
 import ServeStatic from 'koa-static';
 
 import { Repository } from '../database';
-import { createMediaRepostiory } from './media';
-import { createIOEventHandlers } from './middlewares/createIOEventHandlers';
+import { createIOEventHandlers } from './createIOEventHandlers';
 import { http, koa, ws } from './lib/api';
 
 /**
@@ -55,9 +54,6 @@ export async function createServer(): Promise<Http.Server> {
 
 	// Serve the client interface
 	app.use(ClientAccessMiddleware);
-
-	// Initialize a media stream repository
-	await createMediaRepostiory(io);
 
 	// Connect repositories with IO
 	Repository.setIO(io);

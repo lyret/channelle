@@ -34,7 +34,7 @@
 		setTimeout(async () => {
 			while (dreamSnd.volume < 1) {
 				await new Promise((res) => {
-					setTimeout(() => res((dreamSnd.volume += 0.05)), 200);
+					setTimeout(() => res((dreamSnd.volume += 0.01)), 200);
 				});
 			}
 		}, 200);

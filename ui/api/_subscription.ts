@@ -1,8 +1,8 @@
-//@ts-ignore
-import { io } from 'socket.io-client';
 import Emittery from 'emittery';
 import type { DataTypes } from './_databaseTypes';
 import type { ConnectionStatusName } from './_connectionTypes';
+import type { Socket } from 'socket.io-client';
+import { ws } from './lib';
 
 type SubscriptionSocketEvents = {
 	status: ConnectionStatusName;
@@ -11,7 +11,7 @@ export class Subscription<
 	Events extends Record<string, unknown> = Record<string, unknown>,
 > {
 	private static _connectionStatus: ConnectionStatusName = 'disconnected';
-	private static _socket: SocketIO.Socket;
+	protected static _socket: Socket;
 	private static _subscriptionEventEmitter: Emittery<SubscriptionSocketEvents> =
 		new Emittery();
 	private _instanceEventEmitter: Emittery<Events> = new Emittery();
@@ -29,14 +29,18 @@ export class Subscription<
 	}
 
 	/** Returns the web socket used for all subscriptions, initiates a connection when needed */
-	public static connection(): SocketIO.Socket {
+	public static connection(): Socket {
 		// FIXME: should not be public
 		if (!this._socket) {
-			const { url, path, transports } = CONFIG.socket;
-			this._socket = io(url, {
-				path,
-				transports,
-			});
+			console.log('HERE', this);
+			this._socket = ws();
+
+			if (this._socket.connected) {
+				this.status = 'connected';
+				if (localStorage.getItem('participant-id')) {
+					Subscription.registerParticipation();
+				}
+			}
 
 			// When the socket is connected...
 			this._socket.on('connect', () => {
@@ -52,7 +56,7 @@ export class Subscription<
 			// Add debugging events
 			if (CONFIG.runtime.debug) {
 				// Reload the browser when requested by the server
-				this._socket.on('build-event', (buildOutputs) => {
+				this._socket.on('build-event', (buildOutputs: any) => {
 					// Reload the window
 					window.location.reload();
 

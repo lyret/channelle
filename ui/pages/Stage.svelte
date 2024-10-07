@@ -4,16 +4,26 @@
 	import MediaAudio from '~/components/stage/MediaAudio.svelte';
 	import ChatView from '~/components/stage/ChatWindow.svelte';
 	import Actions from '~/components/stage/ActionBar.svelte';
-	import { createMediaOptionStore, mediaParticipants } from '~/stores/media';
+	import { mediaParticipants } from '~/stores/media';
 	import { blur, fly } from 'svelte/transition';
 	import { createLocalStore } from '~/stores';
+	import { sceneLayout } from '~/stores/scene/sceneLayout';
+	import { onMount } from 'svelte';
 
 	let stageSettings = createLocalStore('stage-settings', false);
-	let layout = createMediaOptionStore('layout');
 
-	$: matrix = $layout || [];
+	$: matrix = $sceneLayout || [];
 	$: height = Math.max(matrix.length, 1);
 	$: width = Math.max(matrix.length ? matrix[0].length : 0, 1);
+
+	onMount(() => {
+		sceneLayout.subscribe((data) => {
+			console.log('MP layout', data);
+		});
+		mediaParticipants.subscribe((data) => {
+			console.log('MP data', data);
+		});
+	});
 </script>
 
 <main in:blur={{ delay: 500, duration: 1000 }}>

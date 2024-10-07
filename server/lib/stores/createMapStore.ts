@@ -1,11 +1,16 @@
 import EventEmitter from 'node:events';
-import { attempt } from './utils/attempt';
-import { ws } from './api';
+import { attempt } from '../utils/attempt';
+import { ws } from '../api';
 
-/** Creates a new Observable Map */
-export function observableMap<K extends string | number, V>(
-	identifier: string
-): ObservableMap<K, V> {
+/** Creates a new observable store for a map of values */
+export function createMapStore<K extends string | number, V>(
+	identifier: string,
+	/** Optional middleware operations */
+	middlewares: {
+		/** Called when a value is deleted or the map is cleared */
+		onDelete?: (value: V) => void;
+	} = {}
+): ObservableMapStore<K, V> {
 	const _identifier = identifier;
 	const _map: Map<K, V> = new Map();
 	const _io = ws().of(`/${identifier}`);
@@ -33,10 +38,9 @@ export function observableMap<K extends string | number, V>(
 			_map.clear();
 			_emit();
 		});
-		_socket.on('refresh', () => {
+		_socket.on('refresh', (_, callback) => {
 			const currentData = Object.fromEntries(_map.entries()) as Record<K, V>;
-			console.log('HERE', currentData);
-			_socket.emit('*', currentData);
+			callback(currentData);
 		});
 	});
 
@@ -47,10 +51,16 @@ export function observableMap<K extends string | number, V>(
 			_emit();
 		},
 		delete: (key: K) => {
+			if (middlewares.onDelete && _map.has(key)) {
+				middlewares.onDelete(_map.get(key)!);
+			}
 			_map.delete(key);
 			_emit();
 		},
 		clear: () => {
+			if (middlewares.onDelete) {
+				_map.forEach(middlewares.onDelete);
+			}
 			_map.clear();
 			_emit();
 		},
@@ -63,7 +73,7 @@ export function observableMap<K extends string | number, V>(
 		map: () => {
 			return _map;
 		},
-		iterable: () => {
+		entries: () => {
 			return _map.entries();
 		},
 		subscribe: (handler: (data: Record<K, V>) => any) => {
@@ -76,8 +86,8 @@ export function observableMap<K extends string | number, V>(
 	};
 }
 
-/** Observable Map */
-export type ObservableMap<K extends string | number, V> = {
+/** Observable Map Store Interface */
+export type ObservableMapStore<K extends string | number, V> = {
 	/** Returns the key for this observable map, unique for server<->client communication */
 	key: string;
 	/** Sets a key in the map to the given value */
@@ -93,12 +103,12 @@ export type ObservableMap<K extends string | number, V> = {
 	/** Returns the underlying map object directly */
 	map: () => Map<K, V>;
 	/** Returns an iterable iterator for each key value pair in the map */
-	iterable: () => IterableIterator<[K, V]>;
+	entries: () => IterableIterator<[K, V]>;
 	/** Subscribe to updates to the map, retuns the unsubscibe function */
 	subscribe: (handler: (data: Record<K, V>) => any) => () => void;
 };
 
-/** Events emitted within the observable map */
+/** Events emitted within the observable map store */
 export type OMEvents<K extends string | number, V> = {
 	'*': Record<K, V>;
 };

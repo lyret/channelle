@@ -1,6 +1,6 @@
 import * as MediaSoup from 'mediasoup-client';
 import Emittery from 'emittery';
-import type { MediaOptions, MediaRequests } from './_connectionTypes';
+import type { MediaRequests } from './_connectionTypes';
 import { Subscription } from './_subscription';
 
 /** Available events emitted from the API class implementation */
@@ -327,19 +327,6 @@ export class MediaSubscription extends Subscription {
 
 	// Methods
 
-	public static async getCurrentOptions<
-		K extends keyof MediaOptions,
-	>(): Promise<MediaOptions> {
-		return this.request('options');
-	}
-
-	public static async updateOption<K extends keyof MediaOptions>(
-		option: K,
-		value: MediaOptions[K] | undefined
-	): Promise<MediaOptions[K] | undefined> {
-		return this.request('options_set', { option, value }) as never;
-	}
-
 	public static async addEffect(
 		type: 'applause' | 'flowers',
 		number: number
@@ -371,6 +358,7 @@ export class MediaSubscription extends Subscription {
 
 		// Handle new connection event
 		transport.on('connect', ({ dtlsParameters }, callback, errback) => {
+			console.log('HERE', 'transport_receiver_connect');
 			this.request('transport_receiver_connect', {
 				transportId: transport.id,
 				dtlsParameters,

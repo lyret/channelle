@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { blur, scale } from 'svelte/transition';
-	import { participantScenePassword } from '~/stores/access/scenePassword';
+	import { participantScenePassword } from '~/stores/scene/scenePassword';
 
 	let inputRef: HTMLInputElement;
 	let inputValue: string = '';
