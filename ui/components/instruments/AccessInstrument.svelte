@@ -6,7 +6,7 @@
 	let inputValue: string = '';
 
 	let isLoading = false;
-	$: isLocked = !!$scenePassword.length;
+	$: isLocked = $scenePassword?.length;
 	$: isChanged = $scenePassword != inputValue;
 	$: disabled = isLoading || !isChanged;
 
@@ -19,16 +19,6 @@
 			isChanged = false;
 			scenePassword.set(inputValue);
 		}, 1500);
-		// await create('message', {
-		// 	data: {
-		// 		participantId: $currentParticipant.id,
-		// 		backstage: makeBackstage,
-		// 		message: inputValue,
-		// 	},
-		// });
-
-		// loading = false;
-		// inputValue = '';
 	}
 
 	onMount(() => {
@@ -54,6 +44,7 @@
 		<div class="control is-expanded">
 			<input
 				type="text"
+				autocomplete="off"
 				bind:this={inputRef}
 				class="input is-fullwidth is-medium"
 				bind:value={inputValue}

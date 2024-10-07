@@ -36,6 +36,7 @@
 >
 	<input
 		type="text"
+		autocomplete="off"
 		bind:this={inputRef}
 		class="input is-large is-centered has-text-centered"
 		bind:value={inputValue}

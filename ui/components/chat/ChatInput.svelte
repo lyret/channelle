@@ -38,6 +38,7 @@
 		<div class="control is-expanded">
 			<input
 				type="text"
+				autocomplete="off"
 				bind:this={inputRef}
 				class="input is-fullwidth"
 				class:is-large={isLarge}
