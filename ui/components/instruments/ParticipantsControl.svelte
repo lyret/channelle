@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { DataTypes } from '~/api';
-	import { update } from '~/api';
+	import type { DataTypes } from '~/lib';
+	import { update } from '~/lib';
 	import { clickOutside } from '~/directives';
 	import { userCameraBans, userMicrophoneBans } from '~/stores/users';
 

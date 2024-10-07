@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { blur, scale, type BlurParams } from 'svelte/transition';
+	import { blur } from 'svelte/transition';
 	import { createDatabaseStore } from '~/stores';
-	import { currentParticipant } from '~/stores/connection';
-	import { remove } from 'api';
+	import { currentParticipant } from '~/lib/stores/api';
+	import { remove } from '~/lib';
 
 	export let backstageOnly: boolean = false;
 

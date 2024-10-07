@@ -32,7 +32,7 @@
 			// Unable to play, probably no user interaction yet.
 		}
 		setTimeout(async () => {
-			while (dreamSnd.volume < 1) {
+			while (dreamSnd.volume < 0.9) {
 				await new Promise((res) => {
 					setTimeout(() => res((dreamSnd.volume += 0.01)), 200);
 				});

@@ -1,5 +1,5 @@
 import * as MediaSoup from 'mediasoup-client';
-console.log(CONFIG);
+
 /** Sets the debug level for MediaSoup, requires and makes and additional reload due to the import order of MediaSoup */
 export function enableMediaSoupDebugging() {
 	const enabled = !!CONFIG.debug.verboseOutput;

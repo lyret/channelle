@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { create } from '~/api';
-	import { currentParticipant } from '~/stores/connection';
+	import { create } from '~/lib';
+	import { APIStore } from '~/lib/stores/api';
 	export let makeBackstage: boolean = false;
 	export let isLarge: boolean = false;
 	let inputValue: string = '';
@@ -14,13 +14,15 @@
 		e.preventDefault();
 		loading = true;
 
-		await create('message', {
-			data: {
-				participantId: $currentParticipant.id,
-				backstage: makeBackstage,
-				message: inputValue,
-			},
-		});
+		if ($APIStore.status == 'ready') {
+			await create('message', {
+				data: {
+					participantId: $APIStore.participantId,
+					backstage: makeBackstage,
+					message: inputValue,
+				},
+			});
+		}
 
 		loading = false;
 		inputValue = '';

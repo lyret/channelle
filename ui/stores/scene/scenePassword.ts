@@ -1,4 +1,4 @@
-import { createOVStore } from '~/api/OVStore';
+import { createOVStore } from '~/lib/OVStore';
 import { createLocalStore } from '../_localStore';
 import { derived } from 'svelte/store';
 

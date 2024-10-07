@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { DataTypes } from '~/api';
-	import { update } from '~/api';
+	import type { DataTypes } from '~/lib';
+	import { update } from '~/lib';
 
 	export let participant: DataTypes['participant'];
 

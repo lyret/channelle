@@ -1,6 +1,7 @@
 import type * as MediaSoup from 'mediasoup';
 import * as IO from 'socket.io';
 import {
+	client,
 	Repository,
 	RepositoryOperations,
 	RepositoryOperationsThatIntroducesChanges,
@@ -45,18 +46,33 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 		console.error('[IO] client connection error', err);
 	});
 
-	socket.on('registerParticipant', async (id) => {
+	socket.on('registerParticipant', async (id, callback) => {
 		try {
-			console.log(`[IO] ${socket.id} registered participant id ${id}`);
+			const participant = await (!id || Number.isNaN(id)
+				? client.participant.create({
+						data: {
+							name: '',
+							manager: (await client.participant.count()) == 0,
+						},
+					})
+				: client.participant.findFirst({
+						where: { id },
+					}));
 
-			// Link to current media data status
-			onlineParticipants.set(socket.id, Number(id));
-			userOnlineStatus.set(Number(id), true);
-			console.log('[PARTICIPANT]', Number(id), 'is online');
+			if (!participant) {
+				return callback({ ok: false });
+			}
 
-			socket.emit('registerParticipant', { ok: true });
+			console.log(
+				`[PARTICIPANT] ${socket.id} connected as ${participant.name} (id ${participant.id})`
+			);
+			onlineParticipants.set(socket.id, participant.id);
+			userOnlineStatus.set(Number(participant.id), true);
+
+			return callback({ ok: true, participant });
 		} catch {
-			socket.emit('registerParticipant', { ok: false });
+			console.error('HERE');
+			return callback({ ok: false });
 		}
 	});
 

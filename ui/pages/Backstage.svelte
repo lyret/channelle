@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { blur } from 'svelte/transition';
 	import { openInstruments } from '~/stores/ui';
-	import { currentParticipant } from '~/stores/connection';
 	import flowerSrc from '../assets/images/flower.png';
 	import ChatList from '~/components/instruments/ChatInstrument.svelte';
 	import ParticipantsInstrument from '~/components/instruments/ParticipantsInstrument.svelte';

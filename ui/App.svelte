@@ -1,9 +1,5 @@
 <script lang="ts">
-	import {
-		currentParticipationStatus,
-		currentParticipant,
-		connectionStatus,
-	} from '~/stores/connection';
+	import { APIStore } from '~/lib/stores/api';
 	import { blur } from 'svelte/transition';
 	import { route } from '~/stores/ui/url';
 	import flowerSrc from '~/assets/images/flower.png';
@@ -28,21 +24,22 @@
 	}, 1000);
 
 	// Determine what should be rendered
-	$: blocked = $currentParticipationStatus == 'blocked';
-	$: online = $currentParticipationStatus == 'online';
-	$: authenticated = $currentParticipant && $currentParticipant.name;
+	$: isBlocked = $APIStore.status == 'blocked';
+	$: isPreparing = $APIStore.isReady == false;
+	$: hasEnteredName = $APIStore.status == 'ready' && $APIStore.participant.name;
 	$: renderStage = $route && $route.group == 'stage';
 	$: renderBackstage = $route && $route.group == 'backstage';
 	$: needPassword = !$scenePasswordIsOk && renderStage;
 	$: renderMessages =
-		!determiningState && (!online || !authenticated || blocked || needPassword);
+		!determiningState &&
+		(isPreparing || !hasEnteredName || isBlocked || needPassword);
 	$: renderContent =
 		!determiningState && !renderMessages && (renderStage || renderBackstage);
 	$: renderCurtains =
 		!determiningState &&
-		(!online ||
-			!authenticated ||
-			blocked ||
+		(isPreparing ||
+			!hasEnteredName ||
+			isBlocked ||
 			needPassword ||
 			($sceneCurtains && renderStage) ||
 			(!renderStage && !renderBackstage));
@@ -73,11 +70,11 @@
 		>
 			<img class="logo" src={flowerSrc} alt="a kalidoscope of a flower " />
 			<h1 class="title is-family-title is-size-1">Chanelle</h1>
-			{#if blocked}
+			{#if isBlocked}
 				<Blocked />
-			{:else if $currentParticipant && !authenticated}
-				<Authenticate participant={$currentParticipant} />
-			{:else if !online}
+			{:else if $APIStore.status == 'ready' && !hasEnteredName}
+				<Authenticate participant={$APIStore.participant} />
+			{:else if isPreparing}
 				<Loader label={'Ansluter...'} />
 			{:else if needPassword}
 				<PasswordCurtainMessage />

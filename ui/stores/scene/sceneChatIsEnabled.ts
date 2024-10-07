@@ -1,4 +1,4 @@
-import { createOVStore } from '~/api/OVStore';
+import { createOVStore } from '~/lib/OVStore';
 
 /** Keeps track of whenever participants are allowed to access the chat at any time */
 

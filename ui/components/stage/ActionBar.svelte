@@ -4,9 +4,9 @@
 	import { isInFullscreen } from '$lib/stores/fullscreenStore';
 	import { onMount } from 'svelte';
 	import { blur } from 'svelte/transition';
-	import { update } from '~/api';
+	import { update } from '~/lib';
 	import { createLocalStore, createMediaStore } from '~/stores';
-	import { currentParticipant } from '~/stores/connection';
+	import { currentParticipant } from '~/lib/stores/api';
 	import { createEffectsStore } from '~/stores/particles/effectsStore';
 	import { userCameraBans, userMicrophoneBans } from '~/stores/users';
 	import { sceneVisitorAudioIsEnabled } from '~/stores/scene/sceneVisitorAudioIsEnabled';
@@ -21,15 +21,13 @@
 	let effects = createEffectsStore();
 
 	async function updateName() {
-		if ($currentParticipant) {
-			const currentName = $currentParticipant.name;
-			const newName =
-				window.prompt('Byt namn till...', currentName) || currentName;
-			await update('participant', {
-				where: { id: $currentParticipant.id },
-				data: { name: newName },
-			});
-		}
+		const currentName = $currentParticipant.name;
+		const newName =
+			window.prompt('Byt namn till...', currentName) || currentName;
+		await update('participant', {
+			where: { id: $currentParticipant.id },
+			data: { name: newName },
+		});
 	}
 
 	// Make sure effects are rendered

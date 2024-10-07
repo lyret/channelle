@@ -1,6 +1,6 @@
 import type { ObservableValueStore as ServerObservableValueStore } from '~/../server/lib/stores/createValueStore';
 import { readable } from 'svelte/store';
-import { ws } from './lib';
+import { ws } from './api';
 
 /** Store interface */
 type ObservableValueStore<V> = Pick<

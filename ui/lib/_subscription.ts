@@ -1,36 +1,35 @@
 import Emittery from 'emittery';
 import type { DataTypes } from './_databaseTypes';
-import type { ConnectionStatusName } from './_connectionTypes';
 import type { Socket } from 'socket.io-client';
-import { ws } from './lib';
+import { ws } from './api';
 
 type SubscriptionSocketEvents = {
-	status: ConnectionStatusName;
+	status: string;
 };
 export class Subscription<
 	Events extends Record<string, unknown> = Record<string, unknown>,
 > {
-	private static _connectionStatus: ConnectionStatusName = 'disconnected';
+	private static _connectionStatus: string = 'disconnected';
 	protected static _socket: Socket;
 	private static _subscriptionEventEmitter: Emittery<SubscriptionSocketEvents> =
 		new Emittery();
 	private _instanceEventEmitter: Emittery<Events> = new Emittery();
 
 	/** Sets the connection status manually */
-	private static set status(status: ConnectionStatusName) {
+	private static set status(status: string) {
 		this._connectionStatus = status;
 		console.log(`[Subscription] connection status: ${status}`);
 		this.subscriptionEmit('status', status);
 	}
 
 	/** Returns the current connection status */
-	public static get status(): ConnectionStatusName {
+	public static get status(): string {
 		return Subscription._connectionStatus;
 	}
 
 	/** Returns the web socket used for all subscriptions, initiates a connection when needed */
 	public static connection(): Socket {
-		// FIXME: should not be public
+		// FIXME: REMOVE!!
 		if (!this._socket) {
 			console.log('HERE', this);
 			this._socket = ws();

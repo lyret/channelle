@@ -31,10 +31,22 @@ export function createMapStore<K extends string | number, V>(
 			_emit();
 		});
 		_socket.on('delete', ({ key }) => {
+			if (!_map.has(key)) {
+				return;
+			}
+			if (middlewares.onDelete) {
+				middlewares.onDelete(_map.get(key)!);
+			}
 			_map.delete(key);
 			_emit();
 		});
 		_socket.on('clear', () => {
+			if (!_map.size) {
+				return;
+			}
+			if (middlewares.onDelete) {
+				_map.forEach(middlewares.onDelete);
+			}
 			_map.clear();
 			_emit();
 		});
@@ -51,13 +63,19 @@ export function createMapStore<K extends string | number, V>(
 			_emit();
 		},
 		delete: (key: K) => {
-			if (middlewares.onDelete && _map.has(key)) {
+			if (!_map.has(key)) {
+				return;
+			}
+			if (middlewares.onDelete) {
 				middlewares.onDelete(_map.get(key)!);
 			}
 			_map.delete(key);
 			_emit();
 		},
 		clear: () => {
+			if (!_map.size) {
+				return;
+			}
 			if (middlewares.onDelete) {
 				_map.forEach(middlewares.onDelete);
 			}

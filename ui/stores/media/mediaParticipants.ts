@@ -1,6 +1,6 @@
-import type { DataTypes } from '~/api';
+import type { DataTypes } from '~/lib';
 import { derived } from 'svelte/store';
-import { currentParticipant } from '../connection';
+import { APIStore } from '~/lib/stores/api';
 import { createMediaStore } from '../_mediaStore';
 import { createDatabaseStore } from '../_databaseStore';
 import { userCameraBans, userMicrophoneBans } from '../users';
@@ -30,7 +30,7 @@ function createMediaParticipantsStore(): MediaParticipantsStore {
 		[
 			remoteMediaStreams,
 			participants,
-			currentParticipant,
+			APIStore,
 			localMediaStream,
 			sceneLayout,
 			sceneVisitorAudioIsEnabled,
@@ -40,7 +40,7 @@ function createMediaParticipantsStore(): MediaParticipantsStore {
 		([
 			$remoteMediaStreams,
 			$participants,
-			$currentParticipant,
+			$APIStore,
 			$localMediaStream,
 			$sceneLayout,
 			$sceneVisitorAudioIsEnabled,
@@ -87,7 +87,8 @@ function createMediaParticipantsStore(): MediaParticipantsStore {
 							}
 							// Local media
 							else if (
-								participant.id == $currentParticipant.id &&
+								$APIStore.status == 'ready' &&
+								$APIStore.participantId == participant.id &&
 								$localMediaStream &&
 								!$userCameraBans[participant.id]
 							) {

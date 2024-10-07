@@ -1,5 +1,5 @@
-import type { SubscriptionMediaEvents } from '~/api';
-import { MediaSubscription } from '~/api';
+import type { SubscriptionMediaEvents } from '~/lib';
+import { MediaSubscription } from '~/lib';
 import { readable } from 'svelte/store';
 
 /** Store Interface */

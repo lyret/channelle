@@ -1,4 +1,4 @@
-import { createOVStore } from '~/api/OVStore';
+import { createOVStore } from '~/lib/OVStore';
 
 /** Keeps track of whenever any visitor is allowed to use their microphone */
 

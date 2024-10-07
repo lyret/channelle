@@ -1,4 +1,4 @@
-import { createOVStore } from '~/api/OVStore';
+import { createOVStore } from '~/lib/OVStore';
 
 /** Keeps tracks of the configured scene layout */
 

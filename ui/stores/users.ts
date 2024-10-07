@@ -1,4 +1,4 @@
-import { createOMStore } from '~/api/OMStore';
+import { createOMStore } from '~/lib/OMStore';
 
 /** Keeps tracks of what users are currently online, [id]: boolean */
 export const onlineStatus = createOMStore<number, boolean>(

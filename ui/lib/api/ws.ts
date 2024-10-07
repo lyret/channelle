@@ -7,9 +7,6 @@ const _manager: Manager = new Manager(url, {
 	transports,
 });
 
-/** Registry of all created sockets, per namespace */
-let _sockets: Map<string, Socket> = new Map();
-
 /** Returns the global web socket client for the given namespace, or fallback to the main one */
 export function ws(namespace: string = ''): Socket {
 	return _manager.socket(namespace);

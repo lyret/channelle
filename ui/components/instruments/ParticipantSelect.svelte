@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	const dispatch = createEventDispatcher();
-	import type { DataTypes } from '~/api';
+	import type { DataTypes } from '~/lib';
 
 	export let value: DataTypes['participant']['id'] | -1 = -1;
 

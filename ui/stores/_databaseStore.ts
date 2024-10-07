@@ -1,5 +1,5 @@
-import type { RepositoryName, RepositoryTypes } from '~/api';
-import { RepositorySubscription } from '~/api';
+import type { RepositoryName, RepositoryTypes } from '~/lib';
+import { RepositorySubscription } from '~/lib';
 import type { Readable } from 'svelte/store';
 import { readable, derived } from 'svelte/store';
 

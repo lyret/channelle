@@ -1,4 +1,4 @@
-import { MediaSubscription } from '~/api';
+import { MediaSubscription } from '~/lib';
 import { readable } from 'svelte/store';
 import { triggerApplauseEffect, triggerFlowerGiftEffect } from './effects';
 

@@ -1,4 +1,4 @@
-import { createLocalSubscription } from '~/api';
+import { createLocalSubscription } from '~/lib';
 import { readable } from 'svelte/store';
 
 /** Store interface */
