@@ -1,4 +1,4 @@
-import { observableMap } from '../api';
+import { observableMap } from '../lib';
 
 /** Keeps tracks of what users are currently online, [id]: boolean */
 export const userOnlineStatus = observableMap<number, boolean>(

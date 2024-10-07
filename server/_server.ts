@@ -10,7 +10,7 @@ import ServeStatic from 'koa-static';
 import { Repository } from '../database';
 import { createMediaRepostiory } from './media';
 import { createIOEventHandlers } from './middlewares/createIOEventHandlers';
-import { http, koa, ws } from './api/lib';
+import { http, koa, ws } from './lib/api';
 
 /**
  * Read and sends the index.html file
