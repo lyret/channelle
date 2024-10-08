@@ -1,0 +1,8 @@
+{
+	"name": "Channelle",
+	"short_name": "Channelle",
+	"icons": [],
+	"theme_color": "#fb01a5",
+	"background_color": "#000000",
+	"display": "standalone"
+}
