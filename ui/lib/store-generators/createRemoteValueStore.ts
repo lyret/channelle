@@ -30,7 +30,6 @@ export function createRemoteValueStore<V>(
 		_socket.on('disconnect', _onDisconnect);
 
 		_socket.on('*', (data: V) => {
-			console.log('VAL', '*', data);
 			_set(data);
 		});
 

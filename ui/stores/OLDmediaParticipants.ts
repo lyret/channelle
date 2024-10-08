@@ -1,15 +1,12 @@
 import type { DataTypes } from '~/lib';
 import { derived } from 'svelte/store';
 import { APIStore } from '~/lib/stores/api';
-import { createMediaStore } from '../_mediaStore';
-import { createDatabaseStore } from '../../lib/store-generators/createDatabaseStore';
-import { userCameraBans, userMicrophoneBans } from '../users';
-import { sceneLayout } from '../scene/sceneLayout';
-import { sceneVisitorAudioIsEnabled } from '../scene/sceneVisitorAudioIsEnabled';
-
-const remoteMediaStreams = createMediaStore('remoteMediaStreams');
-const localMediaStream = createMediaStore('localMediaStream');
-const participants = createDatabaseStore('participant');
+import { MediaStore } from '~/lib/stores/media';
+import { createDatabaseStore } from '../lib/store-generators/createDatabaseStore';
+import { userCameraBans, userMicrophoneBans } from './users';
+import { sceneLayout } from './scene/sceneLayout';
+import { sceneVisitorAudioIsEnabled } from './scene/sceneVisitorAudioIsEnabled';
+export const participants = createDatabaseStore('participant');
 
 /** Store value */
 type MediaParticipants = {
@@ -28,20 +25,18 @@ interface MediaParticipantsStore {
 function createMediaParticipantsStore(): MediaParticipantsStore {
 	const { subscribe } = derived(
 		[
-			remoteMediaStreams,
 			participants,
 			APIStore,
-			localMediaStream,
+			MediaStore,
 			sceneLayout,
 			sceneVisitorAudioIsEnabled,
 			userCameraBans,
 			userMicrophoneBans,
 		],
 		([
-			$remoteMediaStreams,
 			$participants,
 			$APIStore,
-			$localMediaStream,
+			$MediaStore,
 			$sceneLayout,
 			$sceneVisitorAudioIsEnabled,
 			$userCameraBans,
@@ -78,30 +73,34 @@ function createMediaParticipantsStore(): MediaParticipantsStore {
 						if (layoutedActorsRecord[participant.id]) {
 							// Remote media
 							if (
-								$remoteMediaStreams[participant.id] &&
+								$MediaStore.remoteMediaStreams[participant.id] &&
 								!$userCameraBans[participant.id]
 							) {
 								results.video[participant.id] =
-									$remoteMediaStreams[participant.id];
-								results.audio.push($remoteMediaStreams[participant.id]);
+									$MediaStore.remoteMediaStreams[participant.id];
+								results.audio.push(
+									$MediaStore.remoteMediaStreams[participant.id]
+								);
 							}
 							// Local media
 							else if (
 								$APIStore.status == 'ready' &&
 								$APIStore.participantId == participant.id &&
-								$localMediaStream &&
+								$MediaStore.localMediaStream &&
 								!$userCameraBans[participant.id]
 							) {
-								results.video[participant.id] = $localMediaStream;
+								results.video[participant.id] = $MediaStore.localMediaStream;
 							}
 						}
 					} else {
 						if (
-							$remoteMediaStreams[participant.id] &&
+							$MediaStore.remoteMediaStreams[participant.id] &&
 							$sceneVisitorAudioIsEnabled &&
 							!$userMicrophoneBans[participant.id]
 						) {
-							results.audio.push($remoteMediaStreams[participant.id]);
+							results.audio.push(
+								$MediaStore.remoteMediaStreams[participant.id]
+							);
 						}
 					}
 				}

@@ -1,6 +1,8 @@
 <script lang="ts">
 	export let stream: MediaStream | undefined;
+
 	$: streamHasVideo = stream && stream.getVideoTracks().length;
+	$: streamHasAudio = stream && stream.getAudioTracks().length;
 
 	function srcObject(node: any, stream: any) {
 		if (!stream) {
@@ -20,11 +22,19 @@
 {#if streamHasVideo}
 	<video
 		use:srcObject={stream}
-		controls={true}
+		controls={false}
 		autoplay
 		playsinline
-		muted={true}
+		muted={!streamHasAudio}
 	></video>
+{:else if streamHasAudio}
+	<audio
+		use:srcObject={stream}
+		controls={false}
+		autoplay
+		playsinline
+		muted={false}
+	></audio>
 {/if}
 
 <style>

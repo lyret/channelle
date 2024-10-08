@@ -1,1 +1,1 @@
-export * from './createWebRtcTransport';
+export * from './createRtcTransport';

@@ -12,7 +12,7 @@ import {
 	createSubscriptionPath,
 } from '../shared/subscriptions';
 
-import { createWebRTCTransport } from './lib/rtc';
+import { createRTCTransport } from './lib/rtc';
 import { mediaSoupRouter, ws } from './lib/api';
 
 import { userOnlineStatus } from './stores/users';
@@ -26,6 +26,10 @@ import {
 
 // FIXME: test
 videoProducers.subscribe((data) => {
+	console.log('NOW', data);
+	ws().emit('producers_update');
+});
+audioProducers.subscribe((data) => {
 	console.log('NOW', data);
 	ws().emit('producers_update');
 });
@@ -153,7 +157,7 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 			callback
 		) => {
 			try {
-				const { transport, params } = await createWebRTCTransport();
+				const { transport, params } = await createRTCTransport();
 				mediaProducerTransports.set(socket.id, transport);
 				callback(params);
 			} catch (err) {
@@ -242,7 +246,7 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 				mediaReceiverTransports.delete(socket.id);
 
 				// Create a new transport
-				const { transport, params } = await createWebRTCTransport();
+				const { transport, params } = await createRTCTransport();
 				mediaReceiverTransports.set(socket.id, {
 					options: data,
 					transport: transport,

@@ -1,11 +1,13 @@
 <script lang="ts">
+	import { DeviceAudioStore } from '~/lib/stores/deviceAudio';
+	import { DeviceVideoStore } from '~/lib/stores/deviceVideo';
 	import { windowSizeStore } from '$ui/device';
 	import { fullScreenAction } from '~/legos/actions/fullScreenAction';
 	import { isInFullscreen } from '~/legos/stores/fullscreenStore';
 	import { onMount } from 'svelte';
 	import { blur } from 'svelte/transition';
 	import { update } from '~/lib';
-	import { createLocalStore, createMediaStore } from '~/stores';
+	import { createLocalStore } from '~/stores';
 	import { currentParticipant } from '~/lib/stores/api';
 	import { createEffectsStore } from '~/stores/particles/effectsStore';
 	import { userCameraBans, userMicrophoneBans } from '~/stores/users';
@@ -16,8 +18,6 @@
 	let windowSize = windowSizeStore();
 	$: isMobile = $windowSize.width <= 768;
 	let isFullscreen = isInFullscreen();
-	let isProducingVideo = createMediaStore('isProducingVideo');
-	let isProducingAudio = createMediaStore('isProducingAudio');
 	let effects = createEffectsStore();
 
 	async function updateName() {
@@ -32,9 +32,6 @@
 
 	// Make sure effects are rendered
 	onMount(() => {
-		currentParticipant.subscribe((v) => {
-			console.log('HERE', v);
-		});
 		const stop = effects.subscribe(() => {});
 
 		return () => {
@@ -51,24 +48,6 @@
 
 <div class="buttons">
 	<div class="left">
-		<!-- FULLSCREEN -->
-		<button
-			type="button"
-			class={btnClassList}
-			transition:blur
-			use:fullScreenAction
-		>
-			{#if $isFullscreen}
-				<span class={iconClassList}
-					><ion-icon name={'close-outline'}></ion-icon></span
-				>
-			{:else}
-				<span class={iconClassList}
-					><ion-icon name={'expand-outline'}></ion-icon></span
-				>
-			{/if}
-		</button>
-
 		<!-- CURRENT USER -->
 		<button class={btnClassList} transition:blur on:click={updateName}>
 			{#if !isMobile}
@@ -80,58 +59,6 @@
 		</button>
 	</div>
 	<div class="center">
-		<!-- VIDEO -->
-		{#if $currentParticipant.actor || $currentParticipant.manager}
-			<button
-				type="button"
-				disabled={$userCameraBans[$currentParticipant.id]}
-				class={btnClassList}
-				transition:blur
-				class:has-text-danger={$isProducingVideo}
-				on:click={() =>
-					$isProducingVideo
-						? isProducingVideo.stopPublishVideo()
-						: isProducingVideo.publishVideo()}
-			>
-				<span class={iconClassList}
-					><ion-icon name={$isProducingVideo ? 'videocam-off' : 'videocam'}
-					></ion-icon></span
-				>
-				{#if !isMobile}
-					<span
-						>{$isProducingVideo ? 'Stäng av kameran' : 'Starta kameran'}</span
-					>
-				{/if}
-			</button>
-		{/if}
-
-		<!-- AUDIO -->
-		{#if $currentParticipant.actor || $sceneVisitorAudioIsEnabled}
-			<button
-				type="button"
-				class={btnClassList}
-				transition:blur
-				disabled={$userMicrophoneBans[$currentParticipant.id]}
-				class:has-text-danger={$isProducingAudio}
-				on:click={() =>
-					$isProducingAudio
-						? isProducingAudio.stopPublishAudio()
-						: isProducingAudio.publishAudio()}
-			>
-				<span class={iconClassList}
-					><ion-icon name={$isProducingAudio ? 'mic-off' : 'mic'}></ion-icon><br
-					/></span
-				>
-				{#if !isMobile}
-					<span class=""
-						>{$isProducingAudio
-							? 'Stäng av mikrofonen'
-							: 'Starta mikrofonen'}</span
-					>
-				{/if}
-			</button>
-		{/if}
-
 		<!-- EFFECTS -->
 		{#if $sceneEffectsIsEnabled}
 			<button
@@ -151,8 +78,76 @@
 		{/if}
 	</div>
 	<div class="right">
-		<!-- BACKSTAGE LINK -->
+		<!-- VIDEO -->
 		{#if $currentParticipant.actor || $currentParticipant.manager}
+			<button
+				type="button"
+				disabled={$userCameraBans[$currentParticipant.id]}
+				class={btnClassList}
+				transition:blur
+				class:has-text-danger={$DeviceVideoStore}
+				on:click={() =>
+					$DeviceVideoStore
+						? DeviceVideoStore.stopPublishingVideo()
+						: DeviceVideoStore.publishVideo()}
+			>
+				<span class={iconClassList}
+					><ion-icon name={$DeviceVideoStore ? 'videocam-off' : 'videocam'}
+					></ion-icon></span
+				>
+				{#if !isMobile}
+					<span
+						>{$DeviceVideoStore ? 'Stäng av kameran' : 'Starta kameran'}</span
+					>
+				{/if}
+			</button>
+		{/if}
+
+		<!-- AUDIO -->
+		{#if $currentParticipant.actor || $sceneVisitorAudioIsEnabled}
+			<button
+				type="button"
+				class={btnClassList}
+				transition:blur
+				disabled={$userMicrophoneBans[$currentParticipant.id]}
+				class:has-text-danger={$DeviceAudioStore}
+				on:click={() =>
+					$DeviceAudioStore
+						? DeviceAudioStore.stopPublishingAudio()
+						: DeviceAudioStore.publishAudio()}
+			>
+				<span class={iconClassList}
+					><ion-icon name={$DeviceAudioStore ? 'mic-off' : 'mic'}></ion-icon><br
+					/></span
+				>
+				{#if !isMobile}
+					<span class=""
+						>{$DeviceAudioStore
+							? 'Stäng av mikrofonen'
+							: 'Starta mikrofonen'}</span
+					>
+				{/if}
+			</button>
+		{/if}
+		<!-- FULLSCREEN -->
+		<button
+			type="button"
+			class={btnClassList}
+			transition:blur
+			use:fullScreenAction
+		>
+			{#if $isFullscreen}
+				<span class={iconClassList}
+					><ion-icon name={'close-outline'}></ion-icon></span
+				>
+			{:else}
+				<span class={iconClassList}
+					><ion-icon name={'expand-outline'}></ion-icon></span
+				>
+			{/if}
+		</button>
+		<!-- STAGE SETTINGS -->
+		{#if $currentParticipant.manager}
 			<button
 				class={btnClassList}
 				transition:blur
@@ -172,6 +167,7 @@
 
 <style>
 	.button {
+		height: 48px;
 		background-color: black;
 		border: 1px solid var(--bulma-border);
 	}
@@ -182,8 +178,8 @@
 		border: 1px solid var(--bulma-border);
 	}
 	.buttons {
-		margin-left: 5%;
-		margin-right: 5%;
+		margin-left: 1%;
+		margin-right: 1%;
 	}
 	.left {
 		text-align: left;
@@ -201,7 +197,7 @@
 		text-align: right;
 		flex-grow: 1;
 		flex-grow: 1;
-		flex-basis: 0;
+		flex-basis: 1;
 	}
 
 	@media (max-width: 768px) {

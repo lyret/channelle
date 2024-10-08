@@ -7,14 +7,18 @@ import { createSubscriptionPath } from '../../../shared';
 /** The API store holds the context information needed to determine connection and participation status */
 export const APIStore = createAPIStore();
 
-/** Gives the current participant if available from the API or throws  */
+/** Gives the current participant if available from the API or an empty participant when unavailable  */
 export const currentParticipant = derived([APIStore], ([$APIStore]) => {
 	if ($APIStore.status == 'ready') {
 		return $APIStore.participant;
 	}
-	throw new Error(
-		'Tried to access the current participant when API was unready'
-	);
+	return {
+		id: -1,
+		actor: false,
+		blocked: false,
+		manager: false,
+		name: '',
+	} as DataTypes['participant'];
 });
 
 /** Creates a Svelte Store from a local subscription */

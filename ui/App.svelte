@@ -29,10 +29,17 @@
 	$: hasEnteredName = $APIStore.status == 'ready' && $APIStore.participant.name;
 	$: renderStage = $route && $route.group == 'stage';
 	$: renderBackstage = $route && $route.group == 'backstage';
-	$: needPassword = !$scenePasswordIsOk && renderStage;
+	$: needToBeManager =
+		renderBackstage &&
+		!($APIStore.status == 'ready' && $APIStore.participant.manager);
+	$: needStagePassword = !$scenePasswordIsOk && renderStage;
 	$: renderMessages =
 		!determiningState &&
-		(isPreparing || !hasEnteredName || isBlocked || needPassword);
+		(isPreparing ||
+			!hasEnteredName ||
+			isBlocked ||
+			needStagePassword ||
+			needToBeManager);
 	$: renderContent =
 		!determiningState && !renderMessages && (renderStage || renderBackstage);
 	$: renderCurtains =
@@ -40,7 +47,7 @@
 		(isPreparing ||
 			!hasEnteredName ||
 			isBlocked ||
-			needPassword ||
+			needStagePassword ||
 			($sceneCurtains && renderStage) ||
 			(!renderStage && !renderBackstage));
 </script>
@@ -76,7 +83,9 @@
 				<Authenticate participant={$APIStore.participant} />
 			{:else if isPreparing}
 				<Loader label={'Ansluter...'} />
-			{:else if needPassword}
+			{:else if needToBeManager}
+				<Blocked message="Sidan är endast för tekniker" />
+			{:else if needStagePassword}
 				<PasswordCurtainMessage />
 			{:else}
 				<Problem />

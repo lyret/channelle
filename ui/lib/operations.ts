@@ -46,8 +46,9 @@ async function performDBOperation<
 	});
 }
 
+/* TODO: Depricated! */
 /** Sends a media request through the socket connection and returns the response from the server */
-export async function request<Type extends keyof MediaRequests>(
+export async function mediaRequest<Type extends keyof MediaRequests>(
 	type: Type,
 	data?: MediaRequests[Type][0]
 ) {

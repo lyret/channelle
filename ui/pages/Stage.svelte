@@ -1,27 +1,35 @@
 <script lang="ts">
-	import Sidepanel from '~/components/stage/Sidepanel.svelte';
-	import MediaView from '~/components/stage/MediaView.svelte';
-	import MediaAudio from '~/components/stage/MediaAudio.svelte';
-	import ChatView from '~/components/stage/ChatWindow.svelte';
-	import Actions from '~/components/stage/ActionBar.svelte';
-	import { mediaParticipants } from '~/stores/media';
-	import { blur, fly } from 'svelte/transition';
-	import { createLocalStore } from '~/stores';
-	import { sceneLayout } from '~/stores/scene/sceneLayout';
 	import { onMount } from 'svelte';
-
-	let stageSettings = createLocalStore('stage-settings', false);
+	import { blur, fly } from 'svelte/transition';
+	import MediaWindow from '~/components/stage/MediaWindow.svelte';
+	import ChatWindow from '~/components/stage/ChatWindow.svelte';
+	import SidePanel from '~/components/stage/MenuPanel.svelte';
+	import ActionPanel from '~/components/stage/ActionPanel.svelte';
+	import { MediaStore } from '~/lib/stores/media';
+	import { sceneLayout } from '~/stores/scene/sceneLayout';
+	import { stageSettings } from '~/stores/scene/stageSettingsIsEnbaled';
 
 	$: matrix = $sceneLayout || [];
 	$: height = Math.max(matrix.length, 1);
 	$: width = Math.max(matrix.length ? matrix[0].length : 0, 1);
 
+	let isAutoLayout = true; //!matrix.length;
+
+	$: windowsLayoutStyle = isAutoLayout
+		? `
+		 grid-template-columns: repeat(auto-fit, minmax(600px, auto));
+	`
+		: `
+			grid-template-columns: repeat(${width}, 1fr);
+			grid-template-rows: repeat(${height}, 1fr);
+		`;
+
 	onMount(() => {
 		sceneLayout.subscribe((data) => {
-			console.log('MP layout', data);
+			console.log('MP LAYOUT', data);
 		});
-		mediaParticipants.subscribe((data) => {
-			console.log('MP data', data);
+		MediaStore.subscribe((data) => {
+			console.log('MP Mediastreams', data);
 		});
 	});
 </script>
@@ -31,58 +39,60 @@
 		<span class="icon is-size-4"><ion-icon name="eye"></ion-icon></span>
 		<span class="is-size-4">&nbsp;Du syns i bild</span>
 		<span class="icon is-size-4"
-			><ion-icon name="volume-medium"></ion-icon></span
+		><ion-icon name="volume-medium"></ion-icon></span
 		>
 		<span class="is-size-4">&nbsp;Du hörs</span>
-	</div> -->
+		</div> -->
 	<div class="contents">
 		{#if $stageSettings}
 			<div class="sidebar">
 				<div class="notification sidebar-contents" transition:fly>
-					<Sidepanel />
+					<SidePanel />
 				</div>
 			</div>
 		{/if}
 		<div
 			class={`windows window-cols-${width} window-rows-${height}`}
-			style={`
-			grid-template-columns: repeat(${width}, 1fr);
-			grid-template-rows: repeat(${height}, 1fr);
-		`}
+			style={windowsLayoutStyle}
 		>
-			{#each matrix as row}
-				{#each row as entry}
-					{#if entry.type == 'chat'}
-						<div class="window">
-							<ChatView />
-						</div>
-					{:else if entry.type == 'actor' && entry.id}
-						{#if $mediaParticipants.video[entry.id]}
-							<div class="window">
-								<MediaView stream={$mediaParticipants.video[entry.id]} />
-							</div>
-						{:else}
-							<div class="window text-window">
-								<h1 class="title has-text-white">
-									{$mediaParticipants.actors[entry.id]?.name || '...'}
-								</h1>
-							</div>
-						{/if}
-					{:else}
-						<div class="window"></div>
-					{/if}
+			{#if isAutoLayout}
+				{#each Object.entries($MediaStore.remoteMediaStreams) as [key, stream]}
+					<div class="window">
+						<h1>HERE {key} {stream.id}</h1>
+					</div>
+					<MediaWindow {stream} />
 				{/each}
-			{/each}
+			{:else}
+				<!-- {#each matrix as row}
+					{#each row as entry}
+						{#if entry.type == 'chat'}
+							<div class="window">
+								<ChatView />
+							</div>
+						{:else if entry.type == 'actor' && entry.id}
+							{#if $mediaParticipants.video[entry.id]}
+								<div class="window">
+									<MediaView stream={$mediaParticipants.video[entry.id]} />
+								</div>
+							{:else}
+								<div class="window text-window">
+									<h1 class="title has-text-white">
+										{$mediaParticipants.actors[entry.id]?.name || '...'}
+									</h1>
+								</div>
+							{/if}
+						{:else}
+							<div class="window"></div>
+						{/if}
+					{/each}
+				{/each} -->
+			{/if}
 		</div>
 	</div>
 	<div class="footer">
-		<Actions />
+		<ActionPanel />
 	</div>
 </main>
-
-{#each $mediaParticipants.audio as stream}
-	<MediaAudio {stream} />
-{/each}
 
 <style>
 	main {

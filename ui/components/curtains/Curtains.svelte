@@ -31,13 +31,15 @@
 		} catch {
 			// Unable to play, probably no user interaction yet.
 		}
-		setTimeout(async () => {
-			while (dreamSnd.volume < 0.9) {
-				await new Promise((res) => {
-					setTimeout(() => res((dreamSnd.volume += 0.01)), 200);
-				});
+		let interval: any;
+		interval = setInterval(() => {
+			if (dreamSnd.volume < 0.2) {
+				dreamSnd.volume += 0.01;
+			} else {
+				clearInterval(interval);
 			}
 		}, 200);
+
 		// });
 	});
 

@@ -1,4 +1,4 @@
-import { MediaSubscription, request } from '~/lib';
+import { mediaRequest } from '~/lib';
 import { readable } from 'svelte/store';
 import { triggerApplauseEffect, triggerFlowerGiftEffect } from './effects';
 import { ws } from '~/lib/api';
@@ -39,7 +39,7 @@ export function createEffectsStore(): EffectsStore {
 		subscribe,
 		set: (value: EffectsValue) => {
 			setTimeout(() => {
-				request('effects_add', value);
+				mediaRequest('effects_add', value);
 			}, 100);
 		},
 	};

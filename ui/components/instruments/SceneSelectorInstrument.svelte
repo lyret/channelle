@@ -1,55 +1,68 @@
 <script lang="ts">
 	import { createDatabaseStore } from '~/stores';
-	import ParticipantSelect from './ParticipantSelect.svelte';
+	import SceneSelectorControl from './SceneSelectorControl.svelte';
 
-	import { sceneLayout } from '~/stores/scene/sceneLayout';
+	import { sceneLayout, type SceneLayout } from '~/stores/scene/sceneLayout';
 	import { sceneCurtains } from '~/stores/scene/sceneCurtains';
 	import { sceneVisitorAudioIsEnabled } from '~/stores/scene/sceneVisitorAudioIsEnabled';
 	import { sceneEffectsIsEnabled } from '~/stores/scene/sceneEffectsIsEnabled';
 	import { sceneChatIsEnabled } from '~/stores/scene/sceneChatIsEnabled';
-
-	let selectedLayout = '';
+	import { onMount } from 'svelte';
 
 	let allParticipants = createDatabaseStore('participant');
-	$: actors = $allParticipants.filter((p) => p.actor);
+	$: participants = $allParticipants.filter(
+		(p) => (p.actor || p.manager) && !p.blocked
+	);
 
-	let chat1: number = -1;
-	let chat2: number = -1;
-	let onexone1: number = -1;
-	let twoxtwo1: number = -1;
-	let twoxtwo2: number = -1;
-	let twoxtwo3: number = -1;
-	let twoxtwo4: number = -1;
+	type PredefinedLayout = {
+		name: string;
+		chatEnabled: boolean;
+		layout: SceneLayout;
+	};
 
-	function selectChat() {
-		selectedLayout = 'chatfocus';
-		sceneChatIsEnabled.set(true);
-		sceneLayout.set([
+	let selectedLayout: PredefinedLayout | undefined = undefined;
+
+	let auto: PredefinedLayout = {
+		name: 'Automatisk',
+		chatEnabled: true,
+		layout: [],
+	};
+	let empty: PredefinedLayout = {
+		name: 'Helt tom',
+		chatEnabled: false,
+		layout: [[{ type: 'empty' }]],
+	};
+	let chat: PredefinedLayout = {
+		name: 'Chatduell',
+		chatEnabled: true,
+		layout: [
+			[{ type: 'actor', id: -1 }, { type: 'chat' }, { type: 'actor', id: -1 }],
+		],
+	};
+	let oneXOne: PredefinedLayout = {
+		name: 'En i fokus',
+		chatEnabled: false,
+		layout: [[{ type: 'actor', id: -1 }]],
+	};
+	let twoXTwo: PredefinedLayout = {
+		name: 'Fyra rutor',
+		chatEnabled: false,
+		layout: [
 			[
-				{ type: 'actor', id: chat1 },
-				{ type: 'chat' },
-				{ type: 'actor', id: chat2 },
-			],
-		]);
-	}
-	function selectOneXOne() {
-		selectedLayout = '1x1';
-		sceneChatIsEnabled.set(false);
-		sceneLayout.set([[{ type: 'actor', id: onexone1 }]]);
-	}
-	function selectTwoXTwo() {
-		selectedLayout = '2x2';
-		sceneChatIsEnabled.set(false);
-		sceneLayout.set([
-			[
-				{ type: 'actor', id: twoxtwo1 },
-				{ type: 'actor', id: twoxtwo2 },
+				{ type: 'actor', id: -1 },
+				{ type: 'actor', id: -1 },
 			],
 			[
-				{ type: 'actor', id: twoxtwo3 },
-				{ type: 'actor', id: twoxtwo4 },
+				{ type: 'actor', id: -1 },
+				{ type: 'actor', id: -1 },
 			],
-		]);
+		],
+	};
+
+	function selectLayout(layout: PredefinedLayout) {
+		selectedLayout = layout;
+		sceneChatIsEnabled.set(selectedLayout.chatEnabled);
+		sceneLayout.set(selectedLayout.layout);
 	}
 </script>
 
@@ -76,93 +89,33 @@
 <hr />
 <h1 class="title">Välj Scenlayout</h1>
 
-<!-- svelte-ignore a11y-no-static-element-interactions -->
-<!-- svelte-ignore a11y-click-events-have-key-events -->
-<div
-	class="fixed-grid has-1-cols notification is-secondary is-dark"
-	class:is-success={selectedLayout == '1x1'}
-	on:click={() => selectOneXOne()}
->
-	<h2 class="subtitle" class:has-text-white={selectedLayout != '1x1'}>1x1</h2>
-	<div class="grid">
-		<div class="cell">
-			<ParticipantSelect
-				participants={actors}
-				bind:value={onexone1}
-				on:change={() => selectedLayout == '1x1' && selectOneXOne()}
-			/>
-		</div>
-	</div>
-</div>
-
-<!-- svelte-ignore a11y-no-static-element-interactions -->
-<!-- svelte-ignore a11y-click-events-have-key-events -->
-<div
-	class="fixed-grid has-3-cols notification is-secondary is-dark"
-	class:is-success={selectedLayout == 'chatfocus'}
-	on:click={() => selectChat()}
->
-	<h2 class="subtitle" class:has-text-white={selectedLayout != 'chatfocus'}>
-		Chattfokus
-	</h2>
-	<div class="grid">
-		<div class="cell">
-			<ParticipantSelect
-				participants={actors}
-				bind:value={chat1}
-				on:change={() => selectedLayout == 'chatfocus' && selectChat()}
-			/>
-		</div>
-		<button disabled class="button">
-			<span class="icon"><ion-icon name="chatbox-ellipses"></ion-icon></span>
-			<span>Chatt</span></button
-		>
-		<div class="cell">
-			<ParticipantSelect
-				participants={actors}
-				bind:value={chat2}
-				on:change={() => selectedLayout == 'chatfocus' && selectChat()}
-			/>
-		</div>
-	</div>
-</div>
-
-<!-- svelte-ignore a11y-no-static-element-interactions -->
-<!-- svelte-ignore a11y-click-events-have-key-events -->
-<div
-	class="fixed-grid has-2-cols notification is-secondary is-dark"
-	class:is-success={selectedLayout == '2x2'}
-	on:click={() => selectTwoXTwo()}
->
-	<h2 class="subtitle" class:has-text-white={selectedLayout != '2x2'}>2x2</h2>
-	<div class="grid">
-		<div class="cell">
-			<ParticipantSelect
-				participants={actors}
-				bind:value={twoxtwo1}
-				on:change={() => selectedLayout == '2x2' && selectTwoXTwo()}
-			/>
-		</div>
-		<div class="cell">
-			<ParticipantSelect
-				participants={actors}
-				bind:value={twoxtwo2}
-				on:change={() => selectedLayout == '2x2' && selectTwoXTwo()}
-			/>
-		</div>
-		<div class="cell">
-			<ParticipantSelect
-				participants={actors}
-				bind:value={twoxtwo3}
-				on:change={() => selectedLayout == '2x2' && selectTwoXTwo()}
-			/>
-		</div>
-		<div class="cell">
-			<ParticipantSelect
-				participants={actors}
-				bind:value={twoxtwo4}
-				on:change={() => selectedLayout == '2x2' && selectTwoXTwo()}
-			/>
-		</div>
-	</div>
-</div>
+<SceneSelectorControl
+	layout={auto}
+	{participants}
+	{selectedLayout}
+	on:select={(e) => selectLayout(e.detail)}
+/>
+<SceneSelectorControl
+	layout={empty}
+	{participants}
+	{selectedLayout}
+	on:select={(e) => selectLayout(e.detail)}
+/>
+<SceneSelectorControl
+	layout={oneXOne}
+	{participants}
+	{selectedLayout}
+	on:select={(e) => selectLayout(e.detail)}
+/>
+<SceneSelectorControl
+	layout={chat}
+	{participants}
+	{selectedLayout}
+	on:select={(e) => selectLayout(e.detail)}
+/>
+<SceneSelectorControl
+	layout={twoXTwo}
+	{participants}
+	{selectedLayout}
+	on:select={(e) => selectLayout(e.detail)}
+/>
