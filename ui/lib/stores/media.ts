@@ -1,7 +1,15 @@
+import type * as MediaSoup from 'mediasoup-client';
 import { readable } from 'svelte/store';
 import { mediaRequest } from '../operations';
 import { ws } from '~/lib/api';
-import { createRTCConsumerTransport } from '../rtc';
+import { createRTCConsumerTransport, rtcRequest } from '../rtc';
+import type { DataTypes } from '../_databaseTypes';
+import type {
+	StageLayoutWithProducers,
+	StageLayoutActorWithProducer,
+} from '~/../server/createIOEventHandlers';
+import { currentParticipant } from './api';
+import { DeviceVideoStore } from './deviceVideo';
 
 /**
  * The Media store provides all media streams, both from this client and from the MediaSoup server
@@ -12,38 +20,152 @@ export const MediaStore = createMediaStore();
 function createMediaStore(): MediaStore {
 	const _socket = ws();
 	let _value: MediaStoreValue = {
-		localMediaStream: undefined,
-		remoteMediaStreams: {},
+		layout: [],
+		isAutoLayout: true,
+		leftovers: [],
 	};
 	let _isConsuming: boolean = false;
 
 	const { subscribe } = readable(_value, function start(_set) {
+		// Subscribe to the current participant so that any local device stream can be added to the media layout
+		let _currentPartipant: DataTypes['participant'] | undefined;
+		let _localVideoStream: MediaStream | undefined;
+		const _stopCurrentParticipantSubscription = currentParticipant.subscribe(
+			($currentParticipant) =>
+				(_currentPartipant = $currentParticipant.id
+					? $currentParticipant
+					: undefined)
+		);
+		// Subscribe to the current video publishing status so that we can include the local video stream in the layout
+		const _stopDeviceVideoSubscription = DeviceVideoStore.subscribe(
+			() => (_localVideoStream = DeviceVideoStore.localVideoStream())
+		);
+
 		// Consume any new media stream produced on the media soup server
 		const _onConsume = async () => {
 			const transport = await createRTCConsumerTransport();
-			// Get consumers
-			const { consumers } = await mediaRequest('transport_receiver_consume');
+			// Get new data
+			const { layout, leftovers } = await rtcRequest<{
+				layout: StageLayoutWithProducers;
+				leftovers: Array<StageLayoutActorWithProducer>;
+			}>(_socket, 'transport_receiver_consume', {});
 
-			// Start consuming
-			const streams: Record<string, MediaStream> = {};
-			for (const {
-				id,
-				producerId,
-				kind,
-				rtpParameters,
-				participantId,
-			} of consumers) {
-				const consumer = await transport.consume({
-					id,
-					producerId,
-					kind,
-					rtpParameters,
-				});
-				streams[participantId] = streams[participantId] || new MediaStream();
-				streams[participantId].addTrack(consumer.track);
+			// Create a updated layout with streams
+			const isAutoLayout = !layout.length;
+			let localStreamIsNotALeftover = false;
+			const updatedLayout: StageLayoutWithStreams = [];
+			const updatedLeftovers: Array<StageLayoutActorWithStream> = [];
+
+			for (const row of layout) {
+				const updatedRow: StageLayoutWithStreams[number] = [];
+				for (const cell of row) {
+					if (cell.type == 'actor') {
+						// Start consuming
+						if (cell.production && cell.production.length) {
+							const stream = new MediaStream();
+							for (const {
+								id,
+								producerId,
+								kind,
+								rtpParameters,
+							} of cell.production) {
+								await transport
+									.consume({
+										id,
+										producerId,
+										kind,
+										rtpParameters,
+									})
+									.then((consumer) => {
+										if (!consumer.paused) {
+											stream.addTrack(consumer.track);
+										}
+									});
+							}
+							updatedRow.push({
+								type: 'actor',
+								id: cell.id,
+								participant: cell.participant,
+								stream,
+							});
+						} else if (_currentPartipant && cell.id == _currentPartipant.id) {
+							localStreamIsNotALeftover = true;
+							updatedRow.push({
+								type: 'actor',
+								id: cell.id,
+								participant: cell.participant,
+								stream: _localVideoStream,
+							});
+						} else {
+							updatedRow.push({
+								type: 'actor',
+								id: cell.id,
+								participant: cell.participant,
+							});
+						}
+					} else {
+						updatedRow.push(cell);
+					}
+				}
+				updatedLayout.push(updatedRow);
 			}
+
+			for (const cell of leftovers) {
+				// Start consuming
+				if (cell.production && cell.production.length) {
+					const stream = new MediaStream();
+					for (const {
+						id,
+						producerId,
+						kind,
+						rtpParameters,
+					} of cell.production) {
+						await transport
+							.consume({
+								id,
+								producerId,
+								kind,
+								rtpParameters,
+							})
+							.then((consumer) => {
+								stream.addTrack(consumer.track);
+							});
+					}
+					updatedLeftovers.push({
+						type: 'actor',
+						id: cell.id,
+						participant: cell.participant,
+						stream,
+					});
+				} else {
+					updatedLeftovers.push({
+						type: 'actor',
+						id: cell.id,
+						participant: cell.participant,
+					});
+				}
+			}
+
+			if (
+				!localStreamIsNotALeftover &&
+				_currentPartipant &&
+				_localVideoStream
+			) {
+				updatedLeftovers.push({
+					type: 'actor',
+					id: _currentPartipant.id,
+					participant: _currentPartipant,
+					stream: _localVideoStream,
+				});
+			}
+
+			_value = {
+				layout: updatedLayout,
+				isAutoLayout,
+				leftovers: updatedLeftovers,
+			};
+
 			_isConsuming = true;
-			_value.remoteMediaStreams = streams;
 			_set(_value);
 		};
 		_socket.on('producers_update', _onConsume);
@@ -52,6 +174,8 @@ function createMediaStore(): MediaStore {
 		_onConsume();
 
 		return function stop() {
+			_stopCurrentParticipantSubscription();
+			_stopDeviceVideoSubscription();
 			_isConsuming = false;
 			_socket.off('producers_update', _onConsume);
 			mediaRequest('remove_consumer');
@@ -65,11 +189,14 @@ function createMediaStore(): MediaStore {
 }
 
 /** Media Store Value */
+// export type MediaStoreValue = Record<
+// 	number,
+// 	{ participant?: DataTypes['participant']; stream: MediaStream }
+// >;
 export type MediaStoreValue = {
-	/** Any media stream generated from this device */
-	localMediaStream: MediaStream | undefined;
-	/** Any media streams coming in from other connected users */
-	remoteMediaStreams: Record<number, MediaStream>;
+	isAutoLayout: boolean;
+	layout: StageLayoutWithStreams;
+	leftovers: Array<StageLayoutActorWithStream>;
 };
 
 /** Media Store Interface */
@@ -77,3 +204,14 @@ interface MediaStore {
 	isConsuming: () => boolean;
 	subscribe: (handler: (value: MediaStoreValue) => void) => () => void;
 }
+// FIXME: type madness
+export type StageLayoutWithStreams = Array<
+	Array<StageLayoutActorWithStream | { type: 'chat' } | { type: 'empty' }>
+>;
+
+export type StageLayoutActorWithStream = {
+	type: 'actor';
+	participant: DataTypes['participant'];
+	id: number;
+	stream?: MediaStream | undefined;
+};

@@ -15,6 +15,7 @@ function createDeviceVideoStore(): DeviceVideoStore {
 	const _socket = ws();
 	let _videoProducer: MediaSoup.types.Producer | undefined = undefined;
 	let _value: DeviceVideoStoreValue = false;
+	let _localVideoStream: MediaStream | undefined = undefined;
 	let _isPublishing: boolean = false;
 
 	const { subscribe, set } = writable(_value, function start(_set) {
@@ -22,6 +23,7 @@ function createDeviceVideoStore(): DeviceVideoStore {
 	});
 	return {
 		isPublishing: () => _isPublishing,
+		localVideoStream: () => _localVideoStream,
 		publishVideo: async () => {
 			if (_videoProducer) {
 				_videoProducer.resume();
@@ -32,9 +34,7 @@ function createDeviceVideoStore(): DeviceVideoStore {
 				const track = videoStream.getVideoTracks()[0];
 
 				_videoProducer = await sendTransport.produce({ track });
-				// TODO: need resume?
-				//await transport.produce({ track: audioTrack });
-				// FIXME: this.localMediaStream = videoStream;
+				_localVideoStream = videoStream;
 			}
 			_value = true;
 			set(_value);
@@ -45,6 +45,7 @@ function createDeviceVideoStore(): DeviceVideoStore {
 				//request('remove_producer', { video: true });
 			}
 			_value = false;
+			_localVideoStream = undefined;
 			set(_value);
 		},
 		subscribe: subscribe,
@@ -57,6 +58,8 @@ export type DeviceVideoStoreValue = boolean;
 /** Device Video Store Interface */
 interface DeviceVideoStore {
 	isPublishing: () => boolean;
+	/** Returns the published video stream from this device while publishing */
+	localVideoStream: () => MediaStream | undefined;
 	/** Starts publishing video */
 	publishVideo: () => Promise<void>;
 	/** Stops/pauses publishing video */

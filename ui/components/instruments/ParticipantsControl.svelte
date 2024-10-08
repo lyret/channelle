@@ -105,7 +105,7 @@
 					on:click={() =>
 						doUpdate(
 							participant,
-							{ actor: false },
+							{ actor: false, manager: false },
 							`Ta bort "${participant.name}" som skådespelare?`
 						)}
 				>
@@ -153,7 +153,7 @@
 					on:click={() =>
 						doUpdate(
 							participant,
-							{ manager: true },
+							{ manager: true, actor: true },
 							`Är "${participant.name}" en tekniker?`
 						)}
 				>

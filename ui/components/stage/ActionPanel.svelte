@@ -13,8 +13,8 @@
 	import { userCameraBans, userMicrophoneBans } from '~/stores/users';
 	import { sceneVisitorAudioIsEnabled } from '~/stores/scene/sceneVisitorAudioIsEnabled';
 	import { sceneEffectsIsEnabled } from '~/stores/scene/sceneEffectsIsEnabled';
+	import { stageSettings } from '~/stores/scene/stageSettingsIsEnbaled';
 
-	let showSettings = createLocalStore('stage-settings', false);
 	let windowSize = windowSizeStore();
 	$: isMobile = $windowSize.width <= 768;
 	let isFullscreen = isInFullscreen();
@@ -151,8 +151,8 @@
 			<button
 				class={btnClassList}
 				transition:blur
-				class:has-text-info={$showSettings}
-				on:click={() => showSettings.set(!$showSettings)}
+				class:has-text-info={$stageSettings}
+				on:click={() => stageSettings.set(!$stageSettings)}
 			>
 				<span class={iconClassList}
 					><ion-icon name="speedometer"></ion-icon></span

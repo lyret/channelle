@@ -2,7 +2,11 @@
 	import { createDatabaseStore } from '~/stores';
 	import SceneSelectorControl from './SceneSelectorControl.svelte';
 
-	import { sceneLayout, type SceneLayout } from '~/stores/scene/sceneLayout';
+	import { stageLayout } from '~/stores/stage/stageLayout';
+	import {
+		selectedPredefinedStageLayout,
+		type PredefinedLayout,
+	} from '~/stores/stage/selectedPredefinedStageLayout';
 	import { sceneCurtains } from '~/stores/scene/sceneCurtains';
 	import { sceneVisitorAudioIsEnabled } from '~/stores/scene/sceneVisitorAudioIsEnabled';
 	import { sceneEffectsIsEnabled } from '~/stores/scene/sceneEffectsIsEnabled';
@@ -13,14 +17,6 @@
 	$: participants = $allParticipants.filter(
 		(p) => (p.actor || p.manager) && !p.blocked
 	);
-
-	type PredefinedLayout = {
-		name: string;
-		chatEnabled: boolean;
-		layout: SceneLayout;
-	};
-
-	let selectedLayout: PredefinedLayout | undefined = undefined;
 
 	let auto: PredefinedLayout = {
 		name: 'Automatisk',
@@ -59,11 +55,18 @@
 		],
 	};
 
-	function selectLayout(layout: PredefinedLayout) {
-		selectedLayout = layout;
-		sceneChatIsEnabled.set(selectedLayout.chatEnabled);
-		sceneLayout.set(selectedLayout.layout);
-	}
+	// Sync actual stage layout stores when the selected predefined layout changes
+	onMount(() => {
+		const stop = selectedPredefinedStageLayout.subscribe((layout) => {
+			console.log('here', layout);
+			sceneChatIsEnabled.set(layout?.chatEnabled || false);
+			stageLayout.set(layout?.layout || []);
+		});
+
+		return () => {
+			stop();
+		};
+	});
 </script>
 
 <h1 class="title">Sceninställningar</h1>
@@ -92,30 +95,30 @@
 <SceneSelectorControl
 	layout={auto}
 	{participants}
-	{selectedLayout}
-	on:select={(e) => selectLayout(e.detail)}
+	selectedLayout={$selectedPredefinedStageLayout}
+	on:select={(e) => selectedPredefinedStageLayout.set(e.detail)}
 />
 <SceneSelectorControl
 	layout={empty}
 	{participants}
-	{selectedLayout}
-	on:select={(e) => selectLayout(e.detail)}
+	selectedLayout={$selectedPredefinedStageLayout}
+	on:select={(e) => selectedPredefinedStageLayout.set(e.detail)}
 />
 <SceneSelectorControl
 	layout={oneXOne}
 	{participants}
-	{selectedLayout}
-	on:select={(e) => selectLayout(e.detail)}
+	selectedLayout={$selectedPredefinedStageLayout}
+	on:select={(e) => selectedPredefinedStageLayout.set(e.detail)}
 />
 <SceneSelectorControl
 	layout={chat}
 	{participants}
-	{selectedLayout}
-	on:select={(e) => selectLayout(e.detail)}
+	selectedLayout={$selectedPredefinedStageLayout}
+	on:select={(e) => selectedPredefinedStageLayout.set(e.detail)}
 />
 <SceneSelectorControl
 	layout={twoXTwo}
 	{participants}
-	{selectedLayout}
-	on:select={(e) => selectLayout(e.detail)}
+	selectedLayout={$selectedPredefinedStageLayout}
+	on:select={(e) => selectedPredefinedStageLayout.set(e.detail)}
 />

@@ -1,20 +1,17 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import type { DataTypes } from '~/lib';
-	import type { SceneLayout } from '~/stores/scene/sceneLayout';
+	import type { PredefinedLayout } from '~/stores/stage/selectedPredefinedStageLayout';
 	const dispatch = createEventDispatcher();
 
 	export let selectedLayout: any;
 	export let participants: Array<DataTypes['participant']>;
-	export let layout: {
-		name: string;
-		chatEnabled: boolean;
-		layout: SceneLayout;
-	};
+	export let layout: PredefinedLayout;
 
 	$: selected = selectedLayout?.name == layout.name;
 
 	function onChange(e: any, cell: any) {
+		e.stopPropagation();
 		cell.id = (e.target as any).value;
 		dispatch('update', layout);
 		if (selected) {
@@ -51,7 +48,10 @@
 							<span>Chatt</span></button
 						>{:else if cell.type == 'actor'}
 						<div class="select is-fullwidth">
-							<select on:change={(e) => onChange(e, cell)}>
+							<select
+								on:change={(e) => onChange(e, cell)}
+								on:click={(e) => e.stopPropagation()}
+							>
 								<option value={-1} class="has-text-gray">- Ingen -</option>
 								{#each participants as participant}
 									<option value={participant.id}>{participant.name}</option>

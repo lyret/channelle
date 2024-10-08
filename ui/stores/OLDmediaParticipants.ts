@@ -4,7 +4,7 @@ import { APIStore } from '~/lib/stores/api';
 import { MediaStore } from '~/lib/stores/media';
 import { createDatabaseStore } from '../lib/store-generators/createDatabaseStore';
 import { userCameraBans, userMicrophoneBans } from './users';
-import { sceneLayout } from './scene/sceneLayout';
+import { sceneLayout } from './stage/stageLayout';
 import { sceneVisitorAudioIsEnabled } from './scene/sceneVisitorAudioIsEnabled';
 export const participants = createDatabaseStore('participant');
 

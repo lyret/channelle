@@ -6,16 +6,13 @@
 	import SidePanel from '~/components/stage/MenuPanel.svelte';
 	import ActionPanel from '~/components/stage/ActionPanel.svelte';
 	import { MediaStore } from '~/lib/stores/media';
-	import { sceneLayout } from '~/stores/scene/sceneLayout';
 	import { stageSettings } from '~/stores/scene/stageSettingsIsEnbaled';
 
-	$: matrix = $sceneLayout || [];
+	$: matrix = $MediaStore.layout || [];
 	$: height = Math.max(matrix.length, 1);
 	$: width = Math.max(matrix.length ? matrix[0].length : 0, 1);
 
-	let isAutoLayout = true; //!matrix.length;
-
-	$: windowsLayoutStyle = isAutoLayout
+	$: windowsLayoutStyle = $MediaStore.isAutoLayout
 		? `
 		 grid-template-columns: repeat(auto-fit, minmax(600px, auto));
 	`
@@ -25,26 +22,16 @@
 		`;
 
 	onMount(() => {
-		sceneLayout.subscribe((data) => {
-			console.log('MP LAYOUT', data);
-		});
 		MediaStore.subscribe((data) => {
-			console.log('MP Mediastreams', data);
+			console.log('MEDIA STORE', data);
 		});
 	});
 </script>
 
 <main in:blur={{ delay: 500, duration: 1000 }}>
-	<!-- <div class="topbar has-text-info has-text-weight-bold">
-		<span class="icon is-size-4"><ion-icon name="eye"></ion-icon></span>
-		<span class="is-size-4">&nbsp;Du syns i bild</span>
-		<span class="icon is-size-4"
-		><ion-icon name="volume-medium"></ion-icon></span
-		>
-		<span class="is-size-4">&nbsp;Du hörs</span>
-		</div> -->
 	<div class="contents">
 		{#if $stageSettings}
+			<h1>GERE</h1>
 			<div class="sidebar">
 				<div class="notification sidebar-contents" transition:fly>
 					<SidePanel />
@@ -55,37 +42,29 @@
 			class={`windows window-cols-${width} window-rows-${height}`}
 			style={windowsLayoutStyle}
 		>
-			{#if isAutoLayout}
-				{#each Object.entries($MediaStore.remoteMediaStreams) as [key, stream]}
-					<div class="window">
-						<h1>HERE {key} {stream.id}</h1>
-					</div>
-					<MediaWindow {stream} />
+			{#if $MediaStore.isAutoLayout}
+				{#each $MediaStore.leftovers as cell}
+					{#key cell.id}
+						<MediaWindow stream={cell.stream} participant={cell.participant} />
+					{/key}
 				{/each}
 			{:else}
-				<!-- {#each matrix as row}
-					{#each row as entry}
-						{#if entry.type == 'chat'}
+				{#each matrix as row}
+					{#each row as cell}
+						{#if cell.type == 'chat'}
 							<div class="window">
-								<ChatView />
+								<ChatWindow />
 							</div>
-						{:else if entry.type == 'actor' && entry.id}
-							{#if $mediaParticipants.video[entry.id]}
-								<div class="window">
-									<MediaView stream={$mediaParticipants.video[entry.id]} />
-								</div>
-							{:else}
-								<div class="window text-window">
-									<h1 class="title has-text-white">
-										{$mediaParticipants.actors[entry.id]?.name || '...'}
-									</h1>
-								</div>
-							{/if}
+						{:else if cell.type == 'actor'}
+							<MediaWindow
+								stream={cell.stream}
+								participant={cell.participant}
+							/>
 						{:else}
 							<div class="window"></div>
 						{/if}
 					{/each}
-				{/each} -->
+				{/each}
 			{/if}
 		</div>
 	</div>
@@ -208,16 +187,5 @@
 		display: block;
 		overflow: none;
 		max-height: 100%;
-	}
-
-	.text-window {
-		width: 100%;
-		height: 100%;
-		text-align: center;
-		display: flex;
-		align-items: center;
-		align-content: center;
-		justify-items: center;
-		justify-content: center;
 	}
 </style>

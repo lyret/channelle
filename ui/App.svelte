@@ -14,6 +14,8 @@
 	import { scenePasswordIsOk } from './stores/scene/scenePassword';
 	import PasswordCurtainMessage from './components/curtains/PasswordCurtainMessage.svelte';
 
+	let hasInteractedWithTheDocument = false;
+
 	import { sceneCurtains } from './stores/scene/sceneCurtains';
 
 	// Delays the rendering of any content to avoid the "pop-in" effect
@@ -32,6 +34,7 @@
 	$: needToBeManager =
 		renderBackstage &&
 		!($APIStore.status == 'ready' && $APIStore.participant.manager);
+	$: needInteraction = renderStage && !hasInteractedWithTheDocument;
 	$: needStagePassword = !$scenePasswordIsOk && renderStage;
 	$: renderMessages =
 		!determiningState &&
@@ -39,7 +42,8 @@
 			!hasEnteredName ||
 			isBlocked ||
 			needStagePassword ||
-			needToBeManager);
+			needToBeManager ||
+			needInteraction);
 	$: renderContent =
 		!determiningState && !renderMessages && (renderStage || renderBackstage);
 	$: renderCurtains =
@@ -87,6 +91,12 @@
 				<Blocked message="Sidan är endast för tekniker" />
 			{:else if needStagePassword}
 				<PasswordCurtainMessage />
+			{:else if needInteraction}
+				<button
+					class="button is-large"
+					on:click={() => (hasInteractedWithTheDocument = true)}
+					>Fortsätt in...</button
+				>
 			{:else}
 				<Problem />
 			{/if}

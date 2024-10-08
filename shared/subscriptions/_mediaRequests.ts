@@ -1,4 +1,5 @@
 import type * as MediaSoup from 'mediasoup-client';
+import type { DataTypes } from '~/lib/_databaseTypes';
 
 /**
  * Possible requests and returned data available through the socket connection
@@ -44,18 +45,6 @@ export type MediaRequests = {
 		{ transportId: string; dtlsParameters: MediaSoup.types.DtlsParameters },
 		undefined,
 	];
-	transport_receiver_consume: [
-		undefined,
-		{
-			consumers: Array<{
-				socketId: string;
-				producerId: string;
-				id: string;
-				kind: MediaSoup.types.MediaKind;
-				rtpParameters: MediaSoup.types.RtpParameters;
-				participantId: number;
-			}>;
-		},
-	];
+	transport_receiver_consume: [undefined, undefined];
 	transport_receiver_resume: [undefined, undefined];
 };

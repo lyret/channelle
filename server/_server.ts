@@ -15,6 +15,7 @@ import { http, koa, ws } from './lib/api';
 import * as SceneStores from './stores/scene';
 import * as UserStores from './stores/users';
 import * as MediaStores from './stores/media';
+import * as StageStores from './stores/stage';
 
 /**
  * Read and sends the index.html file
@@ -65,7 +66,8 @@ export async function createServer(): Promise<Http.Server> {
 		SceneStores.sceneChatIsEnabled,
 		SceneStores.sceneCurtains,
 		SceneStores.sceneEffectsIsEnabled,
-		SceneStores.sceneLayout,
+		StageStores.stageLayout,
+		StageStores.selectedPredefinedStageLayout,
 		SceneStores.scenePassword,
 		SceneStores.sceneVisitorAudioIsEnabled,
 		MediaStores.audioProducers,
