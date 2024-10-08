@@ -9,7 +9,12 @@ import ServeStatic from 'koa-static';
 
 import { Repository } from '../database';
 import { createIOEventHandlers } from './createIOEventHandlers';
+import { loadStores } from './loadStores';
 import { http, koa, ws } from './lib/api';
+
+import * as SceneStores from './stores/scene';
+import * as UserStores from './stores/users';
+import * as MediaStores from './stores/media';
 
 /**
  * Read and sends the index.html file
@@ -54,6 +59,23 @@ export async function createServer(): Promise<Http.Server> {
 
 	// Serve the client interface
 	app.use(ClientAccessMiddleware);
+
+	// Load stores so that they are not removed from the server bundle
+	loadStores(
+		SceneStores.sceneChatIsEnabled,
+		SceneStores.sceneCurtains,
+		SceneStores.sceneEffectsIsEnabled,
+		SceneStores.sceneLayout,
+		SceneStores.scenePassword,
+		SceneStores.sceneVisitorAudioIsEnabled,
+		MediaStores.audioProducers,
+		MediaStores.videoProducers,
+		MediaStores.mediaProducerTransports,
+		MediaStores.mediaReceiverTransports,
+		UserStores.userCameraBans,
+		UserStores.userMicrophoneBans,
+		UserStores.userOnlineStatus
+	);
 
 	// Connect repositories with IO
 	Repository.setIO(io);

@@ -16,8 +16,7 @@ import { createWebRTCTransport } from './lib/rtc';
 import { mediaSoupRouter, ws } from './lib/api';
 
 import { userOnlineStatus } from './stores/users';
-import { scenePassword } from './stores/scene';
-console.log(scenePassword);
+
 import {
 	mediaProducerTransports,
 	mediaReceiverTransports,
@@ -46,9 +45,9 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 		console.error('[IO] client connection error', err);
 	});
 
-	socket.on('registerParticipant', async (id, callback) => {
+	socket.on('registerParticipant', async ({ participantId }, callback) => {
 		try {
-			const participant = await (!id || Number.isNaN(id)
+			const participant = await (!participantId || Number.isNaN(participantId)
 				? client.participant.create({
 						data: {
 							name: '',
@@ -56,7 +55,7 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 						},
 					})
 				: client.participant.findFirst({
-						where: { id },
+						where: { id: participantId },
 					}));
 
 			if (!participant) {
@@ -71,7 +70,6 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 
 			return callback({ ok: true, participant });
 		} catch {
-			console.error('HERE');
 			return callback({ ok: false });
 		}
 	});
