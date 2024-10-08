@@ -2,7 +2,7 @@ import type { DataTypes } from '~/lib';
 import { derived } from 'svelte/store';
 import { APIStore } from '~/lib/stores/api';
 import { createMediaStore } from '../_mediaStore';
-import { createDatabaseStore } from '../_databaseStore';
+import { createDatabaseStore } from '../../lib/store-generators/createDatabaseStore';
 import { userCameraBans, userMicrophoneBans } from '../users';
 import { sceneLayout } from '../scene/sceneLayout';
 import { sceneVisitorAudioIsEnabled } from '../scene/sceneVisitorAudioIsEnabled';

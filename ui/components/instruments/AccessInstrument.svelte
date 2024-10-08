@@ -45,6 +45,7 @@
 			<input
 				type="text"
 				autocomplete="off"
+				data-1p-ignore
 				bind:this={inputRef}
 				class="input is-fullwidth is-medium"
 				bind:value={inputValue}

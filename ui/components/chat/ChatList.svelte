@@ -14,13 +14,6 @@
 	onMount(() => {
 		if (ref) {
 			ref.addEventListener('scroll', () => {
-				console.log(
-					ref.scrollTop > ref.scrollHeight - ref.clientHeight - 60,
-					ref.scrollTop,
-					ref.scrollHeight - ref.clientHeight - 60,
-					ref.scrollHeight,
-					ref.clientHeight
-				);
 				if (
 					hasUnread &&
 					ref.scrollTop >= ref.scrollHeight - ref.clientHeight - 60
@@ -50,8 +43,6 @@
 
 	onMount(() => {
 		const stop = allMessages.subscribe((data) => {
-			console.log('new messages', data, $allMessages);
-
 			if (loaded) {
 				if (ref && ref.scrollTop > ref.scrollHeight - ref.clientHeight - 60) {
 					setTimeout(() => {
@@ -60,7 +51,8 @@
 				} else {
 					hasUnread = true;
 				}
-			} else if (!allMessages.isDefault()) {
+			} else if (!allMessages.isConnected()) {
+				console.log('here');
 				loaded = true;
 				setTimeout(() => {
 					if (ref) {

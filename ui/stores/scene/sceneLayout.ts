@@ -1,8 +1,8 @@
-import { createOVStore } from '~/lib/OVStore';
+import { createRemoteValueStore } from '~/lib/store-generators';
 
 /** Keeps tracks of the configured scene layout */
 
 export const sceneLayout =
-	createOVStore<Array<Array<{ type: 'actor'; id: number } | { type: 'chat' }>>>(
-		'scene-layout'
-	);
+	createRemoteValueStore<
+		Array<Array<{ type: 'actor'; id: number } | { type: 'chat' }>>
+	>('scene-layout');

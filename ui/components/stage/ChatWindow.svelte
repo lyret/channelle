@@ -3,7 +3,7 @@
 	import { blur } from 'svelte/transition';
 	import ChatInput from '../chat/ChatInput.svelte';
 	import ChatList from '../chat/ChatList.svelte';
-	import { sceneVisitorAudioIsEnabled } from '~/stores/scene/sceneVisitorAudioIsEnabled';
+	import { sceneChatIsEnabled } from '~/stores/scene/sceneChatIsEnabled';
 
 	let ref: HTMLDivElement;
 	let hasUnread = false;
@@ -21,7 +21,7 @@
 
 <div class="chat-window" in:blur={{ duration: 500 }}>
 	<ChatList />
-	{#if $sceneVisitorAudioIsEnabled}
+	{#if $sceneChatIsEnabled}
 		<ChatInput />
 	{/if}
 </div>

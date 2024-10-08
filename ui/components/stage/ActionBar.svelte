@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { windowSizeStore } from '$ui/device';
-	import { fullScreenAction } from '$lib/actions/fullScreenAction';
-	import { isInFullscreen } from '$lib/stores/fullscreenStore';
+	import { fullScreenAction } from '~/legos/actions/fullScreenAction';
+	import { isInFullscreen } from '~/legos/stores/fullscreenStore';
 	import { onMount } from 'svelte';
 	import { blur } from 'svelte/transition';
 	import { update } from '~/lib';
@@ -32,6 +32,9 @@
 
 	// Make sure effects are rendered
 	onMount(() => {
+		currentParticipant.subscribe((v) => {
+			console.log('HERE', v);
+		});
 		const stop = effects.subscribe(() => {});
 
 		return () => {
@@ -68,12 +71,12 @@
 
 		<!-- CURRENT USER -->
 		<button class={btnClassList} transition:blur on:click={updateName}>
-			<span class={iconClassList}
-				><ion-icon name="person-circle-outline"></ion-icon></span
-			>
 			{#if !isMobile}
-				<span>{$currentParticipant?.name} </span>
+				<span class={iconClassList}
+					><ion-icon name="person-circle-outline"></ion-icon></span
+				>
 			{/if}
+			<span>{$currentParticipant?.name} </span>
 		</button>
 	</div>
 	<div class="center">

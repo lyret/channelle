@@ -41,6 +41,7 @@
 			<input
 				type="text"
 				autocomplete="off"
+				data-1p-ignore
 				bind:this={inputRef}
 				class="input is-fullwidth"
 				class:is-large={isLarge}

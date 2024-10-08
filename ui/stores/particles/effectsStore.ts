@@ -1,6 +1,7 @@
-import { MediaSubscription } from '~/lib';
+import { MediaSubscription, request } from '~/lib';
 import { readable } from 'svelte/store';
 import { triggerApplauseEffect, triggerFlowerGiftEffect } from './effects';
+import { ws } from '~/lib/api';
 
 /** Store value */
 type EffectsValue = { type: 'flowers' | 'applause'; number: number };
@@ -27,10 +28,10 @@ export function createEffectsStore(): EffectsStore {
 		};
 
 		// Listen to any status updates from the websocket connection
-		MediaSubscription.connection().on('effects_trigger', handler);
+		ws().on('effects_trigger', handler);
 
 		return function stop() {
-			MediaSubscription.connection().off('effects_trigger', handler);
+			ws().off('effects_trigger', handler);
 		};
 	});
 
@@ -38,7 +39,7 @@ export function createEffectsStore(): EffectsStore {
 		subscribe,
 		set: (value: EffectsValue) => {
 			setTimeout(() => {
-				MediaSubscription.addEffect(value.type, value.number);
+				request('effects_add', value);
 			}, 100);
 		},
 	};

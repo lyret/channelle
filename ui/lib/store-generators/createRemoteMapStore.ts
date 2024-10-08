@@ -1,41 +1,39 @@
 import type { ObservableMapStore as ServerObservableMapStore } from '~/../server/lib/stores/createMapStore';
 import { readable } from 'svelte/store';
-import { ws } from './api';
+import { ws } from '../api';
 
 /** Store interface */
-type ObservableMapStore<K extends string | number, V> = Pick<
+type RemoteMapStore<K extends string | number, V> = Pick<
 	ServerObservableMapStore<K, V>,
 	'key' | 'set' | 'delete' | 'clear' | 'subscribe'
 > & {
 	isConnected: () => boolean;
 };
 
-/** Creates a Svelte Store from a local subscription */
-export function createOMStore<K extends string | number, V>(
+/** Creates a Svelte Store for an remote observable map on the server side */
+export function createRemoteMapStore<K extends string | number, V>(
 	identifier: string
-): ObservableMapStore<K, V> {
+): RemoteMapStore<K, V> {
 	const _identifier = identifier;
 	const _socket = ws(`/${identifier}`);
-	let _connected = _socket.connected;
-
-	let _onConnect = () => {
-		_connected = true;
-	};
-	let _onDisconnect = () => {
-		_connected = false;
-	};
 
 	const { subscribe } = readable<Record<K, V>>(
 		{} as Record<K, V>,
 		function start(_set) {
+			// Refresh the current remote value
+			_socket.emit('refresh', (data: Record<K, V>) => {
+				_set(data);
+			});
+
+			let _onConnect = () => {};
 			_socket.on('connect', _onConnect);
+
+			let _onDisconnect = () => {};
 			_socket.on('disconnect', _onDisconnect);
 
 			_socket.on('*', (data: Record<K, V>) => {
 				_set(data);
 			});
-
-			_socket.emit('refresh');
 
 			return function stop() {
 				_socket.off('connect', _onConnect);
@@ -46,7 +44,7 @@ export function createOMStore<K extends string | number, V>(
 
 	return {
 		key: _identifier,
-		isConnected: () => _connected,
+		isConnected: () => _socket.connected,
 		set: (key: K, value: V) => {
 			_socket.emit('set', { key, value });
 		},

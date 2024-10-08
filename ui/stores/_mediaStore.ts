@@ -30,7 +30,6 @@ export function createMediaStore<Key extends keyof SubscriptionMediaEvents>(
 				set(value);
 			});
 			if (key == 'remoteMediaStreams') {
-				console.log('CONSUME');
 				MediaSubscription.consume();
 			}
 

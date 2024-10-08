@@ -1,8 +1,8 @@
-import { RepositorySubscription } from '~/lib';
-import type { DataTypes } from '~/lib';
+import type { DataTypes, SubscriptionMessage } from '~/lib';
 import type { Socket } from 'socket.io-client';
 import { derived, readable } from 'svelte/store';
 import { ws } from '../api';
+import { createSubscriptionPath } from '../../../shared';
 
 /** The API store holds the context information needed to determine connection and participation status */
 export const APIStore = createAPIStore();
@@ -19,15 +19,16 @@ export const currentParticipant = derived([APIStore], ([$APIStore]) => {
 
 /** Creates a Svelte Store from a local subscription */
 function createAPIStore(): APIStore {
-	const _socket: Socket = ws('/');
-	let _participantSubscription:
-		| RepositorySubscription<'participant', 'first'>
-		| undefined;
+	const _socket: Socket = ws();
 
 	let cookiesAccepted = !!localStorage.getItem('cookies-accepted');
 	let participantId = localStorage.getItem('participant-id')
 		? Number(localStorage.getItem('participant-id'))
 		: undefined;
+	let participantSubscriptionPath: string | undefined;
+	let participantSubscriptionMessage:
+		| Omit<SubscriptionMessage, 'messageId'>
+		| undefined;
 	let _value: APIStoreValue = !_socket.connected
 		? {
 				status: 'disconnected',
@@ -84,7 +85,7 @@ function createAPIStore(): APIStore {
 			// if not set - as a new participant
 			_socket.emit(
 				'registerParticipant',
-				participantId,
+				{ participantId },
 				(response: { ok: boolean; participant: DataTypes['participant'] }) => {
 					if (!response?.ok) {
 						console.error('Failed to registred existing participantion');
@@ -102,17 +103,20 @@ function createAPIStore(): APIStore {
 						);
 
 						// Create a subscription to the current participants data in the database
-						_participantSubscription = new RepositorySubscription({
+						participantSubscriptionMessage = {
 							repository: 'participant',
 							id: response.participant.id,
-						});
+						};
+						participantSubscriptionPath = createSubscriptionPath(
+							participantSubscriptionMessage
+						);
 
 						// Load any initial data
 						_onParticipantData(response.participant);
 
 						// Start the subscription
-						_participantSubscription.on('data', _onParticipantData);
-						_participantSubscription.start();
+						_socket.on(participantSubscriptionPath, _onParticipantData);
+						_socket.emit('subscribe', participantSubscriptionMessage);
 					}
 				}
 			);
@@ -170,7 +174,10 @@ function createAPIStore(): APIStore {
 		return function stop() {
 			_socket.off('connect', _onConnect);
 			_socket.off('disconnect', _onDisconnect);
-			_participantSubscription?.off('data', _onParticipantData);
+			if (participantSubscriptionMessage) {
+				_socket.off(participantSubscriptionPath, _onParticipantData);
+				_socket.emit('unsubscribe', participantSubscriptionMessage);
+			}
 		};
 	});
 

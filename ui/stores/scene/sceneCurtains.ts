@@ -1,4 +1,4 @@
-import { createOVStore } from '~/lib/OVStore';
+import { createRemoteValueStore } from '~/lib/store-generators';
 
 /** Keeps tracks of the manually set curtain position by the managers */
-export const sceneCurtains = createOVStore<boolean>('scene-curtains');
+export const sceneCurtains = createRemoteValueStore<boolean>('scene-curtains');

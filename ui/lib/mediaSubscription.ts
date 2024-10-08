@@ -1,7 +1,7 @@
 import * as MediaSoup from 'mediasoup-client';
 import Emittery from 'emittery';
-import type { MediaRequests } from './_connectionTypes';
 import { Subscription } from './_subscription';
+import { request } from './operations';
 
 /** Available events emitted from the API class implementation */
 export type SubscriptionMediaEvents = {
@@ -80,7 +80,7 @@ export class MediaSubscription extends Subscription {
 		if (this._videoProducer) {
 			if (!value) {
 				this._videoProducer.pause();
-				this.request('remove_producer', { video: true });
+				request('remove_producer', { video: true });
 			} else {
 				this._videoProducer.resume();
 			}
@@ -96,7 +96,7 @@ export class MediaSubscription extends Subscription {
 		if (this._audioProducer) {
 			if (!value) {
 				this._audioProducer.pause();
-				this.request('remove_producer', { audio: true });
+				request('remove_producer', { audio: true });
 			} else {
 				this._audioProducer.resume();
 			}
@@ -157,37 +157,11 @@ export class MediaSubscription extends Subscription {
 
 	// Static Methods
 
-	/** Sends a request through the socket connection and returns the response from the server */
-	private static async request<Type extends keyof MediaRequests>(
-		type: Type,
-		data?: MediaRequests[Type][0]
-	) {
-		return new Promise<MediaRequests[Type][1]>((resolve, reject) => {
-			console.log('[Media Subscription] requesting', type);
-			Subscription.socketEmit(
-				type,
-				data || {},
-				(
-					response: (MediaRequests[Type][1] & { error: unknown }) | undefined
-				) => {
-					if (response && response.error) {
-						console.log('[Media Subscription]', type, 'Error:');
-						console.error(response.error);
-						reject(response.error);
-					} else {
-						console.log('[Media Subscription]', type, 'Response:', response);
-						resolve(response as MediaRequests[Type][1]);
-					}
-				}
-			);
-		});
-	}
-
 	/** Makes sure that the current capabilities are known and loaded */
 	private static async loadCapabilities() {
 		// Load local device and router capabilities
 		if (!this._rtpCapabilities) {
-			this._rtpCapabilities = await this.request('server_rtp_capabilities');
+			this._rtpCapabilities = await request('server_rtp_capabilities');
 
 			// Check necessary capabilities of the browser
 			try {
@@ -251,14 +225,14 @@ export class MediaSubscription extends Subscription {
 		if (this._sendTransport) {
 			return this._sendTransport;
 		}
-		const sendOptions = await this.request('transport_producer_create', {
+		const sendOptions = await request('transport_producer_create', {
 			forceTcp: false,
 			rtpCapabilities: this.rtpCapabilities,
 		});
 
 		const transport = this.device.createSendTransport(sendOptions);
 		transport.on('connect', async ({ dtlsParameters }, callback, errback) => {
-			this.request('transport_producer_connect', { dtlsParameters })
+			request('transport_producer_connect', { dtlsParameters })
 				.then(callback)
 				.catch(errback);
 		});
@@ -267,7 +241,7 @@ export class MediaSubscription extends Subscription {
 			'produce',
 			async ({ kind, rtpParameters }, callback, errback) => {
 				try {
-					const { id } = await this.request('transport_producer_produce', {
+					const { id } = await request('transport_producer_produce', {
 						transportId: transport.id,
 						kind,
 						rtpParameters,
@@ -325,15 +299,6 @@ export class MediaSubscription extends Subscription {
 		return transport;
 	}
 
-	// Methods
-
-	public static async addEffect(
-		type: 'applause' | 'flowers',
-		number: number
-	): Promise<undefined> {
-		return this.request('effects_add', { type, number });
-	}
-
 	// Start / Stop
 
 	/** Creates a receiver transport to all the current publishing remote sources */
@@ -349,17 +314,17 @@ export class MediaSubscription extends Subscription {
 		await this.loadCapabilities();
 
 		// Create a new receiver transport and request consumers
-		const params = await this.request('transport_receiver_create', {
+		const params = await request('transport_receiver_create', {
 			forceTcp: false,
 			rtpCapabilities: this.rtpCapabilities,
 		});
 		const transport = MediaSubscription.device.createRecvTransport(params);
-		const { consumers } = await this.request('transport_receiver_consume');
+		const { consumers } = await request('transport_receiver_consume');
 
 		// Handle new connection event
 		transport.on('connect', ({ dtlsParameters }, callback, errback) => {
 			console.log('HERE', 'transport_receiver_connect');
-			this.request('transport_receiver_connect', {
+			request('transport_receiver_connect', {
 				transportId: transport.id,
 				dtlsParameters,
 			})
@@ -376,7 +341,7 @@ export class MediaSubscription extends Subscription {
 
 				case 'connected':
 					console.log('[RECEIVER] resuming...');
-					await this.request('transport_receiver_resume');
+					await request('transport_receiver_resume');
 					break;
 				case 'disconnected':
 					console.log('[RECEIVER] disconnected');
@@ -418,7 +383,7 @@ export class MediaSubscription extends Subscription {
 	public static async stopConsume() {
 		if (this._values.isConsuming) {
 			this.isConsuming = false;
-			await this.request('remove_consumer');
+			await request('remove_consumer');
 			Subscription.socketOff('producers_update', this.consume.bind(this));
 		}
 	}

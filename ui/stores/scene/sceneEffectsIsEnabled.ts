@@ -1,7 +1,7 @@
-import { createOVStore } from '~/lib/OVStore';
+import { createRemoteValueStore } from '~/lib/store-generators';
 
 /** Keeps track of whenever participants are allowed to send effects over the scene */
 
-export const sceneEffectsIsEnabled = createOVStore<boolean>(
+export const sceneEffectsIsEnabled = createRemoteValueStore<boolean>(
 	'scene-effects-is-enabled'
 );

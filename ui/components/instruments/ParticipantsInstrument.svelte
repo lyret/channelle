@@ -11,7 +11,8 @@
 		(p) => !p.manager && !p.actor && !p.blocked
 	);
 	$: blocked = $participants.filter((p) => p.blocked && p.name);
-	$: online = participantsWithName.filter((p) => $onlineStatus[p.id]);
+	$: online =
+		$onlineStatus && participantsWithName.filter((p) => $onlineStatus[p.id]);
 
 	let filter: string = 'Deltagare';
 </script>

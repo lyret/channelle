@@ -1,8 +1,8 @@
-import { createOVStore } from '~/lib/OVStore';
+import { createRemoteValueStore } from '~/lib/store-generators';
 import { createLocalStore } from '../_localStore';
 import { derived } from 'svelte/store';
 
-export const scenePassword = createOVStore<string>('scene-password');
+export const scenePassword = createRemoteValueStore<string>('scene-password');
 
 export const participantScenePassword = createLocalStore<string>(
 	'participant-scene-password',
@@ -12,9 +12,6 @@ export const participantScenePassword = createLocalStore<string>(
 export const scenePasswordIsOk = derived(
 	[scenePassword, participantScenePassword],
 	([$scenePassword, $participantScenePassword]) => {
-		return (
-			(scenePassword.isConnected() && !$scenePassword) ||
-			$scenePassword == $participantScenePassword
-		);
+		return !$scenePassword || $scenePassword == $participantScenePassword;
 	}
 );

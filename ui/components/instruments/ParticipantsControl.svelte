@@ -15,7 +15,6 @@
 		ask?: string
 	) {
 		loading = true;
-		console.log(participant);
 		if (!ask || confirm(ask)) {
 			await update('participant', {
 				where: { id: participant.id },

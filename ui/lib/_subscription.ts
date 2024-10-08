@@ -1,5 +1,4 @@
 import Emittery from 'emittery';
-import type { DataTypes } from './_databaseTypes';
 import type { Socket } from 'socket.io-client';
 import { ws } from './api';
 
@@ -10,108 +9,29 @@ export class Subscription<
 	Events extends Record<string, unknown> = Record<string, unknown>,
 > {
 	private static _connectionStatus: string = 'disconnected';
-	protected static _socket: Socket;
 	private static _subscriptionEventEmitter: Emittery<SubscriptionSocketEvents> =
 		new Emittery();
 	private _instanceEventEmitter: Emittery<Events> = new Emittery();
-
-	/** Sets the connection status manually */
-	private static set status(status: string) {
-		this._connectionStatus = status;
-		console.log(`[Subscription] connection status: ${status}`);
-		this.subscriptionEmit('status', status);
-	}
-
-	/** Returns the current connection status */
-	public static get status(): string {
-		return Subscription._connectionStatus;
-	}
-
-	/** Returns the web socket used for all subscriptions, initiates a connection when needed */
-	public static connection(): Socket {
-		// FIXME: REMOVE!!
-		if (!this._socket) {
-			console.log('HERE', this);
-			this._socket = ws();
-
-			if (this._socket.connected) {
-				this.status = 'connected';
-				if (localStorage.getItem('participant-id')) {
-					Subscription.registerParticipation();
-				}
-			}
-
-			// When the socket is connected...
-			this._socket.on('connect', () => {
-				this.status = 'connected';
-				if (localStorage.getItem('participant-id')) {
-					Subscription.registerParticipation();
-				}
-			});
-			this._socket.on('disconnect', () => {
-				this.status = 'disconnected';
-			});
-
-			// Add debugging events
-			if (CONFIG.runtime.debug) {
-				// Reload the browser when requested by the server
-				this._socket.on('build-event', (buildOutputs: any) => {
-					// Reload the window
-					window.location.reload();
-
-					// TODO: Only reload CSS code if possible, requries some more tinkering
-					// to get working
-					for (const link of Array.from(document.querySelectorAll('link'))) {
-						const url = new URL(link.href);
-						for (const outputPath of Object.keys(buildOutputs)) {
-							if (
-								url.host === location.host &&
-								`${CONFIG.build.clientOutput}${url.pathname}` == outputPath
-							) {
-								// Create a new link element for the css, load it and delete
-								// the previous link element
-								const nextHref = outputPath.split('/').splice(-1)[0];
-								console.log(nextHref);
-								const nextElement = link.cloneNode() as HTMLLinkElement;
-								nextElement.href =
-									nextHref + ('?' + Math.random().toString(36).slice(2));
-								nextElement.onload = () => link.remove();
-								link.parentNode?.insertBefore(nextElement, link.nextSibling);
-								return;
-							}
-						}
-					}
-				});
-			}
-		}
-		return this._socket;
-	}
-
-	// Socket Emittance
-
-	protected static socketEmit(event: string, ...args: any[]) {
-		Subscription.connection().emit(event, ...args);
-	}
 
 	protected static socketOn(
 		event: string,
 		handler: (response: any) => void | Promise<void>
 	) {
-		Subscription.connection().on(event, handler);
+		ws().on(event, handler);
 	}
 
 	protected static socketOff(
 		event: string,
 		handler: (response: any) => void | Promise<void>
 	) {
-		Subscription.connection().off(event, handler);
+		ws().off(event, handler);
 	}
 
 	protected static socketOnce(
 		event: string,
 		handler: (response: any) => void | Promise<void>
 	) {
-		Subscription.connection().once(event, handler);
+		ws().once(event, handler);
 	}
 
 	// Subscription Emittance
@@ -121,20 +41,6 @@ export class Subscription<
 		data: SubscriptionSocketEvents[Key]
 	) {
 		this._subscriptionEventEmitter.emit(event, data);
-	}
-
-	public static subscriptionOn<Key extends keyof SubscriptionSocketEvents>(
-		event: Key,
-		handler: (data: SubscriptionSocketEvents[Key]) => void | Promise<void>
-	) {
-		this._subscriptionEventEmitter.on(event, handler);
-	}
-
-	public static subscriptionOff<Key extends keyof SubscriptionSocketEvents>(
-		event: Key,
-		handler: (data: SubscriptionSocketEvents[Key]) => void | Promise<void>
-	) {
-		this._subscriptionEventEmitter.off(event, handler);
 	}
 
 	// Instance Emittance
@@ -165,36 +71,5 @@ export class Subscription<
 		} else {
 			this._instanceEventEmitter.off(event, handler);
 		}
-	}
-
-	// Static Methods
-
-	/** Connects to the server side API */
-	public static connect(): void {
-		this.connection();
-	}
-
-	/** Registers a participant on the server side API */
-	public static registerParticipation() {
-		Subscription.connection().emit(
-			'registerParticipant',
-			localStorage.getItem('participant-id')
-		);
-		Subscription.connection().once(
-			'registerParticipant',
-			(response: {
-				ok: boolean;
-				data: DataTypes['participant'];
-				error?: string;
-			}) => {
-				if (response.ok) {
-					console.log('[Subscription] registred existing participantion');
-				} else {
-					console.log(
-						'[Subscription] failed to registred existing participantion'
-					);
-				}
-			}
-		);
 	}
 }

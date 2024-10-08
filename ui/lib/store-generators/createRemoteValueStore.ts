@@ -1,38 +1,36 @@
 import type { ObservableValueStore as ServerObservableValueStore } from '~/../server/lib/stores/createValueStore';
 import { readable } from 'svelte/store';
-import { ws } from './api';
+import { ws } from '../api';
 
 /** Store interface */
-type ObservableValueStore<V> = Pick<
+type RemoteValueStore<V> = Pick<
 	ServerObservableValueStore<V>,
 	'key' | 'set' | 'subscribe'
 > & {
 	isConnected: () => boolean;
 };
 
-/** TODO: document */
-export function createOVStore<V>(
+/** Creates a Svelte Store for an remote observable value on the server side */
+export function createRemoteValueStore<V>(
 	identifier: string,
 	defaultValue: V | null = null
-): ObservableValueStore<V> {
+): RemoteValueStore<V> {
 	const _identifier = identifier;
 	const _socket = ws(`/${identifier}`);
-	let _connected = _socket.connected;
 
 	const { subscribe } = readable<V>(defaultValue as V, function start(_set) {
-		let _onConnect = () => {
-			_socket.emitWithAck('refresh').then((data) => {
-				_connected = true;
-				_set(data);
-			});
-		};
-		let _onDisconnect = () => {
-			_connected = false;
-		};
+		// Refresh the current remote value
+		_socket.emit('refresh', (data: V) => {
+			_set(data);
+		});
+		let _onConnect = () => {};
 		_socket.on('connect', _onConnect);
+
+		let _onDisconnect = () => {};
 		_socket.on('disconnect', _onDisconnect);
 
 		_socket.on('*', (data: V) => {
+			console.log('VAL', '*', data);
 			_set(data);
 		});
 
@@ -44,7 +42,7 @@ export function createOVStore<V>(
 
 	return {
 		key: _identifier,
-		isConnected: () => _connected,
+		isConnected: () => _socket.connected,
 		set: (value: V) => {
 			_socket.emit('set', value);
 		},

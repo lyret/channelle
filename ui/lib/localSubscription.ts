@@ -69,7 +69,7 @@ class LocalStorageSubscription<Value = any> {
 				window.removeEventListener('storage', this._windowHandler);
 			this._listening = false;
 			console.log(
-				`[LOCAL SUBSCRIPTION] Stopped listening to ${this._key}, all onData events removed`
+				`[LS] Stopped listening to ${this._key}, all onData events removed`
 			);
 		}
 	}
@@ -77,7 +77,7 @@ class LocalStorageSubscription<Value = any> {
 	public start() {
 		if (!this._handler || !this._windowHandler) {
 			console.log(
-				`[LOCAL SUBSCRIPTION] can't start a local subscription to ${this._key}, no onData event is registered`
+				`[LS] can't start a local subscription to ${this._key}, no onData event is registered`
 			);
 		} else if (!this._listening) {
 			// Handle changes using the subscription
@@ -92,9 +92,7 @@ class LocalStorageSubscription<Value = any> {
 				this._key,
 				existingItem ? (JSON.parse(existingItem) as Value) : this._defaultValue
 			);
-			console.log(
-				`[LOCAL SUBSCRIPTION] Started listening to updates at ${this._key}`
-			);
+			console.log(`[LS] Started listening to updates at ${this._key}`);
 		}
 	}
 }
