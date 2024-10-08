@@ -3,9 +3,9 @@
 	"search.useGlobalIgnoreFiles": true,
 	"search.useParentIgnoreFiles": true,
 	"files.exclude": {
-		".nova": false,
+		".nova": true,
 		".vscode": true,
-		".dist": true,
+		".dist": false,
 		"node_modules": true
 	}
 }
