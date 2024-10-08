@@ -50,7 +50,7 @@ export function createMapStore<K extends string | number, V>(
 			_map.clear();
 			_emit();
 		});
-		_socket.on('refresh', (_, callback) => {
+		_socket.on('refresh', (callback) => {
 			const currentData = Object.fromEntries(_map.entries()) as Record<K, V>;
 			callback(currentData);
 		});
