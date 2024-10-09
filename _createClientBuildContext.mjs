@@ -19,10 +19,10 @@ export async function createClientBuildContext(CONFIG, callback) {
 		platform: 'browser',
 		external: ['url'],
 		logLevel: CONFIG.runtime.production
-			? 'info'
+			? 'error'
 			: CONFIG.runtime.verbose
-				? 'warning'
-				: 'error',
+				? 'info'
+				: 'warning',
 		entryPoints: ['./ui/index.html', './ui/_main.ts'],
 		outdir: Path.resolve(process.cwd(), CONFIG.build.clientOutput),
 		define: {

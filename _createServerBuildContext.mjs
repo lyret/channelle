@@ -13,10 +13,10 @@ export async function createServerBuildContext(CONFIG, callback) {
 		platform: 'node',
 		packages: 'external',
 		logLevel: CONFIG.runtime.production
-			? 'info'
+			? 'error'
 			: CONFIG.runtime.verbose
-				? 'warning'
-				: 'error',
+				? 'info'
+				: 'warning',
 		entryPoints: ['./server/index.ts'],
 		outfile: Path.resolve(process.cwd(), CONFIG.build.serverOutput, 'index.js'),
 		define: {
