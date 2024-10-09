@@ -28,11 +28,9 @@ import { stageLayout } from './stores/stage';
 
 // FIXME: test
 videoProducers.subscribe((data) => {
-	console.log('NOW', data);
 	ws().emit('producers_update');
 });
 audioProducers.subscribe((data) => {
-	console.log('NOW', data);
 	ws().emit('producers_update');
 });
 stageLayout.subscribe((data) => {
