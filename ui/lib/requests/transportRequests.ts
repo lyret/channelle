@@ -1,6 +1,6 @@
 import type * as MediaSoup from 'mediasoup-client';
-import { ws } from '../api';
 import { createRtcRequest } from '../rtc';
+import { ws } from '../api';
 
 /** Sends a request with data neccessary to create a transport and that returns the options the client needs to create and open the transport on the client side */
 export const requestRTCTransportCreation = createRtcRequest<
@@ -10,7 +10,7 @@ export const requestRTCTransportCreation = createRtcRequest<
 		forceTcp: boolean;
 		rtpCapabilities: MediaSoup.types.RtpCapabilities;
 	}
->(ws(), 'create-rtc-transport');
+>('create-rtc-transport');
 
 /** Sends a request with additional data neccessary to connect a transport between the server and client */
 export const onRTCTransportConnectingRequest = createRtcRequest<
@@ -19,7 +19,7 @@ export const onRTCTransportConnectingRequest = createRtcRequest<
 		type: 'receiver' | 'sender';
 		dtlsParameters: MediaSoup.types.DtlsParameters;
 	}
->(ws(), 'connect-rtc-transport');
+>('connect-rtc-transport');
 
 /** Sends a request with additional data neccessary to start production over a send transport, returns the producer id */
 export const onTransportConnectingProducingRequest = createRtcRequest<
@@ -31,4 +31,4 @@ export const onTransportConnectingProducingRequest = createRtcRequest<
 		kind: MediaSoup.types.MediaKind;
 		rtpParameters: MediaSoup.types.RtpParameters;
 	}
->(ws(), 'send-transport-producing');
+>('send-transport-producing');

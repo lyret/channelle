@@ -19,12 +19,15 @@ export async function rtcSendTransport(): Promise<MediaSoup.types.Transport> {
 		return _sendTransport;
 	}
 
+	// Get websocket connection
+	const _socket = ws();
+
 	// Make sure we have loaded capabilities
 	// and initialized a local media device
 	let _rtpCapabilities = await rtpCapabilities();
 
 	// Get send options from the server
-	const sendOptions = await requestRTCTransportCreation({
+	const sendOptions = await requestRTCTransportCreation(_socket, {
 		type: 'sender',
 		forceTcp: false,
 		rtpCapabilities: _rtpCapabilities,
@@ -35,7 +38,7 @@ export async function rtcSendTransport(): Promise<MediaSoup.types.Transport> {
 
 	// Connect and supply the dtls parameters to the server
 	transport.on('connect', async ({ dtlsParameters }, callback, errback) => {
-		onRTCTransportConnectingRequest({ dtlsParameters, type: 'sender' })
+		onRTCTransportConnectingRequest(_socket, { dtlsParameters, type: 'sender' })
 			.then(callback)
 			.catch(errback);
 	});
@@ -44,7 +47,7 @@ export async function rtcSendTransport(): Promise<MediaSoup.types.Transport> {
 	transport.on(
 		'produce',
 		async ({ kind, rtpParameters }, callback, errback) => {
-			await onTransportConnectingProducingRequest({
+			await onTransportConnectingProducingRequest(_socket, {
 				transportId: transport.id,
 				kind,
 				rtpParameters,

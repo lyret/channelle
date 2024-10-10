@@ -1,5 +1,5 @@
 import { mediaRequest } from '../operations';
-import { rtpCapabilities, mediaDevice } from '~/lib/api';
+import { rtpCapabilities, mediaDevice, ws } from '~/lib/api';
 import {
 	onRTCTransportConnectingRequest,
 	requestRTCTransportCreation,
@@ -14,8 +14,11 @@ export async function createRTCReceiverTransport() {
 	// and initialized a local media device
 	let _rtpCapabilities = await rtpCapabilities();
 
+	// Get websocket connection
+	const _socket = ws();
+
 	// Create a new receiver transport and request consumers
-	const params = await requestRTCTransportCreation({
+	const params = await requestRTCTransportCreation(_socket, {
 		type: 'receiver',
 		forceTcp: false,
 		rtpCapabilities: _rtpCapabilities,
@@ -26,7 +29,10 @@ export async function createRTCReceiverTransport() {
 
 	// Handle new connection event
 	transport.on('connect', ({ dtlsParameters }, callback, errback) => {
-		onRTCTransportConnectingRequest({ dtlsParameters, type: 'receiver' })
+		onRTCTransportConnectingRequest(_socket, {
+			dtlsParameters,
+			type: 'receiver',
+		})
 			.then(callback)
 			.catch(errback);
 	});

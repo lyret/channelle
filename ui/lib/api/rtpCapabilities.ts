@@ -1,6 +1,7 @@
 import type * as MediaSoup from 'mediasoup-client';
 import { mediaDevice } from './mediaDevice';
 import { requestServerRTPCapabilities } from '../requests/capabilitiesRequests';
+import { ws } from './ws';
 
 /** This clients supported real time protocol capabilities */
 let _rtpCapabilities: MediaSoup.types.RtpCapabilities | undefined = undefined;
@@ -12,8 +13,11 @@ export async function rtpCapabilities(): Promise<MediaSoup.types.RtpCapabilities
 		return _rtpCapabilities;
 	}
 
+	// Get websocket connection
+	const _socket = ws();
+
 	// Load remote rtp capabilities from  the server
-	_rtpCapabilities = await requestServerRTPCapabilities({});
+	_rtpCapabilities = await requestServerRTPCapabilities(_socket, {});
 
 	// Supply the deterimined RTP capabilities to the local device's media router
 	await mediaDevice().load({
