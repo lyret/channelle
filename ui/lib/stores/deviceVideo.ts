@@ -42,7 +42,6 @@ function createDeviceVideoStore(): DeviceVideoStore {
 		stopPublishingVideo: async () => {
 			if (_videoProducer) {
 				_videoProducer.pause();
-				//request('remove_producer', { video: true });
 			}
 			_value = false;
 			_localVideoStream = undefined;

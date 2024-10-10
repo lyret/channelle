@@ -2,6 +2,12 @@ import * as MediaSoup from 'mediasoup-client';
 import { rtpCapabilities } from './rtpCapabilities';
 import { mediaRequest } from '../operations'; // TODO: Remove this import
 import { mediaDevice } from './mediaDevice';
+import { ws } from './ws';
+import {
+	onRTCTransportConnectingRequest,
+	onTransportConnectingProducingRequest,
+	requestRTCTransportCreation,
+} from '../requests/transportRequests';
 
 /** Global RTC Send Transport */
 let _sendTransport: MediaSoup.types.Transport | undefined = undefined;
@@ -18,7 +24,8 @@ export async function rtcSendTransport(): Promise<MediaSoup.types.Transport> {
 	let _rtpCapabilities = await rtpCapabilities();
 
 	// Get send options from the server
-	const sendOptions = await mediaRequest('transport_producer_create', {
+	const sendOptions = await requestRTCTransportCreation({
+		type: 'sender',
 		forceTcp: false,
 		rtpCapabilities: _rtpCapabilities,
 	});
@@ -28,7 +35,7 @@ export async function rtcSendTransport(): Promise<MediaSoup.types.Transport> {
 
 	// Connect and supply the dtls parameters to the server
 	transport.on('connect', async ({ dtlsParameters }, callback, errback) => {
-		mediaRequest('transport_producer_connect', { dtlsParameters })
+		onRTCTransportConnectingRequest({ dtlsParameters, type: 'sender' })
 			.then(callback)
 			.catch(errback);
 	});
@@ -37,16 +44,13 @@ export async function rtcSendTransport(): Promise<MediaSoup.types.Transport> {
 	transport.on(
 		'produce',
 		async ({ kind, rtpParameters }, callback, errback) => {
-			try {
-				const { id } = await mediaRequest('transport_producer_produce', {
-					transportId: transport.id,
-					kind,
-					rtpParameters,
-				});
-				callback({ id });
-			} catch (err: any) {
-				errback(err);
-			}
+			await onTransportConnectingProducingRequest({
+				transportId: transport.id,
+				kind,
+				rtpParameters,
+			})
+				.then(callback)
+				.catch(errback);
 		}
 	);
 

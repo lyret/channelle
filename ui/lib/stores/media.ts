@@ -2,7 +2,7 @@ import type * as MediaSoup from 'mediasoup-client';
 import { readable } from 'svelte/store';
 import { mediaRequest } from '../operations';
 import { ws } from '~/lib/api';
-import { createRTCConsumerTransport, rtcRequest } from '../rtc';
+import { createRTCReceiverTransport, rtcRequest } from '../rtc';
 import type { DataTypes } from '../_databaseTypes';
 import type {
 	StageLayoutWithProducers,
@@ -43,7 +43,7 @@ function createMediaStore(): MediaStore {
 
 		// Consume any new media stream produced on the media soup server
 		const _onConsume = async () => {
-			const transport = await createRTCConsumerTransport();
+			const transport = await createRTCReceiverTransport();
 			// Get new data
 			const { layout, leftovers } = await rtcRequest<{
 				layout: StageLayoutWithProducers;

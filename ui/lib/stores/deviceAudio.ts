@@ -38,7 +38,6 @@ function createDeviceAudioStore(): DeviceAudioStore {
 		stopPublishingAudio: async () => {
 			if (_audioProducer) {
 				_audioProducer.pause();
-				//request('remove_producer', { audio: true });
 			}
 			_value = false;
 			set(_value);

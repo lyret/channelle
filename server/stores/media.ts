@@ -2,13 +2,41 @@ import type * as MediaSoup from 'mediasoup';
 import type { MediaRequests } from '../../shared';
 import { createMapStore } from '../lib/stores';
 
+/** Keeps tracks of created real time transports { [ transport id ]: transport with options } */
+export const openTransports = createMapStore<
+	string,
+	{
+		rtpCapabilities: MediaSoup.types.RtpCapabilities;
+		forceTcp: boolean;
+		/** The id of the socket that created this transport */
+		socketId: string;
+		/** The Transport object */
+		transport: MediaSoup.types.WebRtcTransport;
+		consumers: Array<MediaSoup.types.Consumer>;
+		producers: Array<MediaSoup.types.Producer>;
+	}
+>('rtc-transports', {
+	// Close transport as they are deleted from this map
+	onDelete: ({ transport }) => {
+		transport.close();
+	},
+});
+
 /** Keeps tracks of web rtc transports for incomming media streams from producers */
 export const mediaProducerTransports = createMapStore<
 	string,
-	MediaSoup.types.WebRtcTransport
+	{
+		options: {
+			forceTcp: boolean;
+			rtpCapabilities: MediaSoup.types.RtpCapabilities;
+		};
+		transport: MediaSoup.types.WebRtcTransport;
+		consumers: Array<MediaSoup.types.Consumer>;
+		producers: Array<MediaSoup.types.Producer>;
+	}
 >('media-producer-transports', {
 	// Close any producer transport when deleted from the map
-	onDelete: (transport) => {
+	onDelete: ({ transport }) => {
 		transport.close();
 	},
 });
@@ -17,9 +45,13 @@ export const mediaProducerTransports = createMapStore<
 export const mediaReceiverTransports = createMapStore<
 	string,
 	{
-		options: MediaRequests['transport_receiver_create'][0];
+		options: {
+			forceTcp: boolean;
+			rtpCapabilities: MediaSoup.types.RtpCapabilities;
+		};
 		transport: MediaSoup.types.WebRtcTransport;
 		consumers: Array<MediaSoup.types.Consumer>;
+		producers: Array<MediaSoup.types.Producer>;
 	}
 >('media-receiver-transports', {
 	// Close any receiver transport when deleted from the map

@@ -1,3 +1,4 @@
+import type * as MediaSoupClient from 'mediasoup-client';
 import type * as MediaSoup from 'mediasoup';
 import * as IO from 'socket.io';
 import {
@@ -25,6 +26,12 @@ import {
 	audioProducers,
 } from './stores/media';
 import { stageLayout } from './stores/stage';
+import {
+	handleRTCTransportConnectionRequests,
+	handleRTCTransportCreationRequests,
+	handleSendTransportProducingRequests,
+} from './lib/requestHandlers/transportRequestHandlers';
+import { handleServerRTPCapabilitiesRequests as handleRTPCapabilitiesRequests } from './lib/requestHandlers/capabilitiesRequestsHandlers';
 
 // FIXME: test
 videoProducers.subscribe((data) => {
@@ -111,16 +118,6 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 			}
 		}
 	);
-	socket.on('server_rtp_capabilities', async (_, callback) => {
-		try {
-			callback((await mediaSoupRouter()).rtpCapabilities);
-		} catch (err) {
-			console.error(err);
-			callback({
-				error: CONFIG.isProduction ? err : new Error('Server Error'),
-			});
-		}
-	});
 	socket.on(
 		'remove_producer',
 		async (data: { audio?: boolean; video?: boolean }, callback) => {
@@ -152,154 +149,11 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 			});
 		}
 	});
-	socket.on(
-		'transport_producer_create',
-		async (
-			data: {
-				forceTcp: Boolean;
-				rtpCapabilities: MediaSoup.types.RtpCapabilities;
-			},
-			callback
-		) => {
-			try {
-				const { transport, params } = await createRTCTransport();
-				mediaProducerTransports.set(socket.id, transport);
-				callback(params);
-			} catch (err) {
-				console.error(err);
-				callback({
-					error: CONFIG.isProduction ? err : new Error('Server Error'),
-				});
-			}
-		}
-	);
-	socket.on(
-		'transport_producer_connect',
-		async (
-			data: { dtlsParameters: MediaSoup.types.DtlsParameters },
-			callback
-		) => {
-			try {
-				if (!mediaProducerTransports.has(socket.id)) {
-					throw new Error("Can't connect non-existing producer transport");
-				}
-				await mediaProducerTransports.get(socket.id)!.connect({
-					dtlsParameters: data.dtlsParameters,
-				});
 
-				callback(undefined);
-			} catch (err) {
-				console.error(err);
-				callback({
-					error: CONFIG.isProduction ? err : new Error('Server Error'),
-				});
-			}
-		}
-	);
-	socket.on(
-		'transport_producer_produce',
-		async (
-			data: {
-				transportId: string;
-				kind: MediaSoup.types.MediaKind;
-				rtpParameters: MediaSoup.types.RtpParameters;
-			},
-			callback
-		) => {
-			try {
-				const { kind, rtpParameters } = data;
-				if (!mediaProducerTransports.has(socket.id)) {
-					throw new Error("Can't produce from non-existing producer transport");
-				}
-
-				const producer = await mediaProducerTransports.get(socket.id)!.produce({
-					kind,
-					rtpParameters,
-				});
-
-				if (producer.kind == 'audio') {
-					// Close previous producer
-					audioProducers.delete(socket.id);
-					// Update audio producer collection
-					audioProducers.set(socket.id, producer);
-				} else {
-					// Close previous producer
-					videoProducers.delete(socket.id);
-					// Update video producer collection
-					videoProducers.set(socket.id, producer);
-				}
-				callback({ id: producer.id });
-			} catch (err) {
-				console.error(err);
-				callback({
-					error: CONFIG.isProduction ? err : new Error('Server Error'),
-				});
-			}
-		}
-	);
-	socket.on(
-		'transport_receiver_create',
-		async (
-			data: {
-				forceTcp: false;
-				rtpCapabilities: MediaSoup.types.RtpCapabilities;
-			},
-			callback
-		) => {
-			try {
-				// Destroy previous transport if it exists
-				mediaReceiverTransports.delete(socket.id);
-
-				// Create a new transport
-				const { transport, params } = await createRTCTransport();
-				mediaReceiverTransports.set(socket.id, {
-					options: data,
-					transport: transport,
-					consumers: [],
-				});
-
-				// Return parameters
-				callback(params);
-			} catch (err) {
-				console.error(err);
-				callback({
-					error: CONFIG.isProduction ? err : new Error('Server Error'),
-				});
-			}
-		}
-	);
-	socket.on(
-		'transport_receiver_connect',
-		async (
-			data: {
-				transportId: string;
-				dtlsParameters: MediaSoup.types.DtlsParameters;
-			},
-			callback
-		) => {
-			try {
-				// Fail if no transport exists
-				if (!mediaReceiverTransports.has(socket.id)) {
-					throw new Error("Can't connect a non-existing receiver transport");
-				}
-
-				// Connect it
-				const { transport } = mediaReceiverTransports.get(socket.id)!;
-				console.log('transport_receiver_connect', socket.id);
-				await transport.connect({
-					dtlsParameters: data.dtlsParameters,
-				});
-
-				// Return
-				callback(undefined);
-			} catch (err) {
-				console.error(err);
-				callback({
-					error: CONFIG.isProduction ? err : new Error('Server Error'),
-				});
-			}
-		}
-	);
+	handleRTPCapabilitiesRequests(socket);
+	handleRTCTransportCreationRequests(socket);
+	handleRTCTransportConnectionRequests(socket);
+	handleSendTransportProducingRequests(socket);
 
 	createRTCResponseHandler<{
 		layout: StageLayoutWithProducers;

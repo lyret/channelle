@@ -31,7 +31,6 @@
 <main in:blur={{ delay: 500, duration: 1000 }}>
 	<div class="contents">
 		{#if $stageSettings}
-			<h1>GERE</h1>
 			<div class="sidebar">
 				<div class="notification sidebar-contents" transition:fly>
 					<SidePanel />

@@ -1,28 +1,32 @@
 import { mediaRequest } from '../operations';
 import { rtpCapabilities, mediaDevice } from '~/lib/api';
+import {
+	onRTCTransportConnectingRequest,
+	requestRTCTransportCreation,
+} from '../requests/transportRequests';
 
 /**
- * Creates and returns a transport object for consuming media from the server over WebRTC
+ * Creates and returns a transport object for receiving media from the server over WebRTC
  * A unique consumer- (a.k.a. receiver-) transport is created for each producer on the server side
  */
-export async function createRTCConsumerTransport() {
+export async function createRTCReceiverTransport() {
 	// Make sure we have loaded capabilities
 	// and initialized a local media device
 	let _rtpCapabilities = await rtpCapabilities();
 
 	// Create a new receiver transport and request consumers
-	const params = await mediaRequest('transport_receiver_create', {
+	const params = await requestRTCTransportCreation({
+		type: 'receiver',
 		forceTcp: false,
 		rtpCapabilities: _rtpCapabilities,
 	});
+
+	params.id;
 	const transport = mediaDevice().createRecvTransport(params);
 
 	// Handle new connection event
 	transport.on('connect', ({ dtlsParameters }, callback, errback) => {
-		mediaRequest('transport_receiver_connect', {
-			transportId: transport.id,
-			dtlsParameters,
-		})
+		onRTCTransportConnectingRequest({ dtlsParameters, type: 'receiver' })
 			.then(callback)
 			.catch(errback);
 	});

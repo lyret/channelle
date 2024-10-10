@@ -1,2 +1,2 @@
 export * from './createRtcRequest';
-export * from './createRtcConsumerTransport';
+export * from './createRtcReceiverTransport';
