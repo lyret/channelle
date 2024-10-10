@@ -18,11 +18,7 @@ export async function createClientBuildContext(CONFIG, callback) {
 		minify: CONFIG.runtime.production,
 		platform: 'browser',
 		external: ['url'],
-		logLevel: CONFIG.runtime.production
-			? 'error'
-			: CONFIG.runtime.verbose
-				? 'info'
-				: 'warning',
+		logLevel: CONFIG.runtime.verbose ? 'warning' : 'error',
 		entryPoints: ['./ui/index.html', './ui/_main.ts'],
 		outdir: Path.resolve(process.cwd(), CONFIG.build.clientOutput),
 		define: {
