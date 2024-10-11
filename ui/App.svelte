@@ -34,7 +34,7 @@
 	$: needToBeManager =
 		renderBackstage &&
 		!($APIStore.status == 'ready' && $APIStore.participant.manager);
-	$: needInteraction = CONFIG.isProduction;
+	$: needInteraction = CONFIG.isProduction && !hasInteractedWithTheDocument;
 	$: needStagePassword = !$scenePasswordIsOk && renderStage;
 	$: renderMessages =
 		!determiningState &&
