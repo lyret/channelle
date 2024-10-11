@@ -81,7 +81,7 @@ const createLocalMediaDevicesStores = () => {
 			// Actor
 			if ($currentParticipant.actor) {
 				// Auto layout
-				if (!$layout.length) {
+				if (!$layout || !$layout.length) {
 					return {
 						videoWanted: true,
 						audioWanted: true,
