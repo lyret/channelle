@@ -155,10 +155,11 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 	handleRTCTransportConnectionRequests(socket);
 	handleSendTransportProducingRequests(socket);
 
-	createRTCResponseHandler<{
+	// TODO: super slow
+	const handler = createRTCResponseHandler<{
 		layout: StageLayoutWithProducers;
 		leftovers: Array<StageLayoutActorWithProducer>;
-	}>(socket, 'transport_receiver_consume', async () => {
+	}>('transport_receiver_consume', async () => {
 		// Fail if no transport exists
 		if (!mediaReceiverTransports.has(socket.id)) {
 			throw new Error("Can't connect a non-existing receiver transport");
@@ -236,6 +237,7 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 			options,
 			transport,
 			consumers,
+			producers: [],
 		});
 
 		// Find all actors
@@ -287,6 +289,7 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 
 		return { layout: updatedLayout, leftovers };
 	});
+	handler(socket);
 
 	socket.on('transport_receiver_resume', async (_, callback) => {
 		try {

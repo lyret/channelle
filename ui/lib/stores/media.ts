@@ -9,7 +9,7 @@ import type {
 	StageLayoutActorWithProducer,
 } from '~/../server/createIOEventHandlers';
 import { currentParticipant } from './api';
-import { DeviceVideoStore } from './deviceVideo';
+import { localMedia } from './localMedia';
 
 /**
  * The Media store provides all media streams, both from this client and from the MediaSoup server
@@ -37,9 +37,10 @@ function createMediaStore(): MediaStore {
 					: undefined)
 		);
 		// Subscribe to the current video publishing status so that we can include the local video stream in the layout
-		const _stopDeviceVideoSubscription = DeviceVideoStore.subscribe(
-			() => (_localVideoStream = DeviceVideoStore.localVideoStream())
-		);
+		const _stopDeviceVideoSubscription = localMedia.subscribe(($localMedia) => {
+			_localVideoStream = $localMedia.video.stream;
+			_set(_value);
+		});
 
 		// Consume any new media stream produced on the media soup server
 		const _onConsume = async () => {

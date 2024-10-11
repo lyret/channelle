@@ -163,18 +163,6 @@
 		grid-row-gap: 0px;
 	}
 
-	.topbar {
-		margin: 0;
-		display: flex;
-		align-content: center;
-		align-items: center;
-		justify-content: center;
-		justify-items: center;
-		background-color: black;
-		border-radius: 0;
-		border-bottom: 1px solid var(--bulma-border);
-	}
-
 	.window {
 		color: white;
 		flex-grow: 0;

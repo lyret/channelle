@@ -1,19 +1,18 @@
 <script lang="ts">
-	import { DeviceAudioStore } from '~/lib/stores/deviceAudio';
-	import { DeviceVideoStore } from '~/lib/stores/deviceVideo';
 	import { windowSizeStore } from '$ui/device';
 	import { fullScreenAction } from '~/legos/actions/fullScreenAction';
 	import { isInFullscreen } from '~/legos/stores/fullscreenStore';
 	import { onMount } from 'svelte';
 	import { blur } from 'svelte/transition';
 	import { update } from '~/lib';
-	import { createLocalStore } from '~/stores';
 	import { currentParticipant } from '~/lib/stores/api';
 	import { createEffectsStore } from '~/stores/particles/effectsStore';
 	import { userCameraBans, userMicrophoneBans } from '~/stores/users';
 	import { sceneVisitorAudioIsEnabled } from '~/stores/scene/sceneVisitorAudioIsEnabled';
 	import { sceneEffectsIsEnabled } from '~/stores/scene/sceneEffectsIsEnabled';
 	import { stageSettings } from '~/stores/scene/stageSettingsIsEnbaled';
+	import CameraActionButton from './actionButtons/CameraActionButton.svelte';
+	import MicrophoneActionButton from './actionButtons/MicrophoneActionButton.svelte';
 
 	let windowSize = windowSizeStore();
 	$: isMobile = $windowSize.width <= 768;
@@ -79,56 +78,10 @@
 	</div>
 	<div class="right">
 		<!-- VIDEO -->
-		{#if $currentParticipant.actor || $currentParticipant.manager}
-			<button
-				type="button"
-				disabled={$userCameraBans[$currentParticipant.id]}
-				class={btnClassList}
-				transition:blur
-				class:has-text-danger={$DeviceVideoStore}
-				on:click={() =>
-					$DeviceVideoStore
-						? DeviceVideoStore.stopPublishingVideo()
-						: DeviceVideoStore.publishVideo()}
-			>
-				<span class={iconClassList}
-					><ion-icon name={$DeviceVideoStore ? 'videocam-off' : 'videocam'}
-					></ion-icon></span
-				>
-				{#if !isMobile}
-					<span
-						>{$DeviceVideoStore ? 'Stäng av kameran' : 'Starta kameran'}</span
-					>
-				{/if}
-			</button>
-		{/if}
+		<CameraActionButton minimal={isMobile} />
 
 		<!-- AUDIO -->
-		{#if $currentParticipant.actor || $sceneVisitorAudioIsEnabled}
-			<button
-				type="button"
-				class={btnClassList}
-				transition:blur
-				disabled={$userMicrophoneBans[$currentParticipant.id]}
-				class:has-text-danger={$DeviceAudioStore}
-				on:click={() =>
-					$DeviceAudioStore
-						? DeviceAudioStore.stopPublishingAudio()
-						: DeviceAudioStore.publishAudio()}
-			>
-				<span class={iconClassList}
-					><ion-icon name={$DeviceAudioStore ? 'mic-off' : 'mic'}></ion-icon><br
-					/></span
-				>
-				{#if !isMobile}
-					<span class=""
-						>{$DeviceAudioStore
-							? 'Stäng av mikrofonen'
-							: 'Starta mikrofonen'}</span
-					>
-				{/if}
-			</button>
-		{/if}
+		<MicrophoneActionButton minimal={isMobile} />
 		<!-- FULLSCREEN -->
 		<button
 			type="button"
@@ -147,16 +100,14 @@
 			{/if}
 		</button>
 		<!-- STAGE SETTINGS -->
-		{#if $currentParticipant.manager}
+		{#if $currentParticipant.manager || $currentParticipant.actor}
 			<button
 				class={btnClassList}
 				transition:blur
 				class:has-text-info={$stageSettings}
 				on:click={() => stageSettings.set(!$stageSettings)}
 			>
-				<span class={iconClassList}
-					><ion-icon name="speedometer"></ion-icon></span
-				>
+				<span class={iconClassList}><ion-icon name="options"></ion-icon></span>
 				{#if !isMobile}
 					<span>Inställningar </span>
 				{/if}

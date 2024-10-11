@@ -191,8 +191,6 @@ function createAPIStore(): APIStore {
 	};
 }
 
-/** Returns the web socket used for all subscriptions, initiates a connection when needed */
-
 /** API Store Value */
 type APIStoreValue =
 	| {
@@ -246,7 +244,7 @@ type APIStoreValue =
 			participant: DataTypes['participant'];
 	  };
 
-/** API Store interface */
+/** API Store Interface */
 type APIStore = {
 	get: () => APIStoreValue;
 	subscribe: (handler: (value: APIStoreValue) => void) => () => void;
