@@ -155,7 +155,7 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 	handleRTCTransportConnectionRequests(socket);
 	handleSendTransportProducingRequests(socket);
 
-	// TODO: super slow
+	// TODO: super super slow
 	const handler = createRTCResponseHandler<{
 		layout: StageLayoutWithProducers;
 		leftovers: Array<StageLayoutActorWithProducer>;
