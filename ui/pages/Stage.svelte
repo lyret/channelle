@@ -3,7 +3,7 @@
 	import { blur, fly } from 'svelte/transition';
 	import MediaWindow from '~/components/stage/MediaWindow.svelte';
 	import ChatWindow from '~/components/stage/ChatWindow.svelte';
-	import SidePanel from '~/components/stage/MenuPanel.svelte';
+	import MenuPanel from '~/components/stage/MenuPanel.svelte';
 	import ActionPanel from '~/components/stage/ActionPanel.svelte';
 	import { MediaStore } from '~/lib/stores/media';
 	import { stageSettings } from '~/stores/scene/stageSettingsIsEnbaled';
@@ -33,7 +33,7 @@
 		{#if $stageSettings}
 			<div class="sidebar">
 				<div class="notification sidebar-contents" transition:fly>
-					<SidePanel />
+					<MenuPanel />
 				</div>
 			</div>
 		{/if}

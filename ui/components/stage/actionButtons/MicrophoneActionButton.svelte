@@ -5,6 +5,7 @@
 
 	$: isOn = !!$localMedia.audio.stream && !$localMedia.audio.paused;
 	$: isBlocked = $localMedia.audio.blocked;
+	$: isWanted = $localMedia.audio.wanted;
 	$: errorMessage = $localMedia.audio.err;
 	$: hasError = !!$localMedia.audio.err;
 
@@ -23,15 +24,23 @@
 		<span
 			class="icon is-size-4"
 			class:has-text-danger={hasError}
-			class:has-text-success={isOn}
+			class:has-text-success={isOn && isWanted}
+			class:has-text-warning={isOn && !isWanted}
 			><ion-icon name={isOn ? 'mic' : 'mic-off'}></ion-icon></span
 		>
 		{#if !minimal}
 			<span
-				>Mikrofon ({errorMessage ||
-					(isBlocked && 'ej tillgänglig') ||
-					(isOn ? 'på' : 'av')})</span
-			>
+				>Mikrofon:
+				{#if errorMessage}
+					{errorMessage}
+				{:else if isBlocked}
+					bannad
+				{:else if isOn}
+					på
+				{:else}
+					av
+				{/if}
+			</span>
 		{/if}
 	</button>
 {/if}

@@ -7,12 +7,11 @@
 	import { update } from '~/lib';
 	import { currentParticipant } from '~/lib/stores/api';
 	import { createEffectsStore } from '~/stores/particles/effectsStore';
-	import { userCameraBans, userMicrophoneBans } from '~/stores/users';
-	import { sceneVisitorAudioIsEnabled } from '~/stores/scene/sceneVisitorAudioIsEnabled';
 	import { sceneEffectsIsEnabled } from '~/stores/scene/sceneEffectsIsEnabled';
 	import { stageSettings } from '~/stores/scene/stageSettingsIsEnbaled';
 	import CameraActionButton from './actionButtons/CameraActionButton.svelte';
 	import MicrophoneActionButton from './actionButtons/MicrophoneActionButton.svelte';
+	import MediaInputStatus from './actionButtons/MediaInputStatus.svelte';
 
 	let windowSize = windowSizeStore();
 	$: isMobile = $windowSize.width <= 768;
@@ -77,6 +76,8 @@
 		{/if}
 	</div>
 	<div class="right">
+		<!-- STATUS -->
+		<MediaInputStatus />
 		<!-- VIDEO -->
 		<CameraActionButton minimal={isMobile} />
 

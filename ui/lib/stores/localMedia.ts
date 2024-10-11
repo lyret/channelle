@@ -3,6 +3,8 @@ import { userCameraBans, userMicrophoneBans } from '~/stores/users';
 import { derived, writable } from 'svelte/store';
 import { rtcSendTransport } from '../api';
 import { currentParticipant } from './api';
+import { stageLayout } from '~/stores/stage/stageLayout';
+import { sceneVisitorAudioIsEnabled } from '~/stores/scene/sceneVisitorAudioIsEnabled';
 
 /** Local Media Devices Store Value */
 type StoreValue = {
@@ -10,6 +12,7 @@ type StoreValue = {
 		list: Array<MediaDeviceInfo>;
 		selected?: MediaDeviceInfo;
 		stream?: MediaStream;
+		wanted?: boolean;
 		blocked?: boolean;
 		paused?: boolean;
 		err?: string;
@@ -18,6 +21,7 @@ type StoreValue = {
 		list: Array<MediaDeviceInfo>;
 		selected?: MediaDeviceInfo;
 		stream?: MediaStream;
+		wanted?: boolean;
 		blocked?: boolean;
 		paused?: boolean;
 		err?: string;
@@ -70,11 +74,57 @@ const createLocalMediaDevicesStores = () => {
 		}
 	);
 
+	// Create a derived store for determining if the current users audio / video is wanted on stage
+	const _remoteWantedStatusStore = derived(
+		[currentParticipant, stageLayout, sceneVisitorAudioIsEnabled],
+		([$currentParticipant, $layout, $sceneVisitorAudioIsEnabled]) => {
+			// Actor
+			if ($currentParticipant.actor) {
+				// Auto layout
+				if (!$layout.length) {
+					return {
+						videoWanted: true,
+						audioWanted: true,
+					};
+				}
+				// Custom scene layout
+				for (const row of $layout) {
+					for (const cell of row) {
+						if (cell.type == 'actor' && cell.id == $currentParticipant.id) {
+							return {
+								videoWanted: true,
+								audioWanted: true,
+							};
+						}
+					}
+				}
+			}
+
+			// Visitor or actor not on stage
+			return {
+				videoWanted: false,
+				audioWanted: $sceneVisitorAudioIsEnabled,
+			};
+		}
+	);
+
+	// Create an internal store for subscription handling
 	const { subscribe, set } = writable<StoreValue>(_value, (set) => {
 		// Handle updates to list of hardware input devices
 		navigator.mediaDevices.addEventListener(
 			'devicechange',
 			onDeviceStatusChange
+		);
+
+		// Listen for remote user video and auido stage requests
+		const stopRemoveWantedSubscription = _remoteWantedStatusStore.subscribe(
+			({ videoWanted, audioWanted }) => {
+				_value.video.wanted = videoWanted;
+				_value.audio.wanted = audioWanted;
+				_onUpdateVideo();
+				_onUpdateAudio();
+				set(_value);
+			}
 		);
 
 		// Listen for remote user camera and microphone bans

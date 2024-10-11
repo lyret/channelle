@@ -1,90 +1,127 @@
 <script lang="ts">
-	import { currentParticipant } from '~/lib/stores/api';
-	import ManagerMenuPanel from './ManagerMenuPanel.svelte';
-	import { localMedia } from '~/lib/stores/localMedia';
-
-	let isLoading = false;
-	let isUnloaded = true;
-
-	const onLoadVideoDevices = async () => {
-		if (isUnloaded) {
-			isLoading = true;
-			await localMedia.updateDeviceLists({ video: true });
-			isUnloaded = false;
-			isLoading = false;
-		}
-	};
-	const onLoadAudioDevices = async () => {
-		if (isUnloaded) {
-			isLoading = true;
-			await localMedia.updateDeviceLists({
-				audio: true,
-			});
-			isUnloaded = false;
-			isLoading = false;
-		}
-	};
-	const onSelectVideo = (event: any) => {
-		if (event.target.value > -1) {
-			localMedia.selectVideoDevice($localMedia.video.list[event.target.value]);
-		} else if (event.target.value == -1) {
-			localMedia.selectVideoDevice(undefined);
-		}
-	};
-	const onSelectAudio = (event: any) => {
-		if (event.target.value > -1) {
-			localMedia.selectAudioDevice($localMedia.audio.list[event.target.value]);
-		} else if (event.target.value == -1) {
-			localMedia.selectAudioDevice(undefined);
-		}
-	};
+	import { blur } from 'svelte/transition';
+	import ChatInstrument from '~/components/instruments/ChatInstrument.svelte';
+	import ParticipantsInstrument from '~/components/instruments/ParticipantsInstrument.svelte';
+	import SceneSelectorInstrument from '~/components/instruments/SceneSelectorInstrument.svelte';
+	import MediaLibraryInstrument from '~/components/instruments/MediaLibraryInstrument.svelte';
+	import AccessInstrument from '../instruments/AccessInstrument.svelte';
+	import { focusedInstrument } from '~/stores/ui';
+	import MediaInputMenuInstrument from './menuInstruments/MediaInputMenuInstrument.svelte';
 </script>
 
-<div class="control has-icons-left">
-	<div class="select is-fullwidth mb-4 is-rounded" class:is-loading={isLoading}>
-		<select on:mousedown={onLoadAudioDevices} on:change={onSelectAudio}>
-			{#if !$localMedia.audio.list.length && $localMedia.audio.selected}
-				<option value={-2} selected={true}
-					>{$localMedia.audio.selected.label}</option
-				>
-			{:else}
-				<option value={-1} class="has-text-gray"> Standardmikrofonen</option>
-				{#each $localMedia.audio.list as audioDevice, index}
-					<option
-						value={index}
-						selected={$localMedia.audio.selected &&
-							audioDevice.deviceId == $localMedia.audio.selected.deviceId}
-						>{audioDevice.label}</option
-					>
-				{/each}
-			{/if}
-		</select>
-		<span class="icon"><ion-icon name="mic-outline"></ion-icon></span>
+<!-- <ParticipantsInstrument /> -->
+
+<!-- <main in:blur={{ delay: 500, duration: 1000 }}>
+	
+<!-- Content -->
+{#if $focusedInstrument == 'scene-settings'}
+	<div class="instrument-control">
+		<a on:click={() => ($focusedInstrument = undefined)}>
+			<span class="icon"><ion-icon name="close"></ion-icon></span>
+		</a>
 	</div>
-</div>
-<div class="control has-icons-left">
-	<div class="select is-fullwidth mb-4 is-rounded" class:is-loading={isLoading}>
-		<select on:mousedown={onLoadVideoDevices} on:change={onSelectVideo}>
-			{#if !$localMedia.video.list.length && $localMedia.video.selected}
-				<option value={-2} selected={true}
-					>{$localMedia.video.selected.label}</option
-				>
-			{:else}
-				<option value={-1} class="has-text-gray">Standardkameran</option>
-				{#each $localMedia.video.list as videoDevice, index}
-					<option
-						value={index}
-						selected={$localMedia.video.selected &&
-							videoDevice.deviceId == $localMedia.video.selected.deviceId}
-						>{videoDevice.label}</option
-					>
-				{/each}
-			{/if}
-		</select>
-		<span class="icon"><ion-icon name="videocam-outline"></ion-icon></span>
+	<div class="instrument">
+		<SceneSelectorInstrument />
 	</div>
-</div>
-<hr />
-{#if $currentParticipant.manager}
-	<ManagerMenuPanel />
+{:else if $focusedInstrument == 'participants'}
+	<div class="instrument-control">
+		<a on:click={() => ($focusedInstrument = undefined)}>
+			<span class="icon"><ion-icon name="close"></ion-icon></span>
+		</a>
+	</div>
+	<div class="instrument">
+		<ParticipantsInstrument />
+	</div>
+{:else if $focusedInstrument == 'chat'}
+	<div class="instrument-control">
+		<a on:click={() => ($focusedInstrument = undefined)}>
+			<span class="icon"><ion-icon name="close"></ion-icon></span>
+		</a>
+	</div>
+	<div class="instrument">
+		<ChatInstrument />
+	</div>
+{:else if $focusedInstrument == 'access'}
+	<div class="instrument-control">
+		<a on:click={() => ($focusedInstrument = undefined)}>
+			<span class="icon"><ion-icon name="close"></ion-icon></span>
+		</a>
+	</div>
+	<div class="instrument">
+		<AccessInstrument />
+	</div>
+{:else if $focusedInstrument == 'media-library'}
+	<div class="instrument-control">
+		<a on:click={() => ($focusedInstrument = undefined)}>
+			<span class="icon"><ion-icon name="close"></ion-icon></span>
+		</a>
+	</div>
+	<div class="instrument">
+		<MediaLibraryInstrument />
+	</div>
+{:else}
+	<MediaInputMenuInstrument />
+	<div class="select-view mb-4" in:blur={{ duration: 100 }}>
+		<button
+			class="button is-fullwidth mb-4 is-small"
+			on:click={() => ($focusedInstrument = 'scene-settings')}
+			><span class="icon is-size-5"><ion-icon name="albums"></ion-icon></span>
+			<span>Sceninställningar</span></button
+		>
+		<hr />
+		<button
+			class="button is-fullwidth mb-4 is-small"
+			on:click={() => ($focusedInstrument = 'access')}
+			><span class="icon is-size-5"><ion-icon name="key"></ion-icon></span>
+			<span>Tillgång</span></button
+		>
+		<hr />
+		<button
+			class="button is-fullwidth mb-4 is-small"
+			on:click={() => ($focusedInstrument = 'participants')}
+			><span class="icon is-size-5"
+				><ion-icon name="accessibility"></ion-icon></span
+			>
+			<span>Deltagare</span></button
+		>
+		<hr />
+		<button
+			class="button is-fullwidth mb-4 is-small"
+			on:click={() => ($focusedInstrument = 'chat')}
+			><span class="icon is-size-5"
+				><ion-icon name="chatbox-ellipses"></ion-icon></span
+			>
+			<span>Chatt</span></button
+		>
+		<hr />
+		<a class="button is-fullwidth is-small" href="/backstage" target="_blank">
+			<span class="icon is-size-5"
+				><ion-icon name="arrow-forward-circle-outline"></ion-icon></span
+			>
+			<span>Gå Backstage </span>
+		</a>
+	</div>
 {/if}
+
+<style>
+	.instrument-control {
+		position: absolute;
+		font-size: 3em;
+		top: 8px;
+		right: 24px;
+	}
+	.instrument {
+		padding-top: 24px;
+	}
+
+	.select-view {
+		position: absolute;
+		bottom: 24px;
+		left: 24px;
+		right: 24px;
+	}
+	.select-view .button {
+		justify-content: start;
+		border-width: 0;
+	}
+</style>
