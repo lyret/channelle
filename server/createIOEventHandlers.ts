@@ -66,7 +66,7 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 				? client.participant.create({
 						data: {
 							name: '',
-							manager: (await client.participant.count()) == 0,
+							manager: true, // FIXME: quick fix for production bug (await client.participant.count()) == 0,
 							actor: (await client.participant.count()) == 0,
 						},
 					})

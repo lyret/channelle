@@ -99,6 +99,9 @@ function createAPIStore(): APIStore {
 							isReady: false,
 							errorMessage: 'Failed to registred existing participantion',
 						});
+						// FIXME: quick fix
+						localStorage.removeItem('participant-id');
+						window.location.reload();
 					} else {
 						// Store the current participants id in local storage
 						localStorage.setItem(
