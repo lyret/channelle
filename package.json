@@ -6,7 +6,9 @@
 	"license": "CC-BY-NC/4.0",
 	"scripts": {
 		"init": "prisma generate",
-		"dev": "node cli.mjs -dev",
+		"dev": "node cli.mjs --build --watch --start --no-production --debug localhost --local --lan --port 3000",
+		"production:build": "node cli.mjs --production --no-start --build --no-watch --no-debug",
+		"production:start": "node cli.mjs --production --start --no-build --no-watch --no-debug",
 		"check": "svelte-check --tsconfig ./tsconfig.json && prettier . --check",
 		"format": "prettier . --write",
 		"build": "node cli.mjs --build",
