@@ -85,7 +85,8 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 			userOnlineStatus.set(Number(participant.id), true);
 
 			return callback({ ok: true, participant });
-		} catch {
+		} catch (err) {
+			console.error(err);
 			return callback({ ok: false });
 		}
 	});
