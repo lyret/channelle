@@ -45,7 +45,7 @@ export async function createRTCReceiverTransport() {
 				break;
 
 			case 'connected':
-				console.log(`[RECEIVER TRANSPORT ${transport.id}] resuming...`);
+				console.log(`[RECEIVER TRANSPORT ${transport.id}] connected`);
 				await mediaRequest('transport_receiver_resume');
 				break;
 			case 'disconnected':

@@ -55,7 +55,7 @@ export const handleRTCTransportConnectionRequests = createRTCResponseHandler<
 	});
 });
 
-/** Handles incomming client events for when a send transport starts producing */
+/** Handles incoming client events for when a send transport starts producing */
 export const handleSendTransportProducingRequests = createRTCResponseHandler<
 	{
 		id: string;

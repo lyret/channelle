@@ -79,9 +79,13 @@ const createLocalMediaDevicesStores = () => {
 		[currentParticipant, stageLayout, sceneVisitorAudioIsEnabled],
 		([$currentParticipant, $layout, $sceneVisitorAudioIsEnabled]) => {
 			// Actor
-			if ($currentParticipant.actor) {
+			if ($currentParticipant.actor || $currentParticipant.manager) {
 				// Auto layout
-				if (!$layout || !$layout.length) {
+				if (
+					!$layout ||
+					!$layout.length ||
+					($layout.length == 1 && !$layout[0].length)
+				) {
 					return {
 						videoWanted: true,
 						audioWanted: true,
@@ -259,7 +263,7 @@ const createLocalMediaDevicesStores = () => {
 					err?.name == 'OverconstrainedError' ||
 					err?.name == 'DevicesNotFoundError'
 				) {
-					_value.video.err = 'saknas';
+					_value.audio.err = 'saknas';
 				} else {
 					_value.video.err = 'okänt fel';
 				}

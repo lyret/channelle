@@ -11,6 +11,7 @@
 		if (!stream) {
 			return undefined;
 		}
+
 		node.srcObject = stream;
 		return {
 			update(newStream: any) {

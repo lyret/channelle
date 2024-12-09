@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { localMedia } from '~/lib/stores/localMedia';
+	import { localMedia } from '~/lib/stores/producedMedia';
 
 	let isLoading = false;
 	let isUnloaded = true;

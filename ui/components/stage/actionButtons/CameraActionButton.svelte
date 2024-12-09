@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { blur } from 'svelte/transition';
 	import { currentParticipant } from '~/lib/stores/api';
-	import { localMedia } from '~/lib/stores/localMedia';
+	import { localMedia } from '~/lib/stores/producedMedia';
 
 	$: isOn = !!$localMedia.video.stream && !$localMedia.video.paused;
 	$: isBlocked = $localMedia.video.blocked;

@@ -5,14 +5,15 @@
 	import ChatWindow from '~/components/stage/ChatWindow.svelte';
 	import MenuPanel from '~/components/stage/MenuPanel.svelte';
 	import ActionPanel from '~/components/stage/ActionPanel.svelte';
-	import { MediaStore } from '~/lib/stores/media';
+	import { StageLayout } from '~/lib/stores/stageLayout';
+	import { StageAudio } from '~/lib/stores/stageAudio';
 	import { stageSettings } from '~/stores/scene/stageSettingsIsEnbaled';
 
-	$: matrix = $MediaStore.layout || [];
+	$: matrix = $StageLayout.layout || [];
 	$: height = Math.max(matrix.length, 1);
 	$: width = Math.max(matrix.length ? matrix[0].length : 0, 1);
 
-	$: windowsLayoutStyle = $MediaStore.isAutoLayout
+	$: windowsLayoutStyle = $StageLayout.isAutoLayout
 		? `
 		 grid-template-columns: repeat(auto-fit, minmax(600px, auto));
 	`
@@ -22,8 +23,8 @@
 		`;
 
 	onMount(() => {
-		MediaStore.subscribe((data) => {
-			console.log('MEDIA STORE', data);
+		StageLayout.subscribe((data) => {
+			console.log('StageLayout', data);
 		});
 	});
 </script>
@@ -41,8 +42,8 @@
 			class={`windows window-cols-${width} window-rows-${height}`}
 			style={windowsLayoutStyle}
 		>
-			{#if $MediaStore.isAutoLayout}
-				{#each $MediaStore.leftovers as cell}
+			{#if $StageLayout.isAutoLayout}
+				{#each $StageLayout.leftovers as cell}
 					{#key cell.id}
 						<MediaWindow stream={cell.stream} participant={cell.participant} />
 					{/key}
@@ -67,6 +68,14 @@
 			{/if}
 		</div>
 	</div>
+	<!-- AUDIO -->
+
+	{#each $StageAudio.audio as cell}
+		{#key cell.id}
+			<MediaWindow stream={cell.stream} participant={cell.participant} />
+		{/key}
+	{/each}
+
 	<div class="footer">
 		<ActionPanel />
 	</div>

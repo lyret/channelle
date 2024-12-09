@@ -110,7 +110,7 @@
 			>
 				<span class={iconClassList}><ion-icon name="options"></ion-icon></span>
 				{#if !isMobile}
-					<span>Inställningar </span>
+					<span>Alternativ </span>
 				{/if}
 			</button>
 		{/if}

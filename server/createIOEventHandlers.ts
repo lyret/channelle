@@ -17,7 +17,11 @@ import {
 import { createRTCResponseHandler, createRTCTransport } from './lib/rtc';
 import { mediaSoupRouter, ws } from './lib/api';
 
-import { userOnlineStatus } from './stores/users';
+import {
+	userOnlineStatus,
+	userCameraBans,
+	userMicrophoneBans,
+} from './stores/users';
 
 import {
 	mediaProducerTransports,
@@ -33,16 +37,16 @@ import {
 } from './lib/requestHandlers/transportRequestHandlers';
 import { handleServerRTPCapabilitiesRequests as handleRTPCapabilitiesRequests } from './lib/requestHandlers/capabilitiesRequestsHandlers';
 
-// FIXME: test
 videoProducers.subscribe((data) => {
+	// FIXME: test this
 	ws().emit('producers_update');
 });
 audioProducers.subscribe((data) => {
+	// FIXME: test this
 	ws().emit('producers_update');
 });
 stageLayout.subscribe((data) => {
-	console.log('LAYOUT', data);
-	ws().emit('producers_update');
+	ws().emit('layout_update', data);
 });
 
 /** A map between connected sockets and participant ids for that socket */
@@ -156,10 +160,17 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 	handleRTCTransportConnectionRequests(socket);
 	handleSendTransportProducingRequests(socket);
 
-	// TODO: super super slow
+	// FIXME: working on this
 	const handler = createRTCResponseHandler<{
-		layout: StageLayoutWithProducers;
-		leftovers: Array<StageLayoutActorWithProducer>;
+		availableConsumptions: Array<{
+			socketId: string;
+			producerId: string;
+			participantId: number;
+			participant: DataTypes['participant'];
+			id: string;
+			kind: MediaSoup.types.MediaKind;
+			rtpParameters: MediaSoup.types.RtpParameters;
+		}>;
 	}>('transport_receiver_consume', async () => {
 		// Fail if no transport exists
 		if (!mediaReceiverTransports.has(socket.id)) {
@@ -167,128 +178,117 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 		}
 
 		// Get transports for the connected socket
-		const { options, transport } = mediaReceiverTransports.get(socket.id)!;
+		const { options, transport, consumers, producers } =
+			mediaReceiverTransports.get(socket.id)!;
 
-		// Create a record of what each participant is producing
-		const participantProducers: Record<
-			number,
-			Array<{
-				socketId: string;
-				producerId: string;
-				id: string;
-				kind: MediaSoup.types.MediaKind;
-				rtpParameters: MediaSoup.types.RtpParameters;
-			}>
-		> = {};
+		// Close all existing consumers
+		consumers.forEach((consumer) => consumer.close());
+
+		// Create a record of what is available for consumption
+		const availableConsumptions: Array<{
+			socketId: string;
+			producerId: string;
+			participantId: number;
+			participant: DataTypes['participant'];
+			id: string;
+			kind: MediaSoup.types.MediaKind;
+			rtpParameters: MediaSoup.types.RtpParameters;
+			type: MediaSoup.types.ConsumerType;
+			producerPaused: boolean;
+		}> = [];
 
 		// Create a list of consumers
-		const consumers: Array<MediaSoup.types.Consumer> = [];
+		const newConsumers: Array<MediaSoup.types.Consumer> = [];
 
-		// Find all active producers and group them by participant
-		for (const [socketId, producer] of [
+		// Get the media soup router
+		const router = await mediaSoupRouter();
+
+		// Find all actors
+		const participants: Record<number, DataTypes['participant']> = (
+			await client.participant.findMany({
+				where: { OR: [{ actor: true }, { manager: true }] },
+			})
+		).reduce((record, participant) => {
+			record[participant.id] = participant;
+			return record;
+		}, {});
+
+		// Find all available consumptions from the active producers
+		for (const [producerSocketId, producer] of [
 			...videoProducers.entries(),
 			...audioProducers.entries(),
 		]) {
 			// Skip self consumption
-			if (socket.id == socketId) {
+			if (socket.id == producerSocketId) {
 				continue;
 			}
 			// Fail if unable to consume
 			if (
-				!(await mediaSoupRouter()).canConsume({
+				!router.canConsume({
 					producerId: producer.id,
 					rtpCapabilities: options.rtpCapabilities,
 				})
 			) {
-				throw new Error(
-					'Can not consume from producer from socket ' + socketId
+				console.error(
+					'Can not consume from producer from socket ' + producerSocketId
+				);
+				continue;
+			}
+
+			// Find the participant for the producing socket
+			const participantId = onlineParticipants.get(producerSocketId)!;
+
+			// Check for bans
+			// TODO: Banning here is really ineffective
+			if (producer.kind == 'video' && userCameraBans.has(participantId)) {
+				console.error(
+					"Can't consume the video producer from",
+					participantId,
+					'as it is banned'
+				);
+			} else if (
+				producer.kind == 'audio' &&
+				userMicrophoneBans.has(participantId)
+			) {
+				console.error(
+					"Can't consume the audio producer from",
+					participantId,
+					'as it is banned'
 				);
 			}
+
+			// Create a consumer for the producer
 			const consumer = await transport.consume({
 				producerId: producer.id,
 				rtpCapabilities: options.rtpCapabilities,
 				paused: true,
 			});
 
-			// Find the participant for the producing socket
-			const participantId = onlineParticipants.get(socketId)!;
-
-			// TODO: Check camera bans
-			// TODO: Check microphone bans
-			// TODO: Check visitor status
-
 			// Update record keeping
-			participantProducers[participantId] = [
-				...(participantProducers[participantId] || []),
-				{
-					socketId: socket.id,
-					producerId: producer.id,
-					id: consumer.id,
-					kind: consumer.kind,
-					rtpParameters: consumer.rtpParameters,
-					//type: consumer.type,
-					//producerPaused: consumer.producerPaused,
-				},
-			];
-			consumers.push(consumer);
+			availableConsumptions.push({
+				socketId: socket.id,
+				producerId: producer.id,
+				participantId,
+				participant: participants[participantId],
+				id: consumer.id,
+				kind: consumer.kind,
+				rtpParameters: consumer.rtpParameters,
+				type: consumer.type,
+				producerPaused: consumer.producerPaused,
+			});
+			newConsumers.push(consumer);
 		}
 
 		// Update receiver transport map
 		mediaReceiverTransports.set(socket.id, {
 			options,
 			transport,
-			consumers,
+			consumers: newConsumers,
 			producers: [],
 		});
 
-		// Find all actors
-		const participants: Record<number, DataTypes['participant']> = (
-			await client.participant.findMany({
-				where: { actor: true },
-			})
-		).reduce((record, particpant) => {
-			record[particpant.id] = particpant;
-			return record;
-		}, {});
-
-		// Create a updated layout with producers
-		const updatedLayout: StageLayoutWithProducers = stageLayout
-			.get()
-			.map((row) => {
-				return row.map((cell) => {
-					if (cell.type == 'actor') {
-						if (!participants[cell.id]) {
-							return {
-								type: 'empty',
-							};
-						}
-						const production = participantProducers[cell.id] || [];
-						delete participantProducers[cell.id];
-						return {
-							type: 'actor',
-							id: cell.id,
-							participant: participants[cell.id],
-							production,
-						};
-					} else {
-						return cell;
-					}
-				});
-			}) as any;
-
-		// Find leftovers that are also producing
-		const leftovers: Array<StageLayoutActorWithProducer> = Object.entries(
-			participantProducers
-		).map(([id, production]) => {
-			return {
-				type: 'actor',
-				participant: participants[id],
-				id,
-				production,
-			};
-		}) as any; // TODO: easy to fix type error?
-
-		return { layout: updatedLayout, leftovers };
+		// Return available consumptions
+		return { availableConsumptions };
 	});
 	handler(socket);
 
