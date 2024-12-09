@@ -37,7 +37,11 @@ export const StageLayout = derived(
 
 		// Find leftovers
 		for (const stream of $ConsumedMediaStore) {
-			if (!handled.has(stream.participant.id)) {
+			if (
+				stream.participant?.id &&
+				!handled.has(stream.participant.id) &&
+				stream.kind == 'video'
+			) {
 				updatedLeftovers.push({
 					type: 'actor',
 					id: stream.participant.id,

@@ -23,37 +23,25 @@
 	}
 </script>
 
-{#if streamHasVideo}
-	<div class="window">
-		<video
-			use:srcObject={stream}
-			controls={true}
-			autoplay
-			playsinline
-			muted={!streamHasAudio}
-		></video>
-	</div>
-{:else if streamHasAudio}
-	<audio
-		use:srcObject={stream}
-		controls={true}
-		autoplay
-		playsinline
-		muted={false}
-	></audio>
-{/if}
 {#if participant && !streamHasVideo}
 	<div class="window text-window">
 		<h1 class="title has-text-white">
 			{participant.name}
 		</h1>
 	</div>
+{:else}
+	<div class="window">
+		<video
+			use:srcObject={stream}
+			controls={false}
+			autoplay
+			playsinline
+			muted={!streamHasAudio}
+		></video>
+	</div>
 {/if}
 
 <style>
-	audio {
-		display: none;
-	}
 	video {
 		position: absolute;
 		top: 0;

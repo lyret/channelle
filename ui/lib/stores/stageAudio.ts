@@ -33,7 +33,11 @@ export const StageAudio = derived(
 		// Find leftovers
 		if ($sceneVisitorAudioIsEnabled) {
 			for (const stream of $ConsumedMediaStore) {
-				if (stream.kind == 'audio' && !handled.has(stream.participant.id))
+				if (
+					stream.kind == 'audio' &&
+					stream.participant?.id &&
+					!handled.has(stream.participant.id)
+				)
 					updatedAudio.push({
 						type: 'actor',
 						id: stream.participant.id,

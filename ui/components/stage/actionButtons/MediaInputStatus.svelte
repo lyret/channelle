@@ -2,6 +2,7 @@
 	import { blur } from 'svelte/transition';
 	import { currentParticipant } from '~/lib/stores/api';
 	import { localMedia } from '~/lib/stores/producedMedia';
+	import { sceneCurtains } from '~/stores/scene/sceneCurtains';
 
 	$: isCameraOn = !!$localMedia.video.stream && !$localMedia.video.paused;
 	$: isMicOn = !!$localMedia.audio.stream && !$localMedia.audio.paused;
@@ -12,7 +13,8 @@
 	$: isCameraBlocked = isCameraWanted && $localMedia.video.blocked;
 	$: isMicBlocked = isMicWanted && $localMedia.audio.blocked;
 	$: visible =
-		isMicUnwanted || isCameraUnwanted || isMicWanted || isCameraWanted;
+		!$sceneCurtains &&
+		(isMicUnwanted || isCameraUnwanted || isMicWanted || isCameraWanted);
 	$: isUrgent = isCameraWanted || isMicWanted;
 </script>
 

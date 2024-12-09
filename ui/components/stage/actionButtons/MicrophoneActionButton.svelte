@@ -2,6 +2,7 @@
 	import { blur } from 'svelte/transition';
 	import { currentParticipant } from '~/lib/stores/api';
 	import { localMedia } from '~/lib/stores/producedMedia';
+	import { sceneVisitorAudioIsEnabled } from '~/stores/scene/sceneVisitorAudioIsEnabled';
 
 	$: isOn = !!$localMedia.audio.stream && !$localMedia.audio.paused;
 	$: isBlocked = $localMedia.audio.blocked;
@@ -12,7 +13,7 @@
 	export let minimal: boolean = false;
 </script>
 
-{#if $currentParticipant.actor || $currentParticipant.manager}
+{#if $currentParticipant.actor || $currentParticipant.manager || $sceneVisitorAudioIsEnabled}
 	<button
 		type="button"
 		disabled={isBlocked}
