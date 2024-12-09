@@ -71,23 +71,23 @@
 
 <h1 class="title">Sceninställningar</h1>
 <button
-	class="button is-dark is-fullwidth"
+	class="button is-dark is-fullwidth mb-2"
 	class:is-success={$sceneCurtains}
-	on:click={() => sceneCurtains.set(!$sceneCurtains)}>Visa ridå</button
+	on:click={() => sceneCurtains.set(!$sceneCurtains)}>Visa ridå 🎭</button
 >
 <button
-	class="button is-dark is-fullwidth"
+	class="button is-dark is-fullwidth mb-2"
 	class:is-success={$sceneVisitorAudioIsEnabled}
 	on:click={() => {
 		sceneVisitorAudioIsEnabled.set(!$sceneVisitorAudioIsEnabled);
-	}}>Tillåt ljud från publiken</button
+	}}>Tillåt ljud från publiken 🎤</button
 >
 <button
-	class="button is-dark is-fullwidth"
+	class="button is-dark is-fullwidth mb-2"
 	class:is-success={$sceneEffectsIsEnabled}
 	on:click={() => {
 		sceneEffectsIsEnabled.set(!$sceneEffectsIsEnabled);
-	}}>Tillåt blommor och applåder</button
+	}}>Tillåt blommor och applåder 🌹👏</button
 >
 <hr />
 <h1 class="title">Välj Scenlayout</h1>

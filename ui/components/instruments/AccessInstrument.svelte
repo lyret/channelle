@@ -37,6 +37,7 @@
 
 <h1 class="title mb-0">Tillgång</h1>
 <p>Kontrollera vilka som har tillgång till scenen</p>
+<h3 class="title is-4 mt-4 mb-0">Länk för skådespelare</h3>
 <h3 class="title is-4 mt-4 mb-0">Scenlösenord</h3>
 <p>Ange ett lösenord som krävs för att komma in och se scenen.</p>
 <form on:submit={onSubmit} class="form my-2">
