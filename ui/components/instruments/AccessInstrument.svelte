@@ -10,6 +10,8 @@
 	$: isChanged = $scenePassword != inputValue;
 	$: disabled = isLoading || !isChanged;
 
+	let inviteLinks = ['', ''];
+
 	async function onSubmit(e: SubmitEvent) {
 		e.preventDefault();
 		isLoading = true;
@@ -29,6 +31,13 @@
 			inputValue = value;
 		});
 
+		const currentUrl = new URL(window.location.href);
+		const searchParams = new URLSearchParams(
+			'invite=' + CONFIG.stage.inviteKey
+		);
+		inviteLinks[0] = `${currentUrl.origin}?${searchParams.toString()}`;
+		inviteLinks[1] = `${currentUrl.origin}/backstage?${searchParams.toString()}`;
+
 		return () => {
 			stop();
 		};
@@ -37,7 +46,13 @@
 
 <h1 class="title mb-0">Tillgång</h1>
 <p>Kontrollera vilka som har tillgång till scenen</p>
-<h3 class="title is-4 mt-4 mb-0">Länk för skådespelare</h3>
+<h3 class="title is-4 mt-1 mb-4">Länk för skådespelare</h3>
+<p>
+	Du kan dela denna länk för att få dem som följer dem att omedelbart få
+	tillgång som skådespelare.
+</p>
+<h4 class="title is-6 mt-0 mb-4">{inviteLinks[0]}</h4>
+
 <h3 class="title is-4 mt-4 mb-0">Scenlösenord</h3>
 <p>Ange ett lösenord som krävs för att komma in och se scenen.</p>
 <form on:submit={onSubmit} class="form my-2">

@@ -1,4 +1,3 @@
-import type * as MediaSoupClient from 'mediasoup-client';
 import type * as MediaSoup from 'mediasoup';
 import * as IO from 'socket.io';
 import {
@@ -64,36 +63,46 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 		console.error('[IO] client connection error', err);
 	});
 
-	socket.on('registerParticipant', async ({ participantId }, callback) => {
-		try {
-			const participant = await (!participantId || Number.isNaN(participantId)
-				? client.participant.create({
+	socket.on(
+		'registerParticipant',
+		async ({ participantId, hasFollowedInviteLinkForActors }, callback) => {
+			try {
+				let participant: DataTypes['participant'] | undefined = undefined;
+
+				if (participantId && !Number.isNaN(participantId)) {
+					participant = await client.participant.findFirst({
+						where: { id: participantId },
+					});
+				}
+				if (!participant) {
+					participant = await client.participant.create({
 						data: {
 							name: '',
-							manager: true, // FIXME: quick fix for production bug (await client.participant.count()) == 0,
-							actor: (await client.participant.count()) == 0,
+							manager: (await client.participant.count()) == 0,
+							actor:
+								(await client.participant.count()) == 0 ||
+								!!hasFollowedInviteLinkForActors,
 						},
-					})
-				: client.participant.findFirst({
-						where: { id: participantId },
-					}));
+					});
+				}
 
-			if (!participant) {
+				if (!participant) {
+					return callback({ ok: false });
+				}
+
+				console.log(
+					`[PARTICIPANT] ${socket.id} connected as ${participant.name} (id ${participant.id})`
+				);
+				onlineParticipants.set(socket.id, participant.id);
+				userOnlineStatus.set(Number(participant.id), true);
+
+				return callback({ ok: true, participant });
+			} catch (err) {
+				console.error(err);
 				return callback({ ok: false });
 			}
-
-			console.log(
-				`[PARTICIPANT] ${socket.id} connected as ${participant.name} (id ${participant.id})`
-			);
-			onlineParticipants.set(socket.id, participant.id);
-			userOnlineStatus.set(Number(participant.id), true);
-
-			return callback({ ok: true, participant });
-		} catch (err) {
-			console.error(err);
-			return callback({ ok: false });
 		}
-	});
+	);
 
 	socket.on('effects_trigger', async (_, callback) => {
 		try {

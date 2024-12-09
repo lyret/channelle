@@ -84,22 +84,29 @@ function createAPIStore(): APIStore {
 			};
 			_set(_value);
 
+			// Determine if the user has followed the invite link for
+			// actors
+			const currentUrl = new URL(window.location.href);
+
+			const hasFollowedInviteLinkForActors: boolean =
+				currentUrl.searchParams.has('invite') &&
+				currentUrl.searchParams.get('invite') == CONFIG.stage.inviteKey;
+
 			// Register a participant on the server side API
 			// Either with the existing id stored in local storage or,
 			// if not set - as a new participant
 			_socket.emit(
 				'registerParticipant',
-				{ participantId },
+				{ participantId, hasFollowedInviteLinkForActors },
 				(response: { ok: boolean; participant: DataTypes['participant'] }) => {
 					if (!response?.ok) {
-						console.error('Failed to registred existing participantion');
+						console.error('Failed to registred existing participation');
 						_set({
 							status: 'error',
 							hasError: true,
 							isReady: false,
-							errorMessage: 'Failed to registred existing participantion',
+							errorMessage: 'Failed to registred existing participation',
 						});
-						// FIXME: quick fix
 						localStorage.removeItem('participant-id');
 						window.location.reload();
 					} else {

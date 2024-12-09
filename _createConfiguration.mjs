@@ -206,6 +206,7 @@ export async function createConfiguration() {
 		/** Stage Settings */
 		stage: {
 			name: process.env.STAGE_NAME || '',
+			inviteKey: process.env.STAGE_INVITE_LINK_KEY || '123',
 		},
 		/** Web Server Settings */
 		web: {
