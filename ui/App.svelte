@@ -2,7 +2,7 @@
 	import { APIStore } from '~/lib/stores/api';
 	import { blur } from 'svelte/transition';
 	import { route } from '~/stores/ui/url';
-	import flowerSrc from '~/assets/images/flower.png';
+	import logoSrc from '~/assets/images/logo-free.gif';
 
 	import Curtains from '~/components/curtains/Curtains.svelte';
 	import Loader from '~/components/curtains/LoadingCurtainMessage.svelte';
@@ -14,9 +14,9 @@
 	import { scenePasswordIsOk } from './stores/scene/scenePassword';
 	import PasswordCurtainMessage from './components/curtains/PasswordCurtainMessage.svelte';
 
-	let hasInteractedWithTheDocument = false;
-
 	import { sceneCurtains } from './stores/scene/sceneCurtains';
+
+	export let name: string = '';
 
 	// Delays the rendering of any content to avoid the "pop-in" effect
 	// on initial rendering due to initial determination of state
@@ -34,7 +34,6 @@
 	$: needToBeManager =
 		renderBackstage &&
 		!($APIStore.status == 'ready' && $APIStore.participant.manager);
-	$: needInteraction = CONFIG.isProduction && !hasInteractedWithTheDocument;
 	$: needStagePassword = !$scenePasswordIsOk && renderStage;
 	$: renderMessages =
 		!determiningState &&
@@ -42,8 +41,7 @@
 			!hasEnteredName ||
 			isBlocked ||
 			needStagePassword ||
-			needToBeManager ||
-			needInteraction);
+			needToBeManager);
 	$: renderContent =
 		!determiningState && !renderMessages && (renderStage || renderBackstage);
 	$: renderCurtains =
@@ -75,12 +73,12 @@
 {#if renderMessages}
 	<div class="overlay">
 		<div
-			class="notification"
+			class="notification is-primary"
 			in:blur={{ duration: 1000 }}
 			out:blur={{ duration: 500 }}
 		>
-			<img class="logo" src={flowerSrc} alt="a kalidoscope of a flower " />
-			<h1 class="title is-family-title is-size-2">Channelle</h1>
+			<img class="logo" src={logoSrc} alt="Channelle" />
+			{#if name}<h1 class="title is-family-title is-size-2">{name}</h1>{/if}
 			{#if isBlocked}
 				<Blocked />
 			{:else if $APIStore.status == 'ready' && !hasEnteredName}
@@ -91,12 +89,6 @@
 				<Blocked message="Sidan är endast för tekniker" />
 			{:else if needStagePassword}
 				<PasswordCurtainMessage />
-			{:else if needInteraction}
-				<button
-					class="button is-large"
-					on:click={() => (hasInteractedWithTheDocument = true)}
-					>Fortsätt in...</button
-				>
 			{:else}
 				<Problem />
 			{/if}
@@ -144,8 +136,7 @@
 	}
 
 	img.logo {
-		max-width: 300px;
-		width: 40%;
+		width: 100%;
 		margin-bottom: 24px;
 	}
 </style>

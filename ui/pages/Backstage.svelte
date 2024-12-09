@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { blur } from 'svelte/transition';
 	import { openInstruments } from '~/stores/ui';
-	import flowerSrc from '../assets/images/flower.png';
+	import logoSrc from '../assets/images/redrose.gif';
 	import ChatList from '~/components/instruments/ChatInstrument.svelte';
 	import ParticipantsInstrument from '~/components/instruments/ParticipantsInstrument.svelte';
 	import SceneSelectorInstrument from '~/components/instruments/SceneSelectorInstrument.svelte';
@@ -16,16 +16,13 @@
 		style="height:100px"
 		in:blur={{ duration: 5000, delay: 2000 }}
 	>
-		<img src={flowerSrc} alt="logotyp" class="mt-3 mb-0" style="height:80px" />
+		<img src={logoSrc} alt="logotyp" class="mt-3 mb-0" style="height:80px" />
 	</div>
-	<div class="tabs is-centered mb-0" in:blur={{ duration: 100 }}>
+	<div
+		class="tabs is-light is-boxed is-centered mb-0"
+		in:blur={{ duration: 100 }}
+	>
 		<ul>
-			<li>
-				<span
-					class="is-flowers has-text-primary has-text-centered is-size-4 is-hidden-touch"
-					>s t i n a o c h v i k</span
-				>
-			</li>
 			<li class:is-active={$openInstruments['scene-settings']}>
 				<a on:click={() => openInstruments.toggle('scene-settings')}
 					><span class="icon"><ion-icon name="albums"></ion-icon></span> Scenen
@@ -77,7 +74,7 @@
 					></a
 				>
 			</li>
-			<li class:is-active={$openInstruments['media-library']}>
+			<!-- <li class:is-active={$openInstruments['media-library']}>
 				<a on:click={() => openInstruments.toggle('media-library')}
 					><span class="icon"><ion-icon name="images-outline"></ion-icon></span>
 					Mediabibliotek<span class="icon"
@@ -88,13 +85,7 @@
 						></ion-icon></span
 					></a
 				>
-			</li>
-			<li>
-				<span
-					class="is-flowers has-text-primary has-text-centered is-size-4 is-hidden-touch"
-					>t o r o c h e b b a</span
-				>
-			</li>
+			</li> -->
 		</ul>
 	</div>
 	<!-- Content -->
@@ -128,25 +119,26 @@
 			</div>
 		{/if}
 	</div>
-	<div class="footer">
-		<span class="is-flowers has-text-primary has-text-centered is-size-4">
-			a b c d e f g h i j k l m n o p q r s t u v w x y z y x w v u t s r q p o
-			m n l k j i h g f e
-		</span>
-	</div>
+	<div class="footer"></div>
 </main>
 
 <style>
 	main {
+		background-color: rgb(30, 30, 30);
 		height: 100%;
 		display: flex;
 		flex-direction: column;
 	}
 
+	.instruments,
+	.instrument {
+		background-color: rgb(20, 22, 26);
+	}
+
 	.header,
 	.tabs,
 	.footer {
-		background-color: black;
+		background-color: rgb(30, 30, 30);
 		padding: 0;
 		display: block;
 		flex-grow: 0;
@@ -156,13 +148,13 @@
 
 	.tabs {
 		z-index: 10;
-		box-shadow: 0px 20px 10px black;
+		/* box-shadow: 0px 20px 10px rgb(20, 22, 26); */
 	}
 
 	.footer {
 		border-top: 1px solid var(--bulma-border);
 		z-index: 10;
-		box-shadow: 0px -10px 10px black;
+		box-shadow: 0px -10px 10px rgb(30, 30, 30);
 		width: 100vw;
 		overflow: hidden;
 		-webkit-font-smoothing: antialiased;

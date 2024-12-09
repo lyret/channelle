@@ -2,12 +2,16 @@
 	import { onMount } from 'svelte';
 	import { blur, fly } from 'svelte/transition';
 	import MediaWindow from '~/components/stage/MediaWindow.svelte';
+	import MediaAudio from '~/components/stage/MediaAudio.svelte';
 	import ChatWindow from '~/components/stage/ChatWindow.svelte';
 	import MenuPanel from '~/components/stage/MenuPanel.svelte';
 	import ActionPanel from '~/components/stage/ActionPanel.svelte';
+	import ActivationPanel from '~/components/stage/ActivationPanel.svelte';
 	import { StageLayout } from '~/lib/stores/stageLayout';
 	import { StageAudio } from '~/lib/stores/stageAudio';
 	import { stageSettings } from '~/stores/scene/stageSettingsIsEnbaled';
+
+	let hasInteractedWithTheDocument = false;
 
 	$: matrix = $StageLayout.layout || [];
 	$: height = Math.max(matrix.length, 1);
@@ -73,15 +77,20 @@
 		</div>
 	</div>
 	<!-- AUDIO -->
+	{#key hasInteractedWithTheDocument}
+		{#each $StageAudio.audio as cell}
+			{#key cell.id}
+				<MediaAudio stream={cell.stream} />
+			{/key}
+		{/each}
+	{/key}
 
-	{#each $StageAudio.audio as cell}
-		{#key cell.id}
-			<MediaWindow stream={cell.stream} participant={cell.participant} />
-		{/key}
-	{/each}
-
-	<div class="footer">
-		<ActionPanel />
+	<div class="footer" style="z-index: 9999;">
+		{#if hasInteractedWithTheDocument}
+			<ActionPanel />
+		{:else}
+			<ActivationPanel on:ok={() => (hasInteractedWithTheDocument = true)} />
+		{/if}
 	</div>
 </main>
 
@@ -149,7 +158,7 @@
 	}
 
 	.footer {
-		background-color: black;
+		background-color: rgba(0, 0, 0, 0.8);
 		margin: 0;
 		padding: 8px;
 		width: 100%;
@@ -161,7 +170,7 @@
 
 		/*border-top: 1px solid var(--bulma-border);*/
 		z-index: 10;
-		box-shadow: 0px -10px 10px black;
+		box-shadow: 0px -10px 10px rgba(0, 0, 0, 0.8);
 	}
 
 	.windows {

@@ -203,6 +203,10 @@ export async function createConfiguration() {
 			/** Indicates that we want to show verbose warnings and log messages */
 			verboseOutput: verbose,
 		},
+		/** Stage Settings */
+		stage: {
+			name: process.env.STAGE_NAME || '',
+		},
 		/** Web Server Settings */
 		web: {
 			/** Announced ip addresses */

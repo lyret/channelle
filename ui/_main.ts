@@ -8,6 +8,9 @@ enableMediaSoupDebugging();
 
 var mainComponent = new App({
 	target: document.body,
+	props: {
+		name: CONFIG.stage.name,
+	},
 });
 
 export default mainComponent;

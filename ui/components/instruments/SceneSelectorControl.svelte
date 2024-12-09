@@ -25,7 +25,7 @@
 <div
 	class="fixed-grid has-{layout?.layout[0] &&
 		layout.layout[0].length}-cols notification is-secondary is-dark"
-	class:is-success={selected}
+	class:is-primary={selected}
 	on:click={() => dispatch('select', layout)}
 >
 	<h2 class="subtitle mb-1 is-6" class:has-text-white={!selected}>

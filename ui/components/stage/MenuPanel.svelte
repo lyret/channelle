@@ -7,6 +7,7 @@
 	import AccessInstrument from '../instruments/AccessInstrument.svelte';
 	import { focusedInstrument } from '~/stores/ui';
 	import MediaInputMenuInstrument from './menuInstruments/MediaInputMenuInstrument.svelte';
+	import logoSrc from '~/assets/images/logo-smoker-free.gif';
 </script>
 
 <!-- <ParticipantsInstrument /> -->
@@ -14,6 +15,7 @@
 <!-- <main in:blur={{ delay: 500, duration: 1000 }}>
 	
 <!-- Content -->
+<img src={logoSrc} class="logo" />
 {#if $focusedInstrument == 'scene-settings'}
 	<div class="instrument-control">
 		<a on:click={() => ($focusedInstrument = undefined)}>
@@ -104,6 +106,10 @@
 {/if}
 
 <style>
+	.logo {
+		border-radius: 8px;
+		margin-bottom: 24px;
+	}
 	.instrument-control {
 		position: absolute;
 		font-size: 3em;

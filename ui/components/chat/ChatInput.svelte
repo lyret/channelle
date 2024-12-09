@@ -56,7 +56,7 @@
 				class:is-large={isLarge}
 				{disabled}
 				class:is-loading={loading}
-				class:is-success={!loading && !disabled && !makeBackstage}
+				class:is-primary={!loading && !disabled && !makeBackstage}
 				class:is-info={!loading && !disabled && makeBackstage}
 			>
 				{#if disabled}

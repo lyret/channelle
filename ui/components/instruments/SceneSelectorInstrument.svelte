@@ -72,19 +72,19 @@
 <h1 class="title">Sceninställningar</h1>
 <button
 	class="button is-dark is-fullwidth mb-2"
-	class:is-success={$sceneCurtains}
+	class:is-primary={$sceneCurtains}
 	on:click={() => sceneCurtains.set(!$sceneCurtains)}>Visa ridå 🎭</button
 >
 <button
 	class="button is-dark is-fullwidth mb-2"
-	class:is-success={$sceneVisitorAudioIsEnabled}
+	class:is-primary={$sceneVisitorAudioIsEnabled}
 	on:click={() => {
 		sceneVisitorAudioIsEnabled.set(!$sceneVisitorAudioIsEnabled);
 	}}>Tillåt ljud från publiken 🎤</button
 >
 <button
 	class="button is-dark is-fullwidth mb-2"
-	class:is-success={$sceneEffectsIsEnabled}
+	class:is-primary={$sceneEffectsIsEnabled}
 	on:click={() => {
 		sceneEffectsIsEnabled.set(!$sceneEffectsIsEnabled);
 	}}>Tillåt blommor och applåder 🌹👏</button
