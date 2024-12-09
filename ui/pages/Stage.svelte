@@ -33,7 +33,11 @@
 	<div class="contents">
 		{#if $stageSettings}
 			<div class="sidebar">
-				<div class="notification sidebar-contents" transition:fly>
+				<div
+					class="notification sidebar-contents"
+					style="z-index: 9999"
+					transition:fly
+				>
 					<MenuPanel />
 				</div>
 			</div>
