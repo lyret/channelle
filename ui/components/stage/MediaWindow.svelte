@@ -27,7 +27,7 @@
 	<div class="window">
 		<video
 			use:srcObject={stream}
-			controls={false}
+			controls={true}
 			autoplay
 			playsinline
 			muted={!streamHasAudio}
@@ -36,7 +36,7 @@
 {:else if streamHasAudio}
 	<audio
 		use:srcObject={stream}
-		controls={false}
+		controls={true}
 		autoplay
 		playsinline
 		muted={false}
