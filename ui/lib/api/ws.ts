@@ -1,7 +1,7 @@
 import { Manager, type Socket } from 'socket.io-client';
 
 /** A global socket manager to keep configuraiton similar between all namespaces */
-const { url, path, transports } = CONFIG.socket;
+const { path, transports } = CONFIG.socket;
 const _manager: Manager = new Manager({
 	path,
 	transports,

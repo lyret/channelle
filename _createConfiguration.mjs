@@ -216,7 +216,7 @@ export async function createConfiguration() {
 		},
 		/** Socket IO Settings */
 		socket: {
-			path: '/server',
+			path: '/ws',
 			transports: ['websocket'],
 		},
 		/** MediaSoup Settings */
