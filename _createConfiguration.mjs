@@ -78,14 +78,14 @@ export async function createConfiguration() {
 
 	// The LOCAL options enables the stage server to be reached from the loopback interface of the machine running the server
 	const local =
-		cli.local !== undefined ? cli.local : env.local != 'false' || true;
+		cli.local !== undefined ? cli.LOCAL : env.local != 'false' || true;
 
 	// The LAN options enables the stage server to be reached from within the current local area network
-	const lan = cli.lan !== undefined ? cli.lan : env.lan != 'false' || true;
+	const lan = cli.lan !== undefined ? cli.LAN : env.lan != 'false' || true;
 
 	// The WAN options enables the stage server to be reached from the current wide area network, i.e.  the public internet
 	const wan =
-		cli.wan !== undefined ? cli.wan : env.wan != 'false' || production;
+		cli.wan !== undefined ? cli.wan : env.WAN != 'false' || production;
 
 	// The BUILD option makes the CLI program generate fresh server and frontend code bundles for the current configuration
 	const build =
