@@ -21,7 +21,7 @@
 
 	$: windowsLayoutStyle = $StageLayout.isAutoLayout
 		? `
-		 grid-template-columns: repeat(auto-fit, minmax(600px, auto));
+		 grid-template-columns: repeat(auto-fit, minmax(50%, auto));
 	`
 		: `
 			grid-template-columns: repeat(${width}, 1fr);

@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { blur } from 'svelte/transition';
-	import ChatInstrument from '~/components/instruments/ChatInstrument.svelte';
 	import ParticipantsInstrument from '~/components/instruments/ParticipantsInstrument.svelte';
 	import SceneSelectorInstrument from '~/components/instruments/SceneSelectorInstrument.svelte';
 	import MediaLibraryInstrument from '~/components/instruments/MediaLibraryInstrument.svelte';
