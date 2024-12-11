@@ -78,7 +78,7 @@
 			out:blur={{ duration: 500 }}
 		>
 			<img class="logo" src={logoSrc} alt="Channelle" />
-			{#if name}<h1 class="title is-family-title is-size-2">{name}</h1>{/if}
+			{#if name}<h1 class="title is-family-title">{name}</h1>{/if}
 			{#if isBlocked}
 				<Blocked />
 			{:else if $APIStore.status == 'ready' && !hasEnteredName}
@@ -96,21 +96,26 @@
 	</div>
 {/if}
 
-<style>
-	.overlay {
-		z-index: 9999;
-		position: fixed;
-		top: 0;
-		left: 0;
-		bottom: 0;
-		right: 0;
-		display: flex;
-		flex-direction: column;
-		flex-wrap: nowrap;
-		justify-content: center;
-		align-items: center;
-		align-content: center;
-		overflow: none;
+<style lang="scss">
+	img.logo {
+		width: 100%;
+		margin-bottom: 24px;
+		transition: width, margin-bottom, 1s;
+
+		@include mobile {
+			width: 70%;
+			margin-bottom: 14px;
+		}
+	}
+	:global {
+		.overlay > .notification > h1.title {
+			font-size: 32px;
+			transition: font-size, 1s;
+
+			@include mobile {
+				font-size: 24px;
+			}
+		}
 	}
 
 	.overlay .notification {
@@ -132,11 +137,32 @@
 		);
 		-webkit-backdrop-filter: blur(10px);
 		backdrop-filter: blur(10px);
-		transition: height 2s;
-	}
+		transition:
+			height,
+			width 1s;
 
-	img.logo {
-		width: 100%;
-		margin-bottom: 24px;
+		@include tablet {
+			width: 70%;
+			max-width: unset;
+		}
+		@include mobile {
+			width: 90%;
+			max-width: unset;
+		}
+	}
+	.overlay {
+		z-index: 9999;
+		position: fixed;
+		top: 0;
+		left: 0;
+		bottom: 0;
+		right: 0;
+		display: flex;
+		flex-direction: column;
+		flex-wrap: nowrap;
+		justify-content: center;
+		align-items: center;
+		align-content: center;
+		overflow: none;
 	}
 </style>

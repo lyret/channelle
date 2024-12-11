@@ -2,7 +2,7 @@ import Chalk from 'chalk';
 import Esbuild from 'esbuild';
 import EsbuildSvelte from 'esbuild-svelte';
 import { sassPlugin as EsbuildSass } from 'esbuild-sass-plugin';
-import SveltePreprocess from 'svelte-preprocess';
+import SvelteConfig from './svelte.config.mjs';
 import Path from 'node:path';
 
 /** Creates the build context for building the client code using the given config */
@@ -40,12 +40,7 @@ export async function createClientBuildContext(CONFIG, callback) {
 		plugins: [
 			EsbuildHtml(),
 			EsbuildSass(),
-			EsbuildSvelte({
-				compilerOptions: {
-					enableSourcemap: true,
-				},
-				preprocess: SveltePreprocess(),
-			}),
+			EsbuildSvelte(SvelteConfig),
 			{
 				name: 'EsbuildCallback',
 				setup(build) {

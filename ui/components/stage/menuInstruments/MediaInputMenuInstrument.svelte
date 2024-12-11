@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { localMedia } from '~/lib/stores/producedMedia';
+	import { update } from '~/lib';
+	import { currentParticipant } from '~/lib/stores/api';
 
 	let isLoading = false;
 	let isUnloaded = true;
@@ -36,8 +38,25 @@
 			localMedia.selectAudioDevice(undefined);
 		}
 	};
+
+	async function updateName() {
+		const currentName = $currentParticipant.name;
+		const newName =
+			window.prompt('Byt namn till...', currentName) || currentName;
+		await update('participant', {
+			where: { id: $currentParticipant.id },
+			data: { name: newName },
+		});
+	}
 </script>
 
+<p class="label">Ändra ditt namn</p>
+<!-- CURRENT USER -->
+<button class="button is-fullwidth mb-4 is-rounded" on:click={updateName}>
+	<span class="icon"><ion-icon name="person-circle-outline"></ion-icon></span>
+	<span>{$currentParticipant?.name} </span>
+</button>
+<p class="label">Välj din kamera- och mikrofon- ingång</p>
 <div class="control has-icons-left">
 	<div class="select is-fullwidth mb-4 is-rounded" class:is-loading={isLoading}>
 		<select on:mousedown={onLoadAudioDevices} on:change={onSelectAudio}>
@@ -83,3 +102,10 @@
 	</div>
 </div>
 <hr />
+
+<style>
+	.label {
+		text-align: center;
+		font-weight: 400;
+	}
+</style>

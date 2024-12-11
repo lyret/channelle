@@ -73,5 +73,8 @@
 		"tslib": "^2.5.3",
 		"typescript": "^5.0.0",
 		"universal-router": "^9.0.1"
+	},
+	"devDependencies": {
+		"sass": "^1.82.0"
 	}
 }

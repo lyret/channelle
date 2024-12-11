@@ -4,12 +4,14 @@
 	import MediaWindow from '~/components/stage/MediaWindow.svelte';
 	import MediaAudio from '~/components/stage/MediaAudio.svelte';
 	import ChatWindow from '~/components/stage/ChatWindow.svelte';
-	import MenuPanel from '~/components/stage/MenuPanel.svelte';
+	import OptionsPanel from '~/components/stage/OptionsPanel.svelte';
+	import ChatPanel from '~/components/stage/ChatPanel.svelte';
 	import ActionPanel from '~/components/stage/ActionPanel.svelte';
 	import ActivationPanel from '~/components/stage/ActivationPanel.svelte';
 	import { StageLayout } from '~/lib/stores/stageLayout';
 	import { StageAudio } from '~/lib/stores/stageAudio';
-	import { stageSettings } from '~/stores/scene/stageSettingsIsEnbaled';
+	import { stageSettings } from '~/stores/scene/stageSettingsIsOpen';
+	import { stageChat } from '~/stores/scene/stageChatPanelsOpen';
 
 	let hasInteractedWithTheDocument = false;
 
@@ -35,48 +37,58 @@
 
 <main in:blur={{ delay: 500, duration: 1000 }}>
 	<div class="contents">
-		{#if $stageSettings}
+		<div class="windows-wrapper">
+			<div
+				class={`windows window-cols-${width} window-rows-${height}`}
+				style={windowsLayoutStyle}
+			>
+				{#if $StageLayout.isAutoLayout}
+					{#each $StageLayout.leftovers as cell}
+						{#key cell.id}
+							<MediaWindow
+								stream={cell.stream}
+								participant={cell.participant}
+							/>
+						{/key}
+					{/each}
+				{:else}
+					{#each matrix as row}
+						{#each row as cell}
+							{#if cell.type == 'chat'}
+								<div class="window">
+									<ChatWindow />
+								</div>
+							{:else if cell.type == 'actor'}
+								<MediaWindow
+									stream={cell.stream}
+									participant={cell.participant}
+								/>
+							{:else}
+								<div class="window"></div>
+							{/if}
+						{/each}
+					{/each}
+				{/if}
+			</div>
+		</div>
+		{#if $stageSettings || $stageChat}
 			<div class="sidebar">
 				<div
 					class="notification sidebar-contents"
 					style="z-index: 9999"
 					transition:fly
 				>
-					<MenuPanel />
+					{#if $stageSettings}
+						<OptionsPanel />
+					{:else}
+						<ChatPanel />
+					{/if}
 				</div>
 			</div>
 		{/if}
-		<div
-			class={`windows window-cols-${width} window-rows-${height}`}
-			style={windowsLayoutStyle}
-		>
-			{#if $StageLayout.isAutoLayout}
-				{#each $StageLayout.leftovers as cell}
-					{#key cell.id}
-						<MediaWindow stream={cell.stream} participant={cell.participant} />
-					{/key}
-				{/each}
-			{:else}
-				{#each matrix as row}
-					{#each row as cell}
-						{#if cell.type == 'chat'}
-							<div class="window">
-								<ChatWindow />
-							</div>
-						{:else if cell.type == 'actor'}
-							<MediaWindow
-								stream={cell.stream}
-								participant={cell.participant}
-							/>
-						{:else}
-							<div class="window"></div>
-						{/if}
-					{/each}
-				{/each}
-			{/if}
-		</div>
 	</div>
-	<!-- AUDIO -->
+
+	<!-- AUDIO ELEMENTS -->
 	{#key hasInteractedWithTheDocument}
 		{#each $StageAudio.audio as cell}
 			{#key cell.id}
@@ -85,16 +97,13 @@
 		{/each}
 	{/key}
 
-	<div class="footer" style="z-index: 9999;">
-		{#if hasInteractedWithTheDocument}
-			<ActionPanel />
-		{:else}
-			<ActivationPanel on:ok={() => (hasInteractedWithTheDocument = true)} />
-		{/if}
+	<!-- FOOTER -->
+	<div class="footer">
+		<ActionPanel />
 	</div>
 </main>
 
-<style>
+<style lang="scss">
 	main {
 		height: 100%;
 		display: flex;
@@ -127,7 +136,7 @@
 		position: relative;
 		order: 2;
 		width: 30%;
-		min-width: 300px;
+		min-width: 400px;
 		max-width: 600px;
 		max-height: 100%;
 		overflow: hidden;
@@ -137,6 +146,16 @@
 		align-items: end;
 		justify-items: end;
 		padding: 4px;
+		@include mobile {
+			position: fixed;
+			order: 0;
+			max-width: unset;
+			width: 90%;
+			top: 0;
+			bottom: 120px;
+			left: 5%;
+			right: 5%;
+		}
 	}
 
 	.sidebar-contents {
@@ -160,8 +179,14 @@
 	.footer {
 		background-color: rgba(0, 0, 0, 0.8);
 		margin: 0;
-		padding: 8px;
+		padding: 8px 0px;
 		width: 100%;
+		height: 60px;
+
+		@include mobile {
+			height: 120px;
+		}
+
 		display: block;
 		order: 1;
 		flex-grow: 0;
@@ -169,18 +194,32 @@
 		flex-basis: 1;
 
 		/*border-top: 1px solid var(--bulma-border);*/
-		z-index: 10;
+		z-index: 9999;
 		box-shadow: 0px -10px 10px rgba(0, 0, 0, 0.8);
 	}
 
-	.windows {
+	.windows-wrapper {
 		flex-shrink: 0;
 		flex-grow: 1;
 		flex-basis: 1;
 		align-self: auto;
-
-		display: grid;
 		order: 0;
+		height: 100%;
+	}
+
+	.windows {
+		display: grid;
+		width: 100%;
+		position: relative;
+		top: 50%;
+		-webkit-transform: translateY(-50%);
+		max-width: calc(((100vh - 60px) / 10) * 16);
+
+		@include mobile {
+			max-width: calc(((100vh - 120px) / 10) * 16);
+		}
+
+		aspect-ratio: 16/10;
 		grid-column-gap: 0px;
 		grid-row-gap: 0px;
 	}

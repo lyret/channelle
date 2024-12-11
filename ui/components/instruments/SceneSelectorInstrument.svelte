@@ -25,19 +25,19 @@
 	};
 	let empty: PredefinedLayout = {
 		name: 'Helt tom',
-		chatEnabled: false,
+		chatEnabled: true,
 		layout: [[{ type: 'empty' }]],
 	};
 	let chat: PredefinedLayout = {
 		name: 'Chatduell',
-		chatEnabled: true,
+		chatEnabled: false,
 		layout: [
 			[{ type: 'actor', id: -1 }, { type: 'chat' }, { type: 'actor', id: -1 }],
 		],
 	};
 	let oneXOne: PredefinedLayout = {
 		name: 'En i fokus',
-		chatEnabled: false,
+		chatEnabled: true,
 		layout: [[{ type: 'actor', id: -1 }]],
 	};
 	let oneXTwo: PredefinedLayout = {
@@ -52,7 +52,7 @@
 	};
 	let twoXTwo: PredefinedLayout = {
 		name: 'Fyra rutor',
-		chatEnabled: false,
+		chatEnabled: true,
 		layout: [
 			[
 				{ type: 'actor', id: -1 },
@@ -68,7 +68,6 @@
 	// Sync actual stage layout stores when the selected predefined layout changes
 	onMount(() => {
 		const stop = selectedPredefinedStageLayout.subscribe((layout) => {
-			console.log('here', layout);
 			sceneChatIsEnabled.set(layout?.chatEnabled || false);
 			stageLayout.set(layout?.layout || []);
 		});

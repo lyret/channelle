@@ -4,29 +4,19 @@
 	import { isInFullscreen } from '~/legos/stores/fullscreenStore';
 	import { onMount } from 'svelte';
 	import { blur } from 'svelte/transition';
-	import { update } from '~/lib';
 	import { currentParticipant } from '~/lib/stores/api';
 	import { createEffectsStore } from '~/stores/particles/effectsStore';
 	import { sceneEffectsIsEnabled } from '~/stores/scene/sceneEffectsIsEnabled';
-	import { stageSettings } from '~/stores/scene/stageSettingsIsEnbaled';
+	import { stageSettings } from '~/stores/scene/stageSettingsIsOpen';
 	import CameraActionButton from './actionButtons/CameraActionButton.svelte';
 	import MicrophoneActionButton from './actionButtons/MicrophoneActionButton.svelte';
 	import MediaInputStatus from './actionButtons/MediaInputStatus.svelte';
-
 	let windowSize = windowSizeStore();
-	$: isMobile = $windowSize.width <= 768;
+	$: isMobile = $windowSize.width <= 842;
+	import { sceneChatIsEnabled } from '~/stores/scene/sceneChatIsEnabled';
+	import { stageChat } from '~/stores/scene/stageChatPanelsOpen';
 	let isFullscreen = isInFullscreen();
 	let effects = createEffectsStore();
-
-	async function updateName() {
-		const currentName = $currentParticipant.name;
-		const newName =
-			window.prompt('Byt namn till...', currentName) || currentName;
-		await update('participant', {
-			where: { id: $currentParticipant.id },
-			data: { name: newName },
-		});
-	}
 
 	// Make sure effects are rendered
 	onMount(() => {
@@ -46,15 +36,8 @@
 
 <div class="buttons">
 	<div class="left">
-		<!-- CURRENT USER -->
-		<button class={btnClassList} transition:blur on:click={updateName}>
-			{#if !isMobile}
-				<span class={iconClassList}
-					><ion-icon name="person-circle-outline"></ion-icon></span
-				>
-			{/if}
-			<span>{$currentParticipant?.name} </span>
-		</button>
+		<!-- STATUS -->
+		<MediaInputStatus />
 	</div>
 	<div class="center">
 		<!-- EFFECTS -->
@@ -76,8 +59,6 @@
 		{/if}
 	</div>
 	<div class="right">
-		<!-- STATUS -->
-		<MediaInputStatus />
 		<!-- VIDEO -->
 		<CameraActionButton minimal={isMobile} />
 
@@ -100,24 +81,39 @@
 				>
 			{/if}
 		</button>
-		<!-- STAGE SETTINGS -->
-		{#if $currentParticipant.manager || $currentParticipant.actor}
+		<!-- CHAT -->
+		{#if $sceneChatIsEnabled}
 			<button
 				class={btnClassList}
 				transition:blur
-				class:has-text-info={$stageSettings}
-				on:click={() => stageSettings.set(!$stageSettings)}
+				class:has-text-success={$stageChat}
+				class:has-text-light={$stageChat}
+				on:click={() => stageChat.set(!$stageChat)}
 			>
-				<span class={iconClassList}><ion-icon name="options"></ion-icon></span>
+				<span class={iconClassList}
+					><ion-icon name="chatbubble-ellipses"></ion-icon></span
+				>
 				{#if !isMobile}
-					<span>Alternativ </span>
+					<span>Chat</span>
 				{/if}
 			</button>
 		{/if}
+		<!-- STAGE SETTINGS -->
+		<button
+			class={btnClassList}
+			transition:blur
+			class:has-text-info={$stageSettings}
+			on:click={() => stageSettings.set(!$stageSettings)}
+		>
+			<span class={iconClassList}><ion-icon name="options"></ion-icon></span>
+			{#if !isMobile}
+				<span>Alternativ</span>
+			{/if}
+		</button>
 	</div>
 </div>
 
-<style>
+<style lang="scss">
 	.button {
 		height: 48px;
 		background-color: black;
@@ -152,18 +148,25 @@
 		flex-basis: 1;
 	}
 
-	@media (max-width: 768px) {
-		.buttons {
-			margin-left: 0px;
-			margin-right: 0px;
-		}
+	.buttons {
+		margin-left: 0px;
+		margin-right: 0px;
+	}
+	@include mobile {
 		.right,
+		.center,
 		.left {
-			text-align: left;
+			width: 100vw;
+			text-align: center;
+			:global {
+				.button {
+					margin-left: 16px;
+					margin-right: 16px;
+				}
+			}
 		}
 		.left,
-		.right,
-		.center {
+		.center .right {
 			flex-grow: 0;
 		}
 	}
