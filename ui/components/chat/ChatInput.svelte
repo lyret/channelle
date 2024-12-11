@@ -30,7 +30,10 @@
 
 	onMount(() => {
 		if (inputRef) {
-			inputRef.focus();
+			const isMobile = window.innerWidth <= 842;
+			if (!isMobile) {
+				inputRef.focus();
+			}
 		}
 	});
 </script>
