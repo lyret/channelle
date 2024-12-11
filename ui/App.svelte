@@ -7,6 +7,7 @@
 	import Curtains from '~/components/curtains/Curtains.svelte';
 	import Loader from '~/components/curtains/LoadingCurtainMessage.svelte';
 	import Authenticate from '~/components/curtains/AuthenticateCurtainMessage.svelte';
+	import Continue from '~/components/curtains/ContinueCurtainMessage.svelte';
 	import Blocked from '~/components/curtains/BlockedCurtainMessage.svelte';
 	import Problem from '~/components/curtains/ProblemCurtainMessage.svelte';
 	import ManagePage from '~/pages/Backstage.svelte';
@@ -17,6 +18,7 @@
 	import { sceneCurtains } from './stores/scene/sceneCurtains';
 
 	export let name: string = '';
+	let hasInteractedWithTheDocument = false;
 
 	// Delays the rendering of any content to avoid the "pop-in" effect
 	// on initial rendering due to initial determination of state
@@ -39,6 +41,7 @@
 		!determiningState &&
 		(isPreparing ||
 			!hasEnteredName ||
+			!hasInteractedWithTheDocument ||
 			isBlocked ||
 			needStagePassword ||
 			needToBeManager);
@@ -83,6 +86,11 @@
 				<Blocked />
 			{:else if $APIStore.status == 'ready' && !hasEnteredName}
 				<Authenticate participant={$APIStore.participant} />
+			{:else if $APIStore.status == 'ready' && !hasInteractedWithTheDocument}
+				<Continue
+					participant={$APIStore?.participant}
+					on:click={() => (hasInteractedWithTheDocument = true)}
+				/>
 			{:else if isPreparing}
 				<Loader label={'Ansluter...'} />
 			{:else if needToBeManager}

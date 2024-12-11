@@ -7,13 +7,10 @@
 	import OptionsPanel from '~/components/stage/OptionsPanel.svelte';
 	import ChatPanel from '~/components/stage/ChatPanel.svelte';
 	import ActionPanel from '~/components/stage/ActionPanel.svelte';
-	import ActivationPanel from '~/components/stage/ActivationPanel.svelte';
 	import { StageLayout } from '~/lib/stores/stageLayout';
 	import { StageAudio } from '~/lib/stores/stageAudio';
 	import { stageSettings } from '~/stores/scene/stageSettingsIsOpen';
 	import { stageChat } from '~/stores/scene/stageChatPanelsOpen';
-
-	let hasInteractedWithTheDocument = false;
 
 	$: matrix = $StageLayout.layout || [];
 	$: height = Math.max(matrix.length, 1);
@@ -89,13 +86,11 @@
 	</div>
 
 	<!-- AUDIO ELEMENTS -->
-	{#key hasInteractedWithTheDocument}
-		{#each $StageAudio.audio as cell}
-			{#key cell.id}
-				<MediaAudio stream={cell.stream} />
-			{/key}
-		{/each}
-	{/key}
+	{#each $StageAudio.audio as cell}
+		{#key cell.id}
+			<MediaAudio stream={cell.stream} />
+		{/key}
+	{/each}
 
 	<!-- FOOTER -->
 	<div class="footer">
