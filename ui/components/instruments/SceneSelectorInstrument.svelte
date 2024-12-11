@@ -40,6 +40,16 @@
 		chatEnabled: false,
 		layout: [[{ type: 'actor', id: -1 }]],
 	};
+	let oneXTwo: PredefinedLayout = {
+		name: 'Två bredvid varandra',
+		chatEnabled: true,
+		layout: [
+			[
+				{ type: 'actor', id: -1 },
+				{ type: 'actor', id: -1 },
+			],
+		],
+	};
 	let twoXTwo: PredefinedLayout = {
 		name: 'Fyra rutor',
 		chatEnabled: false,
@@ -77,6 +87,13 @@
 >
 <button
 	class="button is-dark is-fullwidth mb-2"
+	class:is-primary={$sceneChatIsEnabled}
+	on:click={() => {
+		sceneChatIsEnabled.set(!$sceneChatIsEnabled);
+	}}>Tillåt publiken att öppna chatten 💬</button
+>
+<button
+	class="button is-dark is-fullwidth mb-2"
 	class:is-primary={$sceneVisitorAudioIsEnabled}
 	on:click={() => {
 		sceneVisitorAudioIsEnabled.set(!$sceneVisitorAudioIsEnabled);
@@ -106,6 +123,12 @@
 />
 <SceneSelectorControl
 	layout={oneXOne}
+	{participants}
+	selectedLayout={$selectedPredefinedStageLayout}
+	on:select={(e) => selectedPredefinedStageLayout.set(e.detail)}
+/>
+<SceneSelectorControl
+	layout={oneXTwo}
 	{participants}
 	selectedLayout={$selectedPredefinedStageLayout}
 	on:select={(e) => selectedPredefinedStageLayout.set(e.detail)}
