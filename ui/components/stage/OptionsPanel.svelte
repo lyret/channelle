@@ -78,7 +78,7 @@
 		font-size: 3em;
 		height: 24px;
 		margin-bottom: -24px;
-		margin-right: -16px;
+		margin-right: -10px;
 		text-align: right;
 	}
 	.instrument {

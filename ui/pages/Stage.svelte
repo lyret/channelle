@@ -150,11 +150,11 @@
 			position: fixed;
 			order: 0;
 			max-width: unset;
-			width: 90%;
+			width: 100%;
 			top: 0;
+			left: 0;
+			right: 0;
 			bottom: 120px;
-			left: 5%;
-			right: 5%;
 		}
 	}
 
@@ -163,7 +163,7 @@
 		top: 8px;
 		left: 8px;
 		right: 8px;
-		bottom: 8px;
+		bottom: 12px;
 		overflow-y: scroll;
 		z-index: 100;
 		background-color: hsla(
