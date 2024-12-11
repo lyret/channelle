@@ -34,88 +34,106 @@
 	const iconClassList = 'icon is-size-4';
 </script>
 
-<div class="buttons">
-	<div class="left">
-		<!-- STATUS -->
-		<MediaInputStatus />
-	</div>
-	<div class="center">
-		<!-- EFFECTS -->
-		{#if $sceneEffectsIsEnabled}
-			<button
-				class={effectBtnClassList}
-				transition:blur
-				on:click={() => effects.set({ type: 'applause', number: 1 })}
-			>
-				<span class={iconClassList}>👏</span></button
-			>
-			<button
-				class={effectBtnClassList}
-				transition:blur
-				on:click={() => effects.set({ type: 'flowers', number: 1 })}
-			>
-				<span class={iconClassList}>🌹</span></button
-			>
+<div class="bar" style={`flex-wrap: ${isMobile ? 'wrap' : 'nowrap'};`}>
+	<!-- STATUS -->
+	<span class="block"><MediaInputStatus /></span>
+	<!-- SPACER / BREAKER -->
+	{#if !isMobile}
+		<div class="spacer" />
+	{:else}
+		<div class="breaker" />
+	{/if}
+	<!-- EFFECTS -->
+	{#if $sceneEffectsIsEnabled}
+		<button
+			class={effectBtnClassList}
+			transition:blur
+			on:click={() => effects.set({ type: 'applause', number: 1 })}
+		>
+			<span class={iconClassList}>👏</span></button
+		>
+		<button
+			class={effectBtnClassList}
+			transition:blur
+			on:click={() => effects.set({ type: 'flowers', number: 1 })}
+		>
+			<span class={iconClassList}>🌹</span></button
+		>
+		{#if !isMobile}
+			<div class="spacer" />
 		{/if}
-	</div>
-	<div class="right">
-		<!-- VIDEO -->
-		<CameraActionButton minimal={isMobile} />
+	{/if}
+	<!-- VIDEO -->
+	<CameraActionButton minimal={isMobile} />
 
-		<!-- AUDIO -->
-		<MicrophoneActionButton minimal={isMobile} />
-		<!-- FULLSCREEN -->
-		<button
-			type="button"
-			class={btnClassList}
-			transition:blur
-			use:fullScreenAction
-		>
-			{#if $isFullscreen}
-				<span class={iconClassList}
-					><ion-icon name={'close-outline'}></ion-icon></span
-				>
-			{:else}
-				<span class={iconClassList}
-					><ion-icon name={'expand-outline'}></ion-icon></span
-				>
-			{/if}
-		</button>
-		<!-- CHAT -->
-		{#if $sceneChatIsEnabled}
-			<button
-				class={btnClassList}
-				transition:blur
-				class:has-text-success={$stageChat}
-				class:has-text-light={$stageChat}
-				on:click={() => stageChat.set(!$stageChat)}
+	<!-- AUDIO -->
+	<MicrophoneActionButton minimal={isMobile} />
+	<!-- FULLSCREEN -->
+	<button
+		type="button"
+		class={btnClassList + ' is-hidden-mobile'}
+		transition:blur
+		use:fullScreenAction
+	>
+		{#if $isFullscreen}
+			<span class={iconClassList}
+				><ion-icon name={'close-outline'}></ion-icon></span
 			>
-				<span class={iconClassList}
-					><ion-icon name="chatbubble-ellipses"></ion-icon></span
-				>
-				{#if !isMobile}
-					<span>Chat</span>
-				{/if}
-			</button>
+		{:else}
+			<span class={iconClassList}
+				><ion-icon name={'expand-outline'}></ion-icon></span
+			>
 		{/if}
-		<!-- STAGE SETTINGS -->
+	</button>
+	<!-- CHAT -->
+	{#if $sceneChatIsEnabled}
 		<button
 			class={btnClassList}
 			transition:blur
-			class:has-text-info={$stageSettings}
-			on:click={() => stageSettings.set(!$stageSettings)}
+			class:has-text-success={$stageChat}
+			class:has-text-light={$stageChat}
+			on:click={() => stageChat.set(!$stageChat)}
 		>
-			<span class={iconClassList}><ion-icon name="options"></ion-icon></span>
+			<span class={iconClassList}
+				><ion-icon name="chatbubble-ellipses"></ion-icon></span
+			>
 			{#if !isMobile}
-				<span>Alternativ</span>
+				<span>Chat</span>
 			{/if}
 		</button>
-	</div>
+	{/if}
+	<!-- STAGE SETTINGS -->
+	<button
+		class={btnClassList}
+		transition:blur
+		class:has-text-info={$stageSettings}
+		on:click={() => stageSettings.set(!$stageSettings)}
+	>
+		<span class={iconClassList}><ion-icon name="options"></ion-icon></span>
+		{#if !isMobile}
+			<span>Alternativ</span>
+		{/if}
+	</button>
 </div>
 
 <style lang="scss">
-	.button {
+	.bar {
+		padding: 0;
+		width: 100%;
+		display: flex;
+		flex-direction: row;
+		justify-content: space-around;
 		height: 48px;
+	}
+	.spacer {
+		flex-grow: 0.4;
+	}
+	.breaker {
+		flex-basis: 100%;
+		height: 0;
+	}
+
+	.button {
 		background-color: black;
 		border: 1px solid var(--bulma-border);
 	}
@@ -124,50 +142,5 @@
 	}
 	.button:hover {
 		border: 1px solid var(--bulma-border);
-	}
-	.buttons {
-		margin-left: 1%;
-		margin-right: 1%;
-	}
-	.left {
-		text-align: left;
-		flex-grow: 1;
-		flex-shrink: 1;
-		flex-basis: 1;
-	}
-	.center {
-		text-align: center;
-		flex-grow: 1;
-		flex-shrink: 1;
-		flex-basis: 1;
-	}
-	.right {
-		text-align: right;
-		flex-grow: 1;
-		flex-grow: 1;
-		flex-basis: 1;
-	}
-
-	.buttons {
-		margin-left: 0px;
-		margin-right: 0px;
-	}
-	@include mobile {
-		.right,
-		.center,
-		.left {
-			width: 100vw;
-			text-align: center;
-			:global {
-				.button {
-					margin-left: 16px;
-					margin-right: 16px;
-				}
-			}
-		}
-		.left,
-		.center .right {
-			flex-grow: 0;
-		}
 	}
 </style>
