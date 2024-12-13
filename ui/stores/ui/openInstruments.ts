@@ -2,6 +2,7 @@ import { createSerializedLocalStorageStore } from '~/_localStorage';
 import { createLocalStore } from '../_localStore';
 
 export type InstrumentName =
+	| 'debug'
 	| 'chat'
 	| 'participants'
 	| 'scene-settings'

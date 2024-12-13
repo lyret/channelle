@@ -3,7 +3,8 @@
 	import ParticipantsInstrument from '~/components/instruments/ParticipantsInstrument.svelte';
 	import SceneSelectorInstrument from '~/components/instruments/SceneSelectorInstrument.svelte';
 	import MediaLibraryInstrument from '~/components/instruments/MediaLibraryInstrument.svelte';
-	import AccessInstrument from '../instruments/AccessInstrument.svelte';
+	import DebugInstrument from '~/components/instruments/DebugInstrument.svelte';
+	import AccessInstrument from '~/components/instruments/AccessInstrument.svelte';
 	import { focusedInstrument } from '~/stores/ui';
 	import MediaInputMenuInstrument from './menuInstruments/MediaInputMenuInstrument.svelte';
 	import logoSrc from '~/assets/images/logo-smoker-free.gif';
@@ -23,7 +24,9 @@
 			</a>
 		</div>
 		<div class="instrument">
-			{#if $focusedInstrument == 'scene-settings'}
+			{#if $focusedInstrument == 'debug'}
+				<DebugInstrument />
+			{:else if $focusedInstrument == 'scene-settings'}
 				<SceneSelectorInstrument />
 			{:else if $focusedInstrument == 'participants'}
 				<ParticipantsInstrument />
@@ -35,6 +38,15 @@
 		</div>
 	{:else}
 		<div class="select-view mb-4" in:blur={{ duration: 100 }}>
+			<button
+				class="button is-fullwidth mb-4 is-small"
+				on:click={() => ($focusedInstrument = 'debug')}
+				><span class="icon is-size-5"
+					><ion-icon name="terminal"></ion-icon></span
+				>
+				<span>Avancerad information</span></button
+			>
+			<hr />
 			<button
 				class="button is-fullwidth mb-4 is-small"
 				on:click={() => ($focusedInstrument = 'scene-settings')}
