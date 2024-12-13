@@ -272,7 +272,7 @@ const createLocalMediaDevicesStores = () => {
 
 		// Update the audio producer
 		if (_audioProducer) {
-			// Close and the delete the producer if no local media stream exists or the user is blocked
+			// Close and the delete the producer if no local media stream exists or the user is blocked // TODO: is always closed?
 			if (!_value.audio.stream || _value.audio.blocked || _value.audio.paused) {
 				_value.audio.stream = undefined;
 				_value.audio.paused = true;

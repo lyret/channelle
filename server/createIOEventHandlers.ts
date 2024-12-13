@@ -36,18 +36,6 @@ import {
 } from './lib/requestHandlers/transportRequestHandlers';
 import { handleServerRTPCapabilitiesRequests as handleRTPCapabilitiesRequests } from './lib/requestHandlers/capabilitiesRequestsHandlers';
 
-videoProducers.subscribe((data) => {
-	// FIXME: test this
-	ws().emit('producers_update');
-});
-audioProducers.subscribe((data) => {
-	// FIXME: test this
-	ws().emit('producers_update');
-});
-stageLayout.subscribe((data) => {
-	ws().emit('layout_update', data);
-});
-
 /** A map between connected sockets and participant ids for that socket */
 const onlineParticipants = new Map<string, number>();
 
@@ -74,14 +62,15 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 						where: { id: participantId },
 					});
 				}
+				const makeManager =
+					!CONFIG.runtime.production || (await client.participant.count()) == 0;
+				const makeActor = makeManager || !!hasFollowedInviteLinkForActors;
 				if (!participant) {
 					participant = await client.participant.create({
 						data: {
 							name: '',
-							manager: (await client.participant.count()) == 0,
-							actor:
-								(await client.participant.count()) == 0 ||
-								!!hasFollowedInviteLinkForActors,
+							manager: makeManager,
+							actor: makeActor,
 						},
 					});
 				}
@@ -293,7 +282,6 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 			options,
 			transport,
 			consumers: newConsumers,
-			producers: [],
 		});
 
 		// Return available consumptions
@@ -310,7 +298,9 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 			const { consumers } = mediaReceiverTransports.get(socket.id)!;
 
 			for (const consumer of consumers) {
-				await consumer.resume();
+				if (consumer.paused) {
+					await consumer.resume();
+				}
 			}
 			callback(undefined);
 		} catch (err) {

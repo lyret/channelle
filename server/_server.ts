@@ -16,6 +16,7 @@ import * as SceneStores from './stores/scene';
 import * as UserStores from './stores/users';
 import * as MediaStores from './stores/media';
 import * as StageStores from './stores/stage';
+import { keepProducersAndConsumersUpdated } from './mediaSync';
 
 /**
  * Read and sends the index.html file
@@ -78,6 +79,9 @@ export async function createServer(): Promise<Http.Server> {
 		UserStores.userMicrophoneBans,
 		UserStores.userOnlineStatus
 	);
+
+	// Keep media in sync
+	keepProducersAndConsumersUpdated();
 
 	// Connect repositories with IO
 	Repository.setIO(io);

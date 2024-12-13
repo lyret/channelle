@@ -51,7 +51,6 @@ export const mediaReceiverTransports = createMapStore<
 		};
 		transport: MediaSoup.types.WebRtcTransport;
 		consumers: Array<MediaSoup.types.Consumer>;
-		producers: Array<MediaSoup.types.Producer>;
 	}
 >('media-receiver-transports', {
 	// Close any receiver transport when deleted from the map

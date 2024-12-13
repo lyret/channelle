@@ -18,26 +18,32 @@ export const handleRTCTransportCreationRequests = createRTCResponseHandler<
 >(
 	'create-rtc-transport',
 	async ({ type, forceTcp, rtpCapabilities }, socket) => {
-		const map =
-			type == 'receiver' ? mediaReceiverTransports : mediaSendTransports;
 		const { transport, params } = await createRTCTransport();
 
 		// Destroy and close any previous transport of the same purpose if it exists
-		map.delete(socket.id);
-
 		// Store the newly opened transport
-		map.set(socket.id, {
-			options: { forceTcp, rtpCapabilities },
-			transport: transport,
-			producers: [],
-			consumers: [],
-		});
+		if (type == 'receiver') {
+			mediaReceiverTransports.delete(socket.id);
+			mediaReceiverTransports.set(socket.id, {
+				options: { forceTcp, rtpCapabilities },
+				transport: transport,
+				consumers: [],
+			});
+		} else {
+			mediaSendTransports.delete(socket.id);
+			mediaSendTransports.set(socket.id, {
+				options: { forceTcp, rtpCapabilities },
+				transport: transport,
+				producers: [],
+				consumers: [],
+			});
+		}
 
 		return params;
 	}
 );
 
-/** Handles incomming client events for when a send transport is connected */
+/** Handles incoming client events for when a send transport is connected */
 export const handleRTCTransportConnectionRequests = createRTCResponseHandler<
 	void,
 	{

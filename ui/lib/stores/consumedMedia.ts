@@ -65,17 +65,6 @@ function createConsumedMediaStore(): ConsumedMediaStore {
 				type,
 				producerPaused,
 			} of availableConsumptions) {
-				console.log(
-					socketId,
-					producerId,
-					participantId,
-					participant,
-					id,
-					kind,
-					rtpParameters,
-					type,
-					producerPaused
-				);
 				// Create the media stream
 				const stream = new MediaStream();
 				// Start consuming
@@ -107,6 +96,11 @@ function createConsumedMediaStore(): ConsumedMediaStore {
 
 		// Re-consume when producers update
 		_socket.on('producers_update', _onConsume);
+
+		_socket.on('audio_producers_update', (data) => {
+			console.log('audio_producers_update', data);
+		});
+		//_socket.on('video_producers_update', _onConsume);
 
 		// Subscribe to the current participation status so that TODO: why? explain!
 		const _stopCurrentParticipantSubscription = currentParticipant.subscribe(
