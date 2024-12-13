@@ -200,14 +200,15 @@
 		align-self: auto;
 		order: 0;
 		height: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 
 	.windows {
 		display: grid;
 		width: 100%;
 		position: relative;
-		top: 50%;
-		-webkit-transform: translateY(-50%);
 		max-width: calc(((100vh - 60px) / 10) * 16);
 
 		@include mobile {
