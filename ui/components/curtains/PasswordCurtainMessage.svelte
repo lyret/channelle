@@ -9,7 +9,8 @@
 	let retrying: boolean = false;
 
 	// Handle the submission
-	async function onClick() {
+	async function onSubmit(e: SubmitEvent) {
+		e.preventDefault();
 		loading = true;
 		participantScenePassword.set(inputValue);
 		setTimeout(() => {
@@ -34,28 +35,30 @@
 	class="control is-fullwidth is-large is-centered has-text-centered"
 	class:is-loading={loading}
 >
-	<input
-		type="text"
-		autocomplete="off"
-		data-1p-ignore
-		bind:this={inputRef}
-		class="input is-large is-centered has-text-centered"
-		bind:value={inputValue}
-		placeholder="Lösenord"
-		class:is-disabled={loading}
-	/>
-	{#if !loading}
-		<button
-			in:scale
-			class="button is-fullwidth is-large is-primary mt-4 is-centered"
-			on:click={onClick}
-			class:is-loading={loading}
-			disabled={!inputValue}
-			>Öppna
-		</button>
-	{/if}
-	{#if retrying}
-		<p in:blur class="my-2 is-size-6 has-text-gray">
-			Fel lösenord, försök igen
-		</p>{/if}
+	<form on:submit={onSubmit} class="form">
+		<input
+			type="text"
+			autocomplete="off"
+			data-1p-ignore
+			bind:this={inputRef}
+			class="input is-large is-centered has-text-centered"
+			bind:value={inputValue}
+			placeholder="Lösenord"
+			class:is-disabled={loading}
+		/>
+		{#if !loading}
+			<input
+				type="submit"
+				value="Öppna"
+				in:scale
+				class="button is-fullwidth is-large is-primary mt-4 is-centered"
+				class:is-loading={loading}
+				disabled={!inputValue}
+			/>
+		{/if}
+		{#if retrying}
+			<p in:blur class="my-2 is-size-6 has-text-gray">
+				Fel lösenord, försök igen
+			</p>{/if}
+	</form>
 </div>

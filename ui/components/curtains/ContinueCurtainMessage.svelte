@@ -2,7 +2,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import type { DataTypes } from '~/lib';
 
-	const dispatcher = createEventDispatcher();
+	const dispatch = createEventDispatcher();
 
 	export let participant: DataTypes['participant'];
 
@@ -11,7 +11,7 @@
 
 	// Handle the submission
 	async function onClick() {
-		dispatcher('click');
+		dispatch('click');
 	}
 </script>
 
