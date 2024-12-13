@@ -18,7 +18,7 @@
 	import { sceneCurtains } from './stores/scene/sceneCurtains';
 
 	export let name: string = '';
-	let hasInteractedWithTheDocument = false;
+	let hasInteractedWithTheDocument = !CONFIG.runtime.production;
 
 	// Delays the rendering of any content to avoid the "pop-in" effect
 	// on initial rendering due to initial determination of state
@@ -85,7 +85,10 @@
 			{#if isBlocked}
 				<Blocked />
 			{:else if $APIStore.status == 'ready' && !hasEnteredName}
-				<Authenticate participant={$APIStore.participant} />
+				<Authenticate
+					participant={$APIStore.participant}
+					on:submit={() => (hasInteractedWithTheDocument = true)}
+				/>
 			{:else if $APIStore.status == 'ready' && !hasInteractedWithTheDocument}
 				<Continue
 					participant={$APIStore?.participant}
