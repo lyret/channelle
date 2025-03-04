@@ -1,12 +1,12 @@
 import Chalk from 'chalk';
 import Esbuild from 'esbuild';
-import EsbuildSvelte from 'esbuild-svelte';
-import { sassPlugin as EsbuildSass } from 'esbuild-sass-plugin';
-import EsbuildSVG from 'esbuild-plugin-svg';
 import { copy as EsbuildCopy } from 'esbuild-plugin-copy';
+import EsbuildSVG from 'esbuild-plugin-svg';
+import { sassPlugin as EsbuildSass } from 'esbuild-sass-plugin';
+import EsbuildSvelte from 'esbuild-svelte';
+import Path from 'node:path';
 import * as Sass from 'sass';
 import SvelteConfig from './svelte.config.mjs';
-import Path from 'node:path';
 
 /** Creates the build context for building the client code using the given config */
 export async function createClientBuildContext(CONFIG, callback) {

@@ -31,13 +31,13 @@ function createConsumedMediaStore(): ConsumedMediaStore {
 		_transport = transport;
 	});
 
-	let _value: ConsumedMediaStoreValue = [];
+	const _value: ConsumedMediaStoreValue = [];
 
 	const { subscribe } = readable(_value, function start(_set) {
 		// Subscribe to the current participant so that any local device stream can be added to the media layout
 		let _currentParticipant: DataTypes['participant'] | undefined;
 		let _localVideoStream: MediaStream | undefined;
-		let _isConsuming: boolean = false;
+		const _isConsuming: boolean = false;
 
 		// Consume any new media stream produced on the media soup server
 		const _onConsume = async () => {

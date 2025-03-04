@@ -2,25 +2,25 @@
 	import { windowSizeStore } from '$ui/device';
 	import { onMount } from 'svelte';
 	import { blur } from 'svelte/transition';
-	import { currentParticipant } from '~/lib/stores/api';
 	import { createEffectsStore } from '~/stores/particles/effectsStore';
-	import { sceneEffectsIsEnabled } from '~/stores/scene/sceneEffectsIsEnabled';
-	import { stageSettings } from '~/stores/scene/stageSettingsIsOpen';
-	import CameraActionButton from './actionButtons/CameraActionButton.svelte';
-	import MicrophoneActionButton from './actionButtons/MicrophoneActionButton.svelte';
-	import MediaInputStatus from './actionButtons/MediaInputStatus.svelte';
-	let windowSize = windowSizeStore();
-	$: isMobile = $windowSize.width <= 842;
 	import { sceneChatIsEnabled } from '~/stores/scene/sceneChatIsEnabled';
+	import { sceneEffectsIsEnabled } from '~/stores/scene/sceneEffectsIsEnabled';
 	import { stageChat } from '~/stores/scene/stageChatPanelsOpen';
-	import IconMinimize from '../icons/Icon-minimize.svelte';
+	import { stageSettings } from '~/stores/scene/stageSettingsIsOpen';
 	import { fullscreenStore } from '~/stores/ui/fullscreen';
 	import IconMaximize from '../icons/Icon-maximize.svelte';
 	import IconMessageCircle from '../icons/Icon-message-circle.svelte';
+	import IconMinimize from '../icons/Icon-minimize.svelte';
 	import IconToggleLeft from '../icons/Icon-toggle-left.svelte';
 	import IconToggleRight from '../icons/Icon-toggle-right.svelte';
-	let fullscreen = fullscreenStore();
-	let effects = createEffectsStore();
+	import CameraActionButton from './actionButtons/CameraActionButton.svelte';
+	import MediaInputStatus from './actionButtons/MediaInputStatus.svelte';
+	import MicrophoneActionButton from './actionButtons/MicrophoneActionButton.svelte';
+
+	const fullscreen = fullscreenStore();
+	const windowSize = windowSizeStore();
+	$: isMobile = $windowSize.width <= 842;
+	const effects = createEffectsStore();
 
 	// Make sure effects are rendered
 	onMount(() => {

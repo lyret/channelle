@@ -9,7 +9,7 @@
 	import IconUsers from '../icons/Icon-users.svelte';
 	import IconStar from '../icons/Icon-star.svelte';
 
-	let backstageOnly = createLocalStore('panel-chat-backstage-only', false);
+	const backstageOnly = createLocalStore('panel-chat-backstage-only', false);
 
 	onMount(() => {
 		const stop = sceneChatIsEnabled.subscribe((enabled) => {

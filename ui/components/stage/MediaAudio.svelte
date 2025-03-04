@@ -1,7 +1,7 @@
 <script lang="ts">
 	export let stream: MediaStream | undefined;
 
-	$: streamHasAudio = !!stream ? !!stream.getAudioTracks().length : false;
+	$: streamHasAudio = stream ? !!stream.getAudioTracks().length : false;
 
 	function srcObject(node: any, stream: any) {
 		if (!stream) {

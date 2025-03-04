@@ -40,10 +40,10 @@ export function createDatabaseStore<
 	repository: Name,
 	id?: IdType
 ): DatabaseStore<
-	IdType extends RepositoryTypes[Name]['ModelIdType']
-		? RepositoryTypes[Name]['Operations']['findFirst' | 'findMany']['Result']
-		: RepositoryTypes[Name]['Operations']['findMany']['Result']
-> {
+		IdType extends RepositoryTypes[Name]['ModelIdType']
+			? RepositoryTypes[Name]['Operations']['findFirst' | 'findMany']['Result']
+			: RepositoryTypes[Name]['Operations']['findMany']['Result']
+	> {
 	const _defaultMessage: Pick<SubscriptionMessage, 'id' | 'repository'> = {
 		repository,
 		id,
@@ -51,17 +51,17 @@ export function createDatabaseStore<
 	const subscriptionPath = createSubscriptionPath(_defaultMessage);
 	const _socket = ws();
 	let _isConnected = false;
-	let _value = _defaultMessage.id ? null : ([] as any);
+	const _value = _defaultMessage.id ? null : ([] as any);
 
 	const { subscribe } = readable(_value, function start(_set) {
-		let _onConnect = () => {};
+		const _onConnect = () => {};
 		_socket.on('connect', _onConnect);
-		let _onDisconnect = () => {
+		const _onDisconnect = () => {
 			_isConnected = false;
 		};
 		_socket.on('disconnect', _onDisconnect);
 
-		let _onData = (data: DataValue) => {
+		const _onData = (data: DataValue) => {
 			_isConnected = true;
 			_set(data);
 		};

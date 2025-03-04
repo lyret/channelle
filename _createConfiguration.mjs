@@ -1,10 +1,9 @@
-import 'dotenv/config';
 import Chalk from 'chalk';
-import Nopt from 'nopt';
-import { publicIpv4 } from 'public-ip';
+import 'dotenv/config';
 import { readFileSync } from 'node:fs';
 import { networkInterfaces } from 'node:os';
-import { protocol } from 'socket.io-client';
+import Nopt from 'nopt';
+import { publicIpv4 } from 'public-ip';
 
 /** Creates and returns a runtime context including any given CLI options */
 export async function createConfiguration() {

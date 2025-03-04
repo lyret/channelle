@@ -6,8 +6,8 @@
 
 	export let participant: DataTypes['participant'];
 
-	let name: string = '';
-	let loading: boolean = false;
+	const name: string = '';
+	const loading: boolean = false;
 
 	// Handle the submission
 	async function onClick() {

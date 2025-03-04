@@ -40,7 +40,7 @@ const createLocalMediaDevicesStores = () => {
 	let _audioProducer: MediaSoup.types.Producer | undefined = undefined;
 
 	// Internal value
-	let _value: StoreValue = {
+	const _value: StoreValue = {
 		video: {
 			list: [],
 			paused: true,
@@ -354,7 +354,7 @@ const createLocalMediaDevicesStores = () => {
 		/** Select a media device to use for video */
 		selectVideoDevice: async (deviceInfo: MediaDeviceInfo | undefined) => {
 			// Switch internal stream, force an update if the selected device has changed
-			let forceUpdate =
+			const forceUpdate =
 				_value.video.stream &&
 				!!deviceInfo &&
 				deviceInfo?.deviceId != _value.video.selected?.deviceId;
@@ -387,7 +387,7 @@ const createLocalMediaDevicesStores = () => {
 		/** Select a media device to use for audio */
 		selectAudioDevice: async (deviceInfo: MediaDeviceInfo | undefined) => {
 			// Switch internal stream, force an update if the selected device has changed
-			let forceUpdate =
+			const forceUpdate =
 				_value.audio.stream &&
 				!!deviceInfo &&
 				deviceInfo?.deviceId != _value.audio.selected?.deviceId;

@@ -25,10 +25,10 @@ export function createRemoteMapStore<K extends string | number, V>(
 				_set(data);
 			});
 
-			let _onConnect = () => {};
+			const _onConnect = () => {};
 			_socket.on('connect', _onConnect);
 
-			let _onDisconnect = () => {};
+			const _onDisconnect = () => {};
 			_socket.on('disconnect', _onDisconnect);
 
 			_socket.on('*', (data: Record<K, V>) => {

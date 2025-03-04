@@ -33,7 +33,7 @@ export async function runServerCode(CONFIG) {
 			console.log(
 				'\n🪁',
 				Chalk.white.bgMagenta(`[${CONFIG.package.name.toUpperCase()}]`),
-				Chalk.bold(`Launching\n`)
+				Chalk.bold('Launching\n')
 			);
 
 			// Create subprocess arguments

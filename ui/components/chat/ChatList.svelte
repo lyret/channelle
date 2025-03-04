@@ -25,8 +25,8 @@
 		}
 	});
 
-	let allMessages = createDatabaseStore('message');
-	let participants = createDatabaseStore('participant');
+	const allMessages = createDatabaseStore('message');
+	const participants = createDatabaseStore('participant');
 
 	$: backstageAllowed =
 		$currentParticipant.actor || $currentParticipant.manager;

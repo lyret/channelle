@@ -22,7 +22,7 @@ import { keepProducersAndConsumersUpdated } from './mediaSync';
  * Read and sends the index.html file
  */
 async function ClientAccessMiddleware(ctx: Koa.Context, next: Koa.Next) {
-	let outFile = await Fs.readFile(
+	const outFile = await Fs.readFile(
 		Path.resolve(process.cwd(), CONFIG.build.clientOutput, 'index.html'),
 		{
 			encoding: 'utf8',
@@ -92,7 +92,7 @@ export async function createServer(): Promise<Http.Server> {
 	// Handle incomming debugging messages from the cli over ipc
 	if (CONFIG.runtime.debug) {
 		const channel = new BroadcastChannel<{ type: 'build-event'; data: any }>(
-			`cli-channel`
+			'cli-channel'
 		);
 		channel.addEventListener('message', ({ type, data }) => {
 			switch (type) {

@@ -4,8 +4,8 @@
 	export let participant: DataTypes['participant'] | undefined = undefined;
 	export let stream: MediaStream | undefined;
 
-	$: streamHasVideo = !!stream ? !!stream.getVideoTracks().length : false;
-	$: streamHasAudio = !!stream ? !!stream.getAudioTracks().length : false;
+	$: streamHasVideo = stream ? !!stream.getVideoTracks().length : false;
+	$: streamHasAudio = stream ? !!stream.getAudioTracks().length : false;
 
 	function srcObject(node: any, stream: any) {
 		if (!stream) {

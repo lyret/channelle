@@ -24,7 +24,7 @@ export async function rtcSendTransport(): Promise<MediaSoup.types.Transport> {
 
 	// Make sure we have loaded capabilities
 	// and initialized a local media device
-	let _rtpCapabilities = await rtpCapabilities();
+	const _rtpCapabilities = await rtpCapabilities();
 
 	// Get send options from the server
 	const sendOptions = await requestRTCTransportCreation(_socket, {

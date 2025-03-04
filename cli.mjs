@@ -8,7 +8,7 @@ import { runServerCode } from './_runServerCode.mjs';
 const CONFIG = await createConfiguration();
 
 // Create Broadcast Channel used for IPC messages regarding debugging events
-const channel = new BroadcastChannel(`cli-channel`);
+const channel = new BroadcastChannel('cli-channel');
 
 // ------------------------------------------
 // On file execution

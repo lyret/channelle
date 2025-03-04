@@ -6,7 +6,7 @@ import App from './App.svelte';
 // Set correct debug output level for MediaSoup
 enableMediaSoupDebugging();
 
-var mainComponent = new App({
+const mainComponent = new App({
 	target: document.body,
 	props: {
 		name: CONFIG.stage.name,

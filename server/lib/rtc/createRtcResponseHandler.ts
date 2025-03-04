@@ -3,7 +3,7 @@ import type * as IO from 'socket.io';
 /** Creates a request handler for an event on given web socket connection, made to match the client side rtcRequest function */
 export function createRTCResponseHandler<
 	Result,
-	Params extends Object = Object,
+	Params extends object = object,
 >(
 	event: string,
 	handler: (params: Params, socket: IO.Socket) => Promise<Result>

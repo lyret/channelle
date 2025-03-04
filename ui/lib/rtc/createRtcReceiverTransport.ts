@@ -12,7 +12,7 @@ import {
 export async function createRTCReceiverTransport() {
 	// Make sure we have loaded capabilities
 	// and initialized a local media device
-	let _rtpCapabilities = await rtpCapabilities();
+	const _rtpCapabilities = await rtpCapabilities();
 
 	// Get websocket connection
 	const _socket = ws();

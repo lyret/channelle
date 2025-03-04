@@ -73,7 +73,7 @@ export const handleSendTransportProducingRequests = createRTCResponseHandler<
 	}
 >('send-transport-producing', async ({ kind, rtpParameters }, socket) => {
 	if (!mediaSendTransports.has(socket.id)) {
-		throw new Error("Can't produce from non-existing producer transport");
+		throw new Error('Can\'t produce from non-existing producer transport');
 	}
 
 	const producer = await mediaSendTransports.get(socket.id)!.transport.produce({

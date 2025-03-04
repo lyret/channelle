@@ -172,7 +172,7 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 	}>('transport_receiver_consume', async () => {
 		// Fail if no transport exists
 		if (!mediaReceiverTransports.has(socket.id)) {
-			throw new Error("Can't connect a non-existing receiver transport");
+			throw new Error('Can\'t connect a non-existing receiver transport');
 		}
 
 		// Get transports for the connected socket
@@ -240,7 +240,7 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 			// TODO: Banning here is really ineffective
 			if (producer.kind == 'video' && userCameraBans.has(participantId)) {
 				console.error(
-					"Can't consume the video producer from",
+					'Can\'t consume the video producer from',
 					participantId,
 					'as it is banned'
 				);
@@ -249,7 +249,7 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 				userMicrophoneBans.has(participantId)
 			) {
 				console.error(
-					"Can't consume the audio producer from",
+					'Can\'t consume the audio producer from',
 					participantId,
 					'as it is banned'
 				);
@@ -293,7 +293,7 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 		try {
 			// Fail if no transport exists
 			if (!mediaReceiverTransports.has(socket.id)) {
-				throw new Error("Can't resume a non-existing receiver transport");
+				throw new Error('Can\'t resume a non-existing receiver transport');
 			}
 			const { consumers } = mediaReceiverTransports.get(socket.id)!;
 

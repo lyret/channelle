@@ -25,8 +25,8 @@ export const currentParticipant = derived([APIStore], ([$APIStore]) => {
 function createAPIStore(): APIStore {
 	const _socket: Socket = ws();
 
-	let cookiesAccepted = !!localStorage.getItem('cookies-accepted');
-	let participantId = localStorage.getItem('participant-id')
+	const cookiesAccepted = !!localStorage.getItem('cookies-accepted');
+	const participantId = localStorage.getItem('participant-id')
 		? Number(localStorage.getItem('participant-id'))
 		: undefined;
 	let participantSubscriptionPath: string | undefined;
@@ -35,21 +35,21 @@ function createAPIStore(): APIStore {
 		| undefined;
 	let _value: APIStoreValue = !_socket.connected
 		? {
-				status: 'disconnected',
-				cookiesAccepted,
-				isReady: false,
-				isConnected: false,
-			}
+			status: 'disconnected',
+			cookiesAccepted,
+			isReady: false,
+			isConnected: false,
+		}
 		: {
-				status: 'connected',
-				cookiesAccepted,
-				isReady: false,
-				isConnected: true,
-			};
+			status: 'connected',
+			cookiesAccepted,
+			isReady: false,
+			isConnected: true,
+		};
 
 	const { subscribe } = readable<APIStoreValue>(_value, function start(_set) {
 		// Handle new participant data
-		let _onParticipantData = (participant: DataTypes['participant'] | null) => {
+		const _onParticipantData = (participant: DataTypes['participant'] | null) => {
 			if (!participant) {
 				return _set({
 					status: 'error',
@@ -75,7 +75,7 @@ function createAPIStore(): APIStore {
 		};
 
 		// Handle connections
-		let _onConnect = () => {
+		const _onConnect = () => {
 			_value = {
 				status: 'connected',
 				cookiesAccepted,
@@ -138,7 +138,7 @@ function createAPIStore(): APIStore {
 		_socket.on('connect', _onConnect);
 
 		// Handle disconnections
-		let _onDisconnect = () => {
+		const _onDisconnect = () => {
 			_value = {
 				status: 'disconnected',
 				cookiesAccepted,
@@ -204,55 +204,55 @@ function createAPIStore(): APIStore {
 /** API Store Value */
 type APIStoreValue =
 	| {
-			/** Current API status */
-			status: 'error';
-			/** Indicates if the API is connected and ready */
-			isReady: false;
-			/** The API has crashed due to an error */
-			hasError: true;
-			/** The textual desciption of the error message */
-			errorMessage: string;
-	  }
+		/** Current API status */
+		status: 'error';
+		/** Indicates if the API is connected and ready */
+		isReady: false;
+		/** The API has crashed due to an error */
+		hasError: true;
+		/** The textual desciption of the error message */
+		errorMessage: string;
+	}
 	| {
-			/** Current API status */
-			status: 'blocked';
-			/** Indicates if the API is connected and ready */
-			isReady: true;
-	  }
+		/** Current API status */
+		status: 'blocked';
+		/** Indicates if the API is connected and ready */
+		isReady: true;
+	}
 	| {
-			/** Current API status */
-			status: 'disconnected';
-			/** Indicates if the API is connected and ready */
-			isReady: false;
-			/** The Websocket connection status */
-			isConnected: false;
-			/** Indicates that cookies are either accepted or denied/unknown */
-			cookiesAccepted: boolean;
-	  }
+		/** Current API status */
+		status: 'disconnected';
+		/** Indicates if the API is connected and ready */
+		isReady: false;
+		/** The Websocket connection status */
+		isConnected: false;
+		/** Indicates that cookies are either accepted or denied/unknown */
+		cookiesAccepted: boolean;
+	}
 	| {
-			/** Current API status */
-			status: 'connected';
-			/** Indicates if the API is connected and ready */
-			isReady: false;
-			/** The Websocket connection status */
-			isConnected: true;
-			/** Indicates that cookies are either accepted or denied/unknown */
-			cookiesAccepted: boolean;
-	  }
+		/** Current API status */
+		status: 'connected';
+		/** Indicates if the API is connected and ready */
+		isReady: false;
+		/** The Websocket connection status */
+		isConnected: true;
+		/** Indicates that cookies are either accepted or denied/unknown */
+		cookiesAccepted: boolean;
+	}
 	| {
-			/** Current API status */
-			status: 'ready';
-			/** Indicates if the API is connected and ready */
-			isReady: true;
-			/** The Websocket connection status */
-			isConnected: true;
-			/** Indicates that cookies are either accepted or denied/unknown */
-			cookiesAccepted: boolean;
-			/** Current participant id */
-			participantId: number;
-			/** Current participant */
-			participant: DataTypes['participant'];
-	  };
+		/** Current API status */
+		status: 'ready';
+		/** Indicates if the API is connected and ready */
+		isReady: true;
+		/** The Websocket connection status */
+		isConnected: true;
+		/** Indicates that cookies are either accepted or denied/unknown */
+		cookiesAccepted: boolean;
+		/** Current participant id */
+		participantId: number;
+		/** Current participant */
+		participant: DataTypes['participant'];
+	};
 
 /** API Store Interface */
 type APIStore = {

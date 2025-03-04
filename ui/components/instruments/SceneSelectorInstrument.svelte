@@ -13,34 +13,34 @@
 	import { sceneChatIsEnabled } from '~/stores/scene/sceneChatIsEnabled';
 	import { onMount } from 'svelte';
 
-	let allParticipants = createDatabaseStore('participant');
+	const allParticipants = createDatabaseStore('participant');
 	$: participants = $allParticipants.filter(
 		(p) => (p.actor || p.manager) && !p.blocked
 	);
 
-	let auto: PredefinedLayout = {
+	const auto: PredefinedLayout = {
 		name: 'Automatisk',
 		chatEnabled: true,
 		layout: [],
 	};
-	let empty: PredefinedLayout = {
+	const empty: PredefinedLayout = {
 		name: 'Helt tom',
 		chatEnabled: true,
 		layout: [[{ type: 'empty' }]],
 	};
-	let chat: PredefinedLayout = {
+	const chat: PredefinedLayout = {
 		name: 'Chatduell',
 		chatEnabled: false,
 		layout: [
 			[{ type: 'actor', id: -1 }, { type: 'chat' }, { type: 'actor', id: -1 }],
 		],
 	};
-	let oneXOne: PredefinedLayout = {
+	const oneXOne: PredefinedLayout = {
 		name: 'En i fokus',
 		chatEnabled: true,
 		layout: [[{ type: 'actor', id: -1 }]],
 	};
-	let oneXTwo: PredefinedLayout = {
+	const oneXTwo: PredefinedLayout = {
 		name: 'Två bredvid varandra',
 		chatEnabled: true,
 		layout: [
@@ -50,7 +50,7 @@
 			],
 		],
 	};
-	let twoXTwo: PredefinedLayout = {
+	const twoXTwo: PredefinedLayout = {
 		name: 'Fyra rutor',
 		chatEnabled: true,
 		layout: [

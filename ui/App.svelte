@@ -95,7 +95,7 @@
 					on:click={() => (hasInteractedWithTheDocument = true)}
 				/>
 			{:else if isPreparing}
-				<Loader label={'Ansluter...'} />
+				<Loader label="Ansluter..." />
 			{:else if needToBeManager}
 				<Blocked message="Sidan är endast för tekniker" />
 			{:else if needStagePassword}

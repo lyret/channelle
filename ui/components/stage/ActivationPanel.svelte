@@ -1,18 +1,14 @@
 <script lang="ts">
 	import { windowSizeStore } from '$ui/device';
-	import { fullScreenAction } from '~/legos/actions/fullScreenAction';
-	import { isInFullscreen } from '~/legos/stores/fullscreenStore';
 	import { createEventDispatcher, onMount } from 'svelte';
-	import { blur } from 'svelte/transition';
+	import activationSrc from '~/assets/images/click-here.gif';
 	import { update } from '~/lib';
 	import { currentParticipant } from '~/lib/stores/api';
 	import { createEffectsStore } from '~/stores/particles/effectsStore';
-	import activationSrc from '~/assets/images/click-here.gif';
 
-	let windowSize = windowSizeStore();
+	const windowSize = windowSizeStore();
 	$: isMobile = $windowSize.width <= 768;
-	let isFullscreen = isInFullscreen();
-	let effects = createEffectsStore();
+	const effects = createEffectsStore();
 
 	async function updateName() {
 		const currentName = $currentParticipant.name;

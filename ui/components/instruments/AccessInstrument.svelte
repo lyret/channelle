@@ -12,7 +12,7 @@
 	$: isChanged = $scenePassword != inputValue;
 	$: disabled = isLoading || !isChanged;
 
-	let inviteLinks = ['', ''];
+	const inviteLinks = ['', ''];
 
 	async function onSubmit(e: SubmitEvent) {
 		e.preventDefault();

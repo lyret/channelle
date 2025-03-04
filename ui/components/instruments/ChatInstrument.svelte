@@ -6,7 +6,7 @@
 	import IconUsers from '../icons/Icon-users.svelte';
 	import IconStar from '../icons/Icon-star.svelte';
 
-	let backstageOnly = createLocalStore(
+	const backstageOnly = createLocalStore(
 		'instruments-chat-backstage-only',
 		false
 	);

@@ -43,7 +43,7 @@ export function keepProducersAndConsumersUpdated() {
 		ws().emit('producers_update');
 	});
 	audioProducers.subscribe((data) => {
-		let res = Object.entries(data).map(([socketId, producer]) => ({
+		const res = Object.entries(data).map(([socketId, producer]) => ({
 			socketId,
 			id: producer.id,
 			paused: producer.paused,

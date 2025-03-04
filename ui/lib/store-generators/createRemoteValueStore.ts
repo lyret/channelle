@@ -23,10 +23,10 @@ export function createRemoteValueStore<V>(
 		_socket.emit('refresh', (data: V) => {
 			_set(data);
 		});
-		let _onConnect = () => {};
+		const _onConnect = () => {};
 		_socket.on('connect', _onConnect);
 
-		let _onDisconnect = () => {};
+		const _onDisconnect = () => {};
 		_socket.on('disconnect', _onDisconnect);
 
 		_socket.on('*', (data: V) => {

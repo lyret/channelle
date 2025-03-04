@@ -51,7 +51,7 @@ export const StageLayout = derived(
 			}
 		}
 
-		let _value: StageLayoutStoreValue = {
+		const _value: StageLayoutStoreValue = {
 			layout: updatedLayout,
 			leftovers: updatedLeftovers,
 			isAutoLayout:

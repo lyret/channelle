@@ -6,9 +6,9 @@
 	import ParticipantsInstrument from '~/components/instruments/ParticipantsInstrument.svelte';
 	import SceneSelectorInstrument from '~/components/instruments/SceneSelectorInstrument.svelte';
 	import MediaLibraryInstrument from '~/components/instruments/MediaLibraryInstrument.svelte';
+	import IconUsers from '~/components/icons/Icon-users.svelte';
 	import AccessInstrument from '~/components/instruments/AccessInstrument.svelte';
 	import IconLayers from '~/components/icons/Icon-layers.svelte';
-	import IconUsers from '~/components/icons/Icon-users.svelte';
 	import IconMessageCircle from '~/components/icons/Icon-message-circle.svelte';
 	import IconCheckCircle from '~/components/icons/Icon-check-circle.svelte';
 	import IconCircle from '~/components/icons/Icon-circle.svelte';

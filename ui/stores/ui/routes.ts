@@ -6,17 +6,17 @@ import generateUrls from 'universal-router/generateUrls';
 
 // ROUTES CONFIG
 
-export interface Route<Params = {}> extends RouteConfig<Params> {
+export interface Route<Params = object> extends RouteConfig<Params> {
 	name: RouteName;
 }
 
-export interface RouteConfig<Params = {}> {
+export interface RouteConfig<Params = object> {
 	path: string;
 	group: string;
 	params: Params;
 }
 
-const route: <Params = {}>(
+const route: <Params = object>(
 	path: string,
 	group?: string
 ) => RouteConfig<Params> = (path, group = '') => ({
@@ -83,5 +83,5 @@ export const linkTo =
 		key: K,
 		params: Entry['params'] = {}
 	) =>
-	() =>
-		gotoRoute(key, params);
+		() =>
+			gotoRoute(key, params);

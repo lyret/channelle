@@ -15,7 +15,7 @@ async function performDBOperation<
 	Name extends RepositoryName,
 	Operation extends OperationName,
 	Result extends
-		RepositoryTypes[Name]['Operations'][Operation]['Result'] = RepositoryTypes[Name]['Operations'][Operation]['Result'],
+	RepositoryTypes[Name]['Operations'][Operation]['Result'] = RepositoryTypes[Name]['Operations'][Operation]['Result'],
 >(
 	repository: Name,
 	operation: Operation,

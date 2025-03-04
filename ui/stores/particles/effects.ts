@@ -9,10 +9,10 @@ const flower = Confetti.shapeFromText({ text: '🌹', scalar: 4 });
 const hands = Confetti.shapeFromText({ text: '👏', scalar: 6 });
 
 /** Clap sound effect */
-var clap = new Audio(clapSrc);
+const clap = new Audio(clapSrc);
 
 /** Tink sound effect */
-var tink = new Audio(tinkSrc);
+const tink = new Audio(tinkSrc);
 
 // Celebration methods
 
