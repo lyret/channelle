@@ -1,7 +1,5 @@
 <script lang="ts">
 	import { windowSizeStore } from '$ui/device';
-	import { fullScreenAction } from '~/legos/actions/fullScreenAction';
-	import { isInFullscreen } from '~/legos/stores/fullscreenStore';
 	import { onMount } from 'svelte';
 	import { blur } from 'svelte/transition';
 	import { currentParticipant } from '~/lib/stores/api';
@@ -16,11 +14,12 @@
 	import { sceneChatIsEnabled } from '~/stores/scene/sceneChatIsEnabled';
 	import { stageChat } from '~/stores/scene/stageChatPanelsOpen';
 	import IconMinimize from '../icons/Icon-minimize.svelte';
+	import { fullscreenStore } from '~/stores/ui/fullscreen';
 	import IconMaximize from '../icons/Icon-maximize.svelte';
 	import IconMessageCircle from '../icons/Icon-message-circle.svelte';
 	import IconToggleLeft from '../icons/Icon-toggle-left.svelte';
 	import IconToggleRight from '../icons/Icon-toggle-right.svelte';
-	let isFullscreen = isInFullscreen();
+	let fullscreen = fullscreenStore();
 	let effects = createEffectsStore();
 
 	// Make sure effects are rendered
@@ -78,9 +77,11 @@
 		type="button"
 		class={btnClassList + ' is-hidden-mobile'}
 		transition:blur
-		use:fullScreenAction
+		on:click = {() => {
+			fullscreen.toggle();
+		}}
 	>
-		{#if $isFullscreen}
+		{#if $fullscreen}
 			<span class={iconClassList}><IconMinimize /></span>
 		{:else}
 			<span class={iconClassList}><IconMaximize /></span>

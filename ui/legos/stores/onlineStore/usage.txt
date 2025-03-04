@@ -1,7 +1,0 @@
-<script lang="ts">
-import { onlineStore } from 'svelte-legos';
-
-const isOnline = onlineStore();
-
-// use $isOnline as a boolean state
-</script>

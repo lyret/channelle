@@ -1,9 +1,0 @@
-<script lang="ts">
-import { activeElementStore } from 'svelte-legos';
-
-const activeElement = activeElementStore();
-
-$: {
-  // use $activeElement here if not null
-}
-</script>

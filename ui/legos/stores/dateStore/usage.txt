@@ -1,5 +1,0 @@
-<script lang="ts">
-    import { dateStore } from 'svelte-legos';
-
-    // $dateStore gives you the current date
-</script>

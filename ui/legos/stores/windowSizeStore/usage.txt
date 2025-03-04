@@ -1,8 +1,0 @@
-<script>
-import { windowSizeStore } from 'svelte-legos';
-
-const size = windowSizeStore()
-</script>
-
-<div>Width: {$size.width}</div>
-<div>Height: {$size.height}</div>

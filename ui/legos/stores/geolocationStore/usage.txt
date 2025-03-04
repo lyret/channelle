@@ -1,6 +1,0 @@
-<script lang="ts">
-import { geolocationStore } from "svelte-legos";
-
-const geolocation = geolocationStore({ watch: true });
-$: ({ status, position, error } = $geolocation)
-</script>
