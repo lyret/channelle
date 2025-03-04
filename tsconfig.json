@@ -17,6 +17,6 @@
 		},
 		"outDir": "./.dist"
 	},
-	"include": ["ui/**/*", "shared/**/*", "./global.d.ts"],
+	"include": ["ui/**/*", "shared/**/*", "./global.d.ts", "eslint.config.mjs"],
 	"exclude": ["node_modules/*", "public/*", "server/*"]
 }
