@@ -3,6 +3,7 @@ import Esbuild from 'esbuild';
 import EsbuildSvelte from 'esbuild-svelte';
 import { sassPlugin as EsbuildSass } from 'esbuild-sass-plugin';
 import EsbuildSVG from 'esbuild-plugin-svg';
+import * as Sass from 'sass';
 import SvelteConfig from './svelte.config.mjs';
 import Path from 'node:path';
 
@@ -40,7 +41,11 @@ export async function createClientBuildContext(CONFIG, callback) {
 		plugins: [
 			EsbuildSVG(),
 			EsbuildHtml(),
-			EsbuildSass(),
+			EsbuildSass({
+				logger: !CONFIG.runtime.verbose && Sass.Logger.silent,
+				verbose: false,
+				quietDeps: true,
+			}),
 			EsbuildSvelte(SvelteConfig),
 			{
 				name: 'EsbuildCallback',
