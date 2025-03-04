@@ -1,6 +1,7 @@
-import * as SocketIO from 'socket.io';
-import { Prisma } from '@prisma/client';
-import { client, Client } from './_client';
+import type { Prisma } from '@prisma/client';
+import type * as SocketIO from 'socket.io';
+import type { Client } from './_client';
+import { client } from './_client';
 
 /** Possible repository database operations */
 export const RepositoryOperations = [
@@ -24,7 +25,7 @@ export class Repository<
 	ModelType extends Client[Lowercase<ModelName>] = Client[Lowercase<ModelName>],
 	ModelProjectionType = Prisma.Result<
 		Client[Lowercase<ModelName>],
-		{},
+		object,
 		'findFirstOrThrow'
 	>,
 	ModelIdField extends keyof ModelProjectionType = keyof ModelProjectionType,
@@ -96,7 +97,7 @@ export class Repository<
 
 		if (data) {
 			console.log(
-				`[${this._modelName.toUpperCase()}] Emitting one document to`,
+				`[${this._modelName.toUpperCase()}] Emitting one document to`,
 				target
 			);
 			this.io.to(target).emit(path, data);

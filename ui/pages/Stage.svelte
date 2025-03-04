@@ -1,16 +1,16 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { blur, fly } from 'svelte/transition';
-	import MediaWindow from '~/components/stage/MediaWindow.svelte';
-	import MediaAudio from '~/components/stage/MediaAudio.svelte';
-	import ChatWindow from '~/components/stage/ChatWindow.svelte';
-	import OptionsPanel from '~/components/stage/OptionsPanel.svelte';
-	import ChatPanel from '~/components/stage/ChatPanel.svelte';
 	import ActionPanel from '~/components/stage/ActionPanel.svelte';
-	import { StageLayout } from '~/lib/stores/stageLayout';
+	import ChatPanel from '~/components/stage/ChatPanel.svelte';
+	import ChatWindow from '~/components/stage/ChatWindow.svelte';
+	import MediaAudio from '~/components/stage/MediaAudio.svelte';
+	import MediaWindow from '~/components/stage/MediaWindow.svelte';
+	import OptionsPanel from '~/components/stage/OptionsPanel.svelte';
 	import { StageAudio } from '~/lib/stores/stageAudio';
-	import { stageSettings } from '~/stores/scene/stageSettingsIsOpen';
+	import { StageLayout } from '~/lib/stores/stageLayout';
 	import { stageChat } from '~/stores/scene/stageChatPanelsOpen';
+	import { stageSettings } from '~/stores/scene/stageSettingsIsOpen';
 
 	$: matrix = $StageLayout.layout || [];
 	$: height = Math.max(matrix.length, 1);

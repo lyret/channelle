@@ -2,8 +2,8 @@ import { BroadcastChannel } from 'broadcast-channel';
 import * as MediaSoup from 'mediasoup';
 import * as Fs from 'fs/promises';
 import * as Path from 'path';
-import * as Http from 'http';
-import Koa from 'koa';
+import type * as Http from 'http';
+import type Koa from 'koa';
 import BodyParser from 'koa-bodyparser';
 import ServeStatic from 'koa-static';
 

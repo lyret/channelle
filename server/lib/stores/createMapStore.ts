@@ -1,6 +1,6 @@
 import EventEmitter from 'node:events';
-import { attempt } from '../utils/attempt';
 import { ws } from '../api';
+import { attempt } from '../utils/attempt';
 
 /** Creates a new observable store for a map of values */
 export function createMapStore<K extends string | number, V>(

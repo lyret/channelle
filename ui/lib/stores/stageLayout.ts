@@ -1,7 +1,7 @@
 import { derived, type Readable } from 'svelte/store';
-import { ConsumedMediaStore } from './consumedMedia';
-import type { DataTypes } from '../_databaseTypes';
 import { stageLayout } from '~/stores/stage/stageLayout';
+import type { DataTypes } from '../_databaseTypes';
+import { ConsumedMediaStore } from './consumedMedia';
 
 export const StageLayout = derived(
 	[ConsumedMediaStore, stageLayout],

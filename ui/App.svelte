@@ -1,19 +1,19 @@
 <script lang="ts">
-	import { APIStore } from '~/lib/stores/api';
 	import { blur } from 'svelte/transition';
-	import { route } from '~/stores/ui/url';
 	import logoSrc from '~/assets/images/logo-free.gif';
+	import { APIStore } from '~/lib/stores/api';
+	import { route } from '~/stores/ui/url';
 
+	import Authenticate from '~/components/curtains/AuthenticateCurtainMessage.svelte';
+	import Blocked from '~/components/curtains/BlockedCurtainMessage.svelte';
+	import Continue from '~/components/curtains/ContinueCurtainMessage.svelte';
 	import Curtains from '~/components/curtains/Curtains.svelte';
 	import Loader from '~/components/curtains/LoadingCurtainMessage.svelte';
-	import Authenticate from '~/components/curtains/AuthenticateCurtainMessage.svelte';
-	import Continue from '~/components/curtains/ContinueCurtainMessage.svelte';
-	import Blocked from '~/components/curtains/BlockedCurtainMessage.svelte';
 	import Problem from '~/components/curtains/ProblemCurtainMessage.svelte';
 	import ManagePage from '~/pages/Backstage.svelte';
 	import StagePage from '~/pages/Stage.svelte';
-	import { scenePasswordIsOk } from './stores/scene/scenePassword';
 	import PasswordCurtainMessage from './components/curtains/PasswordCurtainMessage.svelte';
+	import { scenePasswordIsOk } from './stores/scene/scenePassword';
 
 	import { sceneCurtains } from './stores/scene/sceneCurtains';
 

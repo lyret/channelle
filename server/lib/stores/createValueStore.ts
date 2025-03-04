@@ -1,6 +1,6 @@
 import EventEmitter from 'node:events';
-import { attempt } from '../utils/attempt';
 import { ws } from '../api';
+import { attempt } from '../utils/attempt';
 
 /** Creates a new observable store for a single value */
 export function createValueStore<V>(

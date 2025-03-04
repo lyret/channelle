@@ -1,8 +1,8 @@
-import type { DataTypes, SubscriptionMessage } from '~/lib';
 import type { Socket } from 'socket.io-client';
 import { derived, readable } from 'svelte/store';
-import { ws } from '../api';
+import type { DataTypes, SubscriptionMessage } from '~/lib';
 import { createSubscriptionPath } from '../../../shared';
+import { ws } from '../api';
 
 /** The API store holds the context information needed to determine connection and participation status */
 export const APIStore = createAPIStore();
@@ -152,7 +152,7 @@ function createAPIStore(): APIStore {
 		// Handle debugging events
 		if (CONFIG.runtime.debug) {
 			// Reload the browser when requested by the server
-			_socket.on('build-event', (buildOutputs: any) => {
+			_socket.on('build-event', () => {
 				// Reload the window
 				window.location.reload();
 

@@ -1,9 +1,9 @@
 import type * as MediaSoup from 'mediasoup-client';
 import { readable } from 'svelte/store';
-import { mediaRequest } from '../operations';
 import { ws } from '~/lib/api';
-import { createRTCReceiverTransport, createRtcRequest } from '../rtc';
 import type { DataTypes } from '../_databaseTypes';
+import { mediaRequest } from '../operations';
+import { createRTCReceiverTransport, createRtcRequest } from '../rtc';
 import { currentParticipant } from './api';
 import { localMedia } from './producedMedia';
 

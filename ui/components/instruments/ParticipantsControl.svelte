@@ -1,22 +1,21 @@
 <script lang="ts">
+	import { clickOutside } from '~/directives';
 	import type { DataTypes } from '~/lib';
 	import { update } from '~/lib';
-	import { clickOutside } from '~/directives';
 	import { userCameraBans, userMicrophoneBans } from '~/stores/users';
-	import IconCircle from '../icons/Icon-circle.svelte';
 	import IconAward from '../icons/Icon-award.svelte';
 	import IconBriefcase from '../icons/Icon-briefcase.svelte';
-	import IconVideoOff from '../icons/Icon-video-off.svelte';
-	import IconVideo from '../icons/Icon-video.svelte';
+	import IconCircle from '../icons/Icon-circle.svelte';
+	import IconLock from '../icons/Icon-lock.svelte';
 	import IconMicOff from '../icons/Icon-mic-off.svelte';
 	import IconMic from '../icons/Icon-mic.svelte';
-	import IconX from '../icons/Icon-x.svelte';
-	import IconXCircle from '../icons/Icon-x-circle.svelte';
 	import IconToggleLeft from '../icons/Icon-toggle-left.svelte';
+	import IconToggleRight from '../icons/Icon-toggle-right.svelte';
 	import IconType from '../icons/Icon-type.svelte';
 	import IconUnlock from '../icons/Icon-unlock.svelte';
-	import IconLock from '../icons/Icon-lock.svelte';
-	import IconToggleRight from '../icons/Icon-toggle-right.svelte';
+	import IconVideoOff from '../icons/Icon-video-off.svelte';
+	import IconVideo from '../icons/Icon-video.svelte';
+	import IconXCircle from '../icons/Icon-x-circle.svelte';
 
 	export let participant: DataTypes['participant'];
 	export let online: boolean = false;

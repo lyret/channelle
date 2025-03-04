@@ -1,6 +1,5 @@
 import type * as MediaSoup from 'mediasoup-client';
 import { createRtcRequest } from '../rtc';
-import { ws } from '../api';
 
 /** Sends a request with data neccessary to create a transport and that returns the options the client needs to create and open the transport on the client side */
 export const requestRTCTransportCreation = createRtcRequest<

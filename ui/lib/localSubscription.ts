@@ -38,10 +38,13 @@ class LocalStorageSubscription<Value = any> {
 	}
 
 	public onData(handler: (value: Value) => Promise<void> | void) {
-		this._handler &&
+		if (this._handler) {
 			LocalStorageSubscription._eventEmitter.off(this._key, this._handler);
-		this._windowHandler &&
+		}
+		
+		if (this._windowHandler) {
 			window.removeEventListener('storage', this._windowHandler);
+		}
 
 		// Register event handler when using the subscription api
 		this._handler = handler.bind(this);

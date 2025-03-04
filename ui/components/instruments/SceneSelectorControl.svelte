@@ -2,8 +2,8 @@
 	import { createEventDispatcher } from 'svelte';
 	import type { DataTypes } from '~/lib';
 	import type { PredefinedLayout } from '~/stores/stage/selectedPredefinedStageLayout';
-	import IconUser from '../icons/Icon-user.svelte';
 	import IconMessageCircle from '../icons/Icon-message-circle.svelte';
+	import IconUser from '../icons/Icon-user.svelte';
 	const dispatch = createEventDispatcher();
 
 	export let selectedLayout: any;

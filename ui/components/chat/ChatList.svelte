@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { blur } from 'svelte/transition';
-	import { createDatabaseStore } from '~/stores';
-	import { currentParticipant } from '~/lib/stores/api';
 	import { remove } from '~/lib';
+	import { currentParticipant } from '~/lib/stores/api';
+	import { createDatabaseStore } from '~/stores';
 	import IconTrash_2 from '../icons/Icon-trash-2.svelte';
 
 	export let backstageOnly: boolean = false;

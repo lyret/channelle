@@ -1,40 +1,42 @@
 import type * as MediaSoup from 'mediasoup';
-import * as IO from 'socket.io';
+import type * as IO from 'socket.io';
+import type {
+	DataTypes
+} from '../database';
 import {
 	client,
-	DataTypes,
 	Repository,
 	RepositoryOperations,
 	RepositoryOperationsThatIntroducesChanges,
 } from '../database';
+import type {
+	SubscriptionMessage
+} from '../shared/subscriptions';
 import {
-	MediaRequests,
-	SubscriptionMessage,
-	createSubscriptionPath,
+	createSubscriptionPath
 } from '../shared/subscriptions';
 
-import { createRTCResponseHandler, createRTCTransport } from './lib/rtc';
 import { mediaSoupRouter, ws } from './lib/api';
+import { createRTCResponseHandler } from './lib/rtc';
 
 import {
-	userOnlineStatus,
 	userCameraBans,
 	userMicrophoneBans,
+	userOnlineStatus,
 } from './stores/users';
 
-import {
-	mediaProducerTransports,
-	mediaReceiverTransports,
-	videoProducers,
-	audioProducers,
-} from './stores/media';
-import { stageLayout } from './stores/stage';
+import { handleServerRTPCapabilitiesRequests as handleRTPCapabilitiesRequests } from './lib/requestHandlers/capabilitiesRequestsHandlers';
 import {
 	handleRTCTransportConnectionRequests,
 	handleRTCTransportCreationRequests,
 	handleSendTransportProducingRequests,
 } from './lib/requestHandlers/transportRequestHandlers';
-import { handleServerRTPCapabilitiesRequests as handleRTPCapabilitiesRequests } from './lib/requestHandlers/capabilitiesRequestsHandlers';
+import {
+	audioProducers,
+	mediaProducerTransports,
+	mediaReceiverTransports,
+	videoProducers,
+} from './stores/media';
 
 /** A map between connected sockets and participant ids for that socket */
 const onlineParticipants = new Map<string, number>();
@@ -176,7 +178,7 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 		}
 
 		// Get transports for the connected socket
-		const { options, transport, consumers, producers } =
+		const { options, transport, consumers } =
 			mediaReceiverTransports.get(socket.id)!;
 
 		// Close all existing consumers

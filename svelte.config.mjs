@@ -1,7 +1,9 @@
-import preprocess from 'svelte-preprocess';
-import path, { dirname } from 'node:path';
+import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import preprocess from 'svelte-preprocess';
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 const filePath = dirname(fileURLToPath(import.meta.url));
 const sassPath = `${filePath}/ui/styles/`;
 

@@ -32,7 +32,7 @@ export async function createConfiguration() {
 			p: ['--port'],
 			v: ['--verbose'],
 			b: ['--build'],
-			b: ['--debug'],
+			d: ['--debug'],
 			w: ['--watch'],
 		}
 	);

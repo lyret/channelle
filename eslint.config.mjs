@@ -51,14 +51,17 @@ export default [
 			'@stylistic/object-curly-spacing': ['error', 'always'],
 			'@stylistic/arrow-parens': ['error', 'always'],
 			'@stylistic/linebreak-style': 0,
+			'@typescript-eslint/consistent-type-imports': 'warn',
 		},
 	},
 	/** Modify some common rules to less severity */
 	{
 		rules: {
-			'no-unused-vars': 'warn',
+			'no-empty': 'off',
+			'no-unused-vars': 'off',
 			'prefer-const': ['error', { ignoreReadBeforeAssign: true }],
-			'@typescript-eslint/no-explicit-any': 'off'
+			'@typescript-eslint/no-explicit-any': 'off',
+			'no-irregular-whitespace': 'off'
 		},
 	},
 ];

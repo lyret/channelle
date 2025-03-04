@@ -1,40 +1,13 @@
-import type * as MediaSoup from 'mediasoup';
-import * as IO from 'socket.io';
-import {
-	client,
-	DataTypes,
-	Repository,
-	RepositoryOperations,
-	RepositoryOperationsThatIntroducesChanges,
-} from '../database';
-import {
-	MediaRequests,
-	SubscriptionMessage,
-	createSubscriptionPath,
-} from '../shared/subscriptions';
+ 
 
-import { createRTCResponseHandler, createRTCTransport } from './lib/rtc';
-import { mediaSoupRouter, ws } from './lib/api';
+import { ws } from './lib/api';
+
 
 import {
-	userOnlineStatus,
-	userCameraBans,
-	userMicrophoneBans,
-} from './stores/users';
-
-import {
-	mediaProducerTransports,
-	mediaReceiverTransports,
-	videoProducers,
 	audioProducers,
+	videoProducers
 } from './stores/media';
 import { stageLayout } from './stores/stage';
-import {
-	handleRTCTransportConnectionRequests,
-	handleRTCTransportCreationRequests,
-	handleSendTransportProducingRequests,
-} from './lib/requestHandlers/transportRequestHandlers';
-import { handleServerRTPCapabilitiesRequests as handleRTPCapabilitiesRequests } from './lib/requestHandlers/capabilitiesRequestsHandlers';
 
 // FIXME: working on this
 export function keepProducersAndConsumersUpdated() {

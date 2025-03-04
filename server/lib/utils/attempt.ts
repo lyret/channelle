@@ -1,4 +1,5 @@
 /** Returns an async version of the given function that will catch any errors thrown */
+ 
 export const attempt = <T extends Array<any>, U>(fn: (...args: T) => U) => {
 	return async (
 		...args: T
@@ -11,4 +12,4 @@ export const attempt = <T extends Array<any>, U>(fn: (...args: T) => U) => {
 		}
 	};
 };
-// TODO: duplaced in ui folder
+// TODO: duplicated in ui folder

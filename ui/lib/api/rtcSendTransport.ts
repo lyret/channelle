@@ -1,13 +1,12 @@
-import * as MediaSoup from 'mediasoup-client';
-import { rtpCapabilities } from './rtpCapabilities';
-import { mediaRequest } from '../operations'; // TODO: Remove this import
-import { mediaDevice } from './mediaDevice';
-import { ws } from './ws';
+import type * as MediaSoup from 'mediasoup-client';
 import {
 	onRTCTransportConnectingRequest,
 	onTransportConnectingProducingRequest,
 	requestRTCTransportCreation,
 } from '../requests/transportRequests';
+import { mediaDevice } from './mediaDevice';
+import { rtpCapabilities } from './rtpCapabilities';
+import { ws } from './ws';
 
 /** Global RTC Send Transport */
 let _sendTransport: MediaSoup.types.Transport | undefined = undefined;

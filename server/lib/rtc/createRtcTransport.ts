@@ -21,7 +21,7 @@ export async function createRTCTransport() {
 	if (maxIncomingBitrate) {
 		try {
 			await transport.setMaxIncomingBitrate(maxIncomingBitrate);
-		} catch (error) {}
+		} catch {}
 	}
 
 	return {

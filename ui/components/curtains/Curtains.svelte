@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { slide, blur } from 'svelte/transition';
+	import { slide } from 'svelte/transition';
 	//import { onMount, onDestroy } from 'svelte';
 	//import curtainsAnimatedSrc from '~/assets/images/roses.gif';
 	//import dreamLoopSrc from '~/assets/sounds/dream-loop.wav';

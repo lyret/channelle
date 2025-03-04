@@ -1,8 +1,8 @@
 import { derived, type Readable } from 'svelte/store';
-import { ConsumedMediaStore } from './consumedMedia';
-import type { DataTypes } from '../_databaseTypes';
-import { stageLayout } from '~/stores/stage/stageLayout';
 import { sceneVisitorAudioIsEnabled } from '~/stores/scene/sceneVisitorAudioIsEnabled';
+import { stageLayout } from '~/stores/stage/stageLayout';
+import type { DataTypes } from '../_databaseTypes';
+import { ConsumedMediaStore } from './consumedMedia';
 
 // TODO: Document
 export const StageAudio = derived(
@@ -60,11 +60,6 @@ export const StageAudio = derived(
 export type StageAudioStoreValue = {
 	audio: Array<StageAudioActorWithStream>;
 };
-
-/** Stage Audio Store Interface */
-interface StageAudioStore {
-	subscribe: (handler: (value: StageAudioStoreValue) => void) => () => void;
-}
 
 // TODO: document
 export type StageAudioActorWithStream = {

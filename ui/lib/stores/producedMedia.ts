@@ -1,10 +1,10 @@
 import type * as MediaSoup from 'mediasoup-client';
-import { userCameraBans, userMicrophoneBans } from '~/stores/users';
 import { derived, writable } from 'svelte/store';
+import { sceneVisitorAudioIsEnabled } from '~/stores/scene/sceneVisitorAudioIsEnabled';
+import { stageLayout } from '~/stores/stage/stageLayout';
+import { userCameraBans, userMicrophoneBans } from '~/stores/users';
 import { rtcSendTransport } from '../api';
 import { currentParticipant } from './api';
-import { stageLayout } from '~/stores/stage/stageLayout';
-import { sceneVisitorAudioIsEnabled } from '~/stores/scene/sceneVisitorAudioIsEnabled';
 
 /** Local Media Devices Store Value */
 type StoreValue = {

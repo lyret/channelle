@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { localMedia } from '~/lib/stores/producedMedia';
-	import { update } from '~/lib';
-	import { currentParticipant } from '~/lib/stores/api';
 	import IconMeh from '~/components/icons/Icon-meh.svelte';
 	import IconMic from '~/components/icons/Icon-mic.svelte';
 	import IconVideo from '~/components/icons/Icon-video.svelte';
+	import { update } from '~/lib';
+	import { currentParticipant } from '~/lib/stores/api';
+	import { localMedia } from '~/lib/stores/producedMedia';
 
 	let isLoading = false;
 	let isUnloaded = true;

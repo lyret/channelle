@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { blur } from 'svelte/transition';
 	import IconAlertTriangle from '~/components/icons/Icon-alert-triangle.svelte';
-	import { currentParticipant } from '~/lib/stores/api';
 	import { localMedia } from '~/lib/stores/producedMedia';
 	import { sceneCurtains } from '~/stores/scene/sceneCurtains';
 

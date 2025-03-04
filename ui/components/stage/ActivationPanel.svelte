@@ -2,24 +2,12 @@
 	import { windowSizeStore } from '$ui/device';
 	import { createEventDispatcher, onMount } from 'svelte';
 	import activationSrc from '~/assets/images/click-here.gif';
-	import { update } from '~/lib';
-	import { currentParticipant } from '~/lib/stores/api';
 	import { createEffectsStore } from '~/stores/particles/effectsStore';
 
 	const windowSize = windowSizeStore();
-	$: isMobile = $windowSize.width <= 768;
+	
 	const effects = createEffectsStore();
-
-	async function updateName() {
-		const currentName = $currentParticipant.name;
-		const newName =
-			window.prompt('Byt namn till...', currentName) || currentName;
-		await update('participant', {
-			where: { id: $currentParticipant.id },
-			data: { name: newName },
-		});
-	}
-
+	
 	// Make sure effects are rendered
 	onMount(() => {
 		const stop = effects.subscribe(() => {});
@@ -30,12 +18,6 @@
 	});
 
 	const dispatcher = createEventDispatcher();
-
-	// Class list of all buttons in the action bar
-	const btnClassList = 'button is-small';
-	const effectBtnClassList =
-		'button effect is-small is-danger is-rounded is-light is-outlined is-warning';
-	const iconClassList = 'icon is-size-4';
 </script>
 
 <div class="buttons">

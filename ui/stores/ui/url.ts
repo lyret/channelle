@@ -1,9 +1,9 @@
 //@see https://bjornlu.com/blog/simple-svelte-routing-with-reactive-urls/
 
 import { derived, writable, type Writable } from 'svelte/store';
-import { router, type Route, defaultRoute } from './routes';
+import { defaultRoute, router, type Route } from './routes';
+export { gotoRoute, linkTo, replaceRoute } from './routes';
 export type { Route } from './routes';
-export { linkTo, gotoRoute, replaceRoute } from './routes';
 
 // For server side rendering
 const isBrowser = typeof window !== 'undefined';
