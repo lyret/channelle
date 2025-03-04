@@ -178,10 +178,6 @@
 		width: 100%;
 		height: 60px;
 
-		@include mobile {
-			height: 120px;
-		}
-
 		display: block;
 		order: 1;
 		flex-grow: 0;
@@ -191,6 +187,10 @@
 		/*border-top: 1px solid var(--bulma-border);*/
 		z-index: 9999;
 		box-shadow: 0px -10px 10px rgba(0, 0, 0, 0.8);
+
+		@include mobile {
+			height: 120px;
+		}
 	}
 
 	.windows-wrapper {
@@ -211,13 +211,12 @@
 		position: relative;
 		max-width: calc(((100vh - 60px) / 10) * 16);
 
-		@include mobile {
-			max-width: calc(((100vh - 120px) / 10) * 16);
-		}
-
 		aspect-ratio: 16/10;
 		grid-column-gap: 0px;
 		grid-row-gap: 0px;
+		@include mobile {
+			max-width: calc(((100vh - 120px) / 10) * 16);
+		}
 	}
 
 	.window {
