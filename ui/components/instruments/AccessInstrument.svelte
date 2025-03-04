@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { scenePassword } from '~/stores/scene/scenePassword';
+	import IconLock from '../icons/Icon-lock.svelte';
+	import IconUnlock from '../icons/Icon-unlock.svelte';
 
 	let inputRef: HTMLInputElement;
 	let inputValue: string = '';
@@ -81,25 +83,16 @@
 			>
 				{#if isLocked}
 					{#if isChanged && inputValue.length}
-						<span class="icon"
-							><ion-icon name="lock-closed-sharp"></ion-icon></span
-						><span>Byt lösenord</span>
+						<span class="icon"><IconLock /></span><span>Byt lösenord</span>
 					{:else if isChanged}
-						<span class="icon"
-							><ion-icon name="lock-open-sharp"></ion-icon></span
-						><span>Lås upp</span>
+						<span class="icon"><IconUnlock /></span><span>Lås upp</span>
 					{:else}
-						<span class="icon"
-							><ion-icon name="lock-closed-sharp"></ion-icon></span
-						><span>Scenen är låst</span>
+						<span class="icon"><IconLock /></span><span>Scenen är låst</span>
 					{/if}
 				{:else if isChanged}
-					<span class="icon"
-						><ion-icon name="lock-closed-sharp"></ion-icon></span
-					><span>Lås nu</span>
+					<span class="icon"><IconLock /></span><span>Lås nu</span>
 				{:else}
-					<span class="icon"><ion-icon name="lock-open-sharp"></ion-icon></span
-					><span>Scenen är olåst</span>
+					<span class="icon"><IconUnlock /></span><span>Scenen är olåst</span>
 				{/if}
 			</button>
 		</div>

@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { blur } from 'svelte/transition';
+	import IconMicOff from '~/components/icons/Icon-mic-off.svelte';
+	import IconMic from '~/components/icons/Icon-mic.svelte';
 	import { currentParticipant } from '~/lib/stores/api';
 	import { localMedia } from '~/lib/stores/producedMedia';
 	import { sceneVisitorAudioIsEnabled } from '~/stores/scene/sceneVisitorAudioIsEnabled';
@@ -27,7 +29,11 @@
 			class:has-text-danger={hasError}
 			class:has-text-success={isOn && isWanted}
 			class:has-text-warning={isOn && !isWanted}
-			><ion-icon name={isOn ? 'mic' : 'mic-off'}></ion-icon></span
+			>{#if isOn}
+				<IconMic />
+			{:else}
+				<IconMicOff />
+			{/if}</span
 		>
 		{#if !minimal}
 			<span

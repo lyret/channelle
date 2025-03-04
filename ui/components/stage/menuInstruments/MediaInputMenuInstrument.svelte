@@ -2,6 +2,9 @@
 	import { localMedia } from '~/lib/stores/producedMedia';
 	import { update } from '~/lib';
 	import { currentParticipant } from '~/lib/stores/api';
+	import IconMeh from '~/components/icons/Icon-meh.svelte';
+	import IconMic from '~/components/icons/Icon-mic.svelte';
+	import IconVideo from '~/components/icons/Icon-video.svelte';
 
 	let isLoading = false;
 	let isUnloaded = true;
@@ -53,7 +56,7 @@
 <p class="label">Ändra ditt namn</p>
 <!-- CURRENT USER -->
 <button class="button is-fullwidth mb-4 is-rounded" on:click={updateName}>
-	<span class="icon"><ion-icon name="person-circle-outline"></ion-icon></span>
+	<span class="icon"><IconMeh /></span>
 	<span>{$currentParticipant?.name} </span>
 </button>
 <p class="label">Välj din kamera- och mikrofon- ingång</p>
@@ -76,7 +79,7 @@
 				{/each}
 			{/if}
 		</select>
-		<span class="icon"><ion-icon name="mic-outline"></ion-icon></span>
+		<span class="icon"><IconMic /></span>
 	</div>
 </div>
 <div class="control has-icons-left">
@@ -98,7 +101,7 @@
 				{/each}
 			{/if}
 		</select>
-		<span class="icon"><ion-icon name="videocam-outline"></ion-icon></span>
+		<span class="icon"><IconVideo /></span>
 	</div>
 </div>
 <hr />

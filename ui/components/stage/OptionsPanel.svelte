@@ -9,6 +9,12 @@
 	import MediaInputMenuInstrument from './menuInstruments/MediaInputMenuInstrument.svelte';
 	import logoSrc from '~/assets/images/logo-smoker-free.gif';
 	import { currentParticipant } from '~/lib/stores/api';
+	import IconXCircle from '../icons/Icon-x-circle.svelte';
+	import IconLayers from '../icons/Icon-layers.svelte';
+	import IconKey from '../icons/Icon-key.svelte';
+	import IconUsers from '../icons/Icon-users.svelte';
+	import IconExternalLink from '../icons/Icon-external-link.svelte';
+	import IconActivity from '../icons/Icon-activity.svelte';
 </script>
 
 <!-- Common Contents -->
@@ -20,7 +26,7 @@
 	{#if $focusedInstrument != undefined}
 		<div class="instrument-control">
 			<a on:click={() => ($focusedInstrument = undefined)}>
-				<span class="icon"><ion-icon name="close"></ion-icon></span>
+				<span class="icon"><IconXCircle /></span>
 			</a>
 		</div>
 		<div class="instrument">
@@ -41,39 +47,33 @@
 			<button
 				class="button is-fullwidth mb-4 is-small"
 				on:click={() => ($focusedInstrument = 'debug')}
-				><span class="icon is-size-5"
-					><ion-icon name="terminal"></ion-icon></span
-				>
+				><span class="icon is-size-5"><IconActivity /></span>
 				<span>Avancerad information</span></button
 			>
 			<hr />
 			<button
 				class="button is-fullwidth mb-4 is-small"
 				on:click={() => ($focusedInstrument = 'scene-settings')}
-				><span class="icon is-size-5"><ion-icon name="albums"></ion-icon></span>
+				><span class="icon is-size-5"><IconLayers /></span>
 				<span>Sceninställningar</span></button
 			>
 			<hr />
 			<button
 				class="button is-fullwidth mb-4 is-small"
 				on:click={() => ($focusedInstrument = 'access')}
-				><span class="icon is-size-5"><ion-icon name="key"></ion-icon></span>
+				><span class="icon is-size-5"><IconKey /></span>
 				<span>Tillgång</span></button
 			>
 			<hr />
 			<button
 				class="button is-fullwidth mb-4 is-small"
 				on:click={() => ($focusedInstrument = 'participants')}
-				><span class="icon is-size-5"
-					><ion-icon name="accessibility"></ion-icon></span
-				>
+				><span class="icon is-size-5"><IconUsers /></span>
 				<span>Deltagare</span></button
 			>
 			<hr />
 			<a class="button is-fullwidth is-small" href="/backstage" target="_blank">
-				<span class="icon is-size-5"
-					><ion-icon name="arrow-forward-circle-outline"></ion-icon></span
-				>
+				<span class="icon is-size-5"><IconExternalLink /></span>
 				<span>Öppna Backstage</span>
 			</a>
 		</div>

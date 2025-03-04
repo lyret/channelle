@@ -15,6 +15,11 @@
 	$: isMobile = $windowSize.width <= 842;
 	import { sceneChatIsEnabled } from '~/stores/scene/sceneChatIsEnabled';
 	import { stageChat } from '~/stores/scene/stageChatPanelsOpen';
+	import IconMinimize from '../icons/Icon-minimize.svelte';
+	import IconMaximize from '../icons/Icon-maximize.svelte';
+	import IconMessageCircle from '../icons/Icon-message-circle.svelte';
+	import IconToggleLeft from '../icons/Icon-toggle-left.svelte';
+	import IconToggleRight from '../icons/Icon-toggle-right.svelte';
 	let isFullscreen = isInFullscreen();
 	let effects = createEffectsStore();
 
@@ -76,13 +81,9 @@
 		use:fullScreenAction
 	>
 		{#if $isFullscreen}
-			<span class={iconClassList}
-				><ion-icon name={'close-outline'}></ion-icon></span
-			>
+			<span class={iconClassList}><IconMinimize /></span>
 		{:else}
-			<span class={iconClassList}
-				><ion-icon name={'expand-outline'}></ion-icon></span
-			>
+			<span class={iconClassList}><IconMaximize /></span>
 		{/if}
 	</button>
 	<!-- CHAT -->
@@ -94,9 +95,7 @@
 			class:has-text-light={$stageChat}
 			on:click={() => stageChat.set(!$stageChat)}
 		>
-			<span class={iconClassList}
-				><ion-icon name="chatbubble-ellipses"></ion-icon></span
-			>
+			<span class={iconClassList}><IconMessageCircle /></span>
 			{#if !isMobile}
 				<span>Chat</span>
 			{/if}
@@ -109,7 +108,13 @@
 		class:has-text-info={$stageSettings}
 		on:click={() => stageSettings.set(!$stageSettings)}
 	>
-		<span class={iconClassList}><ion-icon name="options"></ion-icon></span>
+		<span class={iconClassList}>
+			{#if $stageSettings}
+				<IconToggleRight />
+			{:else}
+				<IconToggleLeft />
+			{/if}
+		</span>
 		{#if !isMobile}
 			<span>Alternativ</span>
 		{/if}

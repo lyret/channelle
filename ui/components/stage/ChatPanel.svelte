@@ -6,6 +6,8 @@
 	import { sceneChatIsEnabled } from '~/stores/scene/sceneChatIsEnabled';
 	import { stageChat } from '~/stores/scene/stageChatPanelsOpen';
 	import { currentParticipant } from '~/lib/stores/api';
+	import IconUsers from '../icons/Icon-users.svelte';
+	import IconStar from '../icons/Icon-star.svelte';
 
 	let backstageOnly = createLocalStore('panel-chat-backstage-only', false);
 
@@ -27,9 +29,7 @@
 				<ul>
 					<li class:is-active={!$backstageOnly}>
 						<a on:click={() => ($backstageOnly = false)}>
-							<span class="icon is-small"
-								><ion-icon name="people"></ion-icon></span
-							>
+							<span class="icon is-small"><IconUsers /></span>
 							<span>Alla</span>
 						</a>
 					</li>
@@ -38,9 +38,7 @@
 							class:has-text-info={$backstageOnly}
 							on:click={() => ($backstageOnly = true)}
 						>
-							<span class="icon is-small"
-								><ion-icon name="people-circle"></ion-icon></span
-							>
+							<span class="icon is-small"><IconStar /></span>
 							<span>Backstage</span>
 						</a>
 					</li>

@@ -2,6 +2,8 @@
 	import { onMount } from 'svelte';
 	import { create } from '~/lib';
 	import { APIStore } from '~/lib/stores/api';
+	import IconArrowLeft from '../icons/Icon-arrow-left.svelte';
+	import IconArrowUp from '../icons/Icon-arrow-up.svelte';
 	export let makeBackstage: boolean = false;
 	export let isLarge: boolean = false;
 	let inputValue: string = '';
@@ -63,17 +65,13 @@
 				class:is-info={!loading && !disabled && makeBackstage}
 			>
 				{#if disabled}
-					<span class="icon"><ion-icon name="arrow-back"></ion-icon></span><span
-						>Skriv något</span
-					>
+					<span class="icon"><IconArrowLeft /></span><span>Skriv något</span>
 				{:else if makeBackstage}
-					<span class="icon"><ion-icon name="arrow-up"></ion-icon></span><span
+					<span class="icon"><IconArrowUp /></span><span
 						>Skicka till backstage</span
 					>
 				{:else}
-					<span class="icon"><ion-icon name="arrow-up"></ion-icon></span><span
-						>Skicka till alla</span
-					>
+					<span class="icon"><IconArrowUp /></span><span>Skicka till alla</span>
 				{/if}
 			</button>
 		</div>

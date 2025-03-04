@@ -7,6 +7,12 @@
 	import SceneSelectorInstrument from '~/components/instruments/SceneSelectorInstrument.svelte';
 	import MediaLibraryInstrument from '~/components/instruments/MediaLibraryInstrument.svelte';
 	import AccessInstrument from '~/components/instruments/AccessInstrument.svelte';
+	import IconLayers from '~/components/icons/Icon-layers.svelte';
+	import IconUsers from '~/components/icons/Icon-users.svelte';
+	import IconMessageCircle from '~/components/icons/Icon-message-circle.svelte';
+	import IconCheckCircle from '~/components/icons/Icon-check-circle.svelte';
+	import IconCircle from '~/components/icons/Icon-circle.svelte';
+	import IconKey from '~/components/icons/Icon-key.svelte';
 </script>
 
 <main in:blur={{ delay: 500, duration: 1000 }}>
@@ -25,64 +31,62 @@
 		<ul>
 			<li class:is-active={$openInstruments['scene-settings']}>
 				<a on:click={() => openInstruments.toggle('scene-settings')}
-					><span class="icon"><ion-icon name="albums"></ion-icon></span> Scenen
-					<span class="icon"
-						><ion-icon
-							name={$openInstruments['scene-settings']
-								? 'checkmark-circle-outline'
-								: 'ellipse-outline'}
-						></ion-icon></span
-					></a
+					><span class="icon"><IconLayers /></span> Scenen
+					<span class="icon">
+						{#if $openInstruments['scene-settings']}
+							<IconCheckCircle />
+						{:else}
+							<IconCircle />
+						{/if}
+					</span></a
 				>
 			</li>
 			<li class:is-active={$openInstruments['participants']}>
 				<a on:click={() => openInstruments.toggle('participants')}
-					><span class="icon"><ion-icon name="accessibility"></ion-icon></span>
+					><span class="icon"><IconUsers /></span>
 					Deltagare
-					<span class="icon"
-						><ion-icon
-							name={$openInstruments['participants']
-								? 'checkmark-circle-outline'
-								: 'ellipse-outline'}
-						></ion-icon></span
-					></a
+					<span class="icon">
+						{#if $openInstruments['participants']}
+							<IconCheckCircle />
+						{:else}
+							<IconCircle />
+						{/if}
+					</span></a
 				>
 			</li>
 			<li class:is-active={$openInstruments['chat']}>
 				<a on:click={() => openInstruments.toggle('chat')}
-					><span class="icon"
-						><ion-icon name="chatbox-ellipses"></ion-icon></span
-					>
+					><span class="icon"><IconMessageCircle /></span>
 					Chatt<span class="icon"
-						><ion-icon
-							name={$openInstruments['chat']
-								? 'checkmark-circle-outline'
-								: 'ellipse-outline'}
-						></ion-icon></span
+						>{#if $openInstruments['chat']}
+							<IconCheckCircle />
+						{:else}
+							<IconCircle />
+						{/if}</span
 					></a
 				>
 			</li>
 			<li class:is-active={$openInstruments['access']}>
 				<a on:click={() => openInstruments.toggle('access')}
-					><span class="icon"><ion-icon name="key"></ion-icon></span>
+					><span class="icon"><IconKey /></span>
 					Tillgång<span class="icon"
-						><ion-icon
-							name={$openInstruments['access']
-								? 'checkmark-circle-outline'
-								: 'ellipse-outline'}
-						></ion-icon></span
+						>{#if $openInstruments['access']}
+							<IconCheckCircle />
+						{:else}
+							<IconCircle />
+						{/if}</span
 					></a
 				>
 			</li>
 			<!-- <li class:is-active={$openInstruments['media-library']}>
 				<a on:click={() => openInstruments.toggle('media-library')}
-					><span class="icon"><ion-icon name="images-outline"></ion-icon></span>
+					><span class="icon"><IconImage/></span>
 					Mediabibliotek<span class="icon"
-						><ion-icon
-							name={$openInstruments['media-library']
-								? 'checkmark-circle-outline'
-								: 'ellipse-outline'}
-						></ion-icon></span
+						>{#if $openInstruments['media-library']}
+							<IconCheckCircle />
+						{:else}
+							<IconCircle />
+						{/if}</span
 					></a
 				>
 			</li> -->

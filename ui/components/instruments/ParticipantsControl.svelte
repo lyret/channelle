@@ -3,6 +3,20 @@
 	import { update } from '~/lib';
 	import { clickOutside } from '~/directives';
 	import { userCameraBans, userMicrophoneBans } from '~/stores/users';
+	import IconCircle from '../icons/Icon-circle.svelte';
+	import IconAward from '../icons/Icon-award.svelte';
+	import IconBriefcase from '../icons/Icon-briefcase.svelte';
+	import IconVideoOff from '../icons/Icon-video-off.svelte';
+	import IconVideo from '../icons/Icon-video.svelte';
+	import IconMicOff from '../icons/Icon-mic-off.svelte';
+	import IconMic from '../icons/Icon-mic.svelte';
+	import IconX from '../icons/Icon-x.svelte';
+	import IconXCircle from '../icons/Icon-x-circle.svelte';
+	import IconToggleLeft from '../icons/Icon-toggle-left.svelte';
+	import IconType from '../icons/Icon-type.svelte';
+	import IconUnlock from '../icons/Icon-unlock.svelte';
+	import IconLock from '../icons/Icon-lock.svelte';
+	import IconToggleRight from '../icons/Icon-toggle-right.svelte';
 
 	export let participant: DataTypes['participant'];
 	export let online: boolean = false;
@@ -37,13 +51,14 @@
 			class:has-text-success={online}
 		>
 			{#if participant.manager}
-				<ion-icon name="build"></ion-icon>
+				<IconBriefcase />
 			{:else if participant.actor}
-				<ion-icon name="accessibility"></ion-icon>
+				<IconAward />
 			{:else}
-				<ion-icon name="ellipse"></ion-icon>
+				<IconCircle />
 			{/if}
 		</div>
+		&nbsp;
 		<div class="name pr-7" class:is-strikethrough={participant.blocked}>
 			{participant.name}
 		</div>
@@ -59,11 +74,8 @@
 						)}
 				>
 					<span class="icon">
-						<ion-icon
-							name={$userCameraBans[participant.id]
-								? 'videocam-off'
-								: 'videocam'}
-						></ion-icon>
+						{#if $userCameraBans[participant.id]}<IconVideoOff
+							/>{:else}<IconVideo />{/if}
 					</span>
 				</button>
 			{/if}
@@ -77,17 +89,19 @@
 					)}
 			>
 				<span class="icon">
-					<ion-icon
-						name={$userMicrophoneBans[participant.id] ? 'mic-off' : 'mic'}
-					></ion-icon>
+					{#if $userMicrophoneBans[participant.id]}
+						<IconMicOff />
+					{:else}
+						<IconMic />
+					{/if}
 				</span>
 			</button>
 			<button class="button is-small" on:click={() => (active = !active)}>
 				<span class="icon">
 					{#if active}
-						<ion-icon name="close"></ion-icon>
+						<IconToggleRight />
 					{:else}
-						<ion-icon name="options"></ion-icon>
+						<IconToggleLeft />
 					{/if}
 				</span>
 			</button>
@@ -109,8 +123,8 @@
 							`Ta bort "${participant.name}" som skådespelare?`
 						)}
 				>
-					<span class="icon"><ion-icon name="close"></ion-icon></span> Inte skådespare
-				</a>
+					<span class="icon"><IconXCircle /> Inte en skådespelare </span></a
+				>
 			{:else if !participant.manager}
 				<!-- svelte-ignore a11y-click-events-have-key-events -->
 				<!-- svelte-ignore a11y-missing-attribute -->
@@ -124,8 +138,8 @@
 							`Är "${participant.name}" en skådespelare?`
 						)}
 				>
-					<span class="icon"><ion-icon name="accessibility"></ion-icon></span>
-					Skådespelare
+					<span class="icon is-small"><IconAward /></span>
+					Gör till skådespelare
 				</a>
 			{/if}
 			<!-- MAKE TECHNICAN -->
@@ -142,8 +156,8 @@
 							`Ta bort "${participant.name}" som tekniker?`
 						)}
 				>
-					<span class="icon"><ion-icon name="close"></ion-icon></span> Inte tekniker
-				</a>
+					<span class="icon is-small"><IconXCircle /></span> Inte en tekniker</a
+				>
 			{:else}
 				<!-- svelte-ignore a11y-click-events-have-key-events -->
 				<!-- svelte-ignore a11y-missing-attribute -->
@@ -157,8 +171,8 @@
 							`Är "${participant.name}" en tekniker?`
 						)}
 				>
-					<span class="icon"><ion-icon name="build"></ion-icon></span> Tekniker
-				</a>
+					<span class="icon is-small"><IconBriefcase /></span> Gör till tekniker</a
+				>
 			{/if}
 			<!-- CHANGE NAME -->
 			<!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -172,8 +186,8 @@
 							prompt('Skriv nytt namn', participant.name) || participant.name,
 					})}
 			>
-				<span class="icon"><ion-icon name="text"></ion-icon></span> Byt namn
-			</a>
+				<span class="icon is-small"><IconType /></span> Byt namn</a
+			>
 			<!-- BLOCK -->
 			{#if participant.blocked}
 				<!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -183,8 +197,7 @@
 					class="dropdown-item"
 					on:click={() => doUpdate(participant, { blocked: false })}
 				>
-					<span class="icon"><ion-icon name="lock-open"></ion-icon></span> Tillåt
-					tillbaka
+					<span class="icon is-small"><IconUnlock /></span> Tillåt tillbaka
 				</a>
 			{:else}
 				<!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -199,8 +212,7 @@
 							`Vill du blockera och ta bort "${participant.name}"?`
 						)}
 				>
-					<span class="icon"><ion-icon name="lock-closed"></ion-icon></span>
-					Blockera person
+					<span class="icon is-small"><IconLock /></span> Blockera person
 				</a>
 			{/if}
 		</div>

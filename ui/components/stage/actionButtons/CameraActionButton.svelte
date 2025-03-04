@@ -1,7 +1,9 @@
 <script lang="ts">
-	import { blur } from 'svelte/transition';
 	import { currentParticipant } from '~/lib/stores/api';
+	import { blur } from 'svelte/transition';
 	import { localMedia } from '~/lib/stores/producedMedia';
+	import IconVideo from '~/components/icons/Icon-video.svelte';
+	import IconVideoOff from '~/components/icons/Icon-video-off.svelte';
 
 	$: isOn = !!$localMedia.video.stream && !$localMedia.video.paused;
 	$: isBlocked = $localMedia.video.blocked;
@@ -26,7 +28,7 @@
 			class:has-text-danger={hasError}
 			class:has-text-success={isOn && isWanted}
 			class:has-text-warning={isOn && !isWanted}
-			><ion-icon name={isOn ? 'videocam' : 'videocam-off'}></ion-icon></span
+			>{#if isOn}<IconVideo />{:else}<IconVideoOff />{/if}</span
 		>
 		{#if !minimal}
 			<span

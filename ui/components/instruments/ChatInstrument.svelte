@@ -3,6 +3,8 @@
 
 	import ChatInput from '../chat/ChatInput.svelte';
 	import ChatList from '../chat/ChatList.svelte';
+	import IconUsers from '../icons/Icon-users.svelte';
+	import IconStar from '../icons/Icon-star.svelte';
 
 	let backstageOnly = createLocalStore(
 		'instruments-chat-backstage-only',
@@ -17,9 +19,7 @@
 			<ul>
 				<li class:is-active={!$backstageOnly}>
 					<a on:click={() => ($backstageOnly = false)}>
-						<span class="icon is-small"
-							><ion-icon name="people"></ion-icon></span
-						>
+						<span class="icon is-small"><IconUsers /></span>
 						<span>Alla</span>
 					</a>
 				</li>
@@ -28,9 +28,7 @@
 						class:has-text-info={$backstageOnly}
 						on:click={() => ($backstageOnly = true)}
 					>
-						<span class="icon is-small"
-							><ion-icon name="people-circle"></ion-icon></span
-						>
+						<span class="icon is-small"><IconStar /></span>
 						<span>Backstage</span>
 					</a>
 				</li>

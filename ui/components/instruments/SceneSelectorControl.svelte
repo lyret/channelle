@@ -2,6 +2,8 @@
 	import { createEventDispatcher } from 'svelte';
 	import type { DataTypes } from '~/lib';
 	import type { PredefinedLayout } from '~/stores/stage/selectedPredefinedStageLayout';
+	import IconUser from '../icons/Icon-user.svelte';
+	import IconMessageCircle from '../icons/Icon-message-circle.svelte';
 	const dispatch = createEventDispatcher();
 
 	export let selectedLayout: any;
@@ -37,14 +39,12 @@
 				<div class="cell">
 					{#if cell.type == 'empty'}
 						<button disabled class="button is-fullwidth">
-							<span class="icon"><ion-icon name="user"></ion-icon></span>
+							<span class="icon"><IconUser /></span>
 							<span> - Ingen - </span></button
 						>
 					{:else if cell.type == 'chat'}
 						<button disabled class="button is-fullwidth">
-							<span class="icon"
-								><ion-icon name="chatbox-ellipses"></ion-icon></span
-							>
+							<span class="icon"><IconMessageCircle /></span>
 							<span>Chatt</span></button
 						>{:else if cell.type == 'actor'}
 						<div class="select is-fullwidth">

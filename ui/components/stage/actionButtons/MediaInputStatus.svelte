@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { blur } from 'svelte/transition';
+	import IconAlertTriangle from '~/components/icons/Icon-alert-triangle.svelte';
 	import { currentParticipant } from '~/lib/stores/api';
 	import { localMedia } from '~/lib/stores/producedMedia';
 	import { sceneCurtains } from '~/stores/scene/sceneCurtains';
@@ -24,7 +25,7 @@
 		transition:blur
 		class:is-warning={isUrgent}
 	>
-		<span class="icon pr-2"><ion-icon name="warning-outline"></ion-icon></span>
+		<span class="icon pr-2"><IconAlertTriangle /></span>
 		{#if isCameraBlocked && isMicBlocked}
 			Din kamera och mikrofon är inte tillåten.
 		{:else if isCameraBlocked}

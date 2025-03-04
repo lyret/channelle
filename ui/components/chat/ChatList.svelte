@@ -4,6 +4,7 @@
 	import { createDatabaseStore } from '~/stores';
 	import { currentParticipant } from '~/lib/stores/api';
 	import { remove } from '~/lib';
+	import IconTrash_2 from '../icons/Icon-trash-2.svelte';
 
 	export let backstageOnly: boolean = false;
 
@@ -115,7 +116,7 @@
 											class="icon"
 											on:click={() => removeMessage(message.id)}
 										>
-											<ion-icon name="trash-bin"></ion-icon>
+											<IconTrash_2 />
 										</span>
 									</button>
 								</div>
