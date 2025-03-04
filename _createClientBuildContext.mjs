@@ -2,6 +2,7 @@ import Chalk from 'chalk';
 import Esbuild from 'esbuild';
 import EsbuildSvelte from 'esbuild-svelte';
 import { sassPlugin as EsbuildSass } from 'esbuild-sass-plugin';
+import EsbuildSVG from 'esbuild-plugin-svg';
 import SvelteConfig from './svelte.config.mjs';
 import Path from 'node:path';
 
@@ -33,11 +34,11 @@ export async function createClientBuildContext(CONFIG, callback) {
 			'.gif': 'file',
 			'.ttf': 'file',
 			'.otf': 'file',
-			'.svg': 'file',
 			'.mp4': 'file',
 			'.wav': 'file',
 		},
 		plugins: [
+			EsbuildSVG(),
 			EsbuildHtml(),
 			EsbuildSass(),
 			EsbuildSvelte(SvelteConfig),

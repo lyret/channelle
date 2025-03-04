@@ -49,6 +49,7 @@
 		"dotenv": "^16.4.5",
 		"emittery": "^1.0.0",
 		"esbuild": "^0.21.5",
+		"esbuild-plugin-svg": "^0.1.0",
 		"esbuild-sass-plugin": "^3.3.1",
 		"esbuild-svelte": "^0.7.3",
 		"koa": "^2.13.1",

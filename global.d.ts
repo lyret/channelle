@@ -4,8 +4,7 @@ declare module '*.base64' {
 }
 
 declare module '*.svg' {
-	const path: string;
-	export default path;
+	export default SVGElement;
 }
 
 declare module '*.png' {
