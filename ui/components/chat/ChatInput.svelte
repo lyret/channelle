@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { create } from '~/lib';
-	import { APIStore } from '~/lib/stores/api';
-	import IconArrowLeft from '../icons/Icon-arrow-left.svelte';
-	import IconArrowUp from '../icons/Icon-arrow-up.svelte';
+	import { onMount } from "svelte";
+	import { create } from "~/lib";
+	import { APIStore } from "~/lib/stores/api";
+	import PicolArrowFullLeft from "../picol/icons/Picol-arrow-full-left.svelte";
+	import PicolArrowFullUp from "../picol/icons/Picol-arrow-full-up.svelte";
 	export let makeBackstage: boolean = false;
 	export let isLarge: boolean = false;
-	let inputValue: string = '';
+	let inputValue: string = "";
 	let loading = false;
 	$: disabled = loading || !inputValue.length;
 
@@ -16,8 +16,8 @@
 		e.preventDefault();
 		loading = true;
 
-		if ($APIStore.status == 'ready') {
-			await create('message', {
+		if ($APIStore.status == "ready") {
+			await create("message", {
 				data: {
 					participantId: $APIStore.participantId,
 					backstage: makeBackstage,
@@ -27,7 +27,7 @@
 		}
 
 		loading = false;
-		inputValue = '';
+		inputValue = "";
 	}
 
 	onMount(() => {
@@ -62,16 +62,20 @@
 				{disabled}
 				class:is-loading={loading}
 				class:is-primary={!loading && !disabled && !makeBackstage}
-				class:is-info={!loading && !disabled && makeBackstage}
+				class:is-link={!loading && !disabled && makeBackstage}
 			>
 				{#if disabled}
-					<span class="icon"><IconArrowLeft /></span><span>Skriv något</span>
+					<span class="icon"><PicolArrowFullLeft /></span><span
+						>Skriv något</span
+					>
 				{:else if makeBackstage}
-					<span class="icon"><IconArrowUp /></span><span
+					<span class="icon"><PicolArrowFullUp /></span><span
 						>Skicka till backstage</span
 					>
 				{:else}
-					<span class="icon"><IconArrowUp /></span><span>Skicka till alla</span>
+					<span class="icon"><PicolArrowFullUp /></span><span
+						>Skicka till alla</span
+					>
 				{/if}
 			</button>
 		</div>

@@ -23,13 +23,13 @@
 		Alla
 	</label>
 	{#if managers.length}
-		<label class="radio has-text-info">
+		<label class="radio has-text-link">
 			<input type="radio" name="filter" value="Tekniker" bind:group={filter} />
 			Tekniker
 		</label>
 	{/if}
 	{#if actors.length}
-		<label class="radio has-text-info">
+		<label class="radio has-text-link">
 			<input
 				type="radio"
 				name="filter"

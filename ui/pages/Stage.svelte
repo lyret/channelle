@@ -26,6 +26,10 @@
 		`;
 
 	onMount(() => {
+		// setTimeout(() => {
+		// 	document.documentElement.style.setProperty("--main-background-color", "green");
+		// }, 2000);
+
 		StageLayout.subscribe((data) => {
 			console.log('StageLayout', data);
 		});
@@ -71,9 +75,10 @@
 		{#if $stageSettings || $stageChat}
 			<div class="sidebar">
 				<div
-					class="notification sidebar-contents"
+					class="notification is-info sidebar-contents"
 					style="z-index: 9999"
-					transition:fly
+					in:fly={{ y: 200 }}
+					out:fly={{ y: 200 }}
 				>
 					{#if $stageSettings}
 						<OptionsPanel />
@@ -155,7 +160,9 @@
 
 	.sidebar-contents {
 		position: absolute;
-		top: 8px;
+		top: clamp(8px, auto, 8px);
+		max-height: 100%;
+		margin-top: 8px;
 		left: 8px;
 		right: 8px;
 		bottom: 12px;
@@ -165,14 +172,14 @@
 			var(--bulma-notification-h),
 			var(--bulma-notification-s),
 			var(--bulma-notification-background-l),
-			0.8
+			0.9
 		);
 		-webkit-backdrop-filter: blur(10px);
 		backdrop-filter: blur(10px);
 	}
 
 	.footer {
-		background-color: rgba(0, 0, 0, 0.8);
+		background-color: var(--bulma-body-background-color);
 		margin: 0;
 		padding: 8px 0px;
 		width: 100%;
@@ -182,11 +189,11 @@
 		order: 1;
 		flex-grow: 0;
 		flex-shrink: 0;
-		flex-basis: 1;
+		flex-basis: 0px;
 
 		/*border-top: 1px solid var(--bulma-border);*/
 		z-index: 9999;
-		box-shadow: 0px -10px 10px rgba(0, 0, 0, 0.8);
+		box-shadow: 0px -10px 10px rgba(var(--bulma-body-background-color), 0.8);
 
 		@include mobile {
 			height: 120px;

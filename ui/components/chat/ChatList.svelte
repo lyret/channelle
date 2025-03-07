@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { blur } from 'svelte/transition';
-	import { remove } from '~/lib';
-	import { currentParticipant } from '~/lib/stores/api';
-	import { createDatabaseStore } from '~/stores';
-	import IconTrash_2 from '../icons/Icon-trash-2.svelte';
+	import { onMount } from "svelte";
+	import { blur } from "svelte/transition";
+	import { remove } from "~/lib";
+	import { currentParticipant } from "~/lib/stores/api";
+	import { createDatabaseStore } from "~/stores";
+	import PicoBadgeMinus from "../picol/icons/Picol-badge-minus.svelte";
 
 	export let backstageOnly: boolean = false;
 
@@ -14,7 +14,7 @@
 
 	onMount(() => {
 		if (ref) {
-			ref.addEventListener('scroll', () => {
+			ref.addEventListener("scroll", () => {
 				if (
 					hasUnread &&
 					ref.scrollTop >= ref.scrollHeight - ref.clientHeight - 60
@@ -25,8 +25,8 @@
 		}
 	});
 
-	const allMessages = createDatabaseStore('message');
-	const participants = createDatabaseStore('participant');
+	const allMessages = createDatabaseStore("message");
+	const participants = createDatabaseStore("participant");
 
 	$: backstageAllowed =
 		$currentParticipant.actor || $currentParticipant.manager;
@@ -36,10 +36,10 @@
 
 	function participantName(id: number): string {
 		const participant = $participants.find((p) => p.id == id);
-		return participant?.name || '';
+		return participant?.name || "";
 	}
 	function removeMessage(id: number) {
-		remove('message', { where: { id } });
+		remove("message", { where: { id } });
 	}
 
 	onMount(() => {
@@ -53,7 +53,7 @@
 					hasUnread = true;
 				}
 			} else if (!allMessages.isConnected()) {
-				console.log('here');
+				console.log("here");
 				loaded = true;
 				setTimeout(() => {
 					if (ref) {
@@ -90,20 +90,20 @@
 								class:has-text-right={message.participantId ==
 									$currentParticipant.id}
 								class="list-item-description is-family-title is-size-6"
-								class:has-text-info-light={message.backstage}
+								class:has-text-link-light={message.backstage}
 								class:has-text-grey-light={!message.backstage}
 							>
 								{participantName(message.participantId)} ( {new Date(
 									message.createdAt
 								).getHours()}:{new Date(message.createdAt).getMinutes()}
-								{message.backstage ? 'backstage' : ''}
+								{message.backstage ? "backstage" : ""}
 								)
 							</div>
 							<div
 								class:is-underlined={message.participantId ==
 									$currentParticipant.id}
 								class="list-item-title"
-								class:has-text-info={message.backstage}
+								class:has-text-link={message.backstage}
 							>
 								{message.message}
 							</div>
@@ -116,7 +116,7 @@
 											class="icon"
 											on:click={() => removeMessage(message.id)}
 										>
-											<IconTrash_2 />
+											<PicoBadgeMinus />
 										</span>
 									</button>
 								</div>

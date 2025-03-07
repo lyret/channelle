@@ -20,7 +20,7 @@
 
 {#if visible}
 	<span
-		class="tag is-link mt-3 mr-2"
+		class="tag is-info mt-1 mr-2 is-large"
 		transition:blur
 		class:is-warning={isUrgent}
 	>
