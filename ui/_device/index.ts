@@ -1,1 +1,1 @@
-export * from './windowSizeStore';
+export * from "./windowSizeStore";

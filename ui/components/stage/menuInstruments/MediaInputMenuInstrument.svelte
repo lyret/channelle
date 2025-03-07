@@ -1,10 +1,10 @@
 <script lang="ts">
-	import IconMeh from '~/components/icons/Icon-meh.svelte';
-	import IconMic from '~/components/icons/Icon-mic.svelte';
-	import IconVideo from '~/components/icons/Icon-video.svelte';
-	import { update } from '~/lib';
-	import { currentParticipant } from '~/lib/stores/api';
-	import { localMedia } from '~/lib/stores/producedMedia';
+	import IconMeh from "~/components/icons/Icon-meh.svelte";
+	import IconMic from "~/components/icons/Icon-mic.svelte";
+	import IconVideo from "~/components/icons/Icon-video.svelte";
+	import { update } from "~/lib";
+	import { currentParticipant } from "~/lib/stores/api";
+	import { localMedia } from "~/lib/stores/producedMedia";
 
 	let isLoading = false;
 	let isUnloaded = true;
@@ -45,8 +45,8 @@
 	async function updateName() {
 		const currentName = $currentParticipant.name;
 		const newName =
-			window.prompt('Byt namn till...', currentName) || currentName;
-		await update('participant', {
+			window.prompt("Byt namn till...", currentName) || currentName;
+		await update("participant", {
 			where: { id: $currentParticipant.id },
 			data: { name: newName },
 		});

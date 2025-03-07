@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher } from "svelte";
 
 	const dispatch = createEventDispatcher();
 
-	import type { DataTypes } from '~/lib';
-	import { update } from '~/lib';
+	import type { DataTypes } from "~/lib";
+	import { update } from "~/lib";
 
-	export let participant: DataTypes['participant'];
+	export let participant: DataTypes["participant"];
 
-	let name: string = '';
+	let name: string = "";
 	let loading: boolean = false;
 
 	// Handle the submission
@@ -16,11 +16,11 @@
 		e.preventDefault();
 		loading = true;
 
-		await update('participant', {
+		await update("participant", {
 			where: { id: participant.id },
 			data: { name },
 		});
-		dispatch('submit');
+		dispatch("submit");
 	}
 </script>
 

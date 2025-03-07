@@ -1,6 +1,6 @@
-import type { Writable } from 'svelte/store';
+import type { Writable } from "svelte/store";
 
-export function fullscreenStore() : Omit<Writable<boolean>, 'update'> & { toggle: () => void } {
+export function fullscreenStore() : Omit<Writable<boolean>, "update"> & { toggle: () => void } {
 	return {
 		subscribe: (set) => {
 			const fullscreenEventHandler = () => {
@@ -12,13 +12,13 @@ export function fullscreenStore() : Omit<Writable<boolean>, 'update'> & { toggle
 			};
 	
 			document?.addEventListener(
-				'fullscreenchange',
+				"fullscreenchange",
 				fullscreenEventHandler
 			);
 	
 			return () => {
 				document?.removeEventListener(
-					'fullscreenchange',
+					"fullscreenchange",
 					fullscreenEventHandler
 				);
 			};

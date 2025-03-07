@@ -1,4 +1,4 @@
-import type { SingletonDocument } from './_singleton';
+import type { SingletonDocument } from "./_singleton";
 
 interface HighscoreEntry {
 	name: string;

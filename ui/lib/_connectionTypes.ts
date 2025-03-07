@@ -3,4 +3,4 @@ export type {
 	SubscriptionMessage,
 	MediaRequests,
 	ParticipationStatusName,
-} from '../../shared';
+} from "../../shared";

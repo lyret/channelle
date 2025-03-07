@@ -1,6 +1,6 @@
-import type * as MediaSoup from 'mediasoup';
-import type { MediaRequests } from '../../shared';
-import { createMapStore } from '../lib/stores';
+import type * as MediaSoup from "mediasoup";
+import type { MediaRequests } from "../../shared";
+import { createMapStore } from "../lib/stores";
 
 /** Keeps tracks of created real time transports { [ transport id ]: transport with options } */
 export const openTransports = createMapStore<
@@ -15,7 +15,7 @@ export const openTransports = createMapStore<
 		consumers: Array<MediaSoup.types.Consumer>;
 		producers: Array<MediaSoup.types.Producer>;
 	}
->('rtc-transports', {
+>("rtc-transports", {
 	// Close transport as they are deleted from this map
 	onDelete: ({ transport }) => {
 		transport.close();
@@ -34,7 +34,7 @@ export const mediaProducerTransports = createMapStore<
 		consumers: Array<MediaSoup.types.Consumer>;
 		producers: Array<MediaSoup.types.Producer>;
 	}
->('media-producer-transports', {
+>("media-producer-transports", {
 	// Close any producer transport when deleted from the map
 	onDelete: ({ transport }) => {
 		transport.close();
@@ -52,7 +52,7 @@ export const mediaReceiverTransports = createMapStore<
 		transport: MediaSoup.types.WebRtcTransport;
 		consumers: Array<MediaSoup.types.Consumer>;
 	}
->('media-receiver-transports', {
+>("media-receiver-transports", {
 	// Close any receiver transport when deleted from the map
 	onDelete: ({ transport }) => {
 		transport.close();
@@ -61,7 +61,7 @@ export const mediaReceiverTransports = createMapStore<
 
 /** Contains media soup producer objects for each active producer of video */
 export const videoProducers = createMapStore<string, MediaSoup.types.Producer>(
-	'media-video-producers',
+	"media-video-producers",
 	{
 		// Close any producer when deleted from the map
 		onDelete: (producer) => {
@@ -72,7 +72,7 @@ export const videoProducers = createMapStore<string, MediaSoup.types.Producer>(
 /** Contains media soup producer objects for each active producer of audio */
 
 export const audioProducers = createMapStore<string, MediaSoup.types.Producer>(
-	'media-audio-producers',
+	"media-audio-producers",
 	{
 		// Close any producer when deleted from the map
 		onDelete: (producer) => {

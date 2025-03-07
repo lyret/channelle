@@ -1,16 +1,16 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { blur } from 'svelte/transition';
-	import ChatInput from '../chat/ChatInput.svelte';
-	import ChatList from '../chat/ChatList.svelte';
-	import { sceneChatIsEnabled } from '~/stores/scene/sceneChatIsEnabled';
+	import { onMount } from "svelte";
+	import { blur } from "svelte/transition";
+	import ChatInput from "../chat/ChatInput.svelte";
+	import ChatList from "../chat/ChatList.svelte";
+	import { sceneChatIsEnabled } from "~/stores/scene/sceneChatIsEnabled";
 
 	let ref: HTMLDivElement;
 	let hasUnread = false;
 
 	onMount(() => {
 		if (ref) {
-			ref.addEventListener('scroll', () => {
+			ref.addEventListener("scroll", () => {
 				if (hasUnread && ref.scrollTop >= ref.scrollHeight - ref.offsetHeight) {
 					hasUnread = false;
 				}

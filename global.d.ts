@@ -1,33 +1,33 @@
-declare module '*.base64' {
+declare module "*.base64" {
 	const content: string;
 	export default content;
 }
 
-declare module '*.svg' {
+declare module "*.svg" {
 	export default SVGElement;
 }
 
-declare module '*.png' {
+declare module "*.png" {
 	const path: string;
 	export default path;
 }
 
-declare module '*.jpg' {
+declare module "*.jpg" {
 	const path: string;
 	export default path;
 }
 
-declare module '*.gif' {
+declare module "*.gif" {
 	const path: string;
 	export default path;
 }
 
-declare module '*.mp4' {
+declare module "*.mp4" {
 	const path: string;
 	export default path;
 }
 
-declare module '*.wav' {
+declare module "*.wav" {
 	const path: string;
 	export default path;
 }

@@ -1,8 +1,8 @@
 import UniversalRouter, {
 	type RouteContext,
 	type RouterContext,
-} from 'universal-router';
-import generateUrls from 'universal-router/generateUrls';
+} from "universal-router";
+import generateUrls from "universal-router/generateUrls";
 
 // ROUTES CONFIG
 
@@ -19,18 +19,18 @@ export interface RouteConfig<Params = object> {
 const route: <Params = object>(
 	path: string,
 	group?: string
-) => RouteConfig<Params> = (path, group = '') => ({
+) => RouteConfig<Params> = (path, group = "") => ({
 	path: path,
 	group: group,
 	params: {} as any,
 });
 
 const routes = <const>{
-	stage: route('/', 'stage'),
-	backstage: route('/backstage', 'backstage'),
+	stage: route("/", "stage"),
+	backstage: route("/backstage", "backstage"),
 };
 
-export const defaultRoute = routes['foyer'];
+export const defaultRoute = routes["foyer"];
 
 export const router = new UniversalRouter(
 	Object.entries(routes).map((entry) => {
@@ -57,7 +57,7 @@ export const gotoRoute = <
 	Entry extends (typeof routes)[K],
 >(
 	key: K,
-	params: Entry['params'] = {},
+	params: Entry["params"] = {},
 	options: { reload?: boolean } = {}
 ) => {
 	const url = generator(key, params);
@@ -72,7 +72,7 @@ export const replaceRoute = <
 	Entry extends (typeof routes)[K],
 >(
 	key: K,
-	params: Entry['params'] = {}
+	params: Entry["params"] = {}
 ) => {
 	const url = generator(key, params);
 	history.replaceState(null, `Channelle - ${key}`, url);
@@ -81,7 +81,7 @@ export const replaceRoute = <
 export const linkTo =
 	<K extends RouteName, Entry extends (typeof routes)[K]>(
 		key: K,
-		params: Entry['params'] = {}
+		params: Entry["params"] = {}
 	) =>
 		() =>
 			gotoRoute(key, params);

@@ -1,9 +1,9 @@
-import Chalk from 'chalk';
-import 'dotenv/config';
-import { readFileSync } from 'node:fs';
-import { networkInterfaces } from 'node:os';
-import Nopt from 'nopt';
-import { publicIpv4 } from 'public-ip';
+import Chalk from "chalk";
+import "dotenv/config";
+import { readFileSync } from "node:fs";
+import { networkInterfaces } from "node:os";
+import Nopt from "nopt";
+import { publicIpv4 } from "public-ip";
 
 /** Creates and returns a runtime context including any given CLI options */
 export async function createConfiguration() {
@@ -11,7 +11,7 @@ export async function createConfiguration() {
 	const { env } = process;
 
 	// Parse Package JSON
-	const pkg = JSON.parse(readFileSync('./package.json'));
+	const pkg = JSON.parse(readFileSync("./package.json"));
 
 	// Parse CLI Options
 	// @see https://www.npmjs.com/package/nopt
@@ -29,11 +29,11 @@ export async function createConfiguration() {
 			start: Boolean,
 		},
 		{
-			p: ['--port'],
-			v: ['--verbose'],
-			b: ['--build'],
-			d: ['--debug'],
-			w: ['--watch'],
+			p: ["--port"],
+			v: ["--verbose"],
+			b: ["--build"],
+			d: ["--debug"],
+			w: ["--watch"],
 		}
 	);
 
@@ -48,12 +48,12 @@ export async function createConfiguration() {
 	const production =
 		cli.production !== undefined
 			? cli.production
-			: env.NODE_ENV == 'production' ||
-				(env.PRODUCTION && env.PRODUCTION != 'false');
+			: env.NODE_ENV == "production" ||
+				(env.PRODUCTION && env.PRODUCTION != "false");
 	console.log(
-		'🔹',
-		Chalk.bgBlueBright('[CONFIG]'),
-		'Production Mode',
+		"🔹",
+		Chalk.bgBlueBright("[CONFIG]"),
+		"Production Mode",
 		production
 	);
 
@@ -61,45 +61,45 @@ export async function createConfiguration() {
 	const verbose =
 		cli.verbose !== undefined
 			? cli.production
-			: env.VERBOSE && env.VERBOSE != 'false';
-	console.log('🔹', Chalk.bgBlueBright('[CONFIG]'), 'Verbose Output', verbose);
+			: env.VERBOSE && env.VERBOSE != "false";
+	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Verbose Output", verbose);
 
 	// If DEBUG is enabled the nodeJS application will be launched with support for an external debugger
 	const debug =
-		cli.debug !== undefined ? cli.debug : env.DEBUG != 'false' || false;
-	console.log('🔹', Chalk.bgBlueBright('[CONFIG]'), 'Debug', debug);
+		cli.debug !== undefined ? cli.debug : env.DEBUG != "false" || false;
+	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Debug", debug);
 
 	// The PORT option sets the network interface port for the server to bind to.
 	// Defaults to 3000.
 	const port =
 		cli.port !== undefined ? cli.port : env.PORT ? Number(env.PORT) : 3000;
-	console.log('🔹', Chalk.bgBlueBright('[CONFIG]'), 'Port', Chalk.bold(port));
+	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Port", Chalk.bold(port));
 
 	// The LOCAL options enables the stage server to be reached from the loopback interface of the machine running the server
 	const local =
-		cli.local !== undefined ? cli.LOCAL : env.local != 'false' || true;
+		cli.local !== undefined ? cli.LOCAL : env.local != "false" || true;
 
 	// The LAN options enables the stage server to be reached from within the current local area network
-	const lan = cli.lan !== undefined ? cli.LAN : env.lan != 'false' || true;
+	const lan = cli.lan !== undefined ? cli.LAN : env.lan != "false" || true;
 
 	// The WAN options enables the stage server to be reached from the current wide area network, i.e.  the public internet
 	const wan =
-		cli.wan !== undefined ? cli.wan : env.WAN != 'false' || production;
+		cli.wan !== undefined ? cli.wan : env.WAN != "false" || production;
 
 	// The BUILD option makes the CLI program generate fresh server and frontend code bundles for the current configuration
 	const build =
-		cli.build !== undefined ? cli.build : env.BUILD != 'false' || false;
-	console.log('🔹', Chalk.bgBlueBright('[CONFIG]'), 'Build', build);
+		cli.build !== undefined ? cli.build : env.BUILD != "false" || false;
+	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Build", build);
 
 	// The WATCH option makes the CLI program stay alive and watch and rebuild the source code files when changed
 	const watch =
-		cli.watch !== undefined ? cli.watch : env.WATCH != 'false' || false;
-	console.log('🔹', Chalk.bgBlueBright('[CONFIG]'), 'Watch', watch);
+		cli.watch !== undefined ? cli.watch : env.WATCH != "false" || false;
+	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Watch", watch);
 
 	// The START option will make the CLI program launch the server with the current configuration
 	const start =
-		cli.start !== undefined ? cli.start : env.START != 'false' || false;
-	console.log('🔹', Chalk.bgBlueBright('[CONFIG]'), 'Start', start);
+		cli.start !== undefined ? cli.start : env.START != "false" || false;
+	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Start", start);
 	console.log();
 
 	// Create an array of transport listening info for webRTC, will be filled
@@ -113,23 +113,23 @@ export async function createConfiguration() {
 
 			// Add listening infos for WAN,
 			webRTCTransportListenInfos.push({
-				protocol: 'udp',
-				ip: '0.0.0.0',
+				protocol: "udp",
+				ip: "0.0.0.0",
 				announcedAddress: publicIP,
 			});
 			webRTCTransportListenInfos.push({
-				protocol: 'tcp',
-				ip: '0.0.0.0',
+				protocol: "tcp",
+				ip: "0.0.0.0",
 				announcedAddress: publicIP,
 			});
-			console.log('🔹', Chalk.bgBlueBright('[CONFIG]'), 'WEBRTC WAN', publicIP);
+			console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "WEBRTC WAN", publicIP);
 		}
 		if (lan) {
 			// Get any lan IP addresses of this server
 			const lanIP = Object.entries(networkInterfaces())
 				.map(([i, networks]) =>
 					networks
-						.filter((n) => n.family == 'IPv4')
+						.filter((n) => n.family == "IPv4")
 						.map((n) => ({ ...n, interface: i }))
 				)
 				.flat()
@@ -137,34 +137,34 @@ export async function createConfiguration() {
 
 			// Add listening info for WAN,
 			webRTCTransportListenInfos.push({
-				protocol: 'udp',
+				protocol: "udp",
 				ip: lanIP,
 				announcedAddress: lanIP,
 			});
 			webRTCTransportListenInfos.push({
-				protocol: 'tcp',
+				protocol: "tcp",
 				ip: lanIP,
 				announcedAddress: lanIP,
 			});
-			console.log('🔹', Chalk.bgBlueBright('[CONFIG]'), 'WEBRTC LAN', lanIP);
+			console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "WEBRTC LAN", lanIP);
 		}
 		if (local) {
 			// Add listening info for LOCALHOST,
 			webRTCTransportListenInfos.push({
-				protocol: 'udp',
-				ip: '127.0.0.1',
-				announcedAddress: '127.0.0.1',
+				protocol: "udp",
+				ip: "127.0.0.1",
+				announcedAddress: "127.0.0.1",
 			});
 			webRTCTransportListenInfos.push({
-				protocol: 'tcp',
-				ip: '127.0.0.1',
-				announcedAddress: '127.0.0.1',
+				protocol: "tcp",
+				ip: "127.0.0.1",
+				announcedAddress: "127.0.0.1",
 			});
 			console.log(
-				'🔹',
-				Chalk.bgBlueBright('[CONFIG]'),
-				'WEBRTC LOCALHOST',
-				'127.0.0.1'
+				"🔹",
+				Chalk.bgBlueBright("[CONFIG]"),
+				"WEBRTC LOCALHOST",
+				"127.0.0.1"
 			);
 		}
 	}
@@ -193,9 +193,9 @@ export async function createConfiguration() {
 		/** Build Settings */
 		build: {
 			/** The directory to use for server builds */
-			serverOutput: '.dist/server',
+			serverOutput: ".dist/server",
 			/** The directory to use for client builds */
-			clientOutput: '.dist/ui',
+			clientOutput: ".dist/ui",
 		},
 		/** Debug Settings */
 		debug: {
@@ -204,8 +204,8 @@ export async function createConfiguration() {
 		},
 		/** Stage Settings */
 		stage: {
-			name: process.env.STAGE_NAME || '',
-			inviteKey: process.env.STAGE_INVITE_LINK_KEY || '123',
+			name: process.env.STAGE_NAME || "",
+			inviteKey: process.env.STAGE_INVITE_LINK_KEY || "123",
 		},
 		/** Web Server Settings */
 		web: {
@@ -214,14 +214,14 @@ export async function createConfiguration() {
 				(info) => info.announcedAddress
 			),
 			/** Exposed listening host */
-			host: production ? '0.0.0.0' : 'localhost',
+			host: production ? "0.0.0.0" : "localhost",
 			/** Exposed listening port */
 			port: port,
 		},
 		/** Socket IO Settings */
 		socket: {
-			path: '/ws',
-			transports: ['websocket'],
+			path: "/ws",
+			transports: ["websocket"],
 		},
 		/** MediaSoup Settings */
 		mediasoup: {
@@ -229,14 +229,14 @@ export async function createConfiguration() {
 			worker: {
 				rtcMinPort: 10000,
 				rtcMaxPort: 10100,
-				logLevel: 'warn',
+				logLevel: "warn",
 				logTags: [
-					'info',
-					'ice',
-					'dtls',
-					'rtp',
-					'srtp',
-					'rtcp',
+					"info",
+					"ice",
+					"dtls",
+					"rtp",
+					"srtp",
+					"rtcp",
 					// 'rtx',
 					// 'bwe',
 					// 'score',
@@ -248,17 +248,17 @@ export async function createConfiguration() {
 			router: {
 				mediaCodecs: [
 					{
-						kind: 'audio',
-						mimeType: 'audio/opus',
+						kind: "audio",
+						mimeType: "audio/opus",
 						clockRate: 48000,
 						channels: 2,
 					},
 					{
-						kind: 'video',
-						mimeType: 'video/VP8',
+						kind: "video",
+						mimeType: "video/VP8",
 						clockRate: 90000,
 						parameters: {
-							'x-google-start-bitrate': 1000,
+							"x-google-start-bitrate": 1000,
 						},
 					},
 				],

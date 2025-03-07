@@ -1,6 +1,6 @@
-import EventEmitter from 'node:events';
-import { ws } from '../api';
-import { attempt } from '../utils/attempt';
+import EventEmitter from "node:events";
+import { ws } from "../api";
+import { attempt } from "../utils/attempt";
 
 /** Creates a new observable store for a map of values */
 export function createMapStore<K extends string | number, V>(
@@ -20,17 +20,17 @@ export function createMapStore<K extends string | number, V>(
 	// Create a method for emitting the map when its updated
 	const _emit = () => {
 		const currentData = Object.fromEntries(_map.entries()) as Record<K, V>;
-		_emitter.emit('*', currentData);
-		_io.emit('*', currentData);
+		_emitter.emit("*", currentData);
+		_io.emit("*", currentData);
 	};
 
 	// Handle incomming web socket events from the client
-	_io.on('connection', (_socket) => {
-		_socket.on('set', ({ key, value }) => {
+	_io.on("connection", (_socket) => {
+		_socket.on("set", ({ key, value }) => {
 			_map.set(key, value);
 			_emit();
 		});
-		_socket.on('delete', ({ key }) => {
+		_socket.on("delete", ({ key }) => {
 			if (!_map.has(key)) {
 				return;
 			}
@@ -40,7 +40,7 @@ export function createMapStore<K extends string | number, V>(
 			_map.delete(key);
 			_emit();
 		});
-		_socket.on('clear', () => {
+		_socket.on("clear", () => {
 			if (!_map.size) {
 				return;
 			}
@@ -50,7 +50,7 @@ export function createMapStore<K extends string | number, V>(
 			_map.clear();
 			_emit();
 		});
-		_socket.on('refresh', (callback) => {
+		_socket.on("refresh", (callback) => {
 			const currentData = Object.fromEntries(_map.entries()) as Record<K, V>;
 			callback(currentData);
 		});
@@ -95,10 +95,10 @@ export function createMapStore<K extends string | number, V>(
 			return _map.entries();
 		},
 		subscribe: (handler: (data: Record<K, V>) => any) => {
-			_emitter.on('*', handler);
+			_emitter.on("*", handler);
 			attempt(handler)(Object.fromEntries(_map.entries()) as Record<K, V>);
 			return () => {
-				_emitter.off('*', handler);
+				_emitter.off("*", handler);
 			};
 		},
 	};
@@ -128,5 +128,5 @@ export type ObservableMapStore<K extends string | number, V> = {
 
 /** Events emitted within the observable map store */
 export type OMEvents<K extends string | number, V> = {
-	'*': Record<K, V>;
+	"*": Record<K, V>;
 };

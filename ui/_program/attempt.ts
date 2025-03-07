@@ -9,7 +9,7 @@ export const attempt = <Args extends Array<any>, Res>(
 			const result = await fn(...args);
 			return { ok: true, result };
 		} catch (err) {
-			console.error('attempt failed', err);
+			console.error("attempt failed", err);
 			return { ok: false, error: err };
 		}
 	};

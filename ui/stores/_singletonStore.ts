@@ -1,8 +1,8 @@
 import type {
 	SingletonDocuments,
 	SingletonName,
-} from '../../shared/singeltons';
-import { writable } from 'svelte/store';
+} from "../../shared/singeltons";
+import { writable } from "svelte/store";
 
 /** Store interface */
 interface SingletonStore<T> {
@@ -44,7 +44,7 @@ export function createSingletonStore<
 	// Methods
 
 	const set = function (data: Document | undefined) {
-		fetch(endpoint, { method: 'POST', body: JSON.stringify(data) })
+		fetch(endpoint, { method: "POST", body: JSON.stringify(data) })
 			.then(() => {
 				value = data;
 				setter(data);

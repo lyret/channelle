@@ -1,17 +1,17 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
-	import type { DataTypes } from '~/lib';
+	import { createEventDispatcher } from "svelte";
+	import type { DataTypes } from "~/lib";
 
 	const dispatch = createEventDispatcher();
 
-	export let participant: DataTypes['participant'];
+	export let participant: DataTypes["participant"];
 
-	const name: string = '';
+	const name: string = "";
 	const loading: boolean = false;
 
 	// Handle the submission
 	async function onClick() {
-		dispatch('click');
+		dispatch("click");
 	}
 </script>
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { slide } from 'svelte/transition';
+	import { slide } from "svelte/transition";
 	//import { onMount, onDestroy } from 'svelte';
 	//import curtainsAnimatedSrc from '~/assets/images/roses.gif';
 	//import dreamLoopSrc from '~/assets/sounds/dream-loop.wav';
@@ -46,8 +46,8 @@
 
 <div
 	class="curtains"
-	in:slide={{ axis: 'y', duration: 1000 }}
-	out:slide={{ axis: 'y', duration: 500, delay: 500 }}
+	in:slide={{ axis: "y", duration: 1000 }}
+	out:slide={{ axis: "y", duration: 500, delay: 500 }}
 ></div>
 
 <style>

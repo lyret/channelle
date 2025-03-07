@@ -1,12 +1,12 @@
-import type * as MediaSoup from 'mediasoup-client';
+import type * as MediaSoup from "mediasoup-client";
 import {
 	onRTCTransportConnectingRequest,
 	onTransportConnectingProducingRequest,
 	requestRTCTransportCreation,
-} from '../requests/transportRequests';
-import { mediaDevice } from './mediaDevice';
-import { rtpCapabilities } from './rtpCapabilities';
-import { ws } from './ws';
+} from "../requests/transportRequests";
+import { mediaDevice } from "./mediaDevice";
+import { rtpCapabilities } from "./rtpCapabilities";
+import { ws } from "./ws";
 
 /** Global RTC Send Transport */
 let _sendTransport: MediaSoup.types.Transport | undefined = undefined;
@@ -27,7 +27,7 @@ export async function rtcSendTransport(): Promise<MediaSoup.types.Transport> {
 
 	// Get send options from the server
 	const sendOptions = await requestRTCTransportCreation(_socket, {
-		type: 'sender',
+		type: "sender",
 		forceTcp: false,
 		rtpCapabilities: _rtpCapabilities,
 	});
@@ -36,15 +36,15 @@ export async function rtcSendTransport(): Promise<MediaSoup.types.Transport> {
 	const transport = mediaDevice().createSendTransport(sendOptions);
 
 	// Connect and supply the dtls parameters to the server
-	transport.on('connect', async ({ dtlsParameters }, callback, errback) => {
-		onRTCTransportConnectingRequest(_socket, { dtlsParameters, type: 'sender' })
+	transport.on("connect", async ({ dtlsParameters }, callback, errback) => {
+		onRTCTransportConnectingRequest(_socket, { dtlsParameters, type: "sender" })
 			.then(callback)
 			.catch(errback);
 	});
 
 	// Handle produce events - that is when media is sent over this transport
 	transport.on(
-		'produce',
+		"produce",
 		async ({ kind, rtpParameters }, callback, errback) => {
 			await onTransportConnectingProducingRequest(_socket, {
 				transportId: transport.id,
@@ -57,38 +57,38 @@ export async function rtcSendTransport(): Promise<MediaSoup.types.Transport> {
 	);
 
 	// Handle connection state change events
-	transport.on('connectionstatechange', (state) => {
+	transport.on("connectionstatechange", (state) => {
 		switch (state) {
-			case 'connecting':
+			case "connecting":
 				console.log(`[SEND TRANSPORT #${transport.id} ] Connecting...`);
 				break;
 
-			case 'connected':
+			case "connected":
 				console.log(`[SEND TRANSPORT #${transport.id} ] Connected!`);
 				break;
 
-			case 'failed':
+			case "failed":
 				console.log(`[SEND TRANSPORT #${transport.id} ] Failed...`);
 				transport.close();
 				break;
 
-			case 'closed':
+			case "closed":
 				console.log(`[SEND TRANSPORT #${transport.id} ] Closed`);
 				transport.close();
 				break;
 
-			case 'disconnected':
+			case "disconnected":
 				console.log(`[SEND TRANSPORT #${transport.id} ] Disconnected`);
 				transport.close();
 				break;
 
-			case 'new':
+			case "new":
 				console.log(`[SEND TRANSPORT #${transport.id} ] New...`);
 				transport.close();
 				break;
 
 			default:
-				throw new Error('Unhandled send transport state change: ' + state);
+				throw new Error("Unhandled send transport state change: " + state);
 		}
 	});
 

@@ -1,43 +1,43 @@
-import Chalk from 'chalk';
-import Esbuild from 'esbuild';
-import { copy as EsbuildCopy } from 'esbuild-plugin-copy';
-import EsbuildSVG from 'esbuild-plugin-svg';
-import { sassPlugin as EsbuildSass } from 'esbuild-sass-plugin';
-import EsbuildSvelte from 'esbuild-svelte';
-import Path from 'node:path';
-import * as Sass from 'sass';
-import SvelteConfig from './svelte.config.mjs';
+import Chalk from "chalk";
+import Esbuild from "esbuild";
+import { copy as EsbuildCopy } from "esbuild-plugin-copy";
+import EsbuildSVG from "esbuild-plugin-svg";
+import { sassPlugin as EsbuildSass } from "esbuild-sass-plugin";
+import EsbuildSvelte from "esbuild-svelte";
+import Path from "node:path";
+import * as Sass from "sass";
+import SvelteConfig from "./svelte.config.mjs";
 
 /** Creates the build context for building the client code using the given config */
 export async function createClientBuildContext(CONFIG, callback) {
-	const { default: EsbuildHtml } = await import('@chialab/esbuild-plugin-html');
+	const { default: EsbuildHtml } = await import("@chialab/esbuild-plugin-html");
 
 	return Esbuild.context({
-		publicPath: '/',
+		publicPath: "/",
 		bundle: true,
 		write: true,
 		sourcemap: CONFIG.runtime.debug,
 		metafile: true,
 		minify: CONFIG.runtime.production,
-		platform: 'browser',
-		external: ['url'],
-		logLevel: CONFIG.runtime.verbose ? 'warning' : 'error',
-		entryPoints: ['./ui/index.html', './ui/_main.ts'],
+		platform: "browser",
+		external: ["url"],
+		logLevel: CONFIG.runtime.verbose ? "warning" : "error",
+		entryPoints: ["./ui/index.html", "./ui/_main.ts"],
 		outdir: Path.resolve(process.cwd(), CONFIG.build.clientOutput),
 		define: {
 			CONFIG: JSON.stringify(CONFIG),
 		},
 		treeShaking: true,
-		conditions: ['svelte'],
+		conditions: ["svelte"],
 		loader: {
-			'.base64': 'dataurl',
-			'.jpg': 'file',
-			'.png': 'file',
-			'.gif': 'file',
-			'.ttf': 'file',
-			'.otf': 'file',
-			'.mp4': 'file',
-			'.wav': 'file',
+			".base64": "dataurl",
+			".jpg": "file",
+			".png": "file",
+			".gif": "file",
+			".ttf": "file",
+			".otf": "file",
+			".mp4": "file",
+			".wav": "file",
 		},
 		plugins: [
 			EsbuildSVG(),
@@ -50,25 +50,25 @@ export async function createClientBuildContext(CONFIG, callback) {
 			EsbuildSvelte(SvelteConfig),
 			EsbuildCopy({
 				verbose: CONFIG.runtime.verbose,
-				resolveFrom: 'cwd',
+				resolveFrom: "cwd",
 				assets: {
-					from: ['ui/static/**/*'],
-					to: ['.dist/ui/static'],
+					from: ["ui/static/**/*"],
+					to: [".dist/ui/static"],
 				},
 				watch: true,
 			}),
 			{
-				name: 'EsbuildCallback',
+				name: "EsbuildCallback",
 				setup(build) {
 					build.onEnd((results) => {
 						if (
-							results.metafile?.outputs['.dist/ui/index.html'] &&
-							results.metafile?.outputs['.dist/ui/_main.js']
+							results.metafile?.outputs[".dist/ui/index.html"] &&
+							results.metafile?.outputs[".dist/ui/_main.js"]
 						) {
 							console.log(
-								'\n📦',
-								Chalk.white.bgGreen('[BUILD]'),
-								Chalk.bold('New client code available\n')
+								"\n📦",
+								Chalk.white.bgGreen("[BUILD]"),
+								Chalk.bold("New client code available\n")
 							);
 
 							if (callback) {

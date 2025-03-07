@@ -1,4 +1,4 @@
-import * as MediaSoup from 'mediasoup';
+import * as MediaSoup from "mediasoup";
 
 let _router: MediaSoup.types.Router | undefined;
 let _worker: MediaSoup.types.Worker | undefined;
@@ -32,7 +32,7 @@ async function mediaSoupWorker() {
 	});
 
 	// Handle worker process interruptions
-	_worker.on('died', () => {
+	_worker.on("died", () => {
 		console.error(
 			`[MS Server] the mediasoup worker died, exiting in 2 seconds... [pid:${worker.pid}]`
 		);

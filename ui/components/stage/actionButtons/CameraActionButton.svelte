@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { currentParticipant } from '~/lib/stores/api';
-	import { blur } from 'svelte/transition';
-	import { localMedia } from '~/lib/stores/producedMedia';
-	import IconVideo from '~/components/icons/Icon-video.svelte';
-	import IconVideoOff from '~/components/icons/Icon-video-off.svelte';
+	import { blur } from "svelte/transition";
+	import IconVideoOff from "~/components/picol/icons/Picol-video-remove.svelte";
+	import IconVideo from "~/components/picol/icons/Picol-video-run.svelte";
+	import { currentParticipant } from "~/lib/stores/api";
+	import { localMedia } from "~/lib/stores/producedMedia";
 
 	$: isOn = !!$localMedia.video.stream && !$localMedia.video.paused;
 	$: isBlocked = $localMedia.video.blocked;

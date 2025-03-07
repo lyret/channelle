@@ -1,2 +1,2 @@
-export * from './getDeviceMediaStream';
-export * from './listDeviceMediaSources';
+export * from "./getDeviceMediaStream";
+export * from "./listDeviceMediaSources";

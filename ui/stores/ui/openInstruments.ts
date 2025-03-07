@@ -1,25 +1,25 @@
-import { createSerializedLocalStorageStore } from '~/_localStorage';
-import { createLocalStore } from '../_localStore';
+import { createSerializedLocalStorageStore } from "~/_localStorage";
+import { createLocalStore } from "../_localStore";
 
 export type InstrumentName =
-	| 'debug'
-	| 'chat'
-	| 'participants'
-	| 'scene-settings'
-	| 'media-library'
-	| 'access';
+	| "debug"
+	| "chat"
+	| "participants"
+	| "scene-settings"
+	| "media-library"
+	| "access";
 
 function createOpenInstrumentsStore() {
 	const { set, get, subscribe } = createSerializedLocalStorageStore<
 		Partial<Record<InstrumentName, boolean>>
-	>('open-instruments', {
+	>("open-instruments", {
 		serialize: (value) => {
-			return value ? Object.keys(value).join(';') : '';
+			return value ? Object.keys(value).join(";") : "";
 		},
 		deserialize: (data) => {
 			return (
 				data
-					?.split(';')
+					?.split(";")
 					.reduce((obj, val) => (val ? { [val]: true, ...obj } : obj), {}) || {}
 			);
 		},
@@ -41,6 +41,6 @@ function createOpenInstrumentsStore() {
 
 export const openInstruments = createOpenInstrumentsStore();
 export const focusedInstrument = createLocalStore<InstrumentName | undefined>(
-	'focused-instrument',
+	"focused-instrument",
 	undefined
 );

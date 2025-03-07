@@ -1,6 +1,6 @@
-import EventEmitter from 'node:events';
-import { ws } from '../api';
-import { attempt } from '../utils/attempt';
+import EventEmitter from "node:events";
+import { ws } from "../api";
+import { attempt } from "../utils/attempt";
 
 /** Creates a new observable store for a single value */
 export function createValueStore<V>(
@@ -16,17 +16,17 @@ export function createValueStore<V>(
 
 	// Create a method for emitting the value when its updated
 	const _emit = () => {
-		_emitter.emit('*', _value);
-		_io.emit('*', _value);
+		_emitter.emit("*", _value);
+		_io.emit("*", _value);
 	};
 
 	// Handle incomming web socket events from the client
-	_io.on('connection', (_socket) => {
-		_socket.on('set', (value: V) => {
+	_io.on("connection", (_socket) => {
+		_socket.on("set", (value: V) => {
 			_value = value;
 			_emit();
 		});
-		_socket.on('refresh', (callback) => {
+		_socket.on("refresh", (callback) => {
 			callback(_value);
 		});
 	});
@@ -41,10 +41,10 @@ export function createValueStore<V>(
 			return _value;
 		},
 		subscribe: (handler: (value: V) => any) => {
-			_emitter.on('*', handler);
+			_emitter.on("*", handler);
 			attempt(handler)(_value);
 			return () => {
-				_emitter.off('*', handler);
+				_emitter.off("*", handler);
 			};
 		},
 	};
@@ -64,5 +64,5 @@ export type ObservableValueStore<V> = {
 
 /** Events emitted within the observable value store */
 export type OVEvents<V> = {
-	'*': V;
+	"*": V;
 };

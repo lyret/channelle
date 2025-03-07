@@ -1,15 +1,15 @@
-import type { Socket } from 'socket.io-client';
-import { derived, readable } from 'svelte/store';
-import type { DataTypes, SubscriptionMessage } from '~/lib';
-import { createSubscriptionPath } from '../../../shared';
-import { ws } from '../api';
+import type { Socket } from "socket.io-client";
+import { derived, readable } from "svelte/store";
+import type { DataTypes, SubscriptionMessage } from "~/lib";
+import { createSubscriptionPath } from "../../../shared";
+import { ws } from "../api";
 
 /** The API store holds the context information needed to determine connection and participation status */
 export const APIStore = createAPIStore();
 
 /** Gives the current participant if available from the API or an empty participant when unavailable  */
 export const currentParticipant = derived([APIStore], ([$APIStore]) => {
-	if ($APIStore.status == 'ready') {
+	if ($APIStore.status == "ready") {
 		return $APIStore.participant;
 	}
 	return {
@@ -17,31 +17,31 @@ export const currentParticipant = derived([APIStore], ([$APIStore]) => {
 		actor: false,
 		blocked: false,
 		manager: false,
-		name: '',
-	} as DataTypes['participant'];
+		name: "",
+	} as DataTypes["participant"];
 });
 
 /** Creates a Svelte Store from a local subscription */
 function createAPIStore(): APIStore {
 	const _socket: Socket = ws();
 
-	const cookiesAccepted = !!localStorage.getItem('cookies-accepted');
-	const participantId = localStorage.getItem('participant-id')
-		? Number(localStorage.getItem('participant-id'))
+	const cookiesAccepted = !!localStorage.getItem("cookies-accepted");
+	const participantId = localStorage.getItem("participant-id")
+		? Number(localStorage.getItem("participant-id"))
 		: undefined;
 	let participantSubscriptionPath: string | undefined;
 	let participantSubscriptionMessage:
-		| Omit<SubscriptionMessage, 'messageId'>
+		| Omit<SubscriptionMessage, "messageId">
 		| undefined;
 	let _value: APIStoreValue = !_socket.connected
 		? {
-			status: 'disconnected',
+			status: "disconnected",
 			cookiesAccepted,
 			isReady: false,
 			isConnected: false,
 		}
 		: {
-			status: 'connected',
+			status: "connected",
 			cookiesAccepted,
 			isReady: false,
 			isConnected: true,
@@ -49,23 +49,23 @@ function createAPIStore(): APIStore {
 
 	const { subscribe } = readable<APIStoreValue>(_value, function start(_set) {
 		// Handle new participant data
-		const _onParticipantData = (participant: DataTypes['participant'] | null) => {
+		const _onParticipantData = (participant: DataTypes["participant"] | null) => {
 			if (!participant) {
 				return _set({
-					status: 'error',
+					status: "error",
 					isReady: false,
 					hasError: true,
-					errorMessage: 'Nu participant data found in database',
+					errorMessage: "Nu participant data found in database",
 				});
 			}
 			if (participant.blocked) {
 				return _set({
-					status: 'blocked',
+					status: "blocked",
 					isReady: true,
 				});
 			}
 			_set({
-				status: 'ready',
+				status: "ready",
 				cookiesAccepted,
 				isReady: true,
 				isConnected: true,
@@ -77,7 +77,7 @@ function createAPIStore(): APIStore {
 		// Handle connections
 		const _onConnect = () => {
 			_value = {
-				status: 'connected',
+				status: "connected",
 				cookiesAccepted,
 				isReady: false,
 				isConnected: true,
@@ -89,36 +89,36 @@ function createAPIStore(): APIStore {
 			const currentUrl = new URL(window.location.href);
 
 			const hasFollowedInviteLinkForActors: boolean =
-				currentUrl.searchParams.has('invite') &&
-				currentUrl.searchParams.get('invite') == CONFIG.stage.inviteKey;
+				currentUrl.searchParams.has("invite") &&
+				currentUrl.searchParams.get("invite") == CONFIG.stage.inviteKey;
 
 			// Register a participant on the server side API
 			// Either with the existing id stored in local storage or,
 			// if not set - as a new participant
 			_socket.emit(
-				'registerParticipant',
+				"registerParticipant",
 				{ participantId, hasFollowedInviteLinkForActors },
-				(response: { ok: boolean; participant: DataTypes['participant'] }) => {
+				(response: { ok: boolean; participant: DataTypes["participant"] }) => {
 					if (!response?.ok) {
-						console.error('Failed to registred existing participation');
+						console.error("Failed to registred existing participation");
 						_set({
-							status: 'error',
+							status: "error",
 							hasError: true,
 							isReady: false,
-							errorMessage: 'Failed to registred existing participation',
+							errorMessage: "Failed to registred existing participation",
 						});
-						localStorage.removeItem('participant-id');
+						localStorage.removeItem("participant-id");
 						window.location.reload();
 					} else {
 						// Store the current participants id in local storage
 						localStorage.setItem(
-							'participant-id',
+							"participant-id",
 							String(response.participant.id)
 						);
 
 						// Create a subscription to the current participants data in the database
 						participantSubscriptionMessage = {
-							repository: 'participant',
+							repository: "participant",
 							id: response.participant.id,
 						};
 						participantSubscriptionPath = createSubscriptionPath(
@@ -130,29 +130,29 @@ function createAPIStore(): APIStore {
 
 						// Start the subscription
 						_socket.on(participantSubscriptionPath, _onParticipantData);
-						_socket.emit('subscribe', participantSubscriptionMessage);
+						_socket.emit("subscribe", participantSubscriptionMessage);
 					}
 				}
 			);
 		};
-		_socket.on('connect', _onConnect);
+		_socket.on("connect", _onConnect);
 
 		// Handle disconnections
 		const _onDisconnect = () => {
 			_value = {
-				status: 'disconnected',
+				status: "disconnected",
 				cookiesAccepted,
 				isReady: false,
 				isConnected: false,
 			};
 			_set(_value);
 		};
-		_socket.on('disconnect', _onDisconnect);
+		_socket.on("disconnect", _onDisconnect);
 
 		// Handle debugging events
 		if (CONFIG.runtime.debug) {
 			// Reload the browser when requested by the server
-			_socket.on('build-event', () => {
+			_socket.on("build-event", () => {
 				// Reload the window
 				window.location.reload();
 
@@ -186,11 +186,11 @@ function createAPIStore(): APIStore {
 
 		// Return stop function
 		return function stop() {
-			_socket.off('connect', _onConnect);
-			_socket.off('disconnect', _onDisconnect);
+			_socket.off("connect", _onConnect);
+			_socket.off("disconnect", _onDisconnect);
 			if (participantSubscriptionMessage) {
 				_socket.off(participantSubscriptionPath, _onParticipantData);
-				_socket.emit('unsubscribe', participantSubscriptionMessage);
+				_socket.emit("unsubscribe", participantSubscriptionMessage);
 			}
 		};
 	});
@@ -205,7 +205,7 @@ function createAPIStore(): APIStore {
 type APIStoreValue =
 	| {
 		/** Current API status */
-		status: 'error';
+		status: "error";
 		/** Indicates if the API is connected and ready */
 		isReady: false;
 		/** The API has crashed due to an error */
@@ -215,13 +215,13 @@ type APIStoreValue =
 	}
 	| {
 		/** Current API status */
-		status: 'blocked';
+		status: "blocked";
 		/** Indicates if the API is connected and ready */
 		isReady: true;
 	}
 	| {
 		/** Current API status */
-		status: 'disconnected';
+		status: "disconnected";
 		/** Indicates if the API is connected and ready */
 		isReady: false;
 		/** The Websocket connection status */
@@ -231,7 +231,7 @@ type APIStoreValue =
 	}
 	| {
 		/** Current API status */
-		status: 'connected';
+		status: "connected";
 		/** Indicates if the API is connected and ready */
 		isReady: false;
 		/** The Websocket connection status */
@@ -241,7 +241,7 @@ type APIStoreValue =
 	}
 	| {
 		/** Current API status */
-		status: 'ready';
+		status: "ready";
 		/** Indicates if the API is connected and ready */
 		isReady: true;
 		/** The Websocket connection status */
@@ -251,7 +251,7 @@ type APIStoreValue =
 		/** Current participant id */
 		participantId: number;
 		/** Current participant */
-		participant: DataTypes['participant'];
+		participant: DataTypes["participant"];
 	};
 
 /** API Store Interface */

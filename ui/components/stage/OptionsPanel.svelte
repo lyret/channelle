@@ -1,20 +1,20 @@
 <script lang="ts">
-	import { blur } from 'svelte/transition';
-	import ParticipantsInstrument from '~/components/instruments/ParticipantsInstrument.svelte';
-	import SceneSelectorInstrument from '~/components/instruments/SceneSelectorInstrument.svelte';
-	import MediaLibraryInstrument from '~/components/instruments/MediaLibraryInstrument.svelte';
-	import DebugInstrument from '~/components/instruments/DebugInstrument.svelte';
-	import AccessInstrument from '~/components/instruments/AccessInstrument.svelte';
-	import { focusedInstrument } from '~/stores/ui';
-	import MediaInputMenuInstrument from './menuInstruments/MediaInputMenuInstrument.svelte';
-	import logoSrc from '~/assets/images/logo-smoker-free.gif';
-	import { currentParticipant } from '~/lib/stores/api';
-	import IconXCircle from '../icons/Icon-x-circle.svelte';
-	import IconLayers from '../icons/Icon-layers.svelte';
-	import IconKey from '../icons/Icon-key.svelte';
-	import IconUsers from '../icons/Icon-users.svelte';
-	import IconExternalLink from '../icons/Icon-external-link.svelte';
-	import IconActivity from '../icons/Icon-activity.svelte';
+	import { blur } from "svelte/transition";
+	import ParticipantsInstrument from "~/components/instruments/ParticipantsInstrument.svelte";
+	import SceneSelectorInstrument from "~/components/instruments/SceneSelectorInstrument.svelte";
+	import MediaLibraryInstrument from "~/components/instruments/MediaLibraryInstrument.svelte";
+	import DebugInstrument from "~/components/instruments/DebugInstrument.svelte";
+	import AccessInstrument from "~/components/instruments/AccessInstrument.svelte";
+	import { focusedInstrument } from "~/stores/ui";
+	import MediaInputMenuInstrument from "./menuInstruments/MediaInputMenuInstrument.svelte";
+	import logoSrc from "~/assets/images/logo-smoker-free.gif";
+	import { currentParticipant } from "~/lib/stores/api";
+	import IconXCircle from "../icons/Icon-x-circle.svelte";
+	import IconLayers from "../icons/Icon-layers.svelte";
+	import IconKey from "../icons/Icon-key.svelte";
+	import IconUsers from "../icons/Icon-users.svelte";
+	import IconExternalLink from "../icons/Icon-external-link.svelte";
+	import IconActivity from "../icons/Icon-activity.svelte";
 </script>
 
 <!-- Common Contents -->
@@ -30,15 +30,15 @@
 			</a>
 		</div>
 		<div class="instrument">
-			{#if $focusedInstrument == 'debug'}
+			{#if $focusedInstrument == "debug"}
 				<DebugInstrument />
-			{:else if $focusedInstrument == 'scene-settings'}
+			{:else if $focusedInstrument == "scene-settings"}
 				<SceneSelectorInstrument />
-			{:else if $focusedInstrument == 'participants'}
+			{:else if $focusedInstrument == "participants"}
 				<ParticipantsInstrument />
-			{:else if $focusedInstrument == 'access'}
+			{:else if $focusedInstrument == "access"}
 				<AccessInstrument />
-			{:else if $focusedInstrument == 'media-library'}
+			{:else if $focusedInstrument == "media-library"}
 				<MediaLibraryInstrument />
 			{/if}
 		</div>
@@ -46,28 +46,28 @@
 		<div class="select-view mb-4" in:blur={{ duration: 100 }}>
 			<button
 				class="button is-fullwidth mb-4 is-small"
-				on:click={() => ($focusedInstrument = 'debug')}
+				on:click={() => ($focusedInstrument = "debug")}
 				><span class="icon is-size-5"><IconActivity /></span>
 				<span>Avancerad information</span></button
 			>
 			<hr />
 			<button
 				class="button is-fullwidth mb-4 is-small"
-				on:click={() => ($focusedInstrument = 'scene-settings')}
+				on:click={() => ($focusedInstrument = "scene-settings")}
 				><span class="icon is-size-5"><IconLayers /></span>
 				<span>Sceninställningar</span></button
 			>
 			<hr />
 			<button
 				class="button is-fullwidth mb-4 is-small"
-				on:click={() => ($focusedInstrument = 'access')}
+				on:click={() => ($focusedInstrument = "access")}
 				><span class="icon is-size-5"><IconKey /></span>
 				<span>Tillgång</span></button
 			>
 			<hr />
 			<button
 				class="button is-fullwidth mb-4 is-small"
-				on:click={() => ($focusedInstrument = 'participants')}
+				on:click={() => ($focusedInstrument = "participants")}
 				><span class="icon is-size-5"><IconUsers /></span>
 				<span>Deltagare</span></button
 			>

@@ -1,19 +1,19 @@
 //@see https://bjornlu.com/blog/simple-svelte-routing-with-reactive-urls/
 
-import { derived, writable, type Writable } from 'svelte/store';
-import { defaultRoute, router, type Route } from './routes';
-export { gotoRoute, linkTo, replaceRoute } from './routes';
-export type { Route } from './routes';
+import { derived, writable, type Writable } from "svelte/store";
+import { defaultRoute, router, type Route } from "./routes";
+export { gotoRoute, linkTo, replaceRoute } from "./routes";
+export type { Route } from "./routes";
 
 // For server side rendering
-const isBrowser = typeof window !== 'undefined';
-const defaultUrl = 'https://example.com/';
+const isBrowser = typeof window !== "undefined";
+const defaultUrl = "https://example.com/";
 const href = writable(isBrowser ? window.location.href : defaultUrl);
 let Url: typeof URL;
 
 if (!isBrowser) {
 	//@ts-ignore
-	Url = require('url').URL;
+	Url = require("url").URL;
 } else {
 	Url = window.URL;
 	const originalPushState = history.pushState;
@@ -33,8 +33,8 @@ if (!isBrowser) {
 		updateHref();
 	};
 
-	window.addEventListener('popstate', updateHref);
-	window.addEventListener('hashchange', updateHref);
+	window.addEventListener("popstate", updateHref);
+	window.addEventListener("hashchange", updateHref);
 }
 
 // URL
@@ -53,7 +53,7 @@ export const route = derived<
 	router
 		.resolve(window.location)
 		.then((results) => {
-			console.log('[ROUTE]', results);
+			console.log("[ROUTE]", results);
 			set(results as Route);
 		})
 		.catch((err) => {

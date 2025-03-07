@@ -1,7 +1,7 @@
 <script lang="ts">
-	import IconSlash from '../icons/Icon-slash.svelte';
+	import IconSlash from "../icons/Icon-slash.svelte";
 
-	export let message: string = 'Du är portad';
+	export let message: string = "Du är portad";
 </script>
 
 <h1 class="title">

@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
-	import type { DataTypes } from '~/lib';
-	import type { PredefinedLayout } from '~/stores/stage/selectedPredefinedStageLayout';
-	import IconMessageCircle from '../icons/Icon-message-circle.svelte';
-	import IconUser from '../icons/Icon-user.svelte';
+	import { createEventDispatcher } from "svelte";
+	import type { DataTypes } from "~/lib";
+	import type { PredefinedLayout } from "~/stores/stage/selectedPredefinedStageLayout";
+	import IconMessageCircle from "../icons/Icon-message-circle.svelte";
+	import IconUser from "../icons/Icon-user.svelte";
 	const dispatch = createEventDispatcher();
 
 	export let selectedLayout: any;
-	export let participants: Array<DataTypes['participant']>;
+	export let participants: Array<DataTypes["participant"]>;
 	export let layout: PredefinedLayout;
 
 	$: selected = selectedLayout?.name == layout.name;
@@ -15,9 +15,9 @@
 	function onChange(e: any, cell: any) {
 		e.stopPropagation();
 		cell.id = (e.target as any).value;
-		dispatch('update', layout);
+		dispatch("update", layout);
 		if (selected) {
-			dispatch('select', layout);
+			dispatch("select", layout);
 		}
 	}
 </script>
@@ -28,7 +28,7 @@
 	class="fixed-grid has-{layout?.layout[0] &&
 		layout.layout[0].length}-cols notification is-secondary is-dark"
 	class:is-primary={selected}
-	on:click={() => dispatch('select', layout)}
+	on:click={() => dispatch("select", layout)}
 >
 	<h2 class="subtitle mb-1 is-6" class:has-text-white={!selected}>
 		{layout.name}
@@ -37,16 +37,16 @@
 		{#each layout.layout as row}
 			{#each row as cell}
 				<div class="cell">
-					{#if cell.type == 'empty'}
+					{#if cell.type == "empty"}
 						<button disabled class="button is-fullwidth">
 							<span class="icon"><IconUser /></span>
 							<span> - Ingen - </span></button
 						>
-					{:else if cell.type == 'chat'}
+					{:else if cell.type == "chat"}
 						<button disabled class="button is-fullwidth">
 							<span class="icon"><IconMessageCircle /></span>
 							<span>Chatt</span></button
-						>{:else if cell.type == 'actor'}
+						>{:else if cell.type == "actor"}
 						<div class="select is-fullwidth">
 							<select
 								on:change={(e) => onChange(e, cell)}

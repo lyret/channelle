@@ -1,4 +1,4 @@
-import type * as IO from 'socket.io';
+import type * as IO from "socket.io";
 
 /** Creates a request handler for an event on given web socket connection, made to match the client side rtcRequest function */
 export function createRTCResponseHandler<
@@ -26,7 +26,7 @@ export function createRTCResponseHandler<
 
 				callback({
 					ok: false,
-					err: CONFIG.isProduction ? err : 'Server Error',
+					err: CONFIG.isProduction ? err : "Server Error",
 				});
 			}
 		};

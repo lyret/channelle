@@ -1,11 +1,11 @@
-import type * as MediaSoup from 'mediasoup-client';
-import { readable } from 'svelte/store';
-import { ws } from '~/lib/api';
-import type { DataTypes } from '../_databaseTypes';
-import { mediaRequest } from '../operations';
-import { createRTCReceiverTransport, createRtcRequest } from '../rtc';
-import { currentParticipant } from './api';
-import { localMedia } from './producedMedia';
+import type * as MediaSoup from "mediasoup-client";
+import { readable } from "svelte/store";
+import { ws } from "~/lib/api";
+import type { DataTypes } from "../_databaseTypes";
+import { mediaRequest } from "../operations";
+import { createRTCReceiverTransport, createRtcRequest } from "../rtc";
+import { currentParticipant } from "./api";
+import { localMedia } from "./producedMedia";
 
 /**
  * The consumed media store provides all media streams that should be either seen or heard, both from this client and from the MediaSoup server
@@ -35,7 +35,7 @@ function createConsumedMediaStore(): ConsumedMediaStore {
 
 	const { subscribe } = readable(_value, function start(_set) {
 		// Subscribe to the current participant so that any local device stream can be added to the media layout
-		let _currentParticipant: DataTypes['participant'] | undefined;
+		let _currentParticipant: DataTypes["participant"] | undefined;
 		let _localVideoStream: MediaStream | undefined;
 		const _isConsuming: boolean = false;
 
@@ -49,7 +49,7 @@ function createConsumedMediaStore(): ConsumedMediaStore {
 			// Get new data
 			const req = createRtcRequest<{
 				availableConsumptions: Array<any>; // TODO: Array<StageLayoutActorWithProducer>;
-			}>('transport_receiver_consume');
+			}>("transport_receiver_consume");
 
 			// Consume all remote media with the receiver transport
 			const { availableConsumptions } = await req(_socket, {});
@@ -82,11 +82,11 @@ function createConsumedMediaStore(): ConsumedMediaStore {
 						}
 					});
 			}
-			await mediaRequest('transport_receiver_resume');
+			await mediaRequest("transport_receiver_resume");
 
 			if (_currentParticipant && _localVideoStream) {
 				newValue.push({
-					kind: 'video',
+					kind: "video",
 					participant: _currentParticipant,
 					stream: _localVideoStream,
 				});
@@ -95,10 +95,10 @@ function createConsumedMediaStore(): ConsumedMediaStore {
 		};
 
 		// Re-consume when producers update
-		_socket.on('producers_update', _onConsume);
+		_socket.on("producers_update", _onConsume);
 
-		_socket.on('audio_producers_update', (data) => {
-			console.log('audio_producers_update', data);
+		_socket.on("audio_producers_update", (data) => {
+			console.log("audio_producers_update", data);
 		});
 		//_socket.on('video_producers_update', _onConsume);
 
@@ -130,8 +130,8 @@ function createConsumedMediaStore(): ConsumedMediaStore {
 		return function stop() {
 			_stopCurrentParticipantSubscription();
 			_stopDeviceVideoSubscription();
-			_socket.off('producers_update', _onConsume);
-			mediaRequest('remove_consumer');
+			_socket.off("producers_update", _onConsume);
+			mediaRequest("remove_consumer");
 		};
 	});
 
@@ -142,8 +142,8 @@ function createConsumedMediaStore(): ConsumedMediaStore {
 
 /** Consumed Media Store Value */
 export type ConsumedMediaStoreValue = Array<{
-	kind: 'audio' | 'video' | undefined;
-	participant: DataTypes['participant'];
+	kind: "audio" | "video" | undefined;
+	participant: DataTypes["participant"];
 	stream: MediaStream;
 }>;
 

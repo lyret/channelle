@@ -1,16 +1,16 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { blur, fly } from 'svelte/transition';
-	import ActionPanel from '~/components/stage/ActionPanel.svelte';
-	import ChatPanel from '~/components/stage/ChatPanel.svelte';
-	import ChatWindow from '~/components/stage/ChatWindow.svelte';
-	import MediaAudio from '~/components/stage/MediaAudio.svelte';
-	import MediaWindow from '~/components/stage/MediaWindow.svelte';
-	import OptionsPanel from '~/components/stage/OptionsPanel.svelte';
-	import { StageAudio } from '~/lib/stores/stageAudio';
-	import { StageLayout } from '~/lib/stores/stageLayout';
-	import { stageChat } from '~/stores/scene/stageChatPanelsOpen';
-	import { stageSettings } from '~/stores/scene/stageSettingsIsOpen';
+	import { onMount } from "svelte";
+	import { blur, fly } from "svelte/transition";
+	import ActionPanel from "~/components/stage/ActionPanel.svelte";
+	import ChatPanel from "~/components/stage/ChatPanel.svelte";
+	import ChatWindow from "~/components/stage/ChatWindow.svelte";
+	import MediaAudio from "~/components/stage/MediaAudio.svelte";
+	import MediaWindow from "~/components/stage/MediaWindow.svelte";
+	import OptionsPanel from "~/components/stage/OptionsPanel.svelte";
+	import { StageAudio } from "~/lib/stores/stageAudio";
+	import { StageLayout } from "~/lib/stores/stageLayout";
+	import { stageChat } from "~/stores/scene/stageChatPanelsOpen";
+	import { stageSettings } from "~/stores/scene/stageSettingsIsOpen";
 
 	$: matrix = $StageLayout.layout || [];
 	$: height = Math.max(matrix.length, 1);
@@ -31,7 +31,7 @@
 		// }, 2000);
 
 		StageLayout.subscribe((data) => {
-			console.log('StageLayout', data);
+			console.log("StageLayout", data);
 		});
 	});
 </script>
@@ -55,11 +55,11 @@
 				{:else}
 					{#each matrix as row}
 						{#each row as cell}
-							{#if cell.type == 'chat'}
+							{#if cell.type == "chat"}
 								<div class="window">
 									<ChatWindow />
 								</div>
-							{:else if cell.type == 'actor'}
+							{:else if cell.type == "actor"}
 								<MediaWindow
 									stream={cell.stream}
 									participant={cell.participant}

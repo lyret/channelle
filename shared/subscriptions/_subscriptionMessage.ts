@@ -2,7 +2,7 @@ import type {
 	RepositoryName,
 	RepositoryTypes,
 	OperationName,
-} from '../../database';
+} from "../../database";
 
 /**
  * Subscription messages
@@ -20,8 +20,8 @@ export interface SubscriptionMessage<
 	repository: RepositoryName;
 
 	/** any specific data id this message is relevant for */
-	id?: RepositoryTypes[Name]['ModelIdType'];
+	id?: RepositoryTypes[Name]["ModelIdType"];
 
 	/** Any arguments passed along the message */
-	args?: RepositoryTypes[Name]['Operations'][Operation]['Args'];
+	args?: RepositoryTypes[Name]["Operations"][Operation]["Args"];
 }

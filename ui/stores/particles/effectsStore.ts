@@ -1,10 +1,10 @@
-import { mediaRequest } from '~/lib';
-import { readable } from 'svelte/store';
-import { triggerApplauseEffect, triggerFlowerGiftEffect } from './effects';
-import { ws } from '~/lib/api';
+import { mediaRequest } from "~/lib";
+import { readable } from "svelte/store";
+import { triggerApplauseEffect, triggerFlowerGiftEffect } from "./effects";
+import { ws } from "~/lib/api";
 
 /** Store value */
-type EffectsValue = { type: 'flowers' | 'applause'; number: number };
+type EffectsValue = { type: "flowers" | "applause"; number: number };
 
 /** Store interface */
 interface EffectsStore {
@@ -18,9 +18,9 @@ export function createEffectsStore(): EffectsStore {
 		// Handle status updates
 		const handler = (value: EffectsValue) => {
 			for (let i = 0; i < value.number; i++) {
-				if (value.type == 'flowers') {
+				if (value.type == "flowers") {
 					triggerFlowerGiftEffect();
-				} else if (value.type == 'applause') {
+				} else if (value.type == "applause") {
 					triggerApplauseEffect();
 				}
 			}
@@ -28,10 +28,10 @@ export function createEffectsStore(): EffectsStore {
 		};
 
 		// Listen to any status updates from the websocket connection
-		ws().on('effects_trigger', handler);
+		ws().on("effects_trigger", handler);
 
 		return function stop() {
-			ws().off('effects_trigger', handler);
+			ws().off("effects_trigger", handler);
 		};
 	});
 
@@ -39,7 +39,7 @@ export function createEffectsStore(): EffectsStore {
 		subscribe,
 		set: (value: EffectsValue) => {
 			setTimeout(() => {
-				mediaRequest('effects_add', value);
+				mediaRequest("effects_add", value);
 			}, 100);
 		},
 	};

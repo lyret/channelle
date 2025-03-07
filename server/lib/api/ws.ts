@@ -1,6 +1,6 @@
-import * as IO from 'socket.io';
-import { http } from './http';
-import type { DefaultEventsMap } from 'socket.io/dist/typed-events';
+import * as IO from "socket.io";
+import { http } from "./http";
+import type { DefaultEventsMap } from "socket.io/dist/typed-events";
 
 let _io: IO.Server | undefined;
 

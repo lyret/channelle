@@ -1,32 +1,32 @@
-import { derived, type Readable } from 'svelte/store';
-import { stageLayout } from '~/stores/stage/stageLayout';
-import type { DataTypes } from '../_databaseTypes';
-import { ConsumedMediaStore } from './consumedMedia';
+import { derived, type Readable } from "svelte/store";
+import { stageLayout } from "~/stores/stage/stageLayout";
+import type { DataTypes } from "../_databaseTypes";
+import { ConsumedMediaStore } from "./consumedMedia";
 
 export const StageLayout = derived(
 	[ConsumedMediaStore, stageLayout],
 	([$ConsumedMediaStore, $stageLayout], _set) => {
 		const handled = new Set<number>();
-		const updatedLeftovers: StageLayoutStoreValue['leftovers'] = [];
+		const updatedLeftovers: StageLayoutStoreValue["leftovers"] = [];
 		const updatedLayout: StageLayoutWithStreams = [];
 		for (const row of $stageLayout) {
 			const updatedRow: StageLayoutWithStreams[number] = [];
 			for (const cell of row) {
-				if (cell.type == 'actor') {
+				if (cell.type == "actor") {
 					const stream = $ConsumedMediaStore.find(
-						(s) => s.kind == 'video' && s.participant?.id == cell.id
+						(s) => s.kind == "video" && s.participant?.id == cell.id
 					);
 
 					if (stream) {
 						updatedRow.push({
-							type: 'actor',
+							type: "actor",
 							id: cell.id,
 							participant: stream.participant,
 							stream: stream.stream,
 						});
 						handled.add(stream.participant.id);
 					} else {
-						updatedRow.push({ type: 'empty' });
+						updatedRow.push({ type: "empty" });
 					}
 				} else {
 					updatedRow.push(cell);
@@ -40,10 +40,10 @@ export const StageLayout = derived(
 			if (
 				stream.participant?.id &&
 				!handled.has(stream.participant.id) &&
-				stream.kind == 'video'
+				stream.kind == "video"
 			) {
 				updatedLeftovers.push({
-					type: 'actor',
+					type: "actor",
 					id: stream.participant.id,
 					participant: stream.participant,
 					stream: stream.stream,
@@ -75,13 +75,13 @@ interface StageLayoutStore {
 }
 // TODO: document
 export type StageLayoutWithStreams = Array<
-	Array<StageLayoutActorWithStream | { type: 'chat' } | { type: 'empty' }>
+	Array<StageLayoutActorWithStream | { type: "chat" } | { type: "empty" }>
 >;
 
 // TODO: document
 export type StageLayoutActorWithStream = {
-	type: 'actor';
+	type: "actor";
 	id: number;
-	participant: DataTypes['participant'];
+	participant: DataTypes["participant"];
 	stream?: MediaStream | undefined;
 };

@@ -4,4 +4,4 @@ export type {
 	RepositoryName,
 	OperationName,
 	DataTypes,
-} from '../../database';
+} from "../../database";

@@ -1,22 +1,22 @@
-import type { Prisma } from '@prisma/client';
-import type * as SocketIO from 'socket.io';
-import type { Client } from './_client';
-import { client } from './_client';
+import type { Prisma } from "@prisma/client";
+import type * as SocketIO from "socket.io";
+import type { Client } from "./_client";
+import { client } from "./_client";
 
 /** Possible repository database operations */
 export const RepositoryOperations = [
-	'findFirst',
-	'findMany',
-	'create',
-	'update',
-	'delete',
+	"findFirst",
+	"findMany",
+	"create",
+	"update",
+	"delete",
 ] as const;
 
 /** Possible repository database operations that modifies the database */
 export const RepositoryOperationsThatIntroducesChanges = [
-	'create',
-	'update',
-	'delete',
+	"create",
+	"update",
+	"delete",
 ];
 
 /** Repository implementation */
@@ -26,7 +26,7 @@ export class Repository<
 	ModelProjectionType = Prisma.Result<
 		Client[Lowercase<ModelName>],
 		object,
-		'findFirstOrThrow'
+		"findFirstOrThrow"
 	>,
 	ModelIdField extends keyof ModelProjectionType = keyof ModelProjectionType,
 	ModelIdType = ModelProjectionType[ModelIdField],
@@ -50,7 +50,7 @@ export class Repository<
 
 	protected get io(): SocketIO.Server {
 		if (!Repository._io) {
-			throw new Error('No IO Server exists!');
+			throw new Error("No IO Server exists!");
 		}
 		return Repository._io;
 	}
@@ -79,7 +79,7 @@ export class Repository<
 	public async emitAll(socket?: SocketIO.Socket) {
 		const path = `/${this._repoName}`;
 		const target = socket ? socket.id : path;
-		const data = await this.operate('findMany', {} as any);
+		const data = await this.operate("findMany", {} as any);
 		console.log(
 			`[${this._modelName.toUpperCase()}] Emitting all documents to`,
 			target
@@ -91,7 +91,7 @@ export class Repository<
 		const path = `/${this._repoName}/${id}`;
 		const target = socket ? socket.id : path;
 
-		const data = await this.operate('findFirst', {
+		const data = await this.operate("findFirst", {
 			where: { [this._modelIdField]: id },
 		} as any);
 

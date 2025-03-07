@@ -1,23 +1,23 @@
 <script lang="ts">
-	import { blur } from 'svelte/transition';
-	import logoSrc from '~/assets/images/logo-free.gif';
-	import { APIStore } from '~/lib/stores/api';
-	import { route } from '~/stores/ui/url';
+	import { blur } from "svelte/transition";
+	import logoSrc from "~/assets/images/logo-free.gif";
+	import { APIStore } from "~/lib/stores/api";
+	import { route } from "~/stores/ui/url";
 
-	import Authenticate from '~/components/curtains/AuthenticateCurtainMessage.svelte';
-	import Blocked from '~/components/curtains/BlockedCurtainMessage.svelte';
-	import Continue from '~/components/curtains/ContinueCurtainMessage.svelte';
-	import Curtains from '~/components/curtains/Curtains.svelte';
-	import Loader from '~/components/curtains/LoadingCurtainMessage.svelte';
-	import Problem from '~/components/curtains/ProblemCurtainMessage.svelte';
-	import ManagePage from '~/pages/Backstage.svelte';
-	import StagePage from '~/pages/Stage.svelte';
-	import PasswordCurtainMessage from './components/curtains/PasswordCurtainMessage.svelte';
-	import { scenePasswordIsOk } from './stores/scene/scenePassword';
+	import Authenticate from "~/components/curtains/AuthenticateCurtainMessage.svelte";
+	import Blocked from "~/components/curtains/BlockedCurtainMessage.svelte";
+	import Continue from "~/components/curtains/ContinueCurtainMessage.svelte";
+	import Curtains from "~/components/curtains/Curtains.svelte";
+	import Loader from "~/components/curtains/LoadingCurtainMessage.svelte";
+	import Problem from "~/components/curtains/ProblemCurtainMessage.svelte";
+	import ManagePage from "~/pages/Backstage.svelte";
+	import StagePage from "~/pages/Stage.svelte";
+	import PasswordCurtainMessage from "./components/curtains/PasswordCurtainMessage.svelte";
+	import { scenePasswordIsOk } from "./stores/scene/scenePassword";
 
-	import { sceneCurtains } from './stores/scene/sceneCurtains';
+	import { sceneCurtains } from "./stores/scene/sceneCurtains";
 
-	export let name: string = '';
+	export let name: string = "";
 	let hasInteractedWithTheDocument = !CONFIG.runtime.production;
 
 	// Delays the rendering of any content to avoid the "pop-in" effect
@@ -28,14 +28,14 @@
 	}, 1000);
 
 	// Determine what should be rendered
-	$: isBlocked = $APIStore.status == 'blocked';
+	$: isBlocked = $APIStore.status == "blocked";
 	$: isPreparing = $APIStore.isReady == false;
-	$: hasEnteredName = $APIStore.status == 'ready' && $APIStore.participant.name;
-	$: renderStage = $route && $route.group == 'stage';
-	$: renderBackstage = $route && $route.group == 'backstage';
+	$: hasEnteredName = $APIStore.status == "ready" && $APIStore.participant.name;
+	$: renderStage = $route && $route.group == "stage";
+	$: renderBackstage = $route && $route.group == "backstage";
 	$: needToBeManager =
 		renderBackstage &&
-		!($APIStore.status == 'ready' && $APIStore.participant.manager);
+		!($APIStore.status == "ready" && $APIStore.participant.manager);
 	$: needStagePassword = !$scenePasswordIsOk && renderStage;
 	$: renderMessages =
 		!determiningState &&
@@ -84,12 +84,12 @@
 			{#if name}<h1 class="title is-family-title">{name}</h1>{/if}
 			{#if isBlocked}
 				<Blocked />
-			{:else if $APIStore.status == 'ready' && !hasEnteredName}
+			{:else if $APIStore.status == "ready" && !hasEnteredName}
 				<Authenticate
 					participant={$APIStore.participant}
 					on:submit={() => (hasInteractedWithTheDocument = true)}
 				/>
-			{:else if $APIStore.status == 'ready' && !hasInteractedWithTheDocument}
+			{:else if $APIStore.status == "ready" && !hasInteractedWithTheDocument}
 				<Continue
 					participant={$APIStore?.participant}
 					on:click={() => (hasInteractedWithTheDocument = true)}

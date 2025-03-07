@@ -1,35 +1,35 @@
 <script lang="ts">
-	import { clickOutside } from '~/directives';
-	import type { DataTypes } from '~/lib';
-	import { update } from '~/lib';
-	import { userCameraBans, userMicrophoneBans } from '~/stores/users';
-	import IconAward from '../icons/Icon-award.svelte';
-	import IconBriefcase from '../icons/Icon-briefcase.svelte';
-	import IconCircle from '../icons/Icon-circle.svelte';
-	import IconLock from '../icons/Icon-lock.svelte';
-	import IconMicOff from '../icons/Icon-mic-off.svelte';
-	import IconMic from '../icons/Icon-mic.svelte';
-	import IconToggleLeft from '../icons/Icon-toggle-left.svelte';
-	import IconToggleRight from '../icons/Icon-toggle-right.svelte';
-	import IconType from '../icons/Icon-type.svelte';
-	import IconUnlock from '../icons/Icon-unlock.svelte';
-	import IconVideoOff from '../icons/Icon-video-off.svelte';
-	import IconVideo from '../icons/Icon-video.svelte';
-	import IconXCircle from '../icons/Icon-x-circle.svelte';
+	import { clickOutside } from "~/directives";
+	import type { DataTypes } from "~/lib";
+	import { update } from "~/lib";
+	import { userCameraBans, userMicrophoneBans } from "~/stores/users";
+	import IconAward from "../icons/Icon-award.svelte";
+	import IconBriefcase from "../icons/Icon-briefcase.svelte";
+	import IconCircle from "../icons/Icon-circle.svelte";
+	import IconLock from "../icons/Icon-lock.svelte";
+	import IconMicOff from "../icons/Icon-mic-off.svelte";
+	import IconMic from "../icons/Icon-mic.svelte";
+	import IconToggleLeft from "../icons/Icon-toggle-left.svelte";
+	import IconToggleRight from "../icons/Icon-toggle-right.svelte";
+	import IconType from "../icons/Icon-type.svelte";
+	import IconUnlock from "../icons/Icon-unlock.svelte";
+	import IconVideoOff from "../icons/Icon-video-off.svelte";
+	import IconVideo from "../icons/Icon-video.svelte";
+	import IconXCircle from "../icons/Icon-x-circle.svelte";
 
-	export let participant: DataTypes['participant'];
+	export let participant: DataTypes["participant"];
 	export let online: boolean = false;
 	let loading: boolean = false;
 	let active: boolean = false;
 
 	async function doUpdate(
-		participant: DataTypes['participant'],
-		data: Partial<DataTypes['participant']>,
+		participant: DataTypes["participant"],
+		data: Partial<DataTypes["participant"]>,
 		ask?: string
 	) {
 		loading = true;
 		if (!ask || confirm(ask)) {
-			await update('participant', {
+			await update("participant", {
 				where: { id: participant.id },
 				data: data,
 			});
@@ -182,7 +182,7 @@
 				on:click={() =>
 					doUpdate(participant, {
 						name:
-							prompt('Skriv nytt namn', participant.name) || participant.name,
+							prompt("Skriv nytt namn", participant.name) || participant.name,
 					})}
 			>
 				<span class="icon is-small"><IconType /></span> Byt namn</a

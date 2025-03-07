@@ -1,4 +1,4 @@
-import type { Socket } from 'socket.io-client';
+import type { Socket } from "socket.io-client";
 
 /** Creates a function for sending a websocket request on the given namespace with a single data object and returns the acknowledgement in a promise */
 export function createRtcRequest<Result, Params extends object = object>(

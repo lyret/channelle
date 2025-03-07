@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { createDatabaseStore } from '~/stores';
-	import { onlineStatus } from '~/stores/users';
-	import ParticipantsControl from './ParticipantsControl.svelte';
+	import { createDatabaseStore } from "~/stores";
+	import { onlineStatus } from "~/stores/users";
+	import ParticipantsControl from "./ParticipantsControl.svelte";
 
-	const participants = createDatabaseStore('participant');
+	const participants = createDatabaseStore("participant");
 	$: participantsWithName = $participants.filter((p) => p.name && !p.blocked);
 	$: managers = participantsWithName.filter((p) => p.manager);
 	$: actors = participantsWithName.filter((p) => p.actor && !p.manager);
@@ -14,7 +14,7 @@
 	$: online =
 		$onlineStatus && participantsWithName.filter((p) => $onlineStatus[p.id]);
 
-	let filter: string = 'Deltagare';
+	let filter: string = "Deltagare";
 </script>
 
 <div class="radios is-size-7">
@@ -63,15 +63,15 @@
 
 <h1
 	class="title is-size-3 mt-5"
-	class:has-text-info={filter == 'Tekniker' || filter == 'Skådespelare'}
-	class:has-text-success={filter == 'Deltagare online'}
-	class:has-text-danger={filter == 'Blockerade deltagare'}
+	class:has-text-info={filter == "Tekniker" || filter == "Skådespelare"}
+	class:has-text-success={filter == "Deltagare online"}
+	class:has-text-danger={filter == "Blockerade deltagare"}
 >
 	{filter}
 </h1>
 
 <div class="list">
-	{#if blocked.length && filter == 'Blockerade deltagare'}
+	{#if blocked.length && filter == "Blockerade deltagare"}
 		{#each blocked as participant}
 			{#key participant.id}
 				<ParticipantsControl
@@ -80,7 +80,7 @@
 				/>
 			{/key}
 		{/each}
-	{:else if online.length && filter == 'Deltagare online'}
+	{:else if online.length && filter == "Deltagare online"}
 		{#each online as participant}
 			{#key participant.id}
 				<ParticipantsControl
@@ -90,7 +90,7 @@
 			{/key}
 		{/each}
 	{:else}
-		{#if managers.length && (filter == 'Deltagare' || filter == 'Tekniker')}
+		{#if managers.length && (filter == "Deltagare" || filter == "Tekniker")}
 			{#each managers as participant}
 				{#key participant.id}
 					<ParticipantsControl
@@ -100,7 +100,7 @@
 				{/key}
 			{/each}
 		{/if}
-		{#if actors.length && (filter == 'Deltagare' || filter == 'Skådespelare')}
+		{#if actors.length && (filter == "Deltagare" || filter == "Skådespelare")}
 			{#each actors as participant}
 				{#key participant.id}
 					<ParticipantsControl
@@ -110,7 +110,7 @@
 				{/key}
 			{/each}
 		{/if}
-		{#if visitors.length && filter != 'Tekniker' && filter != 'Skådespelare'}
+		{#if visitors.length && filter != "Tekniker" && filter != "Skådespelare"}
 			{#each visitors as participant}
 				{#key participant.id}
 					{#key participant.id}

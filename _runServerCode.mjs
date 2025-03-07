@@ -1,6 +1,6 @@
-import Path from 'node:path';
-import ChildProcess from 'node:child_process';
-import Chalk from 'chalk';
+import Path from "node:path";
+import ChildProcess from "node:child_process";
+import Chalk from "chalk";
 
 /** Currently running server process reference, if any */
 let RUNNING_SERVER;
@@ -17,7 +17,7 @@ export async function runServerCode(CONFIG) {
 	try {
 		// Signal any ongoing process to end
 		if (RUNNING_SERVER) {
-			RUNNING_SERVER.kill('SIGTERM');
+			RUNNING_SERVER.kill("SIGTERM");
 			RUNNING_SERVER = undefined;
 		}
 
@@ -31,9 +31,9 @@ export async function runServerCode(CONFIG) {
 		// Create a new server process
 		RUNNING_SERVER_PROMISE = new Promise((resolve) => {
 			console.log(
-				'\n🪁',
+				"\n🪁",
 				Chalk.white.bgMagenta(`[${CONFIG.package.name.toUpperCase()}]`),
-				Chalk.bold('Launching\n')
+				Chalk.bold("Launching\n")
 			);
 
 			// Create subprocess arguments
@@ -41,33 +41,33 @@ export async function runServerCode(CONFIG) {
 
 			// Enable debugging arguments
 			if (CONFIG.runtime.debug) {
-				args.push('--enable-source-maps');
+				args.push("--enable-source-maps");
 			}
 
 			// Spawn the server
-			RUNNING_SERVER = ChildProcess.spawn('node', args);
+			RUNNING_SERVER = ChildProcess.spawn("node", args);
 
-			RUNNING_SERVER.stdout.on('data', (data) => {
+			RUNNING_SERVER.stdout.on("data", (data) => {
 				process.stdout.write(data);
 			});
 
-			RUNNING_SERVER.stderr.on('data', (data) => {
+			RUNNING_SERVER.stderr.on("data", (data) => {
 				process.stderr.write(data);
 			});
 
-			RUNNING_SERVER.on('close', (code) => {
+			RUNNING_SERVER.on("close", (code) => {
 				if (code) {
 					console.log(
-						'\n💥',
+						"\n💥",
 						Chalk.white.bgRed(`[${CONFIG.package.name.toUpperCase()}]`),
 						Chalk.bold(`Exited with code ${code}\n`)
 					);
 					resolve(code);
 				} else {
 					console.log(
-						'\n🪁',
+						"\n🪁",
 						Chalk.white.bgMagenta(`[${CONFIG.package.name.toUpperCase()}]`),
-						Chalk.bold('Exited\n')
+						Chalk.bold("Exited\n")
 					);
 					resolve(undefined);
 				}

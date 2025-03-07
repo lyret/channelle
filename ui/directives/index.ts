@@ -1,2 +1,2 @@
 //@ts-ignore
-export * from './clickOutside';
+export * from "./clickOutside";

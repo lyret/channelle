@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { blur, scale } from 'svelte/transition';
-	import { participantScenePassword } from '~/stores/scene/scenePassword';
+	import { onMount } from "svelte";
+	import { blur, scale } from "svelte/transition";
+	import { participantScenePassword } from "~/stores/scene/scenePassword";
 
 	let inputRef: HTMLInputElement;
-	let inputValue: string = '';
+	let inputValue: string = "";
 	let loading: boolean = false;
 	let retrying: boolean = false;
 
@@ -14,7 +14,7 @@
 		loading = true;
 		participantScenePassword.set(inputValue);
 		setTimeout(() => {
-			inputValue = '';
+			inputValue = "";
 			retrying = true;
 			loading = false;
 		}, 1500);

@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { createLocalStore } from '~/stores';
+	import { createLocalStore } from "~/stores";
 
-	import ChatInput from '../chat/ChatInput.svelte';
-	import ChatList from '../chat/ChatList.svelte';
-	import IconStar from '../icons/Icon-star.svelte';
-	import IconUsers from '../icons/Icon-users.svelte';
+	import ChatInput from "../chat/ChatInput.svelte";
+	import ChatList from "../chat/ChatList.svelte";
+	import IconStar from "../icons/Icon-star.svelte";
+	import IconUsers from "../icons/Icon-users.svelte";
 
 	const backstageOnly = createLocalStore(
-		'instruments-chat-backstage-only',
+		"instruments-chat-backstage-only",
 		false
 	);
 </script>

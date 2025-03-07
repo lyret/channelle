@@ -1,5 +1,5 @@
 <script>
-	import IconCpu from '../icons/Icon-cpu.svelte';
+	import IconCpu from "../icons/Icon-cpu.svelte";
 </script>
 
 <h1 class="title">

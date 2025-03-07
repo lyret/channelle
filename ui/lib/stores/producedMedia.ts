@@ -1,10 +1,10 @@
-import type * as MediaSoup from 'mediasoup-client';
-import { derived, writable } from 'svelte/store';
-import { sceneVisitorAudioIsEnabled } from '~/stores/scene/sceneVisitorAudioIsEnabled';
-import { stageLayout } from '~/stores/stage/stageLayout';
-import { userCameraBans, userMicrophoneBans } from '~/stores/users';
-import { rtcSendTransport } from '../api';
-import { currentParticipant } from './api';
+import type * as MediaSoup from "mediasoup-client";
+import { derived, writable } from "svelte/store";
+import { sceneVisitorAudioIsEnabled } from "~/stores/scene/sceneVisitorAudioIsEnabled";
+import { stageLayout } from "~/stores/stage/stageLayout";
+import { userCameraBans, userMicrophoneBans } from "~/stores/users";
+import { rtcSendTransport } from "../api";
+import { currentParticipant } from "./api";
 
 /** Local Media Devices Store Value */
 type StoreValue = {
@@ -44,15 +44,15 @@ const createLocalMediaDevicesStores = () => {
 		video: {
 			list: [],
 			paused: true,
-			selected: localStorage.getItem('selected-video-device')
-				? JSON.parse(localStorage.getItem('selected-video-device')!)
+			selected: localStorage.getItem("selected-video-device")
+				? JSON.parse(localStorage.getItem("selected-video-device")!)
 				: undefined,
 		},
 		audio: {
 			list: [],
 			paused: true,
-			selected: localStorage.getItem('selected-audio-device')
-				? JSON.parse(localStorage.getItem('selected-audio-device')!)
+			selected: localStorage.getItem("selected-audio-device")
+				? JSON.parse(localStorage.getItem("selected-audio-device")!)
 				: undefined,
 		},
 	};
@@ -94,7 +94,7 @@ const createLocalMediaDevicesStores = () => {
 				// Custom scene layout
 				for (const row of $layout) {
 					for (const cell of row) {
-						if (cell.type == 'actor' && cell.id == $currentParticipant.id) {
+						if (cell.type == "actor" && cell.id == $currentParticipant.id) {
 							return {
 								videoWanted: true,
 								audioWanted: true,
@@ -116,7 +116,7 @@ const createLocalMediaDevicesStores = () => {
 	const { subscribe, set } = writable<StoreValue>(_value, (set) => {
 		// Handle updates to list of hardware input devices
 		navigator.mediaDevices.addEventListener(
-			'devicechange',
+			"devicechange",
 			onDeviceStatusChange
 		);
 
@@ -144,7 +144,7 @@ const createLocalMediaDevicesStores = () => {
 
 		return function stop() {
 			navigator.mediaDevices.removeEventListener(
-				'devicechange',
+				"devicechange",
 				onDeviceStatusChange
 			);
 			stopRemoveBannedSubscription();
@@ -156,10 +156,10 @@ const createLocalMediaDevicesStores = () => {
 			const deviceInfos = await navigator.mediaDevices.enumerateDevices();
 
 			_value.video.list = deviceInfos
-				.filter((deviceInfo) => deviceInfo.kind === 'videoinput')
+				.filter((deviceInfo) => deviceInfo.kind === "videoinput")
 				.sort((a, b) => (a.label < b.label ? -1 : a.label > b.label ? 1 : 0));
 			_value.audio.list = deviceInfos
-				.filter((deviceInfo) => deviceInfo.kind === 'audioinput')
+				.filter((deviceInfo) => deviceInfo.kind === "audioinput")
 				.sort((a, b) => (a.label < b.label ? -1 : a.label > b.label ? 1 : 0));
 		} catch (err) {
 			console.error(err);
@@ -181,18 +181,18 @@ const createLocalMediaDevicesStores = () => {
 				});
 				_hasCalledGetUserMedia = true;
 			} catch (err: any) {
-				console.error('Failed to get a local video media stream');
+				console.error("Failed to get a local video media stream");
 				console.error(err);
 
 				_value.video.stream = undefined;
 				if (
-					err?.name == 'NotFoundError' ||
-					err?.name == 'OverconstrainedError' ||
-					err?.name == 'DevicesNotFoundError'
+					err?.name == "NotFoundError" ||
+					err?.name == "OverconstrainedError" ||
+					err?.name == "DevicesNotFoundError"
 				) {
-					_value.video.err = 'saknas';
+					_value.video.err = "saknas";
 				} else {
-					_value.video.err = 'okänt fel';
+					_value.video.err = "okänt fel";
 				}
 			}
 		}
@@ -254,18 +254,18 @@ const createLocalMediaDevicesStores = () => {
 				});
 				_hasCalledGetUserMedia = true;
 			} catch (err: any) {
-				console.error('Failed to get a local audio media stream');
+				console.error("Failed to get a local audio media stream");
 				console.error(err);
 
 				_value.audio.stream = undefined;
 				if (
-					err?.name == 'NotFoundError' ||
-					err?.name == 'OverconstrainedError' ||
-					err?.name == 'DevicesNotFoundError'
+					err?.name == "NotFoundError" ||
+					err?.name == "OverconstrainedError" ||
+					err?.name == "DevicesNotFoundError"
 				) {
-					_value.audio.err = 'saknas';
+					_value.audio.err = "saknas";
 				} else {
-					_value.video.err = 'okänt fel';
+					_value.video.err = "okänt fel";
 				}
 			}
 		}
@@ -327,7 +327,7 @@ const createLocalMediaDevicesStores = () => {
 			if (_value.video.stream) {
 				_value.video.stream = undefined;
 				_onUpdateVideo();
-				_value.video.err = 'frånkopplad';
+				_value.video.err = "frånkopplad";
 				set(_value);
 			}
 		}
@@ -341,7 +341,7 @@ const createLocalMediaDevicesStores = () => {
 			if (_value.audio.stream) {
 				_value.audio.stream = undefined;
 				_onUpdateAudio();
-				_value.audio.err = 'frånkopplad';
+				_value.audio.err = "frånkopplad";
 				set(_value);
 			}
 		}
@@ -370,10 +370,10 @@ const createLocalMediaDevicesStores = () => {
 
 			// Update local storage
 			if (!deviceInfo) {
-				localStorage.removeItem('selected-video-device');
+				localStorage.removeItem("selected-video-device");
 			} else {
 				localStorage.setItem(
-					'selected-video-device',
+					"selected-video-device",
 					JSON.stringify(deviceInfo.toJSON())
 				);
 			}
@@ -403,10 +403,10 @@ const createLocalMediaDevicesStores = () => {
 
 			// Update local storage
 			if (!deviceInfo) {
-				localStorage.removeItem('selected-audio-device');
+				localStorage.removeItem("selected-audio-device");
 			} else {
 				localStorage.setItem(
-					'selected-audio-device',
+					"selected-audio-device",
 					JSON.stringify(deviceInfo.toJSON())
 				);
 			}

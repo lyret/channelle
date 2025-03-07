@@ -1,4 +1,4 @@
-import { writable } from 'svelte/store';
+import { writable } from "svelte/store";
 
 /** Creates a Svelte Store that syncs a value with local storage with the given serialization method */
 export function createSerializedLocalStorageStore<V>(

@@ -1,5 +1,5 @@
-import { koa } from './koa';
-import type { Server } from 'http';
+import { koa } from "./koa";
+import type { Server } from "http";
 
 let _http: Server | undefined;
 

@@ -1,3 +1,3 @@
-export * from './createDatabaseStore';
-export * from './createRemoteMapStore';
-export * from './createRemoteValueStore';
+export * from "./createDatabaseStore";
+export * from "./createRemoteMapStore";
+export * from "./createRemoteValueStore";

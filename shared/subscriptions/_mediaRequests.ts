@@ -1,5 +1,5 @@
-import type * as MediaSoup from 'mediasoup-client';
-import type { DataTypes } from '~/lib/_databaseTypes';
+import type * as MediaSoup from "mediasoup-client";
+import type { DataTypes } from "~/lib/_databaseTypes";
 
 /**
  * Possible requests and returned data available through the socket connection

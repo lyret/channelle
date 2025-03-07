@@ -1,4 +1,4 @@
-import Emittery from 'emittery';
+import Emittery from "emittery";
 
 export function createLocalSubscription<Value>(
 	key: string,
@@ -43,7 +43,7 @@ class LocalStorageSubscription<Value = any> {
 		}
 		
 		if (this._windowHandler) {
-			window.removeEventListener('storage', this._windowHandler);
+			window.removeEventListener("storage", this._windowHandler);
 		}
 
 		// Register event handler when using the subscription api
@@ -69,7 +69,7 @@ class LocalStorageSubscription<Value = any> {
 			this._handler &&
 				LocalStorageSubscription._eventEmitter.off(this._key, this._handler);
 			this._windowHandler &&
-				window.removeEventListener('storage', this._windowHandler);
+				window.removeEventListener("storage", this._windowHandler);
 			this._listening = false;
 			console.log(
 				`[LS] Stopped listening to ${this._key}, all onData events removed`
@@ -87,7 +87,7 @@ class LocalStorageSubscription<Value = any> {
 			LocalStorageSubscription._eventEmitter.on(this._key, this._handler);
 
 			// Handle changes to local storages from the web-inspector or other pages
-			window.addEventListener('storage', this._windowHandler);
+			window.addEventListener("storage", this._windowHandler);
 
 			this._listening = true;
 			const existingItem = window.localStorage.getItem(this._key);

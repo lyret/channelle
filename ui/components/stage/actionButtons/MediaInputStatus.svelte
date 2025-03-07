@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { blur } from 'svelte/transition';
-	import IconAlertTriangle from '~/components/icons/Icon-alert-triangle.svelte';
-	import { localMedia } from '~/lib/stores/producedMedia';
-	import { sceneCurtains } from '~/stores/scene/sceneCurtains';
+	import { blur } from "svelte/transition";
+	import IconAlertTriangle from "~/components/icons/Icon-alert-triangle.svelte";
+	import { localMedia } from "~/lib/stores/producedMedia";
+	import { sceneCurtains } from "~/stores/scene/sceneCurtains";
 
 	$: isCameraOn = !!$localMedia.video.stream && !$localMedia.video.paused;
 	$: isMicOn = !!$localMedia.audio.stream && !$localMedia.audio.paused;

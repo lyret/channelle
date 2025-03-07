@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { windowSizeStore } from '$ui/device';
-	import { createEventDispatcher, onMount } from 'svelte';
-	import activationSrc from '~/assets/images/click-here.gif';
-	import { createEffectsStore } from '~/stores/particles/effectsStore';
+	import { windowSizeStore } from "$ui/device";
+	import { createEventDispatcher, onMount } from "svelte";
+	import activationSrc from "~/assets/images/click-here.gif";
+	import { createEffectsStore } from "~/stores/particles/effectsStore";
 
 	const windowSize = windowSizeStore();
 	
@@ -22,7 +22,7 @@
 
 <div class="buttons">
 	<div class="center">
-		<button on:click={() => dispatcher('ok', {})}>
+		<button on:click={() => dispatcher("ok", {})}>
 			<img src={activationSrc} />
 		</button>
 	</div>

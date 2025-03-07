@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { DataTypes } from '~/lib';
+	import type { DataTypes } from "~/lib";
 
-	export let participant: DataTypes['participant'] | undefined = undefined;
+	export let participant: DataTypes["participant"] | undefined = undefined;
 	export let stream: MediaStream | undefined;
 
 	$: streamHasVideo = stream ? !!stream.getVideoTracks().length : false;

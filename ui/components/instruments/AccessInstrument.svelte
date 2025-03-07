@@ -1,18 +1,18 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { scenePassword } from '~/stores/scene/scenePassword';
-	import IconLock from '../icons/Icon-lock.svelte';
-	import IconUnlock from '../icons/Icon-unlock.svelte';
+	import { onMount } from "svelte";
+	import { scenePassword } from "~/stores/scene/scenePassword";
+	import IconLock from "../icons/Icon-lock.svelte";
+	import IconUnlock from "../icons/Icon-unlock.svelte";
 
 	let inputRef: HTMLInputElement;
-	let inputValue: string = '';
+	let inputValue: string = "";
 
 	let isLoading = false;
 	$: isLocked = $scenePassword?.length;
 	$: isChanged = $scenePassword != inputValue;
 	$: disabled = isLoading || !isChanged;
 
-	const inviteLinks = ['', ''];
+	const inviteLinks = ["", ""];
 
 	async function onSubmit(e: SubmitEvent) {
 		e.preventDefault();
@@ -35,7 +35,7 @@
 
 		const currentUrl = new URL(window.location.href);
 		const searchParams = new URLSearchParams(
-			'invite=' + CONFIG.stage.inviteKey
+			"invite=" + CONFIG.stage.inviteKey
 		);
 		inviteLinks[0] = `${currentUrl.origin}?${searchParams.toString()}`;
 		inviteLinks[1] = `${currentUrl.origin}/backstage?${searchParams.toString()}`;
@@ -68,8 +68,8 @@
 				class="input is-fullwidth is-medium"
 				bind:value={inputValue}
 				placeholder={isLocked
-					? 'Spara för att ta bort lösenordet'
-					: 'Ange ett lösenord'}
+					? "Spara för att ta bort lösenordet"
+					: "Ange ett lösenord"}
 			/>
 		</div>
 		<div class="control">

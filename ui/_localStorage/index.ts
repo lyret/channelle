@@ -1,1 +1,1 @@
-export * from './serializedLocalStorageStore';
+export * from "./serializedLocalStorageStore";

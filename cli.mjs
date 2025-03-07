@@ -1,14 +1,14 @@
-import { BroadcastChannel } from 'broadcast-channel';
-import { createConfiguration } from './_createConfiguration.mjs';
-import { createClientBuildContext } from './_createClientBuildContext.mjs';
-import { createServerBuildContext } from './_createServerBuildContext.mjs';
-import { runServerCode } from './_runServerCode.mjs';
+import { BroadcastChannel } from "broadcast-channel";
+import { createConfiguration } from "./_createConfiguration.mjs";
+import { createClientBuildContext } from "./_createClientBuildContext.mjs";
+import { createServerBuildContext } from "./_createServerBuildContext.mjs";
+import { runServerCode } from "./_runServerCode.mjs";
 
 // Create the global runtime configuration
 const CONFIG = await createConfiguration();
 
 // Create Broadcast Channel used for IPC messages regarding debugging events
-const channel = new BroadcastChannel('cli-channel');
+const channel = new BroadcastChannel("cli-channel");
 
 // ------------------------------------------
 // On file execution
@@ -19,7 +19,7 @@ if (CONFIG.runtime.watch) {
 		const clientContext = await createClientBuildContext(CONFIG, (results) => {
 			if (CONFIG.runtime.start && CONFIG.runtime.debug && results.metafile) {
 				channel.postMessage({
-					type: 'build-event',
+					type: "build-event",
 					data: results.metafile.outputs,
 				});
 			}

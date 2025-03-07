@@ -1,11 +1,11 @@
-import { readable } from 'svelte/store';
+import { readable } from "svelte/store";
 
 /** Returns the current inner dimensions of the browser window */
 function _getCurrentWindowDimenstions() {
 	if (
-		typeof window === 'object' &&
-		'innerWidth' in window &&
-		'innerHeight' in window
+		typeof window === "object" &&
+		"innerWidth" in window &&
+		"innerHeight" in window
 	) {
 		return {
 			width: window.innerWidth,
@@ -26,8 +26,8 @@ export function windowSizeStore() {
 			_set(_getCurrentWindowDimenstions());
 		}
 
-		window.addEventListener('resize', handler);
+		window.addEventListener("resize", handler);
 
-		return () => window.removeEventListener('resize', handler);
+		return () => window.removeEventListener("resize", handler);
 	});
 }

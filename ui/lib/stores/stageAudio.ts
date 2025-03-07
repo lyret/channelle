@@ -1,25 +1,25 @@
-import { derived, type Readable } from 'svelte/store';
-import { sceneVisitorAudioIsEnabled } from '~/stores/scene/sceneVisitorAudioIsEnabled';
-import { stageLayout } from '~/stores/stage/stageLayout';
-import type { DataTypes } from '../_databaseTypes';
-import { ConsumedMediaStore } from './consumedMedia';
+import { derived, type Readable } from "svelte/store";
+import { sceneVisitorAudioIsEnabled } from "~/stores/scene/sceneVisitorAudioIsEnabled";
+import { stageLayout } from "~/stores/stage/stageLayout";
+import type { DataTypes } from "../_databaseTypes";
+import { ConsumedMediaStore } from "./consumedMedia";
 
 // TODO: Document
 export const StageAudio = derived(
 	[ConsumedMediaStore, stageLayout, sceneVisitorAudioIsEnabled],
 	([$ConsumedMediaStore, $stageLayout, $sceneVisitorAudioIsEnabled], _set) => {
 		const handled = new Set<number>();
-		const updatedAudio: StageAudioStoreValue['audio'] = [];
+		const updatedAudio: StageAudioStoreValue["audio"] = [];
 		for (const row of $stageLayout) {
 			for (const cell of row) {
-				if (cell.type == 'actor') {
+				if (cell.type == "actor") {
 					const stream = $ConsumedMediaStore.find(
-						(s) => s.kind == 'audio' && s.participant?.id == cell.id
+						(s) => s.kind == "audio" && s.participant?.id == cell.id
 					);
 
 					if (stream && !handled.has(stream.participant.id)) {
 						updatedAudio.push({
-							type: 'actor',
+							type: "actor",
 							id: cell.id,
 							participant: stream.participant,
 							stream: stream.stream,
@@ -34,12 +34,12 @@ export const StageAudio = derived(
 		if ($sceneVisitorAudioIsEnabled) {
 			for (const stream of $ConsumedMediaStore) {
 				if (
-					stream.kind == 'audio' &&
+					stream.kind == "audio" &&
 					stream.participant?.id &&
 					!handled.has(stream.participant.id)
 				)
 					updatedAudio.push({
-						type: 'actor',
+						type: "actor",
 						id: stream.participant.id,
 						participant: stream.participant,
 						stream: stream.stream,
@@ -63,8 +63,8 @@ export type StageAudioStoreValue = {
 
 // TODO: document
 export type StageAudioActorWithStream = {
-	type: 'actor';
+	type: "actor";
 	id: number;
-	participant: DataTypes['participant'];
+	participant: DataTypes["participant"];
 	stream?: MediaStream | undefined;
 };

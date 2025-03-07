@@ -1,6 +1,6 @@
-import Emittery from 'emittery';
-import type { Socket } from 'socket.io-client';
-import { ws } from './api';
+import Emittery from "emittery";
+import type { Socket } from "socket.io-client";
+import { ws } from "./api";
 
 type SubscriptionSocketEvents = {
 	status: string;
@@ -8,7 +8,7 @@ type SubscriptionSocketEvents = {
 export class Subscription<
 	Events extends Record<string, unknown> = Record<string, unknown>,
 > {
-	private static _connectionStatus: string = 'disconnected';
+	private static _connectionStatus: string = "disconnected";
 	private static _subscriptionEventEmitter: Emittery<SubscriptionSocketEvents> =
 		new Emittery();
 	private _instanceEventEmitter: Emittery<Events> = new Emittery();

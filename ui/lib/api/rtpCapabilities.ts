@@ -1,7 +1,7 @@
-import type * as MediaSoup from 'mediasoup-client';
-import { mediaDevice } from './mediaDevice';
-import { requestServerRTPCapabilities } from '../requests/capabilitiesRequests';
-import { ws } from './ws';
+import type * as MediaSoup from "mediasoup-client";
+import { mediaDevice } from "./mediaDevice";
+import { requestServerRTPCapabilities } from "../requests/capabilitiesRequests";
+import { ws } from "./ws";
 
 /** This clients supported real time protocol capabilities */
 let _rtpCapabilities: MediaSoup.types.RtpCapabilities | undefined = undefined;

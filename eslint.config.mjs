@@ -1,13 +1,13 @@
-import EsLintJs from '@eslint/js';
-import Stylistic from '@stylistic/eslint-plugin';
-import EsLintSvelte from 'eslint-plugin-svelte';
-import Globals from 'globals';
-import TsLint from 'typescript-eslint';
-import SvelteConfig from './svelte.config.mjs';
+import EsLintJs from "@eslint/js";
+import Stylistic from "@stylistic/eslint-plugin";
+import EsLintSvelte from "eslint-plugin-svelte";
+import Globals from "globals";
+import TsLint from "typescript-eslint";
+import SvelteConfig from "./svelte.config.mjs";
 
 export default [
 	/** Files to lint */
-	{ files: ['**/*.{js,mjs,cjs,ts,svelte}'] },
+	{ files: ["**/*.{js,mjs,cjs,ts,svelte}"] },
 	/** Globals */
 	{ languageOptions: { globals: { ...Globals.browser, ...Globals.node } } },
 	/** Javascript */
@@ -17,11 +17,11 @@ export default [
 	/** Svelte */
 	...EsLintSvelte.configs.recommended,
 	{
-		files: ['**/*.svelte', '**/*.svelte.js', '**/*.svelte.ts'],
+		files: ["**/*.svelte", "**/*.svelte.js", "**/*.svelte.ts"],
 		languageOptions: {
 			parserOptions: {
 				projectService: true,
-				extraFileExtensions: ['.svelte'], // Add support for additional file extensions, such as .svelte
+				extraFileExtensions: [".svelte"], // Add support for additional file extensions, such as .svelte
 				parser: TsLint.parser,
 				// We recommend importing and specifying svelte.config.js.
 				// By doing so, some rules in eslint-plugin-svelte will automatically read the configuration and adjust their behavior accordingly.
@@ -32,7 +32,7 @@ export default [
 		},
 	},
 	/** Ignore build output */
-	{ ignores: ['.dist/**/*'] },
+	{ ignores: [".dist/**/*"] },
 	/**
    * Replace prettier rules when used as a formatter
    * @see: https://itnext.io/how-to-replace-prettier-by-eslint-rules-21574359e041
@@ -40,28 +40,28 @@ export default [
    */
 	{
 		plugins: {
-			'@stylistic': Stylistic
+			"@stylistic": Stylistic
 		},
 		rules: {
-			'@stylistic/max-len': ['warn', { code: 120, ignoreComments: true, ignoreUrls: true, ignoreStrings: true }],
-			'@stylistic/indent': ['error', 'tab'],
-			'@stylistic/no-mixed-spaces-and-tabs': ['error', 'smart-tabs'],
-			'@stylistic/semi': ['error', 'always'],
-			'@stylistic/quotes': ['error', 'single'],
-			'@stylistic/object-curly-spacing': ['error', 'always'],
-			'@stylistic/arrow-parens': ['error', 'always'],
-			'@stylistic/linebreak-style': 0,
-			'@typescript-eslint/consistent-type-imports': 'warn',
+			"@stylistic/max-len": ["warn", { code: 120, ignoreComments: true, ignoreUrls: true, ignoreStrings: true }],
+			"@stylistic/indent": ["error", "tab"],
+			"@stylistic/no-mixed-spaces-and-tabs": ["error", "smart-tabs"],
+			"@stylistic/semi": ["error", "always"],
+			"@stylistic/quotes": ["error", "double"],
+			"@stylistic/object-curly-spacing": ["error", "always"],
+			"@stylistic/arrow-parens": ["error", "always"],
+			"@stylistic/linebreak-style": 0,
+			"@typescript-eslint/consistent-type-imports": "warn",
 		},
 	},
 	/** Modify some common rules to less severity */
 	{
 		rules: {
-			'no-empty': 'off',
-			'no-unused-vars': 'off',
-			'prefer-const': ['error', { ignoreReadBeforeAssign: true }],
-			'@typescript-eslint/no-explicit-any': 'off',
-			'no-irregular-whitespace': 'off'
+			"no-empty": "off",
+			"no-unused-vars": "off",
+			"prefer-const": ["error", { ignoreReadBeforeAssign: true }],
+			"@typescript-eslint/no-explicit-any": "off",
+			"no-irregular-whitespace": "off"
 		},
 	},
 ];

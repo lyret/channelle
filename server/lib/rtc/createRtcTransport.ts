@@ -1,4 +1,4 @@
-import { mediaSoup } from '../api';
+import { mediaSoup } from "../api";
 
 /** Creates and returns a transport object for communicating with clients over WebRTC */
 export async function createRTCTransport() {

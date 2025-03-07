@@ -1,66 +1,66 @@
 <script lang="ts">
-	import { createDatabaseStore } from '~/stores';
-	import SceneSelectorControl from './SceneSelectorControl.svelte';
+	import { createDatabaseStore } from "~/stores";
+	import SceneSelectorControl from "./SceneSelectorControl.svelte";
 
-	import { onMount } from 'svelte';
-	import { sceneChatIsEnabled } from '~/stores/scene/sceneChatIsEnabled';
-	import { sceneCurtains } from '~/stores/scene/sceneCurtains';
-	import { sceneEffectsIsEnabled } from '~/stores/scene/sceneEffectsIsEnabled';
-	import { sceneVisitorAudioIsEnabled } from '~/stores/scene/sceneVisitorAudioIsEnabled';
+	import { onMount } from "svelte";
+	import { sceneChatIsEnabled } from "~/stores/scene/sceneChatIsEnabled";
+	import { sceneCurtains } from "~/stores/scene/sceneCurtains";
+	import { sceneEffectsIsEnabled } from "~/stores/scene/sceneEffectsIsEnabled";
+	import { sceneVisitorAudioIsEnabled } from "~/stores/scene/sceneVisitorAudioIsEnabled";
 	import {
 		selectedPredefinedStageLayout,
 		type PredefinedLayout,
-	} from '~/stores/stage/selectedPredefinedStageLayout';
-	import { stageLayout } from '~/stores/stage/stageLayout';
+	} from "~/stores/stage/selectedPredefinedStageLayout";
+	import { stageLayout } from "~/stores/stage/stageLayout";
 
-	const allParticipants = createDatabaseStore('participant');
+	const allParticipants = createDatabaseStore("participant");
 	$: participants = $allParticipants.filter(
 		(p) => (p.actor || p.manager) && !p.blocked
 	);
 
 	const auto: PredefinedLayout = {
-		name: 'Automatisk',
+		name: "Automatisk",
 		chatEnabled: true,
 		layout: [],
 	};
 	const empty: PredefinedLayout = {
-		name: 'Helt tom',
+		name: "Helt tom",
 		chatEnabled: true,
-		layout: [[{ type: 'empty' }]],
+		layout: [[{ type: "empty" }]],
 	};
 	const chat: PredefinedLayout = {
-		name: 'Chatduell',
+		name: "Chatduell",
 		chatEnabled: false,
 		layout: [
-			[{ type: 'actor', id: -1 }, { type: 'chat' }, { type: 'actor', id: -1 }],
+			[{ type: "actor", id: -1 }, { type: "chat" }, { type: "actor", id: -1 }],
 		],
 	};
 	const oneXOne: PredefinedLayout = {
-		name: 'En i fokus',
+		name: "En i fokus",
 		chatEnabled: true,
-		layout: [[{ type: 'actor', id: -1 }]],
+		layout: [[{ type: "actor", id: -1 }]],
 	};
 	const oneXTwo: PredefinedLayout = {
-		name: 'Två bredvid varandra',
+		name: "Två bredvid varandra",
 		chatEnabled: true,
 		layout: [
 			[
-				{ type: 'actor', id: -1 },
-				{ type: 'actor', id: -1 },
+				{ type: "actor", id: -1 },
+				{ type: "actor", id: -1 },
 			],
 		],
 	};
 	const twoXTwo: PredefinedLayout = {
-		name: 'Fyra rutor',
+		name: "Fyra rutor",
 		chatEnabled: true,
 		layout: [
 			[
-				{ type: 'actor', id: -1 },
-				{ type: 'actor', id: -1 },
+				{ type: "actor", id: -1 },
+				{ type: "actor", id: -1 },
 			],
 			[
-				{ type: 'actor', id: -1 },
-				{ type: 'actor', id: -1 },
+				{ type: "actor", id: -1 },
+				{ type: "actor", id: -1 },
 			],
 		],
 	};

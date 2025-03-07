@@ -1,42 +1,42 @@
-import type * as MediaSoup from 'mediasoup';
-import type * as IO from 'socket.io';
+import type * as MediaSoup from "mediasoup";
+import type * as IO from "socket.io";
 import type {
 	DataTypes
-} from '../database';
+} from "../database";
 import {
 	client,
 	Repository,
 	RepositoryOperations,
 	RepositoryOperationsThatIntroducesChanges,
-} from '../database';
+} from "../database";
 import type {
 	SubscriptionMessage
-} from '../shared/subscriptions';
+} from "../shared/subscriptions";
 import {
 	createSubscriptionPath
-} from '../shared/subscriptions';
+} from "../shared/subscriptions";
 
-import { mediaSoupRouter, ws } from './lib/api';
-import { createRTCResponseHandler } from './lib/rtc';
+import { mediaSoupRouter, ws } from "./lib/api";
+import { createRTCResponseHandler } from "./lib/rtc";
 
 import {
 	userCameraBans,
 	userMicrophoneBans,
 	userOnlineStatus,
-} from './stores/users';
+} from "./stores/users";
 
-import { handleServerRTPCapabilitiesRequests as handleRTPCapabilitiesRequests } from './lib/requestHandlers/capabilitiesRequestsHandlers';
+import { handleServerRTPCapabilitiesRequests as handleRTPCapabilitiesRequests } from "./lib/requestHandlers/capabilitiesRequestsHandlers";
 import {
 	handleRTCTransportConnectionRequests,
 	handleRTCTransportCreationRequests,
 	handleSendTransportProducingRequests,
-} from './lib/requestHandlers/transportRequestHandlers';
+} from "./lib/requestHandlers/transportRequestHandlers";
 import {
 	audioProducers,
 	mediaProducerTransports,
 	mediaReceiverTransports,
 	videoProducers,
-} from './stores/media';
+} from "./stores/media";
 
 /** A map between connected sockets and participant ids for that socket */
 const onlineParticipants = new Map<string, number>();
@@ -49,15 +49,15 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 	console.log(`[IO] ${socket.id} connected!`);
 
 	// Handle connection errors
-	socket.on('connect_error', (err) => {
-		console.error('[IO] client connection error', err);
+	socket.on("connect_error", (err) => {
+		console.error("[IO] client connection error", err);
 	});
 
 	socket.on(
-		'registerParticipant',
+		"registerParticipant",
 		async ({ participantId, hasFollowedInviteLinkForActors }, callback) => {
 			try {
-				let participant: DataTypes['participant'] | undefined = undefined;
+				let participant: DataTypes["participant"] | undefined = undefined;
 
 				if (participantId && !Number.isNaN(participantId)) {
 					participant = await client.participant.findFirst({
@@ -70,7 +70,7 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 				if (!participant) {
 					participant = await client.participant.create({
 						data: {
-							name: '',
+							name: "",
 							manager: makeManager,
 							actor: makeActor,
 						},
@@ -95,22 +95,22 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 		}
 	);
 
-	socket.on('effects_trigger', async (_, callback) => {
+	socket.on("effects_trigger", async (_, callback) => {
 		try {
 			// Clients are not allowed to trigger effects directly
 			callback(undefined);
 		} catch (err) {
 			console.error(err);
 			callback({
-				error: CONFIG.isProduction ? err : new Error('Server Error'),
+				error: CONFIG.isProduction ? err : new Error("Server Error"),
 			});
 		}
 	});
 	socket.on(
-		'effects_add',
+		"effects_add",
 		async (data: { type: string; number: number }, callback) => {
 			try {
-				ws().emit('effects_trigger', {
+				ws().emit("effects_trigger", {
 					type: data.type,
 					number: data.number,
 				});
@@ -118,13 +118,13 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 			} catch (err) {
 				console.error(err);
 				callback({
-					error: CONFIG.isProduction ? err : new Error('Server Error'),
+					error: CONFIG.isProduction ? err : new Error("Server Error"),
 				});
 			}
 		}
 	);
 	socket.on(
-		'remove_producer',
+		"remove_producer",
 		async (data: { audio?: boolean; video?: boolean }, callback) => {
 			try {
 				if (data.audio) {
@@ -138,19 +138,19 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 			} catch (err) {
 				console.error(err);
 				callback({
-					error: CONFIG.isProduction ? err : new Error('Server Error'),
+					error: CONFIG.isProduction ? err : new Error("Server Error"),
 				});
 			}
 		}
 	);
-	socket.on('remove_consumer', async (_, callback) => {
+	socket.on("remove_consumer", async (_, callback) => {
 		try {
 			mediaReceiverTransports.delete(socket.id);
 			callback(true);
 		} catch (err) {
 			console.error(err);
 			callback({
-				error: CONFIG.isProduction ? err : new Error('Server Error'),
+				error: CONFIG.isProduction ? err : new Error("Server Error"),
 			});
 		}
 	});
@@ -166,15 +166,15 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 			socketId: string;
 			producerId: string;
 			participantId: number;
-			participant: DataTypes['participant'];
+			participant: DataTypes["participant"];
 			id: string;
 			kind: MediaSoup.types.MediaKind;
 			rtpParameters: MediaSoup.types.RtpParameters;
 		}>;
-	}>('transport_receiver_consume', async () => {
+	}>("transport_receiver_consume", async () => {
 		// Fail if no transport exists
 		if (!mediaReceiverTransports.has(socket.id)) {
-			throw new Error('Can\'t connect a non-existing receiver transport');
+			throw new Error("Can't connect a non-existing receiver transport");
 		}
 
 		// Get transports for the connected socket
@@ -189,7 +189,7 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 			socketId: string;
 			producerId: string;
 			participantId: number;
-			participant: DataTypes['participant'];
+			participant: DataTypes["participant"];
 			id: string;
 			kind: MediaSoup.types.MediaKind;
 			rtpParameters: MediaSoup.types.RtpParameters;
@@ -204,7 +204,7 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 		const router = await mediaSoupRouter();
 
 		// Find all actors
-		const participants: Record<number, DataTypes['participant']> = (
+		const participants: Record<number, DataTypes["participant"]> = (
 			await client.participant.findMany({
 				where: { OR: [{ actor: true }, { manager: true }] },
 			})
@@ -230,7 +230,7 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 				})
 			) {
 				console.error(
-					'Can not consume from producer from socket ' + producerSocketId
+					"Can not consume from producer from socket " + producerSocketId
 				);
 				continue;
 			}
@@ -240,20 +240,20 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 
 			// Check for bans
 			// TODO: Banning here is really ineffective
-			if (producer.kind == 'video' && userCameraBans.has(participantId)) {
+			if (producer.kind == "video" && userCameraBans.has(participantId)) {
 				console.error(
-					'Can\'t consume the video producer from',
+					"Can't consume the video producer from",
 					participantId,
-					'as it is banned'
+					"as it is banned"
 				);
 			} else if (
-				producer.kind == 'audio' &&
+				producer.kind == "audio" &&
 				userMicrophoneBans.has(participantId)
 			) {
 				console.error(
-					'Can\'t consume the audio producer from',
+					"Can't consume the audio producer from",
 					participantId,
-					'as it is banned'
+					"as it is banned"
 				);
 			}
 
@@ -291,11 +291,11 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 	});
 	handler(socket);
 
-	socket.on('transport_receiver_resume', async (_, callback) => {
+	socket.on("transport_receiver_resume", async (_, callback) => {
 		try {
 			// Fail if no transport exists
 			if (!mediaReceiverTransports.has(socket.id)) {
-				throw new Error('Can\'t resume a non-existing receiver transport');
+				throw new Error("Can't resume a non-existing receiver transport");
 			}
 			const { consumers } = mediaReceiverTransports.get(socket.id)!;
 
@@ -308,13 +308,13 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 		} catch (err) {
 			console.error(err);
 			callback({
-				error: CONFIG.isProduction ? err : new Error('Server Error'),
+				error: CONFIG.isProduction ? err : new Error("Server Error"),
 			});
 		}
 	});
 
 	// Handle socket disconnections
-	socket.on('disconnect', () => {
+	socket.on("disconnect", () => {
 		// Turn participant offline
 		if (onlineParticipants.has(socket.id)) {
 			try {
@@ -340,7 +340,7 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 
 	// When a subscription starts, it is added on a server side room for that subscription path
 	// The current data is emitted to that single subscriber
-	socket.on('subscribe', async (message: SubscriptionMessage) => {
+	socket.on("subscribe", async (message: SubscriptionMessage) => {
 		const path = createSubscriptionPath(message);
 		const repository: Repository<any, any, any> =
 			Repository._allRepositories[message.repository];
@@ -365,7 +365,7 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 	});
 
 	// When a client want to stop a subscription, it is removed from the corresponding room
-	socket.on('unsubscribe', async (message: SubscriptionMessage) => {
+	socket.on("unsubscribe", async (message: SubscriptionMessage) => {
 		const path = createSubscriptionPath(message);
 		console.log(`[IO] ${socket.id} unsubscribed to ${path}`);
 		socket.leave(path);
@@ -413,12 +413,12 @@ export const createIOEventHandlers = async (socket: IO.Socket) => {
 // FIXME: test
 /** Stage Layout Value With Producers */
 export type StageLayoutWithProducers = Array<
-	Array<StageLayoutActorWithProducer | { type: 'chat' } | { type: 'empty' }>
+	Array<StageLayoutActorWithProducer | { type: "chat" } | { type: "empty" }>
 >;
 
 export type StageLayoutActorWithProducer = {
-	type: 'actor';
-	participant: DataTypes['participant'];
+	type: "actor";
+	participant: DataTypes["participant"];
 	id: number;
 	production: Array<{
 		socketId: string;

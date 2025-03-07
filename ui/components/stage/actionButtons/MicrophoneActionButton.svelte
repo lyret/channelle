@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { blur } from 'svelte/transition';
-	import IconMicOff from '~/components/icons/Icon-mic-off.svelte';
-	import IconMic from '~/components/icons/Icon-mic.svelte';
-	import { currentParticipant } from '~/lib/stores/api';
-	import { localMedia } from '~/lib/stores/producedMedia';
-	import { sceneVisitorAudioIsEnabled } from '~/stores/scene/sceneVisitorAudioIsEnabled';
+	import { blur } from "svelte/transition";
+	import IconMicOff from "~/components/icons/Icon-mic-off.svelte";
+	import IconMic from "~/components/icons/Icon-mic.svelte";
+	import { currentParticipant } from "~/lib/stores/api";
+	import { localMedia } from "~/lib/stores/producedMedia";
+	import { sceneVisitorAudioIsEnabled } from "~/stores/scene/sceneVisitorAudioIsEnabled";
 
 	$: isOn = !!$localMedia.audio.stream && !$localMedia.audio.paused;
 	$: isBlocked = $localMedia.audio.blocked;

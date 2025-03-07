@@ -1,12 +1,12 @@
-import Confetti from 'canvas-confetti';
-import clapSrc from '~/assets/sounds/analog-clap.wav';
-import tinkSrc from '~/assets/sounds/c4.wav';
+import Confetti from "canvas-confetti";
+import clapSrc from "~/assets/sounds/analog-clap.wav";
+import tinkSrc from "~/assets/sounds/c4.wav";
 
 /** Flower SVG shape for confetti effects */
-const flower = Confetti.shapeFromText({ text: '🌹', scalar: 4 });
+const flower = Confetti.shapeFromText({ text: "🌹", scalar: 4 });
 
 /** Hands SVG shape for confetti effects */
-const hands = Confetti.shapeFromText({ text: '👏', scalar: 6 });
+const hands = Confetti.shapeFromText({ text: "👏", scalar: 6 });
 
 /** Clap sound effect */
 const clap = new Audio(clapSrc);
@@ -32,8 +32,8 @@ export function triggerFlowerGiftEffect() {
 		gravity: 0.8,
 		decay: 0.5,
 		startVelocity: 100,
-		colors: ['#b83334'],
-		shapes: [flower, 'circle'],
+		colors: ["#b83334"],
+		shapes: [flower, "circle"],
 		scalar: 2,
 	});
 	Confetti({
@@ -44,7 +44,7 @@ export function triggerFlowerGiftEffect() {
 		gravity: 0.8,
 		decay: 0.6,
 		startVelocity: 100,
-		colors: ['#b83334'],
+		colors: ["#b83334"],
 		shapes: [flower, flower, flower],
 		scalar: 4,
 	});
@@ -58,8 +58,8 @@ export function triggerFlowerGiftEffect() {
 				gravity: 0.8,
 				decay: 0.5,
 				startVelocity: 100,
-				colors: ['#b83334'],
-				shapes: [flower, 'circle'],
+				colors: ["#b83334"],
+				shapes: [flower, "circle"],
 				scalar: 2,
 			}),
 		100
@@ -83,8 +83,8 @@ export function triggerApplauseEffect() {
 		gravity: 0.9,
 		decay: 0.6,
 		startVelocity: 65,
-		colors: ['#f9e231'],
-		shapes: ['star'],
+		colors: ["#f9e231"],
+		shapes: ["star"],
 		scalar: 0.8,
 		//@ts-ignore
 		flat: false,
@@ -97,7 +97,7 @@ export function triggerApplauseEffect() {
 		gravity: 0.8,
 		decay: 0.4,
 		startVelocity: 60,
-		colors: ['#f9e231'],
+		colors: ["#f9e231"],
 		shapes: [hands],
 		scalar: 5,
 		//@ts-ignore

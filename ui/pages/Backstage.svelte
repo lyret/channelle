@@ -1,18 +1,18 @@
 <script lang="ts">
-	import { blur } from 'svelte/transition';
-	import { openInstruments } from '~/stores/ui';
-	import logoSrc from '../assets/images/redrose.gif';
-	import ChatList from '~/components/instruments/ChatInstrument.svelte';
-	import ParticipantsInstrument from '~/components/instruments/ParticipantsInstrument.svelte';
-	import SceneSelectorInstrument from '~/components/instruments/SceneSelectorInstrument.svelte';
-	import MediaLibraryInstrument from '~/components/instruments/MediaLibraryInstrument.svelte';
-	import IconUsers from '~/components/icons/Icon-users.svelte';
-	import AccessInstrument from '~/components/instruments/AccessInstrument.svelte';
-	import IconLayers from '~/components/icons/Icon-layers.svelte';
-	import IconMessageCircle from '~/components/icons/Icon-message-circle.svelte';
-	import IconCheckCircle from '~/components/icons/Icon-check-circle.svelte';
-	import IconCircle from '~/components/icons/Icon-circle.svelte';
-	import IconKey from '~/components/icons/Icon-key.svelte';
+	import { blur } from "svelte/transition";
+	import { openInstruments } from "~/stores/ui";
+	import logoSrc from "../assets/images/redrose.gif";
+	import ChatList from "~/components/instruments/ChatInstrument.svelte";
+	import ParticipantsInstrument from "~/components/instruments/ParticipantsInstrument.svelte";
+	import SceneSelectorInstrument from "~/components/instruments/SceneSelectorInstrument.svelte";
+	import MediaLibraryInstrument from "~/components/instruments/MediaLibraryInstrument.svelte";
+	import IconUsers from "~/components/icons/Icon-users.svelte";
+	import AccessInstrument from "~/components/instruments/AccessInstrument.svelte";
+	import IconLayers from "~/components/icons/Icon-layers.svelte";
+	import IconMessageCircle from "~/components/icons/Icon-message-circle.svelte";
+	import IconCheckCircle from "~/components/icons/Icon-check-circle.svelte";
+	import IconCircle from "~/components/icons/Icon-circle.svelte";
+	import IconKey from "~/components/icons/Icon-key.svelte";
 </script>
 
 <main in:blur={{ delay: 500, duration: 1000 }}>
@@ -29,11 +29,11 @@
 		in:blur={{ duration: 100 }}
 	>
 		<ul>
-			<li class:is-active={$openInstruments['scene-settings']}>
-				<a on:click={() => openInstruments.toggle('scene-settings')}
+			<li class:is-active={$openInstruments["scene-settings"]}>
+				<a on:click={() => openInstruments.toggle("scene-settings")}
 					><span class="icon"><IconLayers /></span> Scenen
 					<span class="icon">
-						{#if $openInstruments['scene-settings']}
+						{#if $openInstruments["scene-settings"]}
 							<IconCheckCircle />
 						{:else}
 							<IconCircle />
@@ -41,12 +41,12 @@
 					</span></a
 				>
 			</li>
-			<li class:is-active={$openInstruments['participants']}>
-				<a on:click={() => openInstruments.toggle('participants')}
+			<li class:is-active={$openInstruments["participants"]}>
+				<a on:click={() => openInstruments.toggle("participants")}
 					><span class="icon"><IconUsers /></span>
 					Deltagare
 					<span class="icon">
-						{#if $openInstruments['participants']}
+						{#if $openInstruments["participants"]}
 							<IconCheckCircle />
 						{:else}
 							<IconCircle />
@@ -54,11 +54,11 @@
 					</span></a
 				>
 			</li>
-			<li class:is-active={$openInstruments['chat']}>
-				<a on:click={() => openInstruments.toggle('chat')}
+			<li class:is-active={$openInstruments["chat"]}>
+				<a on:click={() => openInstruments.toggle("chat")}
 					><span class="icon"><IconMessageCircle /></span>
 					Chatt<span class="icon"
-						>{#if $openInstruments['chat']}
+						>{#if $openInstruments["chat"]}
 							<IconCheckCircle />
 						{:else}
 							<IconCircle />
@@ -66,11 +66,11 @@
 					></a
 				>
 			</li>
-			<li class:is-active={$openInstruments['access']}>
-				<a on:click={() => openInstruments.toggle('access')}
+			<li class:is-active={$openInstruments["access"]}>
+				<a on:click={() => openInstruments.toggle("access")}
 					><span class="icon"><IconKey /></span>
 					Tillgång<span class="icon"
-						>{#if $openInstruments['access']}
+						>{#if $openInstruments["access"]}
 							<IconCheckCircle />
 						{:else}
 							<IconCircle />
@@ -97,27 +97,27 @@
 		in:blur={{ delay: 0, duration: 1000 }}
 		class={`instruments instrument-cols-${Object.values($openInstruments).length}`}
 	>
-		{#if $openInstruments['scene-settings']}
+		{#if $openInstruments["scene-settings"]}
 			<div class="instrument">
 				<SceneSelectorInstrument />
 			</div>
 		{/if}
-		{#if $openInstruments['participants']}
+		{#if $openInstruments["participants"]}
 			<div class="instrument">
 				<ParticipantsInstrument />
 			</div>
 		{/if}
-		{#if $openInstruments['chat']}
+		{#if $openInstruments["chat"]}
 			<div class="instrument">
 				<ChatList />
 			</div>
 		{/if}
-		{#if $openInstruments['access']}
+		{#if $openInstruments["access"]}
 			<div class="instrument">
 				<AccessInstrument />
 			</div>
 		{/if}
-		{#if $openInstruments['media-library']}
+		{#if $openInstruments["media-library"]}
 			<div class="instrument">
 				<MediaLibraryInstrument />
 			</div>

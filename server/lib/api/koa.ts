@@ -1,5 +1,5 @@
-import Koa from 'koa';
-import BodyParser from 'koa-bodyparser';
+import Koa from "koa";
+import BodyParser from "koa-bodyparser";
 
 let _app: Koa | undefined;
 
@@ -14,7 +14,7 @@ export function koa(): Koa {
 	_app = new Koa();
 
 	// Parse bodies
-	_app.use(BodyParser({ enableTypes: ['text'] }));
+	_app.use(BodyParser({ enableTypes: ["text"] }));
 
 	return _app;
 }
