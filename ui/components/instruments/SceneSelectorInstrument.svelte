@@ -2,16 +2,16 @@
 	import { createDatabaseStore } from '~/stores';
 	import SceneSelectorControl from './SceneSelectorControl.svelte';
 
-	import { stageLayout } from '~/stores/stage/stageLayout';
+	import { onMount } from 'svelte';
+	import { sceneChatIsEnabled } from '~/stores/scene/sceneChatIsEnabled';
+	import { sceneCurtains } from '~/stores/scene/sceneCurtains';
+	import { sceneEffectsIsEnabled } from '~/stores/scene/sceneEffectsIsEnabled';
+	import { sceneVisitorAudioIsEnabled } from '~/stores/scene/sceneVisitorAudioIsEnabled';
 	import {
 		selectedPredefinedStageLayout,
 		type PredefinedLayout,
 	} from '~/stores/stage/selectedPredefinedStageLayout';
-	import { sceneCurtains } from '~/stores/scene/sceneCurtains';
-	import { sceneVisitorAudioIsEnabled } from '~/stores/scene/sceneVisitorAudioIsEnabled';
-	import { sceneEffectsIsEnabled } from '~/stores/scene/sceneEffectsIsEnabled';
-	import { sceneChatIsEnabled } from '~/stores/scene/sceneChatIsEnabled';
-	import { onMount } from 'svelte';
+	import { stageLayout } from '~/stores/stage/stageLayout';
 
 	const allParticipants = createDatabaseStore('participant');
 	$: participants = $allParticipants.filter(
@@ -68,7 +68,9 @@
 	// Sync actual stage layout stores when the selected predefined layout changes
 	onMount(() => {
 		const stop = selectedPredefinedStageLayout.subscribe((layout) => {
-			sceneChatIsEnabled.set(layout?.chatEnabled || false);
+			if (layout) {
+				sceneChatIsEnabled.set(layout?.chatEnabled || false);
+			}
 			stageLayout.set(layout?.layout || []);
 		});
 
@@ -79,32 +81,42 @@
 </script>
 
 <h1 class="title">Sceninställningar</h1>
-<button
-	class="button is-dark is-fullwidth mb-2"
-	class:is-primary={$sceneCurtains}
-	on:click={() => sceneCurtains.set(!$sceneCurtains)}>Visa ridå 🎭</button
->
-<button
-	class="button is-dark is-fullwidth mb-2"
-	class:is-primary={$sceneChatIsEnabled}
-	on:click={() => {
-		sceneChatIsEnabled.set(!$sceneChatIsEnabled);
-	}}>Tillåt publiken att öppna chatten 💬</button
->
-<button
-	class="button is-dark is-fullwidth mb-2"
-	class:is-primary={$sceneVisitorAudioIsEnabled}
-	on:click={() => {
-		sceneVisitorAudioIsEnabled.set(!$sceneVisitorAudioIsEnabled);
-	}}>Tillåt ljud från publiken 🎤</button
->
-<button
-	class="button is-dark is-fullwidth mb-2"
-	class:is-primary={$sceneEffectsIsEnabled}
-	on:click={() => {
-		sceneEffectsIsEnabled.set(!$sceneEffectsIsEnabled);
-	}}>Tillåt blommor och applåder 🌹👏</button
->
+
+<h1 class="title is-4">Tvingade inställningar</h1>
+<p class="subtitle is-6">Dessa inställningar kommer gälla oavsett vilken scen som pågår.</p>
+
+<!-- Scene curtains -->
+<p class="has-text-centered pb-2 mt-2">Visa ridån 🎭</p>
+<div class="buttons has-addons is-centered">
+	<button class="button is-danger" class:is-light={$sceneCurtains} on:click={() =>  $sceneCurtains = false}>Dölj</button>
+	<button class="button is-info" class:is-light={$sceneCurtains} >Automatiskt</button>
+	<button class="button is-success" class:is-light={!$sceneCurtains} on:click={() =>  $sceneCurtains = true}>Visa</button>
+  </div>
+
+<!-- Chat button -->
+<p class="has-text-centered pb-2 mt-2">Visa chatt-panelen 💬</p>
+<div class="buttons has-addons is-centered">
+	<button class="button is-danger" class:is-light={$sceneChatIsEnabled} on:click={() =>  $sceneChatIsEnabled = false}>Dölj</button>
+	<button class="button is-info" class:is-light={$sceneChatIsEnabled} >Automatiskt</button>
+	<button class="button is-success" class:is-light={!$sceneChatIsEnabled} on:click={() =>  $sceneChatIsEnabled = true}>Visa</button>
+  </div>
+
+<!-- Visitor audio -->
+<p class="has-text-centered pb-2 mt-2">Tillåt ljud från publiken 🎤</p>
+<div class="buttons has-addons is-centered">
+	<button class="button is-danger" class:is-light={$sceneVisitorAudioIsEnabled} on:click={() =>  $sceneVisitorAudioIsEnabled = false}>Nej</button>
+	<button class="button is-info" class:is-light={$sceneVisitorAudioIsEnabled} >Automatiskt</button>
+	<button class="button is-success" class:is-light={!$sceneVisitorAudioIsEnabled} on:click={() =>  $sceneVisitorAudioIsEnabled = true}>Ja</button>
+  </div>
+
+<!-- Visitor effects -->
+<p class="has-text-centered pb-2 mt-2">Tillåt blommor och applåder 🌹👏</p>
+<div class="buttons has-addons is-centered">
+	<button class="button is-danger" class:is-light={$sceneEffectsIsEnabled} on:click={() =>  $sceneEffectsIsEnabled = false}>Nej</button>
+	<button class="button is-info" class:is-light={$sceneEffectsIsEnabled} >Automatiskt</button>
+	<button class="button is-success" class:is-light={!$sceneEffectsIsEnabled} on:click={() =>  $sceneEffectsIsEnabled = true}>Ja</button>
+  </div>
+
 <hr />
 <h1 class="title">Välj Scenlayout</h1>
 
