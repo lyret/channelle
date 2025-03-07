@@ -40,7 +40,7 @@ $background: #000;
 	$notification-code-background-color: $primary
 );
 // $family-primary: "FuturaHandwritten",
-@use './bulma-list.scss';
+@use './lib/bulma-list.scss';
 
 /* Fonts and external resources */
 @font-face {
