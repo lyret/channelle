@@ -11,7 +11,9 @@
 		"skipLibCheck": true,
 		"sourceMap": true,
 		"baseUrl": "./ui",
+		"typeRoots": ["./shared/types"],
 		"paths": {
+			"*": ["./shared/types/*.d.ts"],
 			"~/*": ["./*"],
 			"$ui/device": ["./_device/index.ts"],
 		},

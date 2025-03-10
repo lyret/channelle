@@ -5,7 +5,12 @@ import { networkInterfaces } from "node:os";
 import Nopt from "nopt";
 import { publicIpv4 } from "public-ip";
 
-/** Creates and returns a runtime context including any given CLI options */
+/** @typedef {import('./shared/types/config.mjs').CONFIG} CONFIG */
+
+/** 
+ * Creates and returns a runtime context including any given CLI options
+ * @returns {CONFIG} CONFIG - The runtime context
+ */
 export async function createConfiguration() {
 	// Parse environmental variables
 	const { env } = process;
@@ -172,6 +177,8 @@ export async function createConfiguration() {
 	// Determine the listening info for media soup
 
 	// Create the appropriate configuration
+
+	/** @type {Types.CONFIG} */
 	const config = {
 		/** Runtime Options */
 		runtime: {

@@ -1,6 +1,8 @@
-import Path from "node:path";
-import ChildProcess from "node:child_process";
 import Chalk from "chalk";
+import ChildProcess from "node:child_process";
+import Path from "node:path";
+
+/** @typedef {import('./shared/types/config.mjs').CONFIG} CONFIG */
 
 /** Currently running server process reference, if any */
 let RUNNING_SERVER;
@@ -12,7 +14,10 @@ let RUNNING_SERVER;
  */
 let RUNNING_SERVER_PROMISE;
 
-/** Creates a abortable child process executing the built version of the server side code */
+/**
+ * Creates a abortable child process executing the built version of the server side code
+ * @param {CONFIG} CONFIG - The runtime context
+ */
 export async function runServerCode(CONFIG) {
 	try {
 		// Signal any ongoing process to end
@@ -35,6 +40,14 @@ export async function runServerCode(CONFIG) {
 				Chalk.white.bgMagenta(`[${CONFIG.package.name.toUpperCase()}]`),
 				Chalk.bold("Launching\n")
 			);
+			if (CONFIG.web.host == "localhost") {
+				console.log(
+					"\n🪁",
+					Chalk.white.bgMagenta(`[${CONFIG.package.name.toUpperCase()}]`),
+					Chalk.bold(`Open: http://localhost:${CONFIG.web.port}\n`)
+				);
+
+			}
 
 			// Create subprocess arguments
 			const args = [Path.resolve(process.cwd(), CONFIG.build.serverOutput)];

@@ -2,7 +2,12 @@ import Chalk from "chalk";
 import Esbuild from "esbuild";
 import Path from "node:path";
 
-/** Creates the build context for building the server code using the given config */
+/** @typedef {import('./shared/types/config.mjs').CONFIG} CONFIG */
+
+/** 
+ * Creates the build context for building the server code using the given config
+ * @param {CONFIG} CONFIG - The runtime context
+*/
 export async function createServerBuildContext(CONFIG, callback) {
 	return Esbuild.context({
 		bundle: true,

@@ -8,7 +8,12 @@ import Path from "node:path";
 import * as Sass from "sass";
 import SvelteConfig from "./svelte.config.mjs";
 
-/** Creates the build context for building the client code using the given config */
+/** @typedef {import('./shared/types/config.mjs').CONFIG} CONFIG */
+
+/** 
+ * Creates the build context for building the client code using the given config
+ * @param {CONFIG} CONFIG - The runtime context
+ */
 export async function createClientBuildContext(CONFIG, callback) {
 	const { default: EsbuildHtml } = await import("@chialab/esbuild-plugin-html");
 
