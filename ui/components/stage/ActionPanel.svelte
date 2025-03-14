@@ -78,7 +78,7 @@
 		class={btnClassList + " is-hidden-mobile"}
 		class:has-text-primary={$fullscreen}
 		transition:blur
-		on:click = {() => {
+		on:click={() => {
 			fullscreen.toggle();
 		}}
 	>
@@ -94,7 +94,10 @@
 			class={btnClassList}
 			transition:blur
 			class:has-text-primary={$stageChat}
-			on:click={() => {stageChat.set(!$stageChat); stageSettings.set(false);}}
+			on:click={() => {
+				stageChat.set(!$stageChat);
+				stageSettings.set(false);
+			}}
 		>
 			<span class={iconClassList}><IconMessageCircle /></span>
 			{#if !isMobile}
@@ -107,7 +110,10 @@
 		class={btnClassList}
 		transition:blur
 		class:has-text-primary={$stageSettings}
-		on:click={() => {stageSettings.set(!$stageSettings); stageChat.set(false);}}
+		on:click={() => {
+			stageSettings.set(!$stageSettings);
+			stageChat.set(false);
+		}}
 	>
 		<span class={iconClassList}>
 			{#if $stageSettings}

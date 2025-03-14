@@ -1,20 +1,20 @@
 <script lang="ts">
 	import { blur } from "svelte/transition";
+	import logoSrc from "~/assets/images/logo-smoker-free.gif";
+	import AccessInstrument from "~/components/instruments/AccessInstrument.svelte";
+	import DebugInstrument from "~/components/instruments/DebugInstrument.svelte";
+	import MediaLibraryInstrument from "~/components/instruments/MediaLibraryInstrument.svelte";
 	import ParticipantsInstrument from "~/components/instruments/ParticipantsInstrument.svelte";
 	import SceneSelectorInstrument from "~/components/instruments/SceneSelectorInstrument.svelte";
-	import MediaLibraryInstrument from "~/components/instruments/MediaLibraryInstrument.svelte";
-	import DebugInstrument from "~/components/instruments/DebugInstrument.svelte";
-	import AccessInstrument from "~/components/instruments/AccessInstrument.svelte";
-	import { focusedInstrument } from "~/stores/ui";
-	import MediaInputMenuInstrument from "./menuInstruments/MediaInputMenuInstrument.svelte";
-	import logoSrc from "~/assets/images/logo-smoker-free.gif";
 	import { currentParticipant } from "~/lib/stores/api";
-	import IconXCircle from "../icons/Icon-x-circle.svelte";
-	import IconLayers from "../icons/Icon-layers.svelte";
-	import IconKey from "../icons/Icon-key.svelte";
-	import IconUsers from "../icons/Icon-users.svelte";
-	import IconExternalLink from "../icons/Icon-external-link.svelte";
+	import { focusedInstrument } from "~/stores/backstage";
 	import IconActivity from "../icons/Icon-activity.svelte";
+	import IconExternalLink from "../icons/Icon-external-link.svelte";
+	import IconKey from "../icons/Icon-key.svelte";
+	import IconLayers from "../icons/Icon-layers.svelte";
+	import IconUsers from "../icons/Icon-users.svelte";
+	import IconXCircle from "../icons/Icon-x-circle.svelte";
+	import MediaInputMenuInstrument from "./menuInstruments/MediaInputMenuInstrument.svelte";
 </script>
 
 <!-- Common Contents -->
