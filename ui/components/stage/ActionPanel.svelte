@@ -7,7 +7,7 @@
 	import { sceneEffectsIsEnabled } from "~/stores/scene/sceneEffectsIsEnabled";
 	import { stageChat } from "~/stores/scene/stageChatPanelsOpen";
 	import { stageSettings } from "~/stores/scene/stageSettingsIsOpen";
-	import { fullscreenStore } from "~/stores/ui/fullscreen";
+	import { fullscreenStore } from "~/stores/stage/fullscreen";
 	import IconMaximize from "../icons/Icon-maximize.svelte";
 	import IconMessageCircle from "../icons/Icon-message-circle.svelte";
 	import IconMinimize from "../icons/Icon-minimize.svelte";

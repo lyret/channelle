@@ -2,7 +2,6 @@
 	import { blur } from "svelte/transition";
 	import logoSrc from "~/assets/images/logo-free.gif";
 	import { APIStore } from "~/lib/stores/api";
-	import { route } from "~/stores/ui/url";
 
 	import Authenticate from "~/components/curtains/AuthenticateCurtainMessage.svelte";
 	import Blocked from "~/components/curtains/BlockedCurtainMessage.svelte";
@@ -10,7 +9,8 @@
 	import Curtains from "~/components/curtains/Curtains.svelte";
 	import Loader from "~/components/curtains/LoadingCurtainMessage.svelte";
 	import Problem from "~/components/curtains/ProblemCurtainMessage.svelte";
-	import ManagePage from "~/pages/Backstage.svelte";
+	import BackstagePage from "~/pages/Backstage.svelte";
+	import PlaygroundPage from "~/pages/Playground.svelte";
 	import StagePage from "~/pages/Stage.svelte";
 	import PasswordCurtainMessage from "./components/curtains/PasswordCurtainMessage.svelte";
 	import { scenePasswordIsOk } from "./stores/scene/scenePassword";
@@ -31,8 +31,11 @@
 	$: isBlocked = $APIStore.status == "blocked";
 	$: isPreparing = $APIStore.isReady == false;
 	$: hasEnteredName = $APIStore.status == "ready" && $APIStore.participant.name;
-	$: renderStage = $route && $route.group == "stage";
-	$: renderBackstage = $route && $route.group == "backstage";
+	$: renderStage =
+		window.location.pathname == "/" ||
+		window.location.pathname.indexOf("/stage") == 0;
+	$: renderPlayground = window.location.pathname.indexOf("/playground") == 0;
+	$: renderBackstage = window.location.pathname.indexOf("/backstage") == 0;
 	$: needToBeManager =
 		renderBackstage &&
 		!($APIStore.status == "ready" && $APIStore.participant.manager);
@@ -46,24 +49,28 @@
 			needStagePassword ||
 			needToBeManager);
 	$: renderContent =
-		!determiningState && !renderMessages && (renderStage || renderBackstage);
+		!determiningState &&
+		!renderMessages &&
+		(renderStage || renderBackstage || renderPlayground);
 	$: renderCurtains =
 		!determiningState &&
 		(isPreparing ||
 			!hasEnteredName ||
 			isBlocked ||
 			needStagePassword ||
-			($sceneCurtains && renderStage) ||
-			(!renderStage && !renderBackstage));
+			($sceneCurtains && renderStage));
 </script>
 
 <!-- Content -->
-
 {#if renderContent}
 	{#if renderStage}
 		<StagePage />
+	{:else if renderPlayground}
+		<PlaygroundPage />
 	{:else if renderBackstage}
-		<ManagePage />
+		<BackstagePage />
+	{:else}
+		<Curtains />
 	{/if}
 {/if}
 
