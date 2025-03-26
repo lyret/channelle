@@ -1,5 +1,4 @@
 import type * as MediaSoup from "mediasoup";
-import type { MediaRequests } from "../../shared";
 import { createMapStore } from "../lib/stores";
 
 /** Keeps tracks of created real time transports { [ transport id ]: transport with options } */
@@ -22,7 +21,7 @@ export const openTransports = createMapStore<
 	},
 });
 
-/** Keeps tracks of web rtc transports for incomming media streams from producers */
+/** Keeps tracks of web rtc transports for incoming media streams from producers */
 export const mediaProducerTransports = createMapStore<
 	string,
 	{

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { blur } from "svelte/transition";
+	import { ConsumedMediaStore } from "~/lib/stores/consumedMedia";
 	import { StageAudio } from "~/lib/stores/stageAudio";
 	import { StageLayout } from "~/lib/stores/stageLayout";
 	import { userCameraBans, userMicrophoneBans } from "~/stores/users";
@@ -22,4 +23,6 @@
 	{JSON.stringify($StageLayout)}
 	<h1>Stage Audio ({countOfStageLayout})</h1>
 	{JSON.stringify($StageAudio)}
+	<h1>Stage Audio ({countOfStageLayout})</h1>
+	{JSON.stringify($ConsumedMediaStore)}
 </main>
