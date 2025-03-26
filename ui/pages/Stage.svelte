@@ -26,10 +26,6 @@
 		`;
 
 	onMount(() => {
-		// setTimeout(() => {
-		// 	document.documentElement.style.setProperty("--main-background-color", "green");
-		// }, 2000);
-
 		StageLayout.subscribe((data) => {
 			console.log("StageLayout", data);
 		});

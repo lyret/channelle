@@ -78,44 +78,128 @@
 			stop();
 		};
 	});
+
+	const doDesignTest = () => {
+		document.documentElement.style.setProperty("--bulma-primary-h", "246deg");
+		document.documentElement.style.setProperty("--bulma-primary-s", "100%");
+		document.documentElement.style.setProperty("--bulma-primary-l", "48.4%");
+		document.documentElement.style.setProperty("--bulma-info-h", "60deg");
+		document.documentElement.style.setProperty("--bulma-info-s", "100%");
+		document.documentElement.style.setProperty("--bulma-info-l", "63.7%");
+		document.documentElement.style.setProperty("--bulma-scheme-h", "60deg");
+		document.documentElement.style.setProperty("--bulma-scheme-s", "100%");
+		document.documentElement.style.setProperty("--bulma-scheme-l", "63.7%");
+		document.documentElement.style.setProperty(
+			"--bulma-scheme-main-l",
+			"63.7%"
+		);
+		document.documentElement.style.setProperty("--bulma-link-h", "317deg");
+		document.documentElement.style.setProperty("--bulma-link-s", "41.2%");
+		document.documentElement.style.setProperty("--bulma-link-l", "93.3%");
+		document.documentElement.style.setProperty("--bulma-link-l", "93.3%");
+		document.documentElement.style.setProperty("--bulma-link-l", "93.3%");
+
+		document.documentElement.style.setProperty(
+			"--bulma-black",
+			"var(--bulma-primary)"
+		);
+		document.documentElement.style.setProperty(
+			"--bulma-button-static-background-color",
+			"var(--bulma-black)"
+		);
+		document.documentElement.style.setProperty(
+			"--bulma-body-background-color",
+			"var(--bulma-black)"
+		);
+	};
 </script>
 
 <h1 class="title">Sceninställningar</h1>
 
+<h1 class="title is-4">Design</h1>
+<p class="subtitle is-6">...</p>
+<button
+	class="button is-danger"
+	class:is-light={$sceneCurtains}
+	on:click={() => doDesignTest()}>Test</button
+>
+
 <h1 class="title is-4">Tvingade inställningar</h1>
-<p class="subtitle is-6">Dessa inställningar kommer gälla oavsett vilken scen som pågår.</p>
+<p class="subtitle is-6">
+	Dessa inställningar kommer gälla oavsett vilken scen som pågår.
+</p>
 
 <!-- Scene curtains -->
 <p class="has-text-centered pb-2 mt-2">Visa ridån 🎭</p>
 <div class="buttons has-addons is-centered">
-	<button class="button is-danger" class:is-light={$sceneCurtains} on:click={() =>  $sceneCurtains = false}>Dölj</button>
-	<button class="button is-info" class:is-light={$sceneCurtains} >Automatiskt</button>
-	<button class="button is-success" class:is-light={!$sceneCurtains} on:click={() =>  $sceneCurtains = true}>Visa</button>
-  </div>
+	<button
+		class="button is-danger"
+		class:is-light={$sceneCurtains}
+		on:click={() => ($sceneCurtains = false)}>Dölj</button
+	>
+	<button class="button is-info" class:is-light={$sceneCurtains}
+		>Automatiskt</button
+	>
+	<button
+		class="button is-success"
+		class:is-light={!$sceneCurtains}
+		on:click={() => ($sceneCurtains = true)}>Visa</button
+	>
+</div>
 
 <!-- Chat button -->
 <p class="has-text-centered pb-2 mt-2">Visa chatt-panelen 💬</p>
 <div class="buttons has-addons is-centered">
-	<button class="button is-danger" class:is-light={$sceneChatIsEnabled} on:click={() =>  $sceneChatIsEnabled = false}>Dölj</button>
-	<button class="button is-info" class:is-light={$sceneChatIsEnabled} >Automatiskt</button>
-	<button class="button is-success" class:is-light={!$sceneChatIsEnabled} on:click={() =>  $sceneChatIsEnabled = true}>Visa</button>
-  </div>
+	<button
+		class="button is-danger"
+		class:is-light={$sceneChatIsEnabled}
+		on:click={() => ($sceneChatIsEnabled = false)}>Dölj</button
+	>
+	<button class="button is-info" class:is-light={$sceneChatIsEnabled}
+		>Automatiskt</button
+	>
+	<button
+		class="button is-success"
+		class:is-light={!$sceneChatIsEnabled}
+		on:click={() => ($sceneChatIsEnabled = true)}>Visa</button
+	>
+</div>
 
 <!-- Visitor audio -->
 <p class="has-text-centered pb-2 mt-2">Tillåt ljud från publiken 🎤</p>
 <div class="buttons has-addons is-centered">
-	<button class="button is-danger" class:is-light={$sceneVisitorAudioIsEnabled} on:click={() =>  $sceneVisitorAudioIsEnabled = false}>Nej</button>
-	<button class="button is-info" class:is-light={$sceneVisitorAudioIsEnabled} >Automatiskt</button>
-	<button class="button is-success" class:is-light={!$sceneVisitorAudioIsEnabled} on:click={() =>  $sceneVisitorAudioIsEnabled = true}>Ja</button>
-  </div>
+	<button
+		class="button is-danger"
+		class:is-light={$sceneVisitorAudioIsEnabled}
+		on:click={() => ($sceneVisitorAudioIsEnabled = false)}>Nej</button
+	>
+	<button class="button is-info" class:is-light={$sceneVisitorAudioIsEnabled}
+		>Automatiskt</button
+	>
+	<button
+		class="button is-success"
+		class:is-light={!$sceneVisitorAudioIsEnabled}
+		on:click={() => ($sceneVisitorAudioIsEnabled = true)}>Ja</button
+	>
+</div>
 
 <!-- Visitor effects -->
 <p class="has-text-centered pb-2 mt-2">Tillåt blommor och applåder 🌹👏</p>
 <div class="buttons has-addons is-centered">
-	<button class="button is-danger" class:is-light={$sceneEffectsIsEnabled} on:click={() =>  $sceneEffectsIsEnabled = false}>Nej</button>
-	<button class="button is-info" class:is-light={$sceneEffectsIsEnabled} >Automatiskt</button>
-	<button class="button is-success" class:is-light={!$sceneEffectsIsEnabled} on:click={() =>  $sceneEffectsIsEnabled = true}>Ja</button>
-  </div>
+	<button
+		class="button is-danger"
+		class:is-light={$sceneEffectsIsEnabled}
+		on:click={() => ($sceneEffectsIsEnabled = false)}>Nej</button
+	>
+	<button class="button is-info" class:is-light={$sceneEffectsIsEnabled}
+		>Automatiskt</button
+	>
+	<button
+		class="button is-success"
+		class:is-light={!$sceneEffectsIsEnabled}
+		on:click={() => ($sceneEffectsIsEnabled = true)}>Ja</button
+	>
+</div>
 
 <hr />
 <h1 class="title">Välj Scenlayout</h1>
