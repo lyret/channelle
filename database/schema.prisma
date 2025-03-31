@@ -21,6 +21,7 @@ model Message {
   createdAt     DateTime @default(now())
   participantId Int
   message       String
+  author        String   @default("")
 }
 
 model Scene {

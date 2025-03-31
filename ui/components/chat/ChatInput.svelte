@@ -22,6 +22,7 @@
 					participantId: $APIStore.participantId,
 					backstage: makeBackstage,
 					message: inputValue,
+					author: $APIStore.participant.name,
 				},
 			});
 		}
