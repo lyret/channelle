@@ -11,15 +11,25 @@
 	let ref: HTMLDivElement;
 	let loaded = false;
 	let hasUnread = false;
+	let scrollPositionBackstage = -1;
+	let scrollPositionAll = -1;
 
 	onMount(() => {
 		if (ref) {
 			ref.addEventListener("scroll", () => {
-				if (
-					hasUnread &&
-					ref.scrollTop >= ref.scrollHeight - ref.clientHeight - 60
-				) {
+				if (ref.scrollTop >= ref.scrollHeight - ref.clientHeight - 60) {
 					hasUnread = false;
+					if (backstageOnly) {
+						scrollPositionBackstage = -1;
+					} else {
+						scrollPositionAll = -1;
+					}
+				} else {
+					if (backstageOnly) {
+						scrollPositionBackstage = ref.scrollTop;
+					} else {
+						scrollPositionAll = ref.scrollTop;
+					}
 				}
 			});
 		}
@@ -41,6 +51,24 @@
 	function removeMessage(id: number) {
 		remove("message", { where: { id } });
 	}
+	$: {
+		if (backstageOnly && ref) {
+			setTimeout(() => {
+				ref.scroll({
+					top:
+						scrollPositionBackstage == -1
+							? ref.scrollHeight
+							: scrollPositionBackstage,
+				});
+			}, 0);
+		} else if (!backstageOnly && ref) {
+			setTimeout(() => {
+				ref.scroll({
+					top: scrollPositionAll == -1 ? ref.scrollHeight : scrollPositionAll,
+				});
+			}, 0);
+		}
+	}
 
 	onMount(() => {
 		const stop = allMessages.subscribe((data) => {
@@ -53,7 +81,6 @@
 					hasUnread = true;
 				}
 			} else if (!allMessages.isConnected()) {
-				console.log("here");
 				loaded = true;
 				setTimeout(() => {
 					if (ref) {
@@ -143,7 +170,7 @@
 		max-height: 100%;
 		overflow: scroll;
 		display: block;
-		flex-grow: 0;
+		flex-grow: 1;
 		overflow: scroll;
 		flex-basis: auto;
 		align-self: auto;

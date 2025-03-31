@@ -23,6 +23,8 @@
 </script>
 
 <div class="instrument">
+	<ChatList backstageOnly={$backstageOnly} />
+
 	{#if $currentParticipant.actor || $currentParticipant.manager}
 		<div class="tab-container">
 			<div class="tabs is-fullwidth">
@@ -46,8 +48,6 @@
 			</div>
 		</div>
 	{/if}
-
-	<ChatList backstageOnly={$backstageOnly} />
 
 	<div class="chat-input">
 		<ChatInput makeBackstage={$backstageOnly} />
@@ -73,7 +73,7 @@
 		flex-shrink: 1;
 		flex-basis: auto;
 		align-self: auto;
-		order: 0;
+		order: 1;
 	}
 	.chat-input {
 		display: block;

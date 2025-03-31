@@ -158,6 +158,7 @@
 		position: absolute;
 		top: clamp(8px, auto, 8px);
 		max-height: 100%;
+		height: 100%;
 		margin-top: 8px;
 		left: 8px;
 		right: 8px;

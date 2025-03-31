@@ -14,6 +14,7 @@
 
 <div class="chat-instrument">
 	<h1 class="title">Chattmeddelanden</h1>
+	<ChatList backstageOnly={$backstageOnly} />
 	<div class="tab-container">
 		<div class="tabs is-fullwidth">
 			<ul>
@@ -35,8 +36,6 @@
 			</ul>
 		</div>
 	</div>
-
-	<ChatList backstageOnly={$backstageOnly} />
 
 	<div class="chat-input">
 		<ChatInput makeBackstage={$backstageOnly} />
