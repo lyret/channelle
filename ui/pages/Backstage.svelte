@@ -128,7 +128,7 @@
 
 <style>
 	main {
-		background-color: rgb(30, 30, 30);
+		background-color: var(--channelle-main-bg-color);
 		height: 100%;
 		display: flex;
 		flex-direction: column;
@@ -136,13 +136,32 @@
 
 	.instruments,
 	.instrument {
-		background-color: rgb(20, 22, 26);
+		background-color: var(--channelle-backstage-bg-color);
+	}
+	.instrument-cols-0 {
+		background-color: var(--channelle-main-bg-color);
+		height: 0;
+		flex-grow: 0;
+	}
+
+	li a {
+		color: var(--channelle-main-text-color);
+	}
+	li:hover a,
+	li.is-active a {
+		border-color: var(--channelle-backstage-text-color);
+		color: var(--channelle-backstage-text-color);
+		background-color: var(--channelle-backstage-bg-color);
+	}
+	.tabs ul {
+		border-color: var(--channelle-backstage-text-color);
+		border-bottom: none;
 	}
 
 	.header,
 	.tabs,
 	.footer {
-		background-color: rgb(30, 30, 30);
+		background-color: var(--channelle-main-bg-color);
 		padding: 0;
 		display: block;
 		flex-grow: 0;
@@ -158,16 +177,10 @@
 	.footer {
 		border-top: 1px solid var(--bulma-border);
 		z-index: 10;
-		box-shadow: 0px -10px 10px rgb(30, 30, 30);
+		box-shadow: 0px -10px 10px var(--channelle-backstage-bg-color);
 		width: 100vw;
 		overflow: hidden;
 		-webkit-font-smoothing: antialiased;
-	}
-	.footer span {
-		display: block;
-		width: auto;
-		padding-bottom: 20px;
-		white-space: nowrap;
 	}
 
 	.instruments {
