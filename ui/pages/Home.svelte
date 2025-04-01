@@ -18,6 +18,7 @@
 	// import StagePage from "~/pages/Stage.svelte";
 	// import PasswordCurtainMessage from "./components/curtains/PasswordCurtainMessage.svelte";
 	import { onMount } from "svelte";
+	import PicolCancel from "~/components/picol/icons/Picol-cancel.svelte";
 	import { scenePasswordIsOk } from "../stores/scene/scenePassword";
 	// import { sceneCurtains } from "./stores/scene/sceneCurtains";
 
@@ -36,6 +37,8 @@
 	$: isBlocked = $APIStore.status == "blocked";
 	$: hasEnteredName = $APIStore.status == "ready" && $APIStore.participant.name;
 	$: needStagePassword = !$scenePasswordIsOk;
+
+	let modalIsOpen = true;
 </script>
 
 <FloatingImage src={rosesSrc} alt="two roses shining" zIndex={2} />
@@ -44,79 +47,132 @@
 <FloatingImage src={rosesSrc} alt="two roses shining" zIndex={2} />
 
 <main>
-	<div class="poster">
-		<h2 class="subtitle is-1">Föreställning</h2>
-		<h1 class="title is-1">Sommaruppehåll</h1>
-		<button
-			class="button main"
-			on:click={() => {
-				if (!isBlocked) {
-					window.location.href = "/stage";
-				}
-			}}
-			><span class="is-family-secondary" class:is-strikethrough={isBlocked}
-				>{hasEnteredName ? "GÅ TILLBAKA IN" : "BESÖK"}</span
-			></button
-		>
-		<button class="button"
-			><span class="is-family-default">Om föreställningen</span></button
-		>
-		<button class="button"
-			><span class="is-family-default">Hur funkar det?</span></button
-		>
-	</div>
-	<div class="info">
-		<div class="area left">
-			<h1 class="title is-1">Channelle</h1>
-		</div>
-		<div class="area right">
-			<img src={smokerSrc} alt="a woman smoking" />
-		</div>
-	</div>
-	<div class="menu">
-		<div class="area left">
-			<a
-				href="https://maskinrepubliken.se"
-				class="is-family-secondary has-text-weight-bold">Maskinrepubliken</a
+	{#if modalIsOpen}
+		<div class="popup">
+			<button class="close icon" on:click={() => (modalIsOpen = false)}
+				><PicolCancel /></button
 			>
-			<a
-				href="https://www.facebook.com/people/Skärmteatern/100076254422586/"
-				class="is-family-secondary has-text-weight-bold">Skärmteatern</a
+			<h1 class="title is-family-default">Jo det går till såhär</h1>
+			<p>
+				Först blablabka
+				<br />Sedan…<br /><br />Om du inte känner dig bekväm med det…<br /><br
+				/>Om du redan betalat och har en kod går du hit: Annars gör du såhär
+			</p>
+		</div>
+	{:else}
+		<div class="poster">
+			<h2 class="subtitle is-1">Föreställning</h2>
+			<h1 class="title is-1">Sommaruppehåll</h1>
+			<button
+				class="button main"
+				on:click={() => {
+					if (!isBlocked) {
+						window.location.href = "/stage";
+					}
+				}}
+				><span class="is-family-secondary" class:is-strikethrough={isBlocked}
+					>{hasEnteredName ? "GÅ TILLBAKA IN" : "BESÖK"}</span
+				></button
+			>
+			<button class="button"
+				><span class="is-family-default">Om föreställningen</span></button
+			>
+			<button class="button"
+				><span class="is-family-default" on:click={() => (modalIsOpen = true)}
+					>Hur funkar det?</span
+				></button
 			>
 		</div>
-		<div class="area center">
-			<img
-				class="logo"
-				src={cureFlowersSrc}
-				alt="cute flowers dancing around"
-			/>
+		<div class="info">
+			<div class="area left">
+				<h1 class="title is-1">Channelle</h1>
+			</div>
+			<div class="area right">
+				<img src={smokerSrc} alt="a woman smoking" />
+			</div>
 		</div>
-		<div class="area right">
-			<a
-				class="is-family-secondary has-text-weight-medium"
-				href="/backstage"
-				target="_blank"
-				>Gå Backstage <span class="icon"><IconArrowRight /></span></a
-			>
-			<img src={moneyPowerGreedSrc} alt="text saying money power greed" />
-			<h1
-				class="title is-2 is-family-secondary has-text-weight-medium is-strikethrough mb-0 pb-0"
-			>
-				Biljettluckan
-			</h1>
-			<h1
-				class="title is-3 is-family-secondary has-text-weight-medium is-italic"
-			>
-				Gratis föreställning!
-			</h1>
+		<div class="menu">
+			<div class="area left">
+				<a
+					href="https://maskinrepubliken.se"
+					class="is-family-secondary has-text-weight-bold">Maskinrepubliken</a
+				>
+				<a
+					href="https://www.facebook.com/people/Skärmteatern/100076254422586/"
+					class="is-family-secondary has-text-weight-bold">Skärmteatern</a
+				>
+			</div>
+			<div class="area center">
+				<img
+					class="logo"
+					src={cureFlowersSrc}
+					alt="cute flowers dancing around"
+				/>
+			</div>
+			<div class="area right">
+				<a
+					class="is-family-secondary has-text-weight-medium"
+					href="/backstage"
+					target="_blank"
+					>Gå Backstage <span class="icon"><IconArrowRight /></span></a
+				>
+				<img src={moneyPowerGreedSrc} alt="text saying money power greed" />
+				<h1
+					class="title is-2 is-family-secondary has-text-weight-medium is-strikethrough mb-0 pb-0"
+				>
+					Biljettluckan
+				</h1>
+				<h1
+					class="title is-3 is-family-secondary has-text-weight-medium is-italic"
+				>
+					Gratis föreställning!
+				</h1>
+			</div>
 		</div>
-	</div>
+	{/if}
 </main>
 
 <style lang="scss">
+	.popup {
+		z-index: 3;
+		background-color: var(--channelle-menu-bg-color);
+		color: var(--channelle-menu-text-color);
+		position: fixed;
+		top: 2vh;
+		bottom: 2vh;
+		left: 12vw;
+		right: 12vw;
+		padding: 24px;
+		padding-top: 48px;
+
+		.close {
+			width: 7%;
+			height: 7%;
+			position: fixed;
+			top: 2vh;
+			right: 12vw;
+			padding-top: 4px;
+			padding-right: 4px;
+		}
+
+		.title {
+			color: var(--channelle-menu-bg-color);
+			background-color: var(--channelle-menu-text-color);
+			padding: 12px 8px;
+		}
+
+		@include mobile {
+			left: 4vw;
+			right: 4vw;
+
+			.close {
+				right: 4vw;
+			}
+		}
+	}
 	main {
-		background-color: var(--channelle-primary-color);
-		color: var(--channelle-primary-text-color);
+		background-color: var(--channelle-main-bg-color);
+		color: var(--channelle-main-text-color);
 		z-index: 1;
 		width: 100%;
 		height: 100%;
@@ -137,7 +193,7 @@
 		flex-grow: 1;
 		.title {
 			z-index: 3;
-			color: var(--channelle-primary-text-color);
+			color: var(--channelle-main-text-color);
 			font-size: 4.5vw;
 			@include mobile {
 				font-size: 9vw;
@@ -145,7 +201,7 @@
 		}
 		.subtitle {
 			z-index: 3;
-			color: var(--channelle-primary-text-color);
+			color: var(--channelle-main-text-color);
 			font-size: 2.5vw;
 			@include mobile {
 				font-size: 7vw;
@@ -159,7 +215,7 @@
 		.button span {
 			font-weight: 700;
 			z-index: 3;
-			color: var(--channelle-primary-text-color);
+			color: var(--channelle-main-text-color);
 			font-size: 2.5vw;
 			@include mobile {
 				font-size: 7vw;
@@ -178,14 +234,14 @@
 		}
 	}
 	.info {
-		background-color: var(--channelle-primary-color);
+		background-color: var(--channelle-main-bg-color);
 		z-index: 3;
 		display: flex;
 		flex-direction: row;
 		flex-wrap: nowrap;
 		justify-content: normal;
 		align-items: end;
-		color: var(--channelle-primary-text-color);
+		color: var(--channelle-main-text-color);
 		flex-shrink: 1;
 		flex-grow: 0;
 		order: 0;
@@ -196,7 +252,7 @@
 			text-align: left;
 
 			.title {
-				color: var(--channelle-primary-text-color);
+				color: var(--channelle-main-text-color);
 				font-size: 5em;
 			}
 		}
@@ -221,10 +277,10 @@
 		}
 	}
 	.menu {
-		background-color: var(--channelle-secondary-color);
+		background-color: var(--channelle-menu-bg-color);
 		padding: 8px;
 		z-index: 3;
-		color: var(--channelle-secondary-text-color);
+		color: var(--channelle-menu-text-color);
 		flex-grow: 0;
 		order: 1;
 
@@ -243,7 +299,7 @@
 		a {
 			display: block;
 			font-size: 1.6rem;
-			color: var(--channelle-secondary-text-color);
+			color: var(--channelle-menu-text-color);
 		}
 		a:hover {
 			transform: var(--channelle-random-rotation);
