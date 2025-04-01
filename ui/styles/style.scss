@@ -1,12 +1,13 @@
 @charset "utf-8";
 
-$primary: white;
-$info: grey;
-$link: darkgrey;
-$success: green;
-$warning: yellow;
-$danger: red;
-$background: black;
+$primary: #0203fe;
+$info: #fd584d;
+$link: #3e9cbf;
+$success: #aff28b;
+$warning: #f2c43d;
+$danger: #b83334;
+$background: #000;
+
 
 // Breakpoints:
 // mobile: up to 768px
@@ -73,6 +74,14 @@ $background: black;
 	src: url('../assets/fonts/OpenSans/OpenSans-VariableFont_wdth,wght.ttf') format('truetype');
 }
 
+.is-family-default {
+	font-family: 'OpenSansItalic' !important;
+	font-weight: 400;
+}
+.is-family-secondary {
+	font-family: 'OpenSans' !important;
+	font-weight: 300;
+}
 .is-family-title {
 	font-family: 'Georgia' !important;
 	text-transform: uppercase;
