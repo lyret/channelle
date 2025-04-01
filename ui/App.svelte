@@ -10,6 +10,7 @@
 	import Loader from "~/components/curtains/LoadingCurtainMessage.svelte";
 	import Problem from "~/components/curtains/ProblemCurtainMessage.svelte";
 	import BackstagePage from "~/pages/Backstage.svelte";
+	import HomePage from "~/pages/Home.svelte";
 	import PlaygroundPage from "~/pages/Playground.svelte";
 	import StagePage from "~/pages/Stage.svelte";
 	import PasswordCurtainMessage from "./components/curtains/PasswordCurtainMessage.svelte";
@@ -31,9 +32,10 @@
 	$: isBlocked = $APIStore.status == "blocked";
 	$: isPreparing = $APIStore.isReady == false;
 	$: hasEnteredName = $APIStore.status == "ready" && $APIStore.participant.name;
-	$: renderStage =
+	$: renderStage = window.location.pathname.indexOf("/stage") == 0;
+	$: renderHome =
 		window.location.pathname == "/" ||
-		window.location.pathname.indexOf("/stage") == 0;
+		window.location.pathname.indexOf("/home") == 0;
 	$: renderPlayground = window.location.pathname.indexOf("/playground") == 0;
 	$: renderBackstage = window.location.pathname.indexOf("/backstage") == 0;
 	$: needToBeManager =
@@ -48,10 +50,7 @@
 			isBlocked ||
 			needStagePassword ||
 			needToBeManager);
-	$: renderContent =
-		!determiningState &&
-		!renderMessages &&
-		(renderStage || renderBackstage || renderPlayground);
+	$: renderContent = !determiningState && !renderMessages;
 	$: renderCurtains =
 		!determiningState &&
 		(isPreparing ||
@@ -63,7 +62,9 @@
 
 <!-- Content -->
 {#if renderContent}
-	{#if renderStage}
+	{#if renderHome}
+		<HomePage />
+	{:else if renderStage}
 		<StagePage />
 	{:else if renderPlayground}
 		<PlaygroundPage />
