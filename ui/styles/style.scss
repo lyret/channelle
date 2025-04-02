@@ -8,14 +8,6 @@ $warning: #f2c43d;
 $danger: #b83334;
 $background: #000;
 
-
-// Breakpoints:
-// mobile: up to 768px
-// tablet: from 769px to 1024px
-// desktop: from 1024px to 1215px
-// widescreen: from 1216px to 1407px
-// fullhd: from 1408px
-
 /* Use Bulma */
 @use 'bulma/sass' with (
 	// Responsive breakpoints
@@ -61,8 +53,39 @@ $background: #000;
 	// Notification
 	$notification-code-background-color: $primary
 );
-// $family-primary: "FuturaHandwritten",
+/* Use the extension Bulma List */
 @use './lib/bulma-list.scss';
+
+
+// Breakpoints:
+// mobile: up to 768px
+// tablet: from 769px to 1024px
+// desktop: from 1024px to 1215px
+// widescreen: from 1216px to 1407px
+// fullhd: from 1408px
+
+
+
+.has-main-background {
+	background-color: var(--channelle-main-bg-color);
+}
+.has-main-color {
+	background-color: var(--channelle-main-text-color);
+}
+.has-menu-background {
+	background-color: var(--channelle-menu-bg-color);
+}
+.has-menu-color {
+	background-color: var(--channelle-menu-text-color);
+}
+.has-backstage-background {
+	background-color: var(--channelle-backstage-bg-color);
+}
+.has-backstage-color {
+	background-color: var(--channelle-backstage-text-color);
+}
+
+
 
 /* Fonts and external resources */
 @font-face {
@@ -74,6 +97,9 @@ $background: #000;
 	src: url('../assets/fonts/OpenSans/OpenSans-VariableFont_wdth,wght.ttf') format('truetype');
 }
 
+
+
+/* Add custom class decelerations for changing the font family */
 .is-family-default {
 	font-family: 'OpenSansItalic' !important;
 	font-weight: 400;
@@ -88,50 +114,21 @@ $background: #000;
 	font-weight: 900;
 }
 
+/* Add custom class decelerations for text decorations */
+.is-strikethrough {
+	text-decoration: line-through !important;
+}
+
+/* Modify default style rules */
 .title {
 	text-transform: uppercase;
 	font-weight: 900;
 }
 
-.is-strikethrough {
-	text-decoration: line-through !important;
-}
-
-/* Custom styles */
-
+/* Style customizations for mobile devices */
 body,
 html {
 	touch-action: none;
 	overscroll-behavior-y: none;
 	height: 100%;
-	
-}
-
-th {
-	text-align: left !important;
-}
-
-.has-hover-effect {
-	transition: transform 300ms;
-}
-
-.has-hover-effect:hover {
-	transform: scale(1.02);
-}
-
-.is-sticky {
-	position: fixed;
-	left: 0;
-	right: 0;
-	width: 100vw;
-	bottom: 0;
-}
-
-.is-color-primary-light,
-.has-text-primary-light {
-  --bulma-color-l: var(--bulma-primary-light-l);
-}
-.is-color-primary-light-invert,
-.has-text-primary-light-invert {
-  --bulma-color-l: var(--bulma-primary-light-invert-l);
 }

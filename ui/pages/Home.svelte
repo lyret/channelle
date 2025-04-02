@@ -1,26 +1,16 @@
 <script lang="ts">
+	import { onMount } from "svelte";
 	import cureFlowersSrc from "~/assets/images/cute-flowers.gif";
 	import moneyPowerGreedSrc from "~/assets/images/money-power-greed.gif";
 	import rosesSrc from "~/assets/images/roses.gif";
 	import smokerSrc from "~/assets/images/smoker-cropped.png";
+	import ticketsSrc from "~/assets/images/tickets.png";
+	import PasswordCurtainMessage from "~/components/curtains/PasswordCurtainMessage.svelte";
 	import FloatingImage from "~/components/home/FloatingImage.svelte";
 	import IconArrowRight from "~/components/icons/Icon-arrow-right.svelte";
-	import { APIStore } from "~/lib/stores/api";
-	// import Authenticate from "~/components/curtains/AuthenticateCurtainMessage.svelte";
-	// import Blocked from "~/components/curtains/BlockedCurtainMessage.svelte";
-	// import Continue from "~/components/curtains/ContinueCurtainMessage.svelte";
-	// import Curtains from "~/components/curtains/Curtains.svelte";
-	// import Loader from "~/components/curtains/LoadingCurtainMessage.svelte";
-	// import Problem from "~/components/curtains/ProblemCurtainMessage.svelte";
-	// import BackstagePage from "~/pages/Backstage.svelte";
-	// import HomePage from "~/pages/Home.svelte";
-	// import PlaygroundPage from "~/pages/Playground.svelte";
-	// import StagePage from "~/pages/Stage.svelte";
-	// import PasswordCurtainMessage from "./components/curtains/PasswordCurtainMessage.svelte";
-	import { onMount } from "svelte";
 	import PicolCancel from "~/components/picol/icons/Picol-cancel.svelte";
+	import { APIStore } from "~/lib/stores/api";
 	import { scenePasswordIsOk } from "../stores/scene/scenePassword";
-	// import { sceneCurtains } from "./stores/scene/sceneCurtains";
 
 	onMount(() => {
 		document.querySelectorAll("a, .button").forEach((element) =>
@@ -38,7 +28,7 @@
 	$: hasEnteredName = $APIStore.status == "ready" && $APIStore.participant.name;
 	$: needStagePassword = !$scenePasswordIsOk;
 
-	let modalIsOpen = true;
+	let howToModalIsOpen = false;
 </script>
 
 <FloatingImage src={rosesSrc} alt="two roses shining" zIndex={2} />
@@ -47,12 +37,14 @@
 <FloatingImage src={rosesSrc} alt="two roses shining" zIndex={2} />
 
 <main>
-	{#if modalIsOpen}
+	{#if howToModalIsOpen}
 		<div class="popup">
-			<button class="close icon" on:click={() => (modalIsOpen = false)}
+			<button class="close icon" on:click={() => (howToModalIsOpen = false)}
 				><PicolCancel /></button
 			>
-			<h1 class="title is-family-default">Jo det går till såhär</h1>
+			<h1 class="title">
+				<span class="is-family-default">Jo det går till såhär</span>
+			</h1>
 			<p>
 				Först blablabka
 				<br />Sedan…<br /><br />Om du inte känner dig bekväm med det…<br /><br
@@ -63,23 +55,40 @@
 		<div class="poster">
 			<h2 class="subtitle is-1">Föreställning</h2>
 			<h1 class="title is-1">Sommaruppehåll</h1>
-			<button
-				class="button main"
-				on:click={() => {
-					if (!isBlocked) {
-						window.location.href = "/stage";
-					}
-				}}
-				><span class="is-family-secondary" class:is-strikethrough={isBlocked}
-					>{hasEnteredName ? "GÅ TILLBAKA IN" : "BESÖK"}</span
-				></button
+			{#if needStagePassword}
+				<div class="item">
+					<div>
+						<img src={ticketsSrc} alt="A man in a ticket booth" />
+					</div>
+					<div>
+						<PasswordCurtainMessage />
+					</div>
+				</div>
+			{:else}
+				<button
+					class="button main"
+					on:click={() => {
+						if (!isBlocked) {
+							window.location.href = "/stage";
+						}
+					}}
+					><span class="is-family-secondary" class:is-strikethrough={isBlocked}
+						>{hasEnteredName ? "GÅ TILLBAKA IN" : "BESÖK"}</span
+					></button
+				>
+			{/if}
+			<a
+				class="button"
+				target="_blank"
+				href="https://www.youtube.com/watch?v=8IXjE4a5Tj4"
+				><span class="is-family-default has-menu-background has-menu-color p-2"
+					>Om föreställningen <span class="icon"><IconArrowRight /></span></span
+				></a
 			>
 			<button class="button"
-				><span class="is-family-default">Om föreställningen</span></button
-			>
-			<button class="button"
-				><span class="is-family-default" on:click={() => (modalIsOpen = true)}
-					>Hur funkar det?</span
+				><span
+					class="is-family-default"
+					on:click={() => (howToModalIsOpen = true)}>Hur funkar det?</span
 				></button
 			>
 		</div>
@@ -155,7 +164,7 @@
 			padding-right: 4px;
 		}
 
-		.title {
+		.title span {
 			color: var(--channelle-menu-bg-color);
 			background-color: var(--channelle-menu-text-color);
 			padding: 12px 8px;
@@ -189,14 +198,31 @@
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
+		justify-items: center;
+		align-items: center;
 		text-align: center;
 		flex-grow: 1;
+
+		.item {
+			background-color: var(--channelle-main-bg-color);
+			color: var(--channelle-main-text-color);
+			display: flex;
+			flex-direction: row;
+			padding: 12px;
+			z-index: 3;
+			height: auto;
+			max-width: 700px;
+
+			img {
+				max-height: 100%;
+			}
+		}
 		.title {
 			z-index: 3;
 			color: var(--channelle-main-text-color);
-			font-size: 4.5vw;
+			font-size: clamp(20px, 4.5vw, 90px);
 			@include mobile {
-				font-size: 9vw;
+				font-size: clamp(20px, 9vw, 90px);
 			}
 		}
 		.subtitle {
@@ -277,6 +303,10 @@
 		}
 	}
 	.menu {
+		.title {
+			--bulma-title-color: var(--channelle-menu-text-color);
+			--bulma-body-color: var(--channelle-menu-text-color);
+		}
 		background-color: var(--channelle-menu-bg-color);
 		padding: 8px;
 		z-index: 3;

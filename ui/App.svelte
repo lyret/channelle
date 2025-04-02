@@ -44,6 +44,7 @@
 	$: needStagePassword = !$scenePasswordIsOk && renderStage;
 	$: renderMessages =
 		!determiningState &&
+		(renderBackstage || renderStage) &&
 		(isPreparing ||
 			!hasEnteredName ||
 			!hasInteractedWithTheDocument ||
@@ -52,12 +53,7 @@
 			needToBeManager);
 	$: renderContent = !determiningState && !renderMessages;
 	$: renderCurtains =
-		!determiningState &&
-		(isPreparing ||
-			!hasEnteredName ||
-			isBlocked ||
-			needStagePassword ||
-			($sceneCurtains && renderStage));
+		determiningState || renderMessages || ($sceneCurtains && renderStage);
 </script>
 
 <!-- Content -->
