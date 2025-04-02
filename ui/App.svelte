@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { blur } from "svelte/transition";
-	import logoSrc from "~/assets/images/logo-free.gif";
+	import logoSrc from "~/assets/images/masks.gif";
 	import { APIStore } from "~/lib/stores/api";
 
 	import Authenticate from "~/components/curtains/AuthenticateCurtainMessage.svelte";
@@ -13,9 +13,9 @@
 	import HomePage from "~/pages/Home.svelte";
 	import PlaygroundPage from "~/pages/Playground.svelte";
 	import StagePage from "~/pages/Stage.svelte";
-	import PasswordCurtainMessage from "./components/curtains/PasswordCurtainMessage.svelte";
 	import { scenePasswordIsOk } from "./stores/scene/scenePassword";
 
+	import PasswordCurtainMessage from "./components/curtains/PasswordCurtainMessage.svelte";
 	import { sceneCurtains } from "./stores/scene/sceneCurtains";
 
 	export let name: string = "";
@@ -79,11 +79,7 @@
 <!-- Curtain Messages -->
 {#if renderMessages}
 	<div class="overlay">
-		<div
-			class="notification is-primary"
-			in:blur={{ duration: 1000 }}
-			out:blur={{ duration: 500 }}
-		>
+		<div class="menu" in:blur={{ duration: 1000 }} out:blur={{ duration: 500 }}>
 			<img class="logo" src={logoSrc} alt="Channelle" />
 			{#if name}<h1 class="title is-family-title">{name}</h1>{/if}
 			{#if isBlocked}
@@ -113,7 +109,7 @@
 
 <style lang="scss">
 	img.logo {
-		width: 100%;
+		width: 20%;
 		margin-bottom: 24px;
 		transition: width, margin-bottom, 1s;
 
@@ -122,18 +118,8 @@
 			margin-bottom: 14px;
 		}
 	}
-	:global {
-		.overlay > .notification > h1.title {
-			font-size: 32px;
-			transition: font-size, 1s;
 
-			@include mobile {
-				font-size: 24px;
-			}
-		}
-	}
-
-	.overlay .notification {
+	.menu {
 		width: 40%;
 		max-width: 600px;
 		display: flex;
@@ -144,17 +130,16 @@
 		align-items: center;
 		text-align: center;
 		padding: 24px;
-		background-color: hsla(
-			var(--bulma-notification-h),
-			var(--bulma-notification-s),
-			var(--bulma-notification-background-l),
-			0.8
-		);
-		-webkit-backdrop-filter: blur(10px);
-		backdrop-filter: blur(10px);
-		transition:
-			height,
-			width 1s;
+		background-color: var(--channelle-menu-bg-color);
+		color: var(--channelle-menu-text-color);
+
+		.title {
+			font-size: 32px;
+			color: var(--channelle-menu-text-color);
+			@include mobile {
+				font-size: 32px;
+			}
+		}
 
 		@include tablet {
 			width: 70%;

@@ -54,7 +54,7 @@
 	{:else}
 		<div class="poster">
 			<h2 class="subtitle is-1">Föreställning</h2>
-			<h1 class="title is-1">Sommaruppehåll</h1>
+			<h1 class="title is-1">{CONFIG.stage.name}</h1>
 			{#if needStagePassword}
 				<div class="item">
 					<div>
