@@ -76,7 +76,7 @@
 	<button
 		type="button"
 		class={btnClassList + " is-hidden-mobile"}
-		class:has-text-primary={$fullscreen}
+		class:active={$fullscreen}
 		transition:blur
 		on:click={() => {
 			fullscreen.toggle();
@@ -93,7 +93,7 @@
 		<button
 			class={btnClassList}
 			transition:blur
-			class:has-text-primary={$stageChat}
+			class:active={$stageChat}
 			on:click={() => {
 				stageChat.set(!$stageChat);
 				stageSettings.set(false);
@@ -109,7 +109,7 @@
 	<button
 		class={btnClassList}
 		transition:blur
-		class:has-text-primary={$stageSettings}
+		class:active={$stageSettings}
 		on:click={() => {
 			stageSettings.set(!$stageSettings);
 			stageChat.set(false);
@@ -137,6 +137,9 @@
 		justify-content: space-around;
 		height: 48px;
 	}
+	.block {
+		text-align: center;
+	}
 	.spacer {
 		flex-grow: 0.4;
 	}
@@ -146,12 +149,17 @@
 	}
 
 	.button {
-		border: 1px solid var(--bulma-border);
+		border-radius: 0;
+		border: none;
+		padding: 12px;
+		background-color: var(--channelle-menu-bg-color);
+		color: var(--channelle-menu-text-color);
+	}
+	.button.active {
+		font-weight: 900;
+		font-size: 1.1em;
 	}
 	.button.effect {
 		width: 50px;
-	}
-	.button:hover {
-		border: 1px solid var(--bulma-border);
 	}
 </style>

@@ -51,3 +51,13 @@
 		{/if}
 	</button>
 {/if}
+
+<style lang="scss">
+	.button {
+		border-radius: 0;
+		border: none;
+		padding: 12px;
+		background-color: var(--channelle-menu-bg-color);
+		color: var(--channelle-menu-text-color);
+	}
+</style>

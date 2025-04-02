@@ -50,7 +50,7 @@
 		height: 100%;
 	}
 	.window {
-		color: white;
+		color: var(--channelle-main-bg-color);
 		flex-grow: 0;
 		flex-shrink: 0;
 		flex-basis: 0;

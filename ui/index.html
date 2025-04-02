@@ -34,14 +34,19 @@
 		<!-- Stylesheet variables -->
 		<style>
 			:root {
-				--channelle-main-bg-color: blue;
-				--channelle-main-text-color: yellow;
+				--channelle-main-bg-color: black;
+				--channelle-main-text-color: white;
 				
-				--channelle-menu-bg-color: yellow;
-				--channelle-menu-text-color: red;
+				--channelle-menu-bg-color: black;
+				--channelle-menu-text-color: white;
 
-				--channelle-backstage-bg-color: var(--channelle-menu-text-color);
-				--channelle-backstage-text-color: var(--channelle-menu-bg-color);
+				--channelle-backstage-bg-color: var(--channelle-menu-bg-color);
+				--channelle-backstage-text-color: var(--channelle-menu-text-color);
+			}
+
+			html,body {
+				background-color: var(--channelle-main-bg-color);
+				color: var(--channelle-main-text-color);
 			}
 		</style>
 		

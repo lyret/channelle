@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { blur } from "svelte/transition";
+	import { slide } from "svelte/transition";
 	import IconAlertTriangle from "~/components/icons/Icon-alert-triangle.svelte";
 	import { localMedia } from "~/lib/stores/producedMedia";
 	import { sceneCurtains } from "~/stores/scene/sceneCurtains";
@@ -19,12 +19,8 @@
 </script>
 
 {#if visible}
-	<span
-		class="tag is-info mt-1 mr-2 is-large"
-		transition:blur
-		class:is-warning={isUrgent}
-	>
-		<span class="icon pr-2"><IconAlertTriangle /></span>
+	<span class="tag mt-1 mr-2 is-large" transition:slide>
+		<span class="icon pr-2"><IconAlertTriangle /></span>&nbsp;
 		{#if isCameraBlocked && isMicBlocked}
 			Din kamera och mikrofon är inte tillåten.
 		{:else if isCameraBlocked}
@@ -46,3 +42,14 @@
 		{/if}
 	</span>
 {/if}
+
+<style lang="scss">
+	.tag {
+		background-color: var(--channelle-menu-bg-color);
+		color: var(--channelle-menu-text-color);
+	}
+	.tag.urgent {
+		background-color: var(--channelle-menu-bg-color);
+		color: var(--channelle-menu-text-color);
+	}
+</style>

@@ -123,7 +123,6 @@
 			</div>
 		{/if}
 	</div>
-	<div class="footer"></div>
 </main>
 
 <style>
@@ -159,8 +158,7 @@
 	}
 
 	.header,
-	.tabs,
-	.footer {
+	.tabs {
 		background-color: var(--channelle-main-bg-color);
 		padding: 0;
 		display: block;
@@ -172,15 +170,6 @@
 	.tabs {
 		z-index: 10;
 		/* box-shadow: 0px 20px 10px rgb(20, 22, 26); */
-	}
-
-	.footer {
-		border-top: 1px solid var(--bulma-border);
-		z-index: 10;
-		box-shadow: 0px -10px 10px var(--channelle-backstage-bg-color);
-		width: 100vw;
-		overflow: hidden;
-		-webkit-font-smoothing: antialiased;
 	}
 
 	.instruments {

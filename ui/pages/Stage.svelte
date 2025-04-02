@@ -71,7 +71,7 @@
 		{#if $stageSettings || $stageChat}
 			<div class="sidebar">
 				<div
-					class="notification is-info sidebar-contents"
+					class="sidebar-contents"
 					style="z-index: 9999"
 					in:fly={{ y: 200 }}
 					out:fly={{ y: 200 }}
@@ -142,6 +142,10 @@
 		align-items: end;
 		justify-items: end;
 		padding: 4px;
+
+		background-color: var(--channelle-menu-bg-color);
+		color: var(--channelle-menu-text-color);
+
 		@include mobile {
 			position: fixed;
 			order: 0;
@@ -165,18 +169,12 @@
 		bottom: 12px;
 		overflow-y: scroll;
 		z-index: 100;
-		background-color: hsla(
-			var(--bulma-notification-h),
-			var(--bulma-notification-s),
-			var(--bulma-notification-background-l),
-			0.9
-		);
 		-webkit-backdrop-filter: blur(10px);
 		backdrop-filter: blur(10px);
 	}
 
 	.footer {
-		background-color: var(--bulma-body-background-color);
+		background-color: var(--channelle-main-bg-color);
 		margin: 0;
 		padding: 8px 0px;
 		width: 100%;
@@ -224,7 +222,7 @@
 	}
 
 	.window {
-		color: white;
+		color: var(--channelle-main-bg-color);
 		flex-grow: 0;
 		flex-shrink: 0;
 		flex-basis: 0;

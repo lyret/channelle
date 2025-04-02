@@ -78,10 +78,10 @@
 				>
 			{/if}
 			<a
-				class="button"
+				class="button alt"
 				target="_blank"
 				href="https://www.youtube.com/watch?v=8IXjE4a5Tj4"
-				><span class="is-family-default has-menu-background has-menu-color p-2"
+				><span class="is-family-default p-2"
 					>Om föreställningen <span class="icon"><IconArrowRight /></span></span
 				></a
 			>
@@ -237,6 +237,10 @@
 			background: none;
 			border: none;
 			box-shadow: none;
+		}
+		.button.alt > span {
+			color: var(--channelle-main-bg-color);
+			background-color: var(--channelle-main-text-color);
 		}
 		.button span {
 			font-weight: 700;
