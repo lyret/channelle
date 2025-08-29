@@ -151,15 +151,6 @@
 
 <h1 class="title">Sceninställningar</h1>
 
-<h1 class="title is-4">Design</h1>
-<p class="subtitle is-6">Testa olika design stilar på din enhet</p>
-<button class="button" on:click={() => doDesignTest("simple")}
-	>Använd enkel design</button
->
-<button class="button" on:click={() => doDesignTest("ukraine")}
-	>Använd 🇺🇦🇸🇪 design</button
->
-
 <h1 class="title is-4">Tvingade inställningar</h1>
 <p class="subtitle is-6">
 	Dessa inställningar kommer gälla oavsett vilken scen som pågår.

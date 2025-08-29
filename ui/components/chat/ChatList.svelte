@@ -120,7 +120,7 @@
 								class:has-text-link-light={message.backstage}
 								class:has-text-grey-light={!message.backstage}
 							>
-								{message.author || participantName(message.participantId)} ( {new Date(
+								{message?.author || participantName(message.participantId)} ( {new Date(
 									message.createdAt
 								).getHours()}:{new Date(message.createdAt).getMinutes()}
 								{message.backstage ? "backstage" : ""}
