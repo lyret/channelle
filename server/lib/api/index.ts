@@ -1,4 +1,4 @@
 export * from "./http";
-export * from "./koa";
+export * from "./restify";
 export * from "./ws";
 export * from "./mediaSoup";
