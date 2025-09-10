@@ -11,7 +11,7 @@
 	import Problem from "~/components/curtains/ProblemCurtainMessage.svelte";
 	import BackstagePage from "~/pages/Backstage.svelte";
 	import HomePage from "~/pages/Home.svelte";
-	import PlaygroundPage from "~/pages/Playground.svelte";
+	import DebugStagePage from "~/pages/DebugStagePage.svelte";
 	import StagePage from "~/pages/Stage.svelte";
 	import { scenePasswordIsOk } from "./stores/scene/scenePassword";
 
@@ -36,7 +36,7 @@
 	$: renderHome =
 		window.location.pathname == "/" ||
 		window.location.pathname.indexOf("/home") == 0;
-	$: renderPlayground = window.location.pathname.indexOf("/playground") == 0;
+	$: renderDebugstage = window.location.pathname.indexOf("/debug") == 0;
 	$: renderBackstage = window.location.pathname.indexOf("/backstage") == 0;
 	$: needToBeManager =
 		renderBackstage &&
@@ -62,8 +62,8 @@
 		<HomePage />
 	{:else if renderStage}
 		<StagePage />
-	{:else if renderPlayground}
-		<PlaygroundPage />
+	{:else if renderDebugstage}
+		<DebugStagePage />
 	{:else if renderBackstage}
 		<BackstagePage />
 	{:else}
