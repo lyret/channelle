@@ -6,11 +6,9 @@
 	"license": "CC-BY-NC/4.0",
 	"scripts": {
 		"production:build": "node cli.mjs --production --no-start --build --no-watch --no-debug",
-		"production:init": "npx prisma migrate deploy",
 		"production:start": "node cli.mjs --production --start --no-build --no-watch --no-debug",
 		"dev": "node cli.mjs --build --watch --start --no-production --debug localhost --local --lan --port 3000",
 		"dev:build": "node cli.mjs --no-production --no-start --build --no-watch --no-debug",
-		"dev:init": "prisma generate",
 		"dev:start": "node cli.mjs --no-production --start --no-build --no-watch --no-debug",
 		"dev:debug": "node cli.mjs --no-production --start --no-build --no-watch --debug",
 		"clean": "rm -r .dist",
@@ -20,15 +18,11 @@
 		"lint": "eslint && svelte-check --tsconfig ./tsconfig.json && eslint",
 		"lint:code": "eslint",
 		"lint:svelte": "svelte-check --tsconfig ./tsconfig.json && eslint",
-		"tools:prisma": "prisma studio",
 		"tools:format": "eslint --fix"
 	},
 	"engines": {
 		"node": ">21.0.0",
 		"npm": ">10.0.0"
-	},
-	"prisma": {
-		"schema": "database/schema.prisma"
 	},
 	"dependencies": {
 		"@types/restify": "^8.5.12",
@@ -44,12 +38,13 @@
 		"mediasoup-client": "^3.7.12",
 		"nopt": "^7.2.1",
 		"postcss": "^8.4.24",
-		"prisma": "^5.15.1",
 		"public-ip": "^6.0.2",
 		"restify": "^11.1.0",
 		"restify-errors": "^8.0.2",
+		"sequelize": "^6.37.7",
 		"socket.io": "^4.6.1",
 		"socket.io-client": "^4.0.0",
+		"sqlite3": "^5.1.7",
 		"svelte": "^4.2.18",
 		"universal-router": "^9.0.1"
 	},
@@ -57,7 +52,6 @@
 		"@babel/polyfill": "^7.12.1",
 		"@chialab/esbuild-plugin-html": "^0.17.2",
 		"@eslint/js": "^9.21.0",
-		"@prisma/client": "^5.15.1",
 		"@stylistic/eslint-plugin": "^4.2.0",
 		"@tsconfig/svelte": "^4.0.1",
 		"@types/canvas-confetti": "^1.6.4",
@@ -71,7 +65,6 @@
 		"esbuild-sass-plugin": "^3.3.1",
 		"esbuild-svelte": "^0.7.3",
 		"eslint": "^9.21.0",
-		"eslint-plugin-prisma": "^1.0.1",
 		"eslint-plugin-svelte": "^3.0.2",
 		"globals": "^16.0.0",
 		"sass": "^1.82.0",

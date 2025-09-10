@@ -11,6 +11,9 @@ export async function mediaSoup() {
   // Create the MediaSoup media router
   const router = await mediaSoupRouter();
 
+  // Debug output
+  console.log("[MS Server] media soup version", MediaSoup.version);
+
   // Return the pair
   return { worker, router };
 }

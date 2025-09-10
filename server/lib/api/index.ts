@@ -1,4 +1,5 @@
 export * from "./http";
-export * from "./restify";
-export * from "./ws";
 export * from "./mediaSoup";
+export * from "./restify";
+export * from "./sequelize";
+export * from "./ws";

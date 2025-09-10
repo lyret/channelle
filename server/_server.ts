@@ -1,10 +1,9 @@
 import * as MediaSoup from "mediasoup";
 import type * as Http from "http";
 
-import { Repository } from "../database";
-import { createIOEventHandlers } from "./createIOEventHandlers";
+//import { createIOEventHandlers } from "./createIOEventHandlers";
 import { loadStores } from "./loadStores";
-import { http, ws } from "./lib/api";
+import { http, ws, sequelize } from "./lib/api";
 
 import * as SceneStores from "./stores/scene";
 import * as UserStores from "./stores/users";
@@ -16,14 +15,14 @@ import { keepProducersAndConsumersUpdated } from "./mediaSync";
  * Creates and starts the application server
  */
 export async function createServer(): Promise<Http.Server> {
-  // Debug output
-  console.log("[MS Server] media soup version", MediaSoup.version);
-
   // Create the http server
   const httpServer = http();
 
   // Create the socket io server
   const io = ws();
+
+  // Create the database connection
+  await sequelize();
 
   // // Load stores so that they are not removed from the server bundle
   // loadStores(
@@ -47,13 +46,14 @@ export async function createServer(): Promise<Http.Server> {
   // keepProducersAndConsumersUpdated();
 
   // Connect repositories with IO
-  Repository.setIO(io);
+  //Repository.setIO(io);
 
   // Handle websocket events
-  io.on("connection", createIOEventHandlers);
+  //io.on("connection", createIOEventHandlers);
 
   // Start the server
   httpServer.listen(CONFIG.web.port);
+  console.log(`[Server] HTTP server listening on port ${CONFIG.web.port}`);
 
   // Return the http server
   return httpServer;
