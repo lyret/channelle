@@ -7,7 +7,7 @@ import { publicIpv4 } from "public-ip";
 
 /** @typedef {import('./shared/types/config.mjs').CONFIG} CONFIG */
 
-/** 
+/**
  * Creates and returns a runtime context including any given CLI options
  * @returns {CONFIG} CONFIG - The runtime context
  */
@@ -39,7 +39,7 @@ export async function createConfiguration() {
 			b: ["--build"],
 			d: ["--debug"],
 			w: ["--watch"],
-		}
+		},
 	);
 
 	// Determine and define the most important runtime options given
@@ -50,60 +50,41 @@ export async function createConfiguration() {
 	// The PRODUCTION option indicates to the source code that the stage server
 	// is reachable by end-users, as opposite to being in development mode where
 	// only authorized developers are accessing the server
-	const production =
-		cli.production !== undefined
-			? cli.production
-			: env.NODE_ENV == "production" ||
-				(env.PRODUCTION && env.PRODUCTION != "false");
-	console.log(
-		"🔹",
-		Chalk.bgBlueBright("[CONFIG]"),
-		"Production Mode",
-		production
-	);
+	const production = cli.production !== undefined ? cli.production : env.NODE_ENV == "production" || (env.PRODUCTION && env.PRODUCTION != "false");
+	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Production Mode", production);
 
 	// If VERBOSE is enabled more detailed console outputs will be given, for debugging purposes
-	const verbose =
-		cli.verbose !== undefined
-			? cli.production
-			: env.VERBOSE && env.VERBOSE != "false";
+	const verbose = cli.verbose !== undefined ? cli.production : env.VERBOSE && env.VERBOSE != "false";
 	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Verbose Output", verbose);
 
 	// If DEBUG is enabled the nodeJS application will be launched with support for an external debugger
-	const debug =
-		cli.debug !== undefined ? cli.debug : env.DEBUG != "false" || false;
+	const debug = cli.debug !== undefined ? cli.debug : env.DEBUG != "false" || false;
 	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Debug", debug);
 
 	// The PORT option sets the network interface port for the server to bind to.
 	// Defaults to 3000.
-	const port =
-		cli.port !== undefined ? cli.port : env.PORT ? Number(env.PORT) : 3000;
+	const port = cli.port !== undefined ? cli.port : env.PORT ? Number(env.PORT) : 3000;
 	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Port", Chalk.bold(port));
 
 	// The LOCAL options enables the stage server to be reached from the loopback interface of the machine running the server
-	const local =
-		cli.local !== undefined ? cli.LOCAL : env.local != "false" || true;
+	const local = cli.local !== undefined ? cli.LOCAL : env.local != "false" || true;
 
 	// The LAN options enables the stage server to be reached from within the current local area network
 	const lan = cli.lan !== undefined ? cli.LAN : env.lan != "false" || true;
 
 	// The WAN options enables the stage server to be reached from the current wide area network, i.e.  the public internet
-	const wan =
-		cli.wan !== undefined ? cli.wan : env.WAN != "false" || production;
+	const wan = cli.wan !== undefined ? cli.wan : env.WAN != "false" || production;
 
 	// The BUILD option makes the CLI program generate fresh server and frontend code bundles for the current configuration
-	const build =
-		cli.build !== undefined ? cli.build : env.BUILD != "false" || false;
+	const build = cli.build !== undefined ? cli.build : env.BUILD != "false" || false;
 	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Build", build);
 
 	// The WATCH option makes the CLI program stay alive and watch and rebuild the source code files when changed
-	const watch =
-		cli.watch !== undefined ? cli.watch : env.WATCH != "false" || false;
+	const watch = cli.watch !== undefined ? cli.watch : env.WATCH != "false" || false;
 	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Watch", watch);
 
 	// The START option will make the CLI program launch the server with the current configuration
-	const start =
-		cli.start !== undefined ? cli.start : env.START != "false" || false;
+	const start = cli.start !== undefined ? cli.start : env.START != "false" || false;
 	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Start", start);
 	console.log();
 
@@ -132,11 +113,7 @@ export async function createConfiguration() {
 		if (lan) {
 			// Get any lan IP addresses of this server
 			const lanIP = Object.entries(networkInterfaces())
-				.map(([i, networks]) =>
-					networks
-						.filter((n) => n.family == "IPv4")
-						.map((n) => ({ ...n, interface: i }))
-				)
+				.map(([i, networks]) => networks.filter((n) => n.family == "IPv4").map((n) => ({ ...n, interface: i })))
 				.flat()
 				.find((n) => !n.internal)?.address;
 
@@ -165,12 +142,7 @@ export async function createConfiguration() {
 				ip: "127.0.0.1",
 				announcedAddress: "127.0.0.1",
 			});
-			console.log(
-				"🔹",
-				Chalk.bgBlueBright("[CONFIG]"),
-				"WEBRTC LOCALHOST",
-				"127.0.0.1"
-			);
+			console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "WEBRTC LOCALHOST", "127.0.0.1");
 		}
 	}
 
@@ -217,9 +189,7 @@ export async function createConfiguration() {
 		/** Web Server Settings */
 		web: {
 			/** Announced ip addresses */
-			announcedAddresses: webRTCTransportListenInfos.map(
-				(info) => info.announcedAddress
-			),
+			announcedAddresses: webRTCTransportListenInfos.map((info) => info.announcedAddress),
 			/** Exposed listening host */
 			host: production ? "0.0.0.0" : "localhost",
 			/** Exposed listening port */
@@ -234,9 +204,9 @@ export async function createConfiguration() {
 		mediasoup: {
 			/** Worker Settings */
 			worker: {
-				rtcMinPort: 10000,
-				rtcMaxPort: 10100,
-				logLevel: "warn",
+				rtcMinPort: 40000,
+				rtcMaxPort: 49999,
+				logLevel: production ? "warn" : "debug",
 				logTags: [
 					"info",
 					"ice",
@@ -265,7 +235,29 @@ export async function createConfiguration() {
 						mimeType: "video/VP8",
 						clockRate: 90000,
 						parameters: {
-							"x-google-start-bitrate": 1000,
+							// 'x-google-start-bitrate': 1000
+						},
+					},
+					{
+						kind: "video",
+						mimeType: "video/h264",
+						clockRate: 90000,
+						parameters: {
+							"packetization-mode": 1,
+							"profile-level-id": "4d0032",
+							"level-asymmetry-allowed": 1,
+							// 'x-google-start-bitrate': 1000
+						},
+					},
+					{
+						kind: "video",
+						mimeType: "video/h264",
+						clockRate: 90000,
+						parameters: {
+							"packetization-mode": 1,
+							"profile-level-id": "42e01f",
+							"level-asymmetry-allowed": 1,
+							// 'x-google-start-bitrate': 1000
 						},
 					},
 				],
@@ -273,8 +265,7 @@ export async function createConfiguration() {
 			/** WebRTC Transport settings **/
 			webRTCTransport: {
 				listenInfos: webRTCTransportListenInfos,
-				maxIncomingBitrate: 1500000,
-				initialAvailableOutgoingBitrate: 1000000,
+				initialAvailableOutgoingBitrate: 800000,
 			},
 		},
 	};

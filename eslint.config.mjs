@@ -34,16 +34,16 @@ export default [
 	/** Ignore build output */
 	{ ignores: [".dist/**/*"] },
 	/**
-   * Replace prettier rules when used as a formatter
-   * @see: https://itnext.io/how-to-replace-prettier-by-eslint-rules-21574359e041
-   * and https://eslint.style
-   */
+	 * Replace prettier rules when used as a formatter
+	 * @see: https://itnext.io/how-to-replace-prettier-by-eslint-rules-21574359e041
+	 * and https://eslint.style
+	 */
 	{
 		plugins: {
-			"@stylistic": Stylistic
+			"@stylistic": Stylistic,
 		},
 		rules: {
-			"@stylistic/max-len": ["warn", { code: 120, ignoreComments: true, ignoreUrls: true, ignoreStrings: true }],
+			"@stylistic/max-len": ["warn", { code: 160, ignoreComments: true, ignoreUrls: true, ignoreStrings: true }],
 			"@stylistic/indent": ["error", "tab"],
 			"@stylistic/no-mixed-spaces-and-tabs": ["error", "smart-tabs"],
 			"@stylistic/semi": ["error", "always"],
@@ -58,10 +58,10 @@ export default [
 	{
 		rules: {
 			"no-empty": "off",
-			"no-unused-vars": "off",
+			"no-unused-vars": "warn",
 			"prefer-const": ["error", { ignoreReadBeforeAssign: true }],
 			"@typescript-eslint/no-explicit-any": "off",
-			"no-irregular-whitespace": "off"
+			"no-irregular-whitespace": "off",
 		},
 	},
 ];

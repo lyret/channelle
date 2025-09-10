@@ -25,6 +25,8 @@
 		"npm": ">10.0.0"
 	},
 	"dependencies": {
+		"@trpc/client": "^10.45.2",
+		"@trpc/server": "^11.5.1",
 		"@types/restify": "^8.5.12",
 		"broadcast-channel": "^7.0.0",
 		"bulma": "^1.0.1",
@@ -46,7 +48,8 @@
 		"socket.io-client": "^4.0.0",
 		"sqlite3": "^5.1.7",
 		"svelte": "^4.2.18",
-		"universal-router": "^9.0.1"
+		"universal-router": "^9.0.1",
+		"zod": "^4.1.5"
 	},
 	"devDependencies": {
 		"@babel/polyfill": "^7.12.1",
@@ -71,7 +74,7 @@
 		"svelte-check": "^3.4.4",
 		"svelte-preprocess": "^5.0.0",
 		"tslib": "^2.5.3",
-		"typescript": "^5.0.0",
+		"typescript": "5.7",
 		"typescript-eslint": "^8.26.0"
 	}
 }

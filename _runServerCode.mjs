@@ -35,22 +35,13 @@ export async function runServerCode(CONFIG) {
 
 		// Create a new server process
 		RUNNING_SERVER_PROMISE = new Promise((resolve) => {
-			console.log(
-				"\n🪁",
-				Chalk.white.bgMagenta(`[${CONFIG.package.name.toUpperCase()}]`),
-				Chalk.bold("Launching\n")
-			);
+			console.log("\n🪁", Chalk.white.bgMagenta(`[${CONFIG.package.name.toUpperCase()}]`), Chalk.bold("Launching\n"));
 			if (CONFIG.web.host == "localhost") {
-				console.log(
-					"\n🪁",
-					Chalk.white.bgMagenta(`[${CONFIG.package.name.toUpperCase()}]`),
-					Chalk.bold(`Open: http://localhost:${CONFIG.web.port}\n`)
-				);
-
+				console.log("\n🪁", Chalk.white.bgMagenta(`[${CONFIG.package.name.toUpperCase()}]`), Chalk.bold(`Open: http://localhost:${CONFIG.web.port}\n`));
 			}
 
 			// Create subprocess arguments
-			const args = [Path.resolve(process.cwd(), CONFIG.build.serverOutput)];
+			const args = [Path.resolve(process.cwd(), CONFIG.build.serverOutput + "/index.mjs")];
 
 			// Enable debugging arguments
 			if (CONFIG.runtime.debug) {
@@ -70,26 +61,16 @@ export async function runServerCode(CONFIG) {
 
 			RUNNING_SERVER.on("close", (code) => {
 				if (code) {
-					console.log(
-						"\n💥",
-						Chalk.white.bgRed(`[${CONFIG.package.name.toUpperCase()}]`),
-						Chalk.bold(`Exited with code ${code}\n`)
-					);
+					console.log("\n💥", Chalk.white.bgRed(`[${CONFIG.package.name.toUpperCase()}]`), Chalk.bold(`Exited with code ${code}\n`));
 					resolve(code);
 				} else {
-					console.log(
-						"\n🪁",
-						Chalk.white.bgMagenta(`[${CONFIG.package.name.toUpperCase()}]`),
-						Chalk.bold("Exited\n")
-					);
+					console.log("\n🪁", Chalk.white.bgMagenta(`[${CONFIG.package.name.toUpperCase()}]`), Chalk.bold("Exited\n"));
 					resolve(undefined);
 				}
 			});
 		});
 	} catch (err) {
-		console.error(
-			`[${CONFIG.package.name.toUpperCase()}] Unable to execute the transpiled server side code`
-		);
+		console.error(`[${CONFIG.package.name.toUpperCase()}] Unable to execute the transpiled server side code`);
 		console.error(err);
 		process.exit(1);
 	}
