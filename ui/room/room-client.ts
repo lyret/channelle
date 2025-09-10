@@ -1,12 +1,13 @@
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import type { RoomRouter } from "../../server/room";
 
-const roomTRPC = createTRPCClient<RoomRouter>({
+/** Create a TRPC client for the room API  */
+const roomClient = createTRPCClient<RoomRouter>({
 	links: [
 		httpBatchLink({
-			url: `https://${CONFIG.web.host}:${CONFIG.web.port}`,
+			url: `https://${CONFIG.web.host}:${CONFIG.web.port}/room`,
 		}),
 	],
 });
 
-roomTRPC.consumerSetLayers.mutate({ id: "123", layers: ["video", "audio"] });
+const test = await roomClient.query({});

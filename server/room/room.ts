@@ -6,7 +6,7 @@ import { z } from "zod";
 
 const HTTP_PEER_STALE = 15000;
 
-const { router: trcpRouter, procedure: trcpProcedure } = await trcp();
+const { router: trcpRouter, procedure: trcpProcedure } = trcp();
 
 type Peer = {
 	lastSeenTs: number;
@@ -57,8 +57,6 @@ const _room: Room = {
 	producers: {},
 	consumers: {},
 };
-
-export type RoomRouter = typeof roomRouter;
 
 // make sure this peer is connected. if we've disconnected the
 // peer because of a network outage we want the peer to know that
@@ -368,6 +366,7 @@ export const roomRouter = trcpRouter({
 		return { closed: true };
 	}),
 });
+export type RoomRouter = typeof roomRouter;
 
 function closePeer(peerId: string) {
 	console.log("closing peer", peerId);

@@ -73,6 +73,7 @@ export function restify(): restifyLib.Server {
 	};
 	_restify.get("/stage", clientInterfaceHandler);
 	_restify.get("/backstage", clientInterfaceHandler);
+	_restify.get("/debug", clientInterfaceHandler);
 	_restify.get("/", clientInterfaceHandler);
 
 	return _restify;

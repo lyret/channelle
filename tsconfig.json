@@ -15,10 +15,10 @@
 		"paths": {
 			"*": ["./shared/types/*.d.ts"],
 			"~/*": ["./*"],
-			"$ui/device": ["./_device/index.ts"],
+			"$ui/device": ["./_device/index.ts"]
 		},
 		"outDir": "./.dist"
 	},
-	"include": ["ui/**/*", "shared/**/*", "./global.d.ts", "eslint.config.mjs"],
+	"include": ["shared/**/*", "./global.d.ts", "eslint.config.mjs"],
 	"exclude": ["node_modules/*", "public/*", "server/*"]
 }

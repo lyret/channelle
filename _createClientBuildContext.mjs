@@ -10,7 +10,7 @@ import SvelteConfig from "./svelte.config.mjs";
 
 /** @typedef {import('./shared/types/config.mjs').CONFIG} CONFIG */
 
-/** 
+/**
  * Creates the build context for building the client code using the given config
  * @param {CONFIG} CONFIG - The runtime context
  */
@@ -23,6 +23,7 @@ export async function createClientBuildContext(CONFIG, callback) {
 		write: true,
 		sourcemap: CONFIG.runtime.debug,
 		metafile: true,
+		format: "esm",
 		minify: CONFIG.runtime.production,
 		platform: "browser",
 		external: ["url"],
@@ -66,15 +67,8 @@ export async function createClientBuildContext(CONFIG, callback) {
 				name: "EsbuildCallback",
 				setup(build) {
 					build.onEnd((results) => {
-						if (
-							results.metafile?.outputs[".dist/ui/index.html"] &&
-							results.metafile?.outputs[".dist/ui/_main.js"]
-						) {
-							console.log(
-								"\n📦",
-								Chalk.white.bgGreen("[BUILD]"),
-								Chalk.bold("New client code available\n")
-							);
+						if (results.metafile?.outputs[".dist/ui/index.html"] && results.metafile?.outputs[".dist/ui/_main.js"]) {
+							console.log("\n📦", Chalk.white.bgGreen("[BUILD]"), Chalk.bold("New client code available\n"));
 
 							if (callback) {
 								callback(results);

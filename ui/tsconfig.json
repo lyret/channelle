@@ -1,0 +1,4 @@
+{
+	"references": [{ "path": "../server" }],
+	"include": ["./**/*", "../shared/**/*", "../global.d.ts"]
+}

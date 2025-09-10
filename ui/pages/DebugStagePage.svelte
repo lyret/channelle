@@ -6,6 +6,8 @@
 	import { userCameraBans, userMicrophoneBans } from "~/stores/users";
 	import { currentParticipant } from "../lib/stores/api";
 
+	import { roomClient } from "../room/room-client";
+
 	let countOfStageAudio = 0;
 	StageAudio.subscribe(() => countOfStageAudio++);
 	let countOfStageLayout = 0;
@@ -26,3 +28,9 @@
 	<h1>Stage Audio ({countOfStageLayout})</h1>
 	{JSON.stringify($ConsumedMediaStore)}
 </main>
+
+<style>
+	main {
+		padding-left: 50px;
+	}
+</style>

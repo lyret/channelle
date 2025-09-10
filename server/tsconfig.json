@@ -1,6 +1,7 @@
 {
 	"compilerOptions": {
 		"esModuleInterop": true,
+		"composite": true,
 		"target": "ES2021",
 		"module": "esnext",
 		"baseUrl": "./server",
