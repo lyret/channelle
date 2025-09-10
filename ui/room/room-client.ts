@@ -1,13 +1,21 @@
-import { createTRPCClient, httpBatchLink } from "@trpc/client";
+import { createTRPCClient, createWSClient, wsLink } from "@trpc/client";
 import type { RoomRouter } from "../../server/room";
 
+/** Create persistent WebSocket connection */
+const wsClient = createWSClient({
+	url: "ws://localhost:3001",
+});
+
 /** Create a TRPC client for the room API  */
-const roomClient = createTRPCClient<RoomRouter>({
+export const roomClient = createTRPCClient<RoomRouter>({
 	links: [
-		httpBatchLink({
-			url: `https://${CONFIG.web.host}:${CONFIG.web.port}/room`,
+		wsLink({
+			client: wsClient,
 		}),
 	],
 });
 
-const test = await roomClient.query({});
+roomClient.sync.query().then((data) => {
+	console.log("HERE");
+	console.log(data);
+});

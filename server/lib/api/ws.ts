@@ -1,26 +1,50 @@
-import * as IO from "socket.io";
-import { http } from "./http";
-import type { DefaultEventsMap } from "socket.io/dist/typed-events";
+import { WebSocketServer } from "ws";
+import { applyWSSHandler } from "@trpc/server/adapters/ws";
+import { roomRouter } from "../../room/room";
 
-let _io: IO.Server | undefined;
+let _ws: WebSocketServer | undefined;
 
 /** Returns the global web socket server  */
-export function ws<
-	EventsMap extends DefaultEventsMap = DefaultEventsMap,
->(): IO.Server<EventsMap> {
+export function ws(): Ws.Server {
 	// Return already initialized singelton instance
-	if (_io) {
-		return _io;
+	if (_ws) {
+		return _ws;
 	}
 
-	// Get the http server
-	const _http = http();
-
 	// Create and return the socket server
-	_io = new IO.Server<EventsMap>(_http, {
-		serveClient: false,
-		path: CONFIG.socket.path,
+	_ws = new WebSocketServer({
+		port: 3001, // TODO: ADD PORT AND CONFIG TO GLOBAL CONGIG OBJECT
+	});
+	// TODO: ADD PORT AND CONFIG TO GLOBAL CONGIG OBJECT
+	const handler = applyWSSHandler({
+		wss: _ws,
+		router: roomRouter,
+		createContext: () => {
+			console.log("[TRPC] Creating Context...");
+			return {};
+		},
+		// Enable heartbeat messages to keep connection open (disabled by default)
+		keepAlive: {
+			enabled: true,
+			// server ping message interval in milliseconds
+			pingMs: 30000,
+			// connection is terminated if pong message is not received in this many milliseconds
+			pongWaitMs: 5000,
+		},
 	});
 
-	return _io;
+	_ws.on("connection", (ws) => {
+		console.log(`➕➕ Connection (${_ws.clients.size})`);
+		ws.once("close", () => {
+			console.log(`➖➖ Connection (${_ws.clients.size})`);
+		});
+	});
+	console.log("✅ WebSocket Server listening on ws://localhost:3001");
+	process.on("SIGTERM", () => {
+		console.log("SIGTERM");
+		handler.broadcastReconnectNotification();
+		_ws.close();
+	});
+
+	return _ws;
 }

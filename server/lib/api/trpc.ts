@@ -1,5 +1,5 @@
 import type { TRPCRootObject, TRPCRuntimeConfigOptions } from "@trpc/server";
-import * as TRPCServer from "@trpc/server";
+import { initTRPC } from "@trpc/server";
 
 let _trcp: TRPCRootObject<Context, object, TRPCRuntimeConfigOptions<object, object>> | undefined;
 
@@ -10,16 +10,14 @@ export function trcp(): TRPCRootObject<Context, object, TRPCRuntimeConfigOptions
 		return _trcp;
 	}
 
-	const a = TRPCServer;
-
 	// Create and return the trcp backend;
-	_trcp = a.initTRPC.context<Context>().create();
+	_trcp = initTRPC.context<Context>().create();
 
 	return _trcp;
 }
 
 /** TRPC Context */
-interface Context {
+export interface Context {
 	peer?: {
 		id: string;
 	};

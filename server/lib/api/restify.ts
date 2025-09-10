@@ -1,8 +1,6 @@
 import * as restifyLib from "restify";
 import * as Fs from "fs/promises";
 import * as Path from "path";
-import { createHTTPHandler } from "@trpc/server/adapters/standalone";
-import { roomRouter } from "../../room/room";
 
 let _restify: restifyLib.Server | undefined;
 
@@ -35,24 +33,6 @@ export function restify(): restifyLib.Server {
 			maxAge: 0,
 		}),
 	);
-
-	// Serve trpc communication
-	const innerHandler = createHTTPHandler({
-		router: roomRouter,
-		basePath: "/room/",
-		createContext() {
-			console.log("HERE");
-			return {};
-		},
-	});
-	async function trpcHandler(req: restifyLib.Request, res: restifyLib.Response) {
-		return innerHandler(req, res);
-	}
-	_restify.post("/room/*", trpcHandler);
-	_restify.put("/room/*", trpcHandler);
-	_restify.get("/room/*", trpcHandler);
-	_restify.head("/room/*", trpcHandler);
-	_restify.del("/room/*", trpcHandler);
 
 	// Serve the client interface for some specific routes
 	const clientInterfaceHandler = async (req: restifyLib.Request, res: restifyLib.Response) => {

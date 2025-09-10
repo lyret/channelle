@@ -3,7 +3,7 @@ import type * as Http from "http";
 
 //import { createIOEventHandlers } from "./createIOEventHandlers";
 // import { loadStores } from "./loadStores";
-import { http, sequelize } from "./lib/api";
+import { http, sequelize, ws } from "./lib/api";
 
 // import * as SceneStores from "./stores/scene";
 // import * as UserStores from "./stores/users";
@@ -19,8 +19,8 @@ export async function createServer(): Promise<Http.Server> {
 	// Create the http server
 	const httpServer = http();
 
-	// Create the socket io server
-	//const io = ws();
+	// Create the socket server
+	ws();
 
 	// Create the database connection
 	await sequelize();

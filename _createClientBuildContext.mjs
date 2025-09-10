@@ -23,7 +23,6 @@ export async function createClientBuildContext(CONFIG, callback) {
 		write: true,
 		sourcemap: CONFIG.runtime.debug,
 		metafile: true,
-		format: "esm",
 		minify: CONFIG.runtime.production,
 		platform: "browser",
 		external: ["url"],
