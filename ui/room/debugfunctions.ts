@@ -1,5 +1,6 @@
-import deepEqual from "deep-equal";
+import DeepEqual from "deep-equal";
 import * as MediaSoup from "mediasoup-client";
+import { roomClient } from "./room-client";
 
 /** Simple uuid helper function */
 function uuidv4(): string {
@@ -22,7 +23,7 @@ export let camVideoProducer: MediaSoup.types.Producer;
 export let camAudioProducer: MediaSoup.types.Producer;
 export let screenVideoProducer: MediaSoup.types.Producer;
 export let screenAudioProducer: MediaSoup.types.Producer;
-export let currentActiveSpeaker: { peerId?: string } = {};
+export let currentActiveSpeaker: { peerId?: string | null } = {};
 export let lastPollSyncData: Record<string, any> = {};
 export let consumers: MediaSoup.types.Consumer[] = [];
 export let pollingInterval: ReturnType<typeof setInterval>;
@@ -42,7 +43,7 @@ export async function onPageLoad() {
 
 	// use sendBeacon to tell the server we're disconnecting when
 	// the page unloads
-	window.addEventListener("unload", () => sig("leave", {}, true));
+	window.addEventListener("unload", () => roomClient.leave.mutate());
 }
 
 //
@@ -58,7 +59,7 @@ export async function joinRoom() {
 	try {
 		// signal that we're a new peer and initialize our
 		// mediasoup-client device, if this is our first time connecting
-		const { routerRtpCapabilities } = await sig("join-as-new-peer", {});
+		const { routerRtpCapabilities } = await roomClient.join.mutate();
 		if (!device.loaded) {
 			await device.load({ routerRtpCapabilities });
 		}
@@ -103,7 +104,7 @@ export async function sendCameraStreams() {
 
 	if (getCamPausedState()) {
 		try {
-			await camVideoProducer.pause();
+			camVideoProducer.pause();
 		} catch (e: any) {
 			console.error(e);
 		}
@@ -161,20 +162,14 @@ export async function startScreenshare() {
 		screenVideoProducer.track.onended = async () => {
 			console.log("screen share stopped");
 			try {
-				await screenVideoProducer.pause();
-				const { error: vidError } = await sig("close-producer", { producerId: screenVideoProducer.id });
-				await screenVideoProducer.close();
-				screenVideoProducer = null as unknown as Producer;
-				if (vidError) {
-					console.error(vidError);
-				}
+				screenVideoProducer.pause();
+				await roomClient.closeProducer.mutate({ producerId: screenVideoProducer.id });
+				screenVideoProducer.close();
+				screenVideoProducer = null as unknown as MediaSoup.types.Producer;
 				if (screenAudioProducer) {
-					const { error: audioError } = await sig("close-producer", { producerId: screenAudioProducer.id });
-					await screenAudioProducer.close();
-					screenAudioProducer = null as unknown as Producer;
-					if (audioError) {
-						console.error(audioError);
-					}
+					await roomClient.closeProducer.mutate({ producerId: screenAudioProducer.id });
+					screenAudioProducer.close();
+					screenAudioProducer = null as unknown as MediaSoup.types.Producer;
 				}
 			} catch (e: any) {
 				console.error(e);
@@ -248,17 +243,14 @@ export async function stopStreams() {
 
 	console.log("stop sending media streams");
 
-	const { error: transportError } = await sig("close-transport", { transportId: sendTransport.id });
-	if (transportError) {
-		console.error(transportError);
-	}
+	await roomClient.closeTransport.mutate({ transportId: sendTransport.id });
 
 	// closing the sendTransport closes all associated producers. when
 	// the camVideoProducer and camAudioProducer are closed,
 	// mediasoup-client stops the local cam tracks, so we don't need to
 	// do anything except set all our local variables to null.
 	try {
-		await sendTransport.close();
+		sendTransport.close();
 	} catch (e: any) {
 		console.error(e);
 	}
@@ -282,18 +274,14 @@ export async function leaveRoom() {
 	// stop polling
 	clearInterval(pollingInterval);
 
-	// close everything on the server-side (transports, producers, consumers)
-	const { error: leaveError } = await sig("leave", {});
-	if (leaveError) {
-		console.error(leaveError);
-	}
-
-	// closing the transports closes all producers and consumers. we
-	// don't need to do anything beyond closing the transports, except
-	// to set all our local variables to their initial states
 	try {
-		if (recvTransport) await recvTransport.close();
-		if (sendTransport) await sendTransport.close();
+		// close everything on the server-side (transports, producers, consumers)
+		await roomClient.leave.mutate();
+		// closing the transports closes all producers and consumers. we
+		// don't need to do anything beyond closing the transports, except
+		// to set all our local variables to their initial states
+		recvTransport?.close();
+		sendTransport?.close();
 	} catch (e: any) {
 		console.error(e);
 	}
@@ -329,7 +317,7 @@ export async function subscribeToTrack(peerId: string, mediaTag: string) {
 
 	// ask the server to create a server-side consumer object and send
 	// us back the info we need to create a client-side consumer
-	const consumerParameters = await sig("recv-track", {
+	const consumerParameters = await roomClient.recvTrack.mutate({
 		mediaTag,
 		mediaPeerId: peerId,
 		rtpCapabilities: device.rtpCapabilities,
@@ -359,79 +347,77 @@ export async function subscribeToTrack(peerId: string, mediaTag: string) {
 }
 
 export async function unsubscribeFromTrack(peerId: string, mediaTag: string) {
-	const consumer = findConsumerForTrack(peerId, mediaTag);
-	if (!consumer) {
-		return;
-	}
-
-	console.log("unsubscribe from track", peerId, mediaTag);
 	try {
+		const consumer = findConsumerForTrack(peerId, mediaTag);
+		if (!consumer) {
+			return;
+		}
+		console.log("unsubscribe from track", peerId, mediaTag);
 		await closeConsumer(consumer);
 	} catch (e) {
 		console.error(e);
 	}
 }
 
-export async function pauseConsumer(consumer: Consumer) {
+export async function pauseConsumer(consumer: MediaSoup.types.Consumer) {
 	if (consumer) {
-		console.log("pause consumer", consumer.appData.peerId, consumer.appData.mediaTag);
 		try {
-			await sig("pause-consumer", { consumerId: consumer.id });
-			await consumer.pause();
+			console.log("pause consumer", consumer.appData.peerId, consumer.appData.mediaTag);
+			await roomClient.pauseConsumer.mutate({ consumerId: consumer.id });
+			consumer.pause();
 		} catch (e) {
 			console.error(e);
 		}
 	}
 }
 
-export async function resumeConsumer(consumer: Consumer) {
+export async function resumeConsumer(consumer: MediaSoup.types.Consumer) {
 	if (consumer) {
-		console.log("resume consumer", consumer.appData.peerId, consumer.appData.mediaTag);
 		try {
-			await sig("resume-consumer", { consumerId: consumer.id });
-			await consumer.resume();
+			console.log("resume consumer", consumer.appData.peerId, consumer.appData.mediaTag);
+			await roomClient.resumeConsumer.mutate({ consumerId: consumer.id });
+			consumer.resume();
 		} catch (e) {
 			console.error(e);
 		}
 	}
 }
 
-export async function pauseProducer(producer: Producer) {
+export async function pauseProducer(producer: MediaSoup.types.Producer) {
 	if (producer) {
-		console.log("pause producer", producer.appData.mediaTag);
 		try {
-			await sig("pause-producer", { producerId: producer.id });
-			await producer.pause();
+			console.log("pause producer", producer.appData.mediaTag);
+			await roomClient.pauseProducer.mutate({ producerId: producer.id });
+			producer.pause();
 		} catch (e) {
 			console.error(e);
 		}
 	}
 }
 
-export async function resumeProducer(producer: Producer) {
+export async function resumeProducer(producer: MediaSoup.types.Producer) {
 	if (producer) {
-		console.log("resume producer", producer.appData.mediaTag);
 		try {
-			await sig("resume-producer", { producerId: producer.id });
-			await producer.resume();
+			console.log("resume producer", producer.appData.mediaTag);
+			await roomClient.resumeProducer.mutate({ producerId: producer.id });
+			producer.resume();
 		} catch (e) {
 			console.error(e);
 		}
 	}
 }
 
-async function closeConsumer(consumer: Consumer) {
-	if (!consumer) {
-		return;
-	}
-
-	console.log("closing consumer", consumer.appData.peerId, consumer.appData.mediaTag);
-
+async function closeConsumer(consumer: MediaSoup.types.Consumer) {
 	try {
+		if (!consumer) {
+			return;
+		}
+		console.log("closing consumer", consumer.appData.peerId, consumer.appData.mediaTag);
+
 		// tell the server we're closing this consumer. (the server-side
 		// consumer may have been closed already, but that's okay.)
-		await sig("close-consumer", { consumerId: consumer.id });
-		await consumer.close();
+		await roomClient.closeConsumer.mutate({ consumerId: consumer.id });
+		consumer.close();
 
 		consumers = consumers.filter((c) => c !== consumer);
 	} catch (e) {
@@ -441,47 +427,41 @@ async function closeConsumer(consumer: Consumer) {
 
 // utility function to create a transport and hook up signaling logic
 // appropriate to the transport's direction
-async function createTransport(direction: string): Promise<Transport> {
+async function createTransport(direction: string): Promise<MediaSoup.types.Transport> {
 	console.log(`create ${direction} transport`);
 
 	// ask the server to create a server-side transport object and send
 	// us back the info we need to create a client-side transport
-	let transport: Transport;
-	const { transportOptions } = await sig("create-transport", { direction });
+	let transport: MediaSoup.types.Transport;
+	const { transportOptions } = await roomClient.createTransport.mutate({ direction });
 	console.log("transport options", transportOptions);
 
 	if (direction === "recv") {
-		transport = await device.createRecvTransport(transportOptions);
+		transport = device.createRecvTransport(transportOptions);
 	} else if (direction === "send") {
-		transport = await device.createSendTransport(transportOptions);
+		transport = device.createSendTransport(transportOptions);
 	} else {
-		throw new console.error(`bad transport 'direction': ${direction}`);
+		throw new Error(`bad transport 'direction': ${direction}`);
 	}
 
 	// mediasoup-client will emit a connect event when media needs to
 	// start flowing for the first time. send dtlsParameters to the
 	// server, then call callback() on success or errback() on failure.
-	transport.on("connect", (params: any, callback: () => void, errback: (error: Error) => void) => {
+	transport.on("connect", (params, callback, errback) => {
 		const dtlsParameters = params.dtlsParameters;
 		console.log("transport connect event", direction);
 
-		sig("connect-transport", {
-			transportId: transportOptions.id,
-			dtlsParameters,
-		})
-			.then((response) => {
-				const connectError = response.error;
-				if (connectError) {
-					const errorMsg = `Error connecting transport: ${connectError}`;
-					console.error("error connecting transport", direction, connectError);
-					errback(new console.error(errorMsg));
-					return;
-				}
-
+		roomClient.connectTransport
+			.mutate({
+				transportId: transportOptions.id,
+				dtlsParameters,
+			})
+			.then(() => {
 				callback();
 			})
-			.catch((catchError) => {
-				errback(catchError);
+			.catch((err) => {
+				console.error("error connecting transport", direction, err);
+				errback(err);
 			});
 	});
 
@@ -507,27 +487,20 @@ async function createTransport(direction: string): Promise<Transport> {
 			// up a server-side producer object, and get back a
 			// producer.id. call callback() on success or errback() on
 			// failure.
-			sig("send-track", {
-				transportId: transportOptions.id,
-				kind,
-				rtpParameters,
-				paused,
-				appData,
-			})
+			roomClient.sendTrack
+				.mutate({
+					transportId: transportOptions.id,
+					kind,
+					rtpParameters,
+					paused,
+					appData,
+				})
 				.then((response) => {
-					const produceError = response.error;
 					const producerId = response.id;
-
-					if (produceError) {
-						const errorMsg = `Error setting up server-side producer: ${produceError}`;
-						console.error("error setting up server-side producer", produceError);
-						errback(new console.error(errorMsg));
-						return;
-					}
-
 					callback({ id: producerId });
 				})
 				.catch((err) => {
+					console.error("error setting up server-side producer", err);
 					errback(err);
 				});
 		});
@@ -554,10 +527,7 @@ async function createTransport(direction: string): Promise<Transport> {
 // polling/update logic
 //
 async function pollAndUpdate() {
-	const { peers, activeSpeaker, error: syncError } = await sig("sync", {});
-	if (syncError) {
-		return { error: syncError };
-	}
+	const { peers, activeSpeaker } = await roomClient.sync.query();
 
 	// update active speaker
 	currentActiveSpeaker = activeSpeaker;
@@ -569,7 +539,7 @@ async function pollAndUpdate() {
 	const thisPeersList = sortPeers(peers);
 	const lastPeersList = sortPeers(lastPollSyncData);
 
-	if (!deepEqual(thisPeersList, lastPeersList)) {
+	if (!DeepEqual(thisPeersList, lastPeersList)) {
 		// Update happens in UI, which we've removed
 	}
 
@@ -625,7 +595,7 @@ function sortPeers(peers: Record<string, any>) {
 		.sort((a, b) => (a.joinTs > b.joinTs ? 1 : b.joinTs > a.joinTs ? -1 : 0));
 }
 
-function findConsumerForTrack(peerId: string, mediaTag: string): Consumer | undefined {
+function findConsumerForTrack(peerId: string, mediaTag: string): MediaSoup.types.Consumer | undefined {
 	return consumers.find((c) => c.appData.peerId === peerId && c.appData.mediaTag === mediaTag);
 }
 
@@ -728,27 +698,6 @@ function camEncodings() {
 // how do we limit bandwidth for screen share streams?
 function screenshareEncodings() {
 	return [{ maxBitrate: 5000000 }];
-}
-
-//
-// our "signaling" function -- just an http fetch
-//
-async function sig(endpoint: string, data: any, beacon?: boolean) {
-	try {
-		const headers = { "Content-Type": "application/json" };
-		const body = JSON.stringify({ ...data, peerId: myPeerId });
-
-		if (beacon) {
-			navigator.sendBeacon("/signaling/" + endpoint, body);
-			return null;
-		}
-
-		const response = await fetch("/signaling/" + endpoint, { method: "POST", body, headers });
-		return await response.json();
-	} catch (e: any) {
-		console.console.error(e);
-		return { error: e };
-	}
 }
 
 //

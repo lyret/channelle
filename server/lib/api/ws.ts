@@ -19,8 +19,9 @@ export function ws(): WebSocketServer {
 	const handler = applyWSSHandler({
 		wss: _ws,
 		router: roomRouter,
-		createContext: () => {
-			console.log("[TRPC] Creating Context...");
+		createContext: (options) => {
+			const token = options.info.connectionParams?.token;
+			console.log("[TRPC] Creating Context...", token);
 			return {};
 		},
 		// Enable heartbeat messages to keep connection open (disabled by default)

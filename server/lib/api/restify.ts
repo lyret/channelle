@@ -30,7 +30,7 @@ export async function restify(): Promise<Restify.Server> {
 		"/*",
 		Restify.plugins.serveStatic({
 			directory: staticPath,
-			maxAge: 0,
+			maxAge: CONFIG.isProduction ? 3600 : 0,
 		}),
 	);
 
@@ -45,7 +45,7 @@ export async function restify(): Promise<Restify.Server> {
 					Restify.plugins.serveStatic({
 						file: file,
 						directory: staticPath,
-						maxAge: 0,
+						maxAge: CONFIG.isProduction ? 3600 : 0,
 					}),
 				);
 			}),
