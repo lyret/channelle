@@ -24,7 +24,7 @@ if (CONFIG.runtime.watch) {
 				});
 			}
 		});
-		await clientContext.watch();
+		await clientContext.customWatch();
 	} catch (err) {
 		console.error(err);
 		process.exit(1);

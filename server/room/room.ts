@@ -1,10 +1,30 @@
 import type * as MediaSoup from "mediasoup";
 import type { ExtendedAppData } from "../lib/api";
+import { BroadcastChannel } from "broadcast-channel";
 import { TRPCError } from "@trpc/server";
 import { trcp, mediaSoupRouter } from "../lib/api";
 import { z } from "zod";
 
 const HTTP_PEER_STALE = 15000;
+
+// Handle incomming debugging messages from the cli over trpc
+// TODO: Move to a separate router
+let buildCounter = 0;
+if (CONFIG.runtime.debug) {
+	const channel = new BroadcastChannel<{ type: "build-event"; data: any }>("cli-channel");
+	channel.addEventListener("message", ({ type }) => {
+		switch (type) {
+			// Refresh the connected clients
+			case "build-event":
+				buildCounter++;
+				break;
+			// Unhandled messages
+			default:
+				console.log(`[DEBUG] Received unhandled ipc message of type: ${type}`);
+				break;
+		}
+	});
+}
 
 const { router: trcpRouter, procedure: trcpProcedure } = trcp();
 
@@ -78,6 +98,7 @@ export const roomRouter = trcpRouter({
 	// 'activeSpeaker' info
 	sync: trcpProcedure.query(async () => {
 		return {
+			buildCounter: buildCounter,
 			peers: _room.peers,
 			activeSpeaker: _room.activeSpeaker,
 		};

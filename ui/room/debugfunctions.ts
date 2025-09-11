@@ -526,8 +526,16 @@ async function createTransport(direction: string): Promise<MediaSoup.types.Trans
 //
 // polling/update logic
 //
+let localBuildCounter = -1;
 async function pollAndUpdate() {
-	const { peers, activeSpeaker } = await roomClient.sync.query();
+	const { peers, activeSpeaker, buildCounter } = await roomClient.sync.query();
+
+	if (buildCounter > localBuildCounter && localBuildCounter != -1) {
+		window.location.reload()
+	} else {
+		localBuildCounter = buildCounter;
+	}
+}
 
 	// update active speaker
 	currentActiveSpeaker = activeSpeaker;
