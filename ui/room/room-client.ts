@@ -7,7 +7,7 @@ const wsClient = createWSClient({
 	url: "ws://localhost:3001",
 	connectionParams: async () => {
 		return {
-			token: "supersecret" + Math.floor(Math.random() * 1000),
+			token: "supersecret FA" + Math.floor(Math.random() * 1000),
 		};
 	},
 });

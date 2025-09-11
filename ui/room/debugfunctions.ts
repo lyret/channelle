@@ -32,6 +32,15 @@ export async function onPageLoad() {
 	console.log(`starting up ... my peerId is ${myPeerId}`);
 	try {
 		device = new MediaSoup.Device();
+		// super-simple signaling: let's poll at 1-second intervals
+		pollingInterval = setInterval(async () => {
+			try {
+				await pollAndUpdate();
+			} catch (err) {
+				console.error("Poll stopped:", err);
+				clearInterval(pollingInterval);
+			}
+		}, 1000);
 	} catch (e: any) {
 		if (e.name === "UnsupportedError") {
 			console.error("browser not supported for video calls");
@@ -68,15 +77,6 @@ export async function joinRoom() {
 		console.error(e);
 		return;
 	}
-
-	// super-simple signaling: let's poll at 1-second intervals
-	pollingInterval = setInterval(async () => {
-		const { error: pollError } = await pollAndUpdate();
-		if (pollError) {
-			clearInterval(pollingInterval);
-			console.error(pollError);
-		}
-	}, 1000);
 }
 
 export async function sendCameraStreams() {
@@ -529,13 +529,11 @@ async function createTransport(direction: string): Promise<MediaSoup.types.Trans
 let localBuildCounter = -1;
 async function pollAndUpdate() {
 	const { peers, activeSpeaker, buildCounter } = await roomClient.sync.query();
-
 	if (buildCounter > localBuildCounter && localBuildCounter != -1) {
-		window.location.reload()
+		window.location.reload();
 	} else {
 		localBuildCounter = buildCounter;
 	}
-}
 
 	// update active speaker
 	currentActiveSpeaker = activeSpeaker;

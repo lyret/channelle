@@ -24,6 +24,17 @@ export async function restify(): Promise<Restify.Server> {
 	_restify.use(Restify.plugins.queryParser());
 	_restify.use(Restify.plugins.gzipResponse());
 
+	// Disable all caching when debugging
+	if (CONFIG.runtime.debug) {
+		_restify.use((req, res, next) => {
+			res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+			res.setHeader("Pragma", "no-cache");
+			res.setHeader("Expires", "0");
+			res.setHeader("Surrogate-Control", "no-store");
+			return next();
+		});
+	}
+
 	// Serve static files
 	const staticPath = Path.resolve(process.cwd(), CONFIG.build.clientOutput);
 	_restify.get(

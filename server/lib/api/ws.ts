@@ -40,11 +40,12 @@ export function ws(): WebSocketServer {
 			console.log(`➖➖ Connection (${_ws.clients.size})`);
 		});
 	});
-	console.log("✅ WebSocket Server listening on ws://localhost:3001");
+	console.log("[WebSocket Server] Listening on ws://localhost:3001");
 	process.on("SIGTERM", () => {
-		console.log("SIGTERM");
+		console.log("[WebSocket Server] Closing and broadcasting reconnect notification...");
 		handler.broadcastReconnectNotification();
 		_ws.close();
+		process.exit(0);
 	});
 
 	return _ws;
