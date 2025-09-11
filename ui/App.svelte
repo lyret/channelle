@@ -33,27 +33,16 @@
 	$: isPreparing = $APIStore.isReady == false;
 	$: hasEnteredName = $APIStore.status == "ready" && $APIStore.participant.name;
 	$: renderStage = window.location.pathname.indexOf("/stage") == 0;
-	$: renderHome =
-		window.location.pathname == "/" ||
-		window.location.pathname.indexOf("/home") == 0;
-	$: renderDebugstage = window.location.pathname.indexOf("/debug") == 0;
+	$: renderHome = window.location.pathname == "/" || window.location.pathname.indexOf("/home") == 0;
 	$: renderBackstage = window.location.pathname.indexOf("/backstage") == 0;
-	$: needToBeManager =
-		renderBackstage &&
-		!($APIStore.status == "ready" && $APIStore.participant.manager);
+	$: needToBeManager = renderBackstage && !($APIStore.status == "ready" && $APIStore.participant.manager);
 	$: needStagePassword = !$scenePasswordIsOk && renderStage;
 	$: renderMessages =
 		!determiningState &&
 		(renderBackstage || renderStage) &&
-		(isPreparing ||
-			!hasEnteredName ||
-			!hasInteractedWithTheDocument ||
-			isBlocked ||
-			needStagePassword ||
-			needToBeManager);
+		(isPreparing || !hasEnteredName || !hasInteractedWithTheDocument || isBlocked || needStagePassword || needToBeManager);
 	$: renderContent = !determiningState && !renderMessages;
-	$: renderCurtains =
-		determiningState || renderMessages || ($sceneCurtains && renderStage);
+	$: renderCurtains = determiningState || renderMessages || ($sceneCurtains && renderStage);
 </script>
 
 <!-- Content -->
@@ -62,8 +51,6 @@
 		<HomePage />
 	{:else if renderStage}
 		<StagePage />
-	{:else if renderDebugstage}
-		<DebugStagePage />
 	{:else if renderBackstage}
 		<BackstagePage />
 	{:else}
@@ -85,15 +72,9 @@
 			{#if isBlocked}
 				<Blocked />
 			{:else if $APIStore.status == "ready" && !hasEnteredName}
-				<Authenticate
-					participant={$APIStore.participant}
-					on:submit={() => (hasInteractedWithTheDocument = true)}
-				/>
+				<Authenticate participant={$APIStore.participant} on:submit={() => (hasInteractedWithTheDocument = true)} />
 			{:else if $APIStore.status == "ready" && !hasInteractedWithTheDocument}
-				<Continue
-					participant={$APIStore?.participant}
-					on:click={() => (hasInteractedWithTheDocument = true)}
-				/>
+				<Continue participant={$APIStore?.participant} on:click={() => (hasInteractedWithTheDocument = true)} />
 			{:else if isPreparing}
 				<Loader label="Ansluter..." />
 			{:else if needToBeManager}
