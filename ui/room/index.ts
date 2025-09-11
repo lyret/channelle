@@ -1,1 +1,2 @@
-export * from "./room-client.ts";
+export * from "./room-client";
+export * from "./debugfunctions";

@@ -5,7 +5,7 @@ import { roomRouter } from "../../room/room";
 let _ws: WebSocketServer | undefined;
 
 /** Returns the global web socket server  */
-export function ws(): Ws.Server {
+export function ws(): WebSocketServer {
 	// Return already initialized singelton instance
 	if (_ws) {
 		return _ws;

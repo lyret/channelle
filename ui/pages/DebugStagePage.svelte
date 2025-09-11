@@ -1,12 +1,16 @@
 <script lang="ts">
+	import { onMount } from "svelte";
 	import { blur } from "svelte/transition";
 	import { ConsumedMediaStore } from "~/lib/stores/consumedMedia";
 	import { StageAudio } from "~/lib/stores/stageAudio";
 	import { StageLayout } from "~/lib/stores/stageLayout";
 	import { userCameraBans, userMicrophoneBans } from "~/stores/users";
 	import { currentParticipant } from "../lib/stores/api";
+	import { onPageLoad } from "../room";
 
-	import { roomClient } from "../room/room-client";
+	onMount(() => {
+		onPageLoad();
+	});
 
 	let countOfStageAudio = 0;
 	StageAudio.subscribe(() => countOfStageAudio++);
