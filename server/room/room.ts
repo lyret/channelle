@@ -81,7 +81,7 @@ const _room: Room = {
 // make sure this peer is connected. if we've disconnected the
 // peer because of a network outage we want the peer to know that
 // happened, when/if it returns
-trcpProcedure.use(async ({ ctx, next }) => {
+const roomProcedure = trcpProcedure.use(async ({ ctx, next }) => {
 	if (!ctx.peer?.id) {
 		throw new TRPCError({ code: "BAD_REQUEST", message: "No peer information given" });
 	} else if (!_room.peers[ctx.peer.id]) {
@@ -96,7 +96,8 @@ trcpProcedure.use(async ({ ctx, next }) => {
 export const roomRouter = trcpRouter({
 	// client polling endpoint. send back our 'peers' data structure and
 	// 'activeSpeaker' info
-	sync: trcpProcedure.query(async () => {
+	sync: roomProcedure.query(async () => {
+		console.log("sync", _room);
 		return {
 			buildCounter: buildCounter,
 			peers: _room.peers,
@@ -106,7 +107,12 @@ export const roomRouter = trcpRouter({
 	// Adds the peer to the room data structure and creates a
 	// transport that the peer will use for receiving media. returns
 	// router rtpCapabilities for mediasoup-client device initialization
-	join: trcpProcedure.mutation(async () => {
+	// Note: bypasses the standard room procedure
+	join: trcpProcedure.mutation(async ({ ctx }) => {
+		if (!ctx.peer?.id) {
+			throw new TRPCError({ code: "BAD_REQUEST", message: "No peer information given" });
+		}
+
 		const peerId = Math.round(Math.random() * 1000000).toString();
 		const msRouter = await mediaSoupRouter();
 		const now = Date.now();
@@ -123,7 +129,7 @@ export const roomRouter = trcpRouter({
 	}),
 	// Removes the peer from the room data structure and and closes
 	// all associated mediasoup objects
-	leave: trcpProcedure.mutation(async ({ ctx }) => {
+	leave: roomProcedure.mutation(async ({ ctx }) => {
 		const peerId = ctx.peer.id;
 		closePeer(peerId);
 		console.log("[Room] peer", peerId, "left");
@@ -131,7 +137,7 @@ export const roomRouter = trcpRouter({
 	}),
 	// Create a mediasoup transport object and send back info needed
 	// to create a transport object on the client side
-	createTransport: trcpProcedure.input(z.object({ direction: z.string() })).mutation(async ({ ctx, input: { direction } }) => {
+	createTransport: roomProcedure.input(z.object({ direction: z.string() })).mutation(async ({ ctx, input: { direction } }) => {
 		console.log("create-transport", ctx.peer.id, direction);
 
 		const transport = await createWebRtcTransport({ peerId: ctx.peer.id, direction });
@@ -144,7 +150,7 @@ export const roomRouter = trcpRouter({
 	}),
 	// Called from inside a client's `transport.on('connect')` event
 	// handler.
-	connectTransport: trcpProcedure
+	connectTransport: roomProcedure
 		.input(z.object({ transportId: z.string(), dtlsParameters: z.any() }))
 		.mutation(async ({ ctx, input: { transportId, dtlsParameters } }) => {
 			const transport = _room.transports[transportId];
@@ -160,7 +166,7 @@ export const roomRouter = trcpRouter({
 		}),
 	// Called by a client that wants to close a single transport (for
 	// example, a client that is no longer sending any media).
-	closeTransport: trcpProcedure.input(z.object({ transportId: z.string() })).mutation(async ({ ctx, input: { transportId } }) => {
+	closeTransport: roomProcedure.input(z.object({ transportId: z.string() })).mutation(async ({ ctx, input: { transportId } }) => {
 		const transport = _room.transports[transportId];
 
 		if (!transport) {
@@ -174,7 +180,7 @@ export const roomRouter = trcpRouter({
 	}),
 
 	// Called from inside a client's `transport.on('produce')` event handler.
-	sendTrack: trcpProcedure
+	sendTrack: roomProcedure
 		.input(z.object({ transportId: z.string(), kind: z.any(), rtpParameters: z.any(), paused: z.boolean().default(false), appData: z.any() }))
 		.mutation(async ({ ctx, input: { transportId, kind, rtpParameters, paused, appData } }) => {
 			const transport = _room.transports[transportId];
@@ -216,7 +222,7 @@ export const roomRouter = trcpRouter({
 	// on the server side, and send back info needed to create a consumer
 	// object on the client side. always start consumers paused. client
 	// will request media to resume when the connection completes
-	recvTrack: trcpProcedure
+	recvTrack: roomProcedure
 		.input(z.object({ mediaPeerId: z.string(), mediaTag: z.any(), rtpCapabilities: z.any() }))
 		.mutation(async ({ ctx, input: { mediaPeerId, mediaTag, rtpCapabilities } }) => {
 			const producer = Object.values(_room.producers).find((p) => p.appData.mediaTag === mediaTag && p.appData.peerId === mediaPeerId);
@@ -283,7 +289,7 @@ export const roomRouter = trcpRouter({
 			};
 		}),
 	// Called to pause receiving a track for a specific client
-	pauseConsumer: trcpProcedure.input(z.object({ consumerId: z.string() })).mutation(async ({ input: { consumerId } }) => {
+	pauseConsumer: roomProcedure.input(z.object({ consumerId: z.string() })).mutation(async ({ input: { consumerId } }) => {
 		const consumer = _room.consumers[consumerId];
 
 		if (!consumer) {
@@ -297,7 +303,7 @@ export const roomRouter = trcpRouter({
 		return { paused: true };
 	}),
 	// Called to resume receiving a track for a specific client
-	resumeConsumer: trcpProcedure.input(z.object({ consumerId: z.string() })).mutation(async ({ input: { consumerId } }) => {
+	resumeConsumer: roomProcedure.input(z.object({ consumerId: z.string() })).mutation(async ({ input: { consumerId } }) => {
 		const consumer = _room.consumers[consumerId];
 
 		if (!consumer) {
@@ -312,7 +318,7 @@ export const roomRouter = trcpRouter({
 	}),
 	// Called to stop receiving a track for a specific client. close and
 	// clean up consumer object
-	closeConsumer: trcpProcedure.input(z.object({ consumerId: z.string() })).mutation(async ({ input: { consumerId } }) => {
+	closeConsumer: roomProcedure.input(z.object({ consumerId: z.string() })).mutation(async ({ input: { consumerId } }) => {
 		const consumer = _room.consumers[consumerId];
 
 		if (!consumer) {
@@ -325,7 +331,7 @@ export const roomRouter = trcpRouter({
 	}),
 	// Called to set the largest spatial layer that a specific client
 	// wants to receive
-	consumerSetLayers: trcpProcedure
+	consumerSetLayers: roomProcedure
 		.input(z.object({ consumerId: z.string(), spatialLayer: z.any() }))
 		.mutation(async ({ input: { consumerId, spatialLayer } }) => {
 			const consumer = _room.consumers[consumerId];
@@ -341,7 +347,7 @@ export const roomRouter = trcpRouter({
 			return { layersSet: true };
 		}),
 	// Called to stop sending a track from a specific client
-	pauseProducer: trcpProcedure.input(z.object({ producerId: z.string() })).mutation(async ({ ctx, input: { producerId } }) => {
+	pauseProducer: roomProcedure.input(z.object({ producerId: z.string() })).mutation(async ({ ctx, input: { producerId } }) => {
 		const producer = _room.producers[producerId];
 
 		if (!producer) {
@@ -358,7 +364,7 @@ export const roomRouter = trcpRouter({
 	}),
 
 	// Called to resume sending a track from a specific client
-	resumeProducer: trcpProcedure.input(z.object({ producerId: z.string() })).mutation(async ({ ctx, input: { producerId } }) => {
+	resumeProducer: roomProcedure.input(z.object({ producerId: z.string() })).mutation(async ({ ctx, input: { producerId } }) => {
 		const producer = _room.producers[producerId];
 
 		if (!producer) {
@@ -374,7 +380,7 @@ export const roomRouter = trcpRouter({
 		return { resumed: true };
 	}),
 	// Called by a client that is no longer sending a specific track
-	closeProducer: trcpProcedure.input(z.object({ producerId: z.string() })).mutation(async ({ ctx, input: { producerId } }) => {
+	closeProducer: roomProcedure.input(z.object({ producerId: z.string() })).mutation(async ({ ctx, input: { producerId } }) => {
 		const producer = _room.producers[producerId];
 
 		if (!producer) {

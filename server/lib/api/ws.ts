@@ -20,9 +20,15 @@ export function ws(): WebSocketServer {
 		wss: _ws,
 		router: roomRouter,
 		createContext: (options) => {
+			// Get the token from the connection parameters
 			const token = options.info.connectionParams?.token;
-			console.log("[TRPC] Creating Context...", token);
-			return {};
+			console.log("[TRPC] New Peer:", token);
+
+			return {
+				peer: {
+					id: token, // Use the token as the peer id
+				},
+			};
 		},
 		// Enable heartbeat messages to keep connection open (disabled by default)
 		keepAlive: {
@@ -35,14 +41,14 @@ export function ws(): WebSocketServer {
 	});
 
 	_ws.on("connection", (ws) => {
-		console.log(`➕➕ Connection (${_ws.clients.size})`);
+		console.log(`[WS] +Connections (${_ws.clients.size})`);
 		ws.once("close", () => {
-			console.log(`➖➖ Connection (${_ws.clients.size})`);
+			console.log(`[WS] -Connections (${_ws.clients.size})`);
 		});
 	});
-	console.log("[WebSocket Server] Listening on ws://localhost:3001");
+	console.log("[WS] Listening on ws://localhost:3001");
 	process.on("SIGTERM", () => {
-		console.log("[WebSocket Server] Closing and broadcasting reconnect notification...");
+		console.log("[WS] Closing and broadcasting reconnect notification...");
 		handler.broadcastReconnectNotification();
 		_ws.close();
 		process.exit(0);

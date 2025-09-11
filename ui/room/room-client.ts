@@ -6,8 +6,11 @@ import type { RoomRouter } from "../../server/room";
 const wsClient = createWSClient({
 	url: "ws://localhost:3001",
 	connectionParams: async () => {
+		// Simple uuid generator
+		const uuidv4 = "111-111-1111".replace(/[018]/g, () => (crypto.getRandomValues(new Uint8Array(1))[0] & 15).toString(16));
+
 		return {
-			token: "supersecret FA" + Math.floor(Math.random() * 1000),
+			token: uuidv4,
 		};
 	},
 });

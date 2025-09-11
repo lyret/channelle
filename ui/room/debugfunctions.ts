@@ -2,17 +2,11 @@ import DeepEqual from "deep-equal";
 import * as MediaSoup from "mediasoup-client";
 import { roomClient } from "./room-client";
 
-/** Simple uuid helper function */
-function uuidv4(): string {
-	return "111-111-1111".replace(/[018]/g, () => (crypto.getRandomValues(new Uint8Array(1))[0] & 15).toString(16));
-}
-
 // Export all the references we use internally to manage call state,
 // to make it easy to tinker from the js console. for example:
 //
 //   `Client.camVideoProducer.paused`
 //
-export const myPeerId: string = uuidv4();
 export let device: MediaSoup.types.Device;
 export let joined: boolean;
 export let localCam: MediaStream;
@@ -29,9 +23,12 @@ export let consumers: MediaSoup.types.Consumer[] = [];
 export let pollingInterval: ReturnType<typeof setInterval>;
 
 export async function onPageLoad() {
-	console.log(`starting up ... my peerId is ${myPeerId}`);
+	console.log("starting up ... my peerId is ???");
 	try {
 		device = new MediaSoup.Device();
+		// join the room
+		await joinRoom();
+		console.log("here");
 		// super-simple signaling: let's poll at 1-second intervals
 		pollingInterval = setInterval(async () => {
 			try {
