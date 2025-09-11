@@ -19,6 +19,7 @@
  * @typedef {Object} BuildConfig
  * @property {string} serverOutput - The directory to use for server builds.
  * @property {string} clientOutput - The directory to use for client builds.
+ * @property {Array<string>} clientInputs - The files to use as build inputs for the client, relative to the 'ui' folder.
  */
 
 /**

@@ -4,17 +4,17 @@ import type { Server } from "http";
 let _http: Server | undefined;
 
 /** Returns the global node http server  */
-export function http(): Server {
-  // Return already initialized singelton instance
-  if (_http) {
-    return _http;
-  }
+export async function http(): Promise<Server> {
+	// Return already initialized singelton instance
+	if (_http) {
+		return _http;
+	}
 
-  // Get the restify server
-  const _app = restify();
+	// Get the restify server
+	const _app = await restify();
 
-  // Create and return the inner http server
-  _http = _app.server;
+	// Create and return the inner http server
+	_http = _app.server;
 
-  return _http;
+	return _http;
 }

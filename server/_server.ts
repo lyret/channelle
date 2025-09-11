@@ -17,7 +17,7 @@ import { http, sequelize, ws } from "./lib/api";
  */
 export async function createServer(): Promise<Http.Server> {
 	// Create the http server
-	const httpServer = http();
+	const httpServer = await http();
 
 	// Create the socket server
 	ws();

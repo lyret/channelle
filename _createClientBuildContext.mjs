@@ -27,7 +27,7 @@ export async function createClientBuildContext(CONFIG, callback) {
 		platform: "browser",
 		external: ["url"],
 		logLevel: CONFIG.runtime.verbose ? "warning" : "error",
-		entryPoints: ["./ui/index.html", "./ui/_main.ts"],
+		entryPoints: CONFIG.build.clientInputs.map((path) => `./ui/${path}`),
 		outdir: Path.resolve(process.cwd(), CONFIG.build.clientOutput),
 		define: {
 			CONFIG: JSON.stringify(CONFIG),
@@ -66,7 +66,7 @@ export async function createClientBuildContext(CONFIG, callback) {
 				name: "EsbuildCallback",
 				setup(build) {
 					build.onEnd((results) => {
-						if (results.metafile?.outputs[".dist/ui/index.html"] && results.metafile?.outputs[".dist/ui/_main.js"]) {
+						if (results.metafile?.outputs[".dist/ui/index.html"] && results.metafile?.outputs[".dist/ui/_index.js"]) {
 							console.log("\n📦", Chalk.white.bgGreen("[BUILD]"), Chalk.bold("New client code available\n"));
 
 							if (callback) {

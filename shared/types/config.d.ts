@@ -27,6 +27,8 @@ type BuildConfig = {
 	serverOutput: string;
 	/** The directory to use for client builds. */
 	clientOutput: string;
+	/** The files to use as build inputs for the client, relative to the 'ui' folder. */
+	clientInputs: Array<string>;
 };
 
 type DebugConfig = {

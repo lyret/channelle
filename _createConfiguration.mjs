@@ -175,6 +175,13 @@ export async function createConfiguration() {
 			serverOutput: ".dist/server",
 			/** The directory to use for client builds */
 			clientOutput: ".dist/ui",
+			/** The files to use as build inputs for the client, relative to the 'ui' folder. */
+			clientInputs: ["index.html", "debug.html", "_index.ts"],
+		},
+		/** Router Settings */
+		routes: {
+			"/": "index.html",
+			"/debug": "debug.html",
 		},
 		/** Debug Settings */
 		debug: {
