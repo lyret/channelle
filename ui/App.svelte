@@ -11,7 +11,6 @@
 	import Problem from "~/components/curtains/ProblemCurtainMessage.svelte";
 	import BackstagePage from "~/pages/Backstage.svelte";
 	import HomePage from "~/pages/Home.svelte";
-	import DebugStagePage from "~/pages/DebugStagePage.svelte";
 	import StagePage from "~/pages/Stage.svelte";
 	import { scenePasswordIsOk } from "./stores/scene/scenePassword";
 
