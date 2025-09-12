@@ -1,5 +1,6 @@
 import DeepEqual from "deep-equal";
 import * as MediaSoup from "mediasoup-client";
+import { writable, derived } from "svelte/store";
 import { roomClient } from "./room-client";
 
 // Export all the references we use internally to manage call state,
@@ -7,6 +8,24 @@ import { roomClient } from "./room-client";
 //
 //   `Client.camVideoProducer.paused`
 //
+
+// Svelte stores for reactive state
+export const deviceStore = writable<MediaSoup.types.Device | null>(null);
+export const joinedStore = writable(false);
+export const localCamStore = writable<MediaStream | null>(null);
+export const localScreenStore = writable<MediaStream | null>(null);
+export const recvTransportStore = writable<MediaSoup.types.Transport | null>(null);
+export const sendTransportStore = writable<MediaSoup.types.Transport | null>(null);
+export const camVideoProducerStore = writable<MediaSoup.types.Producer | null>(null);
+export const camAudioProducerStore = writable<MediaSoup.types.Producer | null>(null);
+export const screenVideoProducerStore = writable<MediaSoup.types.Producer | null>(null);
+export const screenAudioProducerStore = writable<MediaSoup.types.Producer | null>(null);
+export const currentActiveSpeakerStore = writable<{ peerId?: string | null }>({});
+export const lastPollSyncDataStore = writable<Record<string, any>>({});
+export const consumersStore = writable<MediaSoup.types.Consumer[]>([]);
+export const myPeerIdStore = writable<string>("");
+
+// Internal variables (not reactive) - also exported for console debugging
 export let device: MediaSoup.types.Device;
 export let joined: boolean;
 export let localCam: MediaStream;
@@ -21,10 +40,18 @@ export let currentActiveSpeaker: { peerId?: string | null } = {};
 export let lastPollSyncData: Record<string, any> = {};
 export let consumers: MediaSoup.types.Consumer[] = [];
 export let pollingInterval: ReturnType<typeof setInterval>;
+export let myPeerId: string = "";
+
+// Derived stores for convenience
+export const hasLocalCamStore = derived(localCamStore, ($localCam) => !!$localCam);
+export const hasLocalScreenStore = derived(localScreenStore, ($localScreen) => !!$localScreen);
+export const hasSendTransportStore = derived(sendTransportStore, ($transport) => !!$transport);
+export const hasRecvTransportStore = derived(recvTransportStore, ($transport) => !!$transport);
 
 export async function onPageLoad() {
 	try {
 		device = new MediaSoup.Device();
+		deviceStore.set(device);
 		// join the room
 		await joinRoom();
 
@@ -66,10 +93,13 @@ export async function joinRoom() {
 		// mediasoup-client device, if this is our first time connecting
 		const { peerId, routerRtpCapabilities } = await roomClient.join.mutate();
 		console.log("[Room] my peerId is", peerId);
+		myPeerId = peerId;
+		myPeerIdStore.set(peerId);
 		if (!device.loaded) {
 			await device.load({ routerRtpCapabilities });
 		}
 		joined = true;
+		joinedStore.set(true);
 	} catch (e: any) {
 		console.error(e);
 		return;
@@ -88,6 +118,7 @@ export async function sendCameraStreams() {
 	// create a transport for outgoing media, if we don't already have one
 	if (!sendTransport) {
 		sendTransport = await createTransport("send");
+		sendTransportStore.set(sendTransport);
 	}
 
 	// start sending video. the transport logic will initiate a
@@ -98,6 +129,7 @@ export async function sendCameraStreams() {
 		encodings: camEncodings(),
 		appData: { mediaTag: "cam-video" },
 	});
+	camVideoProducerStore.set(camVideoProducer);
 
 	if (getCamPausedState()) {
 		try {
@@ -112,6 +144,7 @@ export async function sendCameraStreams() {
 		track: localCam.getAudioTracks()[0],
 		appData: { mediaTag: "cam-audio" },
 	});
+	camAudioProducerStore.set(camAudioProducer);
 
 	if (getMicPausedState()) {
 		try {
@@ -130,6 +163,7 @@ export async function startScreenshare() {
 	await joinRoom();
 	if (!sendTransport) {
 		sendTransport = await createTransport("send");
+		sendTransportStore.set(sendTransport);
 	}
 
 	// get a screen share track
@@ -137,6 +171,7 @@ export async function startScreenshare() {
 		video: true,
 		audio: true,
 	});
+	localScreenStore.set(localScreen);
 
 	// create a producer for video
 	screenVideoProducer = await sendTransport.produce({
@@ -144,6 +179,7 @@ export async function startScreenshare() {
 		encodings: screenshareEncodings(),
 		appData: { mediaTag: "screen-video" },
 	});
+	screenVideoProducerStore.set(screenVideoProducer);
 
 	// create a producer for audio, if we have it
 	if (localScreen.getAudioTracks().length) {
@@ -151,6 +187,7 @@ export async function startScreenshare() {
 			track: localScreen.getAudioTracks()[0],
 			appData: { mediaTag: "screen-audio" },
 		});
+		screenAudioProducerStore.set(screenAudioProducer);
 	}
 
 	// handler for screen share stopped event (triggered by the
@@ -163,10 +200,12 @@ export async function startScreenshare() {
 				await roomClient.closeProducer.mutate({ producerId: screenVideoProducer.id });
 				screenVideoProducer.close();
 				screenVideoProducer = null as unknown as MediaSoup.types.Producer;
+				screenVideoProducerStore.set(null);
 				if (screenAudioProducer) {
 					await roomClient.closeProducer.mutate({ producerId: screenAudioProducer.id });
 					screenAudioProducer.close();
 					screenAudioProducer = null as unknown as MediaSoup.types.Producer;
+					screenAudioProducerStore.set(null);
 				}
 			} catch (e: any) {
 				console.error(e);
@@ -185,6 +224,7 @@ export async function startCamera() {
 			video: true,
 			audio: true,
 		});
+		localCamStore.set(localCam);
 	} catch (e: any) {
 		console.error("start camera error", e);
 	}
@@ -224,6 +264,7 @@ export async function cycleCamera() {
 		video: { deviceId: { exact: vidDevices[idx].deviceId } },
 		audio: true,
 	});
+	localCamStore.set(localCam);
 
 	// replace the tracks we are sending
 	await camVideoProducer.replaceTrack({ track: localCam.getVideoTracks()[0] });
@@ -253,12 +294,19 @@ export async function stopStreams() {
 	}
 
 	sendTransport = null!;
+	sendTransportStore.set(null);
 	camVideoProducer = null!;
+	camVideoProducerStore.set(null);
 	camAudioProducer = null!;
+	camAudioProducerStore.set(null);
 	screenVideoProducer = null!;
+	screenVideoProducerStore.set(null);
 	screenAudioProducer = null!;
+	screenAudioProducerStore.set(null);
 	localCam = null!;
+	localCamStore.set(null);
 	localScreen = null!;
+	localScreenStore.set(null);
 }
 
 export async function leaveRoom() {
@@ -284,16 +332,29 @@ export async function leaveRoom() {
 	}
 
 	recvTransport = null!;
+	recvTransportStore.set(null);
 	sendTransport = null!;
+	sendTransportStore.set(null);
 	camVideoProducer = null!;
+	camVideoProducerStore.set(null);
 	camAudioProducer = null!;
+	camAudioProducerStore.set(null);
 	screenVideoProducer = null!;
+	screenVideoProducerStore.set(null);
 	screenAudioProducer = null!;
+	screenAudioProducerStore.set(null);
 	localCam = null!;
+	localCamStore.set(null);
 	localScreen = null!;
+	localScreenStore.set(null);
 	lastPollSyncData = {};
+	lastPollSyncDataStore.set({});
 	consumers = [];
+	consumersStore.set([]);
 	joined = false;
+	joinedStore.set(false);
+	myPeerId = "";
+	myPeerIdStore.set("");
 }
 
 export async function subscribeToTrack(peerId: string, mediaTag: string) {
@@ -302,6 +363,7 @@ export async function subscribeToTrack(peerId: string, mediaTag: string) {
 	// create a receive transport if we don't already have one
 	if (!recvTransport) {
 		recvTransport = await createTransport("recv");
+		recvTransportStore.set(recvTransport);
 	}
 
 	// if we do already have a consumer, we shouldn't have called this
@@ -341,6 +403,7 @@ export async function subscribeToTrack(peerId: string, mediaTag: string) {
 
 	// keep track of all our consumers
 	consumers.push(consumer);
+	consumersStore.set([...consumers]);
 }
 
 export async function unsubscribeFromTrack(peerId: string, mediaTag: string) {
@@ -417,6 +480,7 @@ async function closeConsumer(consumer: MediaSoup.types.Consumer) {
 		consumer.close();
 
 		consumers = consumers.filter((c) => c !== consumer);
+		consumersStore.set([...consumers]);
 	} catch (e) {
 		console.error(e);
 	}
@@ -534,6 +598,7 @@ async function pollAndUpdate() {
 
 	// update active speaker
 	currentActiveSpeaker = activeSpeaker;
+	currentActiveSpeakerStore.set(activeSpeaker);
 
 	// decide if we need to update tracks list
 	// build list of peers, sorted by join time, removing last
@@ -589,6 +654,7 @@ async function pollAndUpdate() {
 	});
 
 	lastPollSyncData = peers;
+	lastPollSyncDataStore.set(peers);
 	return {}; // return an empty object if there isn't an error
 }
 
