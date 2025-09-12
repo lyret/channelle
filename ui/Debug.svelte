@@ -7,18 +7,14 @@
 	import {
 		joinedStore,
 		localCamStore,
-		localScreenStore,
 		sendTransportStore,
 		recvTransportStore,
 		camVideoProducerStore,
 		camAudioProducerStore,
-		screenVideoProducerStore,
-		screenAudioProducerStore,
 		currentActiveSpeakerStore,
 		consumersStore,
 		myPeerIdStore,
 		hasLocalCamStore,
-		hasLocalScreenStore,
 		hasSendTransportStore,
 		hasRecvTransportStore,
 	} from "./room/debugfunctions";
@@ -31,23 +27,26 @@
 
 	// Video element refs
 	let localCamVideo: HTMLVideoElement;
-	let localScreenVideo: HTMLVideoElement;
 	let consumerVideos: { [key: string]: HTMLVideoElement } = {};
 
 	// Subscribe to stores using $ prefix
 	$: myPeerId = $myPeerIdStore;
 	$: joined = $joinedStore;
 	$: hasLocalCam = $hasLocalCamStore;
-	$: hasLocalScreen = $hasLocalScreenStore;
 	$: hasSendTransport = $hasSendTransportStore;
 	$: hasRecvTransport = $hasRecvTransportStore;
 	$: hasCamVideo = !!$camVideoProducerStore;
 	$: hasCamAudio = !!$camAudioProducerStore;
-	$: hasScreenVideo = !!$screenVideoProducerStore;
-	$: hasScreenAudio = !!$screenAudioProducerStore;
 	$: activeSpeaker = $currentActiveSpeakerStore?.peerId || "None";
 	$: consumers = $consumersStore;
 	$: consumerCount = consumers.length;
+	$: consumerStats = {
+		total: consumers.length,
+		active: consumers.filter((c) => !c.paused).length,
+		paused: consumers.filter((c) => c.paused).length,
+		video: consumers.filter((c) => c.appData.mediaTag?.includes("video")).length,
+		audio: consumers.filter((c) => c.appData.mediaTag?.includes("audio")).length,
+	};
 
 	// Update video elements when streams change
 	$: if (localCamVideo && $localCamStore) {
@@ -55,13 +54,6 @@
 		localCamVideo.play().catch((e) => console.error("Error playing local camera:", e));
 	} else if (localCamVideo && !$localCamStore) {
 		localCamVideo.srcObject = null;
-	}
-
-	$: if (localScreenVideo && $localScreenStore) {
-		localScreenVideo.srcObject = $localScreenStore;
-		localScreenVideo.play().catch((e) => console.error("Error playing local screen:", e));
-	} else if (localScreenVideo && !$localScreenStore) {
-		localScreenVideo.srcObject = null;
 	}
 
 	// Update consumer videos when consumers change
@@ -80,8 +72,6 @@
 	// Computed properties for producer states
 	$: camVideoPaused = $camVideoProducerStore?.paused || false;
 	$: camAudioPaused = $camAudioProducerStore?.paused || false;
-	$: screenVideoPaused = $screenVideoProducerStore?.paused || false;
-	$: screenAudioPaused = $screenAudioProducerStore?.paused || false;
 
 	onMount(() => {
 		Debug.onPageLoad();
@@ -91,9 +81,6 @@
 		// Clean up video elements
 		if (localCamVideo) {
 			localCamVideo.srcObject = null;
-		}
-		if (localScreenVideo) {
-			localScreenVideo.srcObject = null;
 		}
 		Object.values(consumerVideos).forEach((video) => {
 			if (video) {
@@ -177,26 +164,6 @@
 				</div>
 			{/if}
 
-			<!-- Local Screen Share -->
-			{#if hasLocalScreen}
-				<div class="column is-4-desktop is-6-tablet">
-					<div class="card">
-						<div class="card-content p-2">
-							<p class="subtitle is-6 mb-1">Screen Share</p>
-							<video bind:this={localScreenVideo} autoplay playsinline muted class="video-preview" class:is-paused={screenVideoPaused} />
-							<div class="tags are-small mt-1">
-								<span class="tag" class:is-success={hasScreenVideo && !screenVideoPaused} class:is-warning={screenVideoPaused}>
-									Video: {hasScreenVideo ? (screenVideoPaused ? "Paused" : "Active") : "Inactive"}
-								</span>
-								<span class="tag" class:is-success={hasScreenAudio && !screenAudioPaused} class:is-warning={screenAudioPaused}>
-									Audio: {hasScreenAudio ? (screenAudioPaused ? "Paused" : "Active") : "Inactive"}
-								</span>
-							</div>
-						</div>
-					</div>
-				</div>
-			{/if}
-
 			<!-- Remote Consumer Videos -->
 			{#each consumers.filter(isVideoConsumer) as consumer (getConsumerKey(consumer))}
 				<div class="column is-4-desktop is-6-tablet">
@@ -219,6 +186,28 @@
 									<span class="tag is-primary">Speaking</span>
 								{/if}
 							</div>
+							<div class="buttons are-small mt-1">
+								<button
+									class="button is-small is-warning"
+									on:click={() =>
+										handleAction(
+											async () => (consumer.paused ? await Debug.resumeConsumer(consumer) : await Debug.pauseConsumer(consumer)),
+											`Consumer ${consumer.paused ? "resumed" : "paused"}`,
+										)}
+								>
+									{consumer.paused ? "Resume" : "Pause"}
+								</button>
+								<button
+									class="button is-small is-danger"
+									on:click={() =>
+										handleAction(
+											() => Debug.unsubscribeFromTrack(consumer.appData.peerId, consumer.appData.mediaTag),
+											`Unsubscribed from ${consumer.appData.mediaTag}`,
+										)}
+								>
+									Close
+								</button>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -229,14 +218,48 @@
 		{#if consumers.filter(isAudioConsumer).length > 0}
 			<div class="content">
 				<p class="subtitle is-6">Audio Consumers</p>
-				<div class="tags">
+				<div class="columns is-multiline">
 					{#each consumers.filter(isAudioConsumer) as consumer}
-						<span class="tag" class:is-primary={consumer.appData.peerId === activeSpeaker}>
-							{consumer.appData.peerId} - {consumer.appData.mediaTag}: {consumer.paused ? "Paused" : "Active"}
-							{#if consumer.appData.peerId === activeSpeaker}
-								🔊
-							{/if}
-						</span>
+						<div class="column is-6">
+							<div class="box p-2">
+								<div class="level is-mobile mb-1">
+									<div class="level-left">
+										<span class="tag is-small" class:is-primary={consumer.appData.peerId === activeSpeaker}>
+											{consumer.appData.peerId} - {consumer.appData.mediaTag}
+											{#if consumer.appData.peerId === activeSpeaker}
+												🔊{/if}
+										</span>
+									</div>
+									<div class="level-right">
+										<span class="tag is-small" class:is-success={!consumer.paused} class:is-warning={consumer.paused}>
+											{consumer.paused ? "Paused" : "Active"}
+										</span>
+									</div>
+								</div>
+								<div class="buttons are-small">
+									<button
+										class="button is-small is-warning"
+										on:click={() =>
+											handleAction(
+												async () => (consumer.paused ? await Debug.resumeConsumer(consumer) : await Debug.pauseConsumer(consumer)),
+												`Audio ${consumer.paused ? "resumed" : "paused"}`,
+											)}
+									>
+										{consumer.paused ? "Resume" : "Pause"}
+									</button>
+									<button
+										class="button is-small is-danger"
+										on:click={() =>
+											handleAction(
+												() => Debug.unsubscribeFromTrack(consumer.appData.peerId, consumer.appData.mediaTag),
+												`Unsubscribed from audio`,
+											)}
+									>
+										Close
+									</button>
+								</div>
+							</div>
+						</div>
 					{/each}
 				</div>
 			</div>
@@ -263,10 +286,6 @@
 							<td><span class="tag is-small" class:is-success={hasLocalCam}>{hasLocalCam ? "Active" : "Inactive"}</span></td>
 						</tr>
 						<tr>
-							<td><strong>Screen Share:</strong></td>
-							<td><span class="tag is-small" class:is-success={hasLocalScreen}>{hasLocalScreen ? "Active" : "Inactive"}</span></td>
-						</tr>
-						<tr>
 							<td><strong>Send Transport:</strong></td>
 							<td><span class="tag is-small" class:is-success={hasSendTransport}>{hasSendTransport ? "Active" : "Inactive"}</span></td>
 						</tr>
@@ -279,8 +298,24 @@
 							<td>{activeSpeaker}</td>
 						</tr>
 						<tr>
-							<td><strong>Consumers:</strong></td>
-							<td>{consumerCount}</td>
+							<td><strong>Total Consumers:</strong></td>
+							<td>{consumerStats.total}</td>
+						</tr>
+						<tr>
+							<td><strong>Active/Paused:</strong></td>
+							<td>
+								<span class="tag is-small is-success">{consumerStats.active}</span>
+								/
+								<span class="tag is-small is-warning">{consumerStats.paused}</span>
+							</td>
+						</tr>
+						<tr>
+							<td><strong>Video/Audio:</strong></td>
+							<td>
+								<span class="tag is-small is-info">{consumerStats.video}</span>
+								/
+								<span class="tag is-small is-info">{consumerStats.audio}</span>
+							</td>
 						</tr>
 					</tbody>
 				</table>
@@ -308,22 +343,6 @@
 								</span>
 							</td>
 						</tr>
-						<tr>
-							<td><strong>Screen Video:</strong></td>
-							<td>
-								<span class="tag is-small" class:is-success={hasScreenVideo && !screenVideoPaused} class:is-warning={screenVideoPaused}>
-									{hasScreenVideo ? (screenVideoPaused ? "Paused" : "Active") : "Inactive"}
-								</span>
-							</td>
-						</tr>
-						<tr>
-							<td><strong>Screen Audio:</strong></td>
-							<td>
-								<span class="tag is-small" class:is-success={hasScreenAudio && !screenAudioPaused} class:is-warning={screenAudioPaused}>
-									{hasScreenAudio ? (screenAudioPaused ? "Paused" : "Active") : "Inactive"}
-								</span>
-							</td>
-						</tr>
 					</tbody>
 				</table>
 			</div>
@@ -343,61 +362,61 @@
 			</div>
 		</div>
 
-		<!-- Media Controls -->
+		<!-- Camera Controls -->
 		<div class="field">
-			<label class="label is-small">Media Controls</label>
+			<label class="label is-small">Camera Controls</label>
 			<div class="buttons are-small">
-				<button class="button is-info" on:click={() => handleAction(Debug.startCamera, "Camera started")} disabled={hasLocalCam}> Start Camera </button>
-				<button class="button is-info" on:click={() => handleAction(Debug.sendCameraStreams, "Camera streams sent")} disabled={!hasLocalCam || !joined}>
-					Send Camera
+				<button class="button is-info" on:click={() => handleAction(Debug.startVideoOnly, "Camera started")} disabled={hasLocalCam}>
+					Start Camera
 				</button>
-				<button
-					class="button is-info"
-					on:click={() => handleAction(Debug.startScreenshare, "Screen share started")}
-					disabled={!joined || hasLocalScreen}
-				>
-					Screen Share
+				<button class="button is-info" on:click={() => handleAction(Debug.sendVideoStream, "Video stream sent")} disabled={!hasLocalCam || !joined}>
+					Send Video
+				</button>
+				<button class="button is-info" on:click={() => handleAction(Debug.startCamera, "Camera + Mic started")} disabled={hasLocalCam}>
+					Start Both
+				</button>
+				<button class="button is-info" on:click={() => handleAction(Debug.sendCameraStreams, "All streams sent")} disabled={!hasLocalCam || !joined}>
+					Send Both
 				</button>
 				<button class="button is-warning" on:click={() => handleAction(Debug.cycleCamera, "Camera cycled")} disabled={!hasCamVideo}>
 					Cycle Camera
 				</button>
 				<button class="button is-danger" on:click={() => handleAction(Debug.stopStreams, "Streams stopped")} disabled={!hasSendTransport}>
-					Stop Streams
+					Stop All
 				</button>
 			</div>
 		</div>
 
-		<!-- Pause/Resume Controls -->
+		<!-- Audio Controls -->
 		<div class="field">
-			<label class="label is-small">Pause/Resume Controls</label>
+			<label class="label is-small">Audio Controls</label>
 			<div class="buttons are-small">
-				<button
-					class="button is-warning"
-					on:click={() => handleToggle(Debug.changeCamPaused, Debug.getCamPausedState(), "Camera")}
-					disabled={!hasCamVideo}
-				>
-					{Debug.getCamPausedState() ? "Resume" : "Pause"} Camera
+				<button class="button is-info" on:click={() => handleAction(Debug.startAudioOnly, "Microphone started")} disabled={hasLocalCam}>
+					Start Microphone
+				</button>
+				<button class="button is-info" on:click={() => handleAction(Debug.sendAudioStream, "Audio stream sent")} disabled={!hasLocalCam || !joined}>
+					Send Audio
 				</button>
 				<button
 					class="button is-warning"
 					on:click={() => handleToggle(Debug.changeMicPaused, Debug.getMicPausedState(), "Microphone")}
 					disabled={!hasCamAudio}
 				>
-					{Debug.getMicPausedState() ? "Resume" : "Pause"} Mic
+					{Debug.getMicPausedState() ? "Unmute" : "Mute"} Mic
 				</button>
+			</div>
+		</div>
+
+		<!-- Video Pause/Resume Controls -->
+		<div class="field">
+			<label class="label is-small">Video Controls</label>
+			<div class="buttons are-small">
 				<button
 					class="button is-warning"
-					on:click={() => handleToggle(Debug.changeScreenPaused, Debug.getScreenPausedState(), "Screen")}
-					disabled={!hasScreenVideo}
+					on:click={() => handleToggle(Debug.changeCamPaused, Debug.getCamPausedState(), "Camera")}
+					disabled={!hasCamVideo}
 				>
-					{Debug.getScreenPausedState() ? "Resume" : "Pause"} Screen
-				</button>
-				<button
-					class="button is-warning"
-					on:click={() => handleToggle(Debug.changeScreenAudioPaused, Debug.getScreenAudioPausedState(), "Screen Audio")}
-					disabled={!hasScreenAudio}
-				>
-					{Debug.getScreenAudioPausedState() ? "Resume" : "Pause"} Screen Audio
+					{Debug.getCamPausedState() ? "Show Video" : "Hide Video"}
 				</button>
 			</div>
 		</div>
@@ -435,6 +454,54 @@
 						Unsubscribe
 					</button>
 				</p>
+			</div>
+		</div>
+
+		<!-- Consumer Controls -->
+		<div class="field">
+			<label class="label is-small">Consumer Controls</label>
+			<div class="buttons are-small">
+				<button
+					class="button is-small is-warning"
+					on:click={() =>
+						handleAction(async () => {
+							for (const consumer of consumers) {
+								if (consumer.paused) {
+									await Debug.resumeConsumer(consumer);
+								}
+							}
+						}, "All consumers resumed")}
+					disabled={consumers.length === 0}
+				>
+					Resume All
+				</button>
+				<button
+					class="button is-small is-warning"
+					on:click={() =>
+						handleAction(async () => {
+							for (const consumer of consumers) {
+								if (!consumer.paused) {
+									await Debug.pauseConsumer(consumer);
+								}
+							}
+						}, "All consumers paused")}
+					disabled={consumers.length === 0}
+				>
+					Pause All
+				</button>
+				<button
+					class="button is-small is-danger"
+					on:click={() =>
+						handleAction(async () => {
+							const consumersToClose = [...consumers];
+							for (const consumer of consumersToClose) {
+								await Debug.unsubscribeFromTrack(consumer.appData.peerId, consumer.appData.mediaTag);
+							}
+						}, "All consumers closed")}
+					disabled={consumers.length === 0}
+				>
+					Close All
+				</button>
 			</div>
 		</div>
 

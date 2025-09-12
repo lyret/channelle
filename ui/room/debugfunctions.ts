@@ -13,13 +13,10 @@ import { roomClient } from "./room-client";
 export const deviceStore = writable<MediaSoup.types.Device | null>(null);
 export const joinedStore = writable(false);
 export const localCamStore = writable<MediaStream | null>(null);
-export const localScreenStore = writable<MediaStream | null>(null);
 export const recvTransportStore = writable<MediaSoup.types.Transport | null>(null);
 export const sendTransportStore = writable<MediaSoup.types.Transport | null>(null);
 export const camVideoProducerStore = writable<MediaSoup.types.Producer | null>(null);
 export const camAudioProducerStore = writable<MediaSoup.types.Producer | null>(null);
-export const screenVideoProducerStore = writable<MediaSoup.types.Producer | null>(null);
-export const screenAudioProducerStore = writable<MediaSoup.types.Producer | null>(null);
 export const currentActiveSpeakerStore = writable<{ peerId?: string | null }>({});
 export const lastPollSyncDataStore = writable<Record<string, any>>({});
 export const consumersStore = writable<MediaSoup.types.Consumer[]>([]);
@@ -29,13 +26,10 @@ export const myPeerIdStore = writable<string>("");
 export let device: MediaSoup.types.Device;
 export let joined: boolean;
 export let localCam: MediaStream;
-export let localScreen: MediaStream;
 export let recvTransport: MediaSoup.types.Transport;
 export let sendTransport: MediaSoup.types.Transport;
 export let camVideoProducer: MediaSoup.types.Producer;
 export let camAudioProducer: MediaSoup.types.Producer;
-export let screenVideoProducer: MediaSoup.types.Producer;
-export let screenAudioProducer: MediaSoup.types.Producer;
 export let currentActiveSpeaker: { peerId?: string | null } = {};
 export let lastPollSyncData: Record<string, any> = {};
 export let consumers: MediaSoup.types.Consumer[] = [];
@@ -44,7 +38,6 @@ export let myPeerId: string = "";
 
 // Derived stores for convenience
 export const hasLocalCamStore = derived(localCamStore, ($localCam) => !!$localCam);
-export const hasLocalScreenStore = derived(localScreenStore, ($localScreen) => !!$localScreen);
 export const hasSendTransportStore = derived(sendTransportStore, ($transport) => !!$transport);
 export const hasRecvTransportStore = derived(recvTransportStore, ($transport) => !!$transport);
 
@@ -155,65 +148,6 @@ export async function sendCameraStreams() {
 	}
 }
 
-export async function startScreenshare() {
-	console.log("start screen share");
-
-	// make sure we've joined the room and that we have a sending
-	// transport
-	await joinRoom();
-	if (!sendTransport) {
-		sendTransport = await createTransport("send");
-		sendTransportStore.set(sendTransport);
-	}
-
-	// get a screen share track
-	localScreen = await navigator.mediaDevices.getDisplayMedia({
-		video: true,
-		audio: true,
-	});
-	localScreenStore.set(localScreen);
-
-	// create a producer for video
-	screenVideoProducer = await sendTransport.produce({
-		track: localScreen.getVideoTracks()[0],
-		encodings: screenshareEncodings(),
-		appData: { mediaTag: "screen-video" },
-	});
-	screenVideoProducerStore.set(screenVideoProducer);
-
-	// create a producer for audio, if we have it
-	if (localScreen.getAudioTracks().length) {
-		screenAudioProducer = await sendTransport.produce({
-			track: localScreen.getAudioTracks()[0],
-			appData: { mediaTag: "screen-audio" },
-		});
-		screenAudioProducerStore.set(screenAudioProducer);
-	}
-
-	// handler for screen share stopped event (triggered by the
-	// browser's built-in screen sharing ui)
-	if (screenVideoProducer.track) {
-		screenVideoProducer.track.onended = async () => {
-			console.log("screen share stopped");
-			try {
-				screenVideoProducer.pause();
-				await roomClient.closeProducer.mutate({ producerId: screenVideoProducer.id });
-				screenVideoProducer.close();
-				screenVideoProducer = null as unknown as MediaSoup.types.Producer;
-				screenVideoProducerStore.set(null);
-				if (screenAudioProducer) {
-					await roomClient.closeProducer.mutate({ producerId: screenAudioProducer.id });
-					screenAudioProducer.close();
-					screenAudioProducer = null as unknown as MediaSoup.types.Producer;
-					screenAudioProducerStore.set(null);
-				}
-			} catch (e: any) {
-				console.error(e);
-			}
-		};
-	}
-}
-
 export async function startCamera() {
 	if (localCam) {
 		return;
@@ -227,6 +161,101 @@ export async function startCamera() {
 		localCamStore.set(localCam);
 	} catch (e: any) {
 		console.error("start camera error", e);
+	}
+}
+
+export async function startAudioOnly() {
+	if (localCam) {
+		return;
+	}
+	console.log("starting audio only");
+	try {
+		localCam = await navigator.mediaDevices.getUserMedia({
+			video: false,
+			audio: true,
+		});
+		localCamStore.set(localCam);
+	} catch (e: any) {
+		console.error("start audio error", e);
+	}
+}
+
+export async function startVideoOnly() {
+	if (localCam) {
+		return;
+	}
+	console.log("starting video only");
+	try {
+		localCam = await navigator.mediaDevices.getUserMedia({
+			video: true,
+			audio: false,
+		});
+		localCamStore.set(localCam);
+	} catch (e: any) {
+		console.error("start video error", e);
+	}
+}
+
+export async function sendVideoStream() {
+	console.log("send video stream");
+
+	// make sure we've joined the room and started our camera
+	await joinRoom();
+	await startVideoOnly();
+
+	// create a transport for outgoing media, if we don't already have one
+	if (!sendTransport) {
+		sendTransport = await createTransport("send");
+		sendTransportStore.set(sendTransport);
+	}
+
+	// only send video if we have a video track
+	if (localCam.getVideoTracks().length > 0) {
+		camVideoProducer = await sendTransport.produce({
+			track: localCam.getVideoTracks()[0],
+			encodings: camEncodings(),
+			appData: { mediaTag: "cam-video" },
+		});
+		camVideoProducerStore.set(camVideoProducer);
+
+		if (getCamPausedState()) {
+			try {
+				camVideoProducer.pause();
+			} catch (e: any) {
+				console.error(e);
+			}
+		}
+	}
+}
+
+export async function sendAudioStream() {
+	console.log("send audio stream");
+
+	// make sure we've joined the room and started our microphone
+	await joinRoom();
+	await startAudioOnly();
+
+	// create a transport for outgoing media, if we don't already have one
+	if (!sendTransport) {
+		sendTransport = await createTransport("send");
+		sendTransportStore.set(sendTransport);
+	}
+
+	// only send audio if we have an audio track
+	if (localCam.getAudioTracks().length > 0) {
+		camAudioProducer = await sendTransport.produce({
+			track: localCam.getAudioTracks()[0],
+			appData: { mediaTag: "cam-audio" },
+		});
+		camAudioProducerStore.set(camAudioProducer);
+
+		if (getMicPausedState()) {
+			try {
+				camAudioProducer.pause();
+			} catch (e: any) {
+				console.error(e);
+			}
+		}
 	}
 }
 
@@ -272,7 +301,7 @@ export async function cycleCamera() {
 }
 
 export async function stopStreams() {
-	if (!(localCam || localScreen)) {
+	if (!localCam) {
 		return;
 	}
 	if (!sendTransport) {
@@ -299,14 +328,8 @@ export async function stopStreams() {
 	camVideoProducerStore.set(null);
 	camAudioProducer = null!;
 	camAudioProducerStore.set(null);
-	screenVideoProducer = null!;
-	screenVideoProducerStore.set(null);
-	screenAudioProducer = null!;
-	screenAudioProducerStore.set(null);
 	localCam = null!;
 	localCamStore.set(null);
-	localScreen = null!;
-	localScreenStore.set(null);
 }
 
 export async function leaveRoom() {
@@ -339,14 +362,8 @@ export async function leaveRoom() {
 	camVideoProducerStore.set(null);
 	camAudioProducer = null!;
 	camAudioProducerStore.set(null);
-	screenVideoProducer = null!;
-	screenVideoProducerStore.set(null);
-	screenAudioProducer = null!;
-	screenAudioProducerStore.set(null);
 	localCam = null!;
 	localCamStore.set(null);
-	localScreen = null!;
-	localScreenStore.set(null);
 	lastPollSyncData = {};
 	lastPollSyncDataStore.set({});
 	consumers = [];
@@ -441,6 +458,48 @@ export async function resumeConsumer(consumer: MediaSoup.types.Consumer) {
 			console.error(e);
 		}
 	}
+}
+
+export async function pauseAllConsumers() {
+	console.log("pausing all consumers");
+	for (const consumer of consumers) {
+		if (!consumer.paused) {
+			await pauseConsumer(consumer);
+		}
+	}
+}
+
+export async function resumeAllConsumers() {
+	console.log("resuming all consumers");
+	for (const consumer of consumers) {
+		if (consumer.paused) {
+			await resumeConsumer(consumer);
+		}
+	}
+}
+
+export async function closeAllConsumers() {
+	console.log("closing all consumers");
+	const consumersToClose = [...consumers];
+	for (const consumer of consumersToClose) {
+		await closeConsumer(consumer);
+	}
+}
+
+export function getConsumerStats() {
+	const total = consumers.length;
+	const paused = consumers.filter((c) => c.paused).length;
+	const active = total - paused;
+	const video = consumers.filter((c) => c.appData.mediaTag?.includes("video")).length;
+	const audio = consumers.filter((c) => c.appData.mediaTag?.includes("audio")).length;
+
+	return {
+		total,
+		active,
+		paused,
+		video,
+		audio,
+	};
 }
 
 export async function pauseProducer(producer: MediaSoup.types.Producer) {
@@ -676,8 +735,6 @@ function findConsumerForTrack(peerId: string, mediaTag: string): MediaSoup.types
 // Default values for states (replacing UI checkboxes)
 let camPausedState = false;
 let micPausedState = false;
-let screenPausedState = false;
-let screenAudioPausedState = false;
 
 export function getCamPausedState(): boolean {
 	return camPausedState;
@@ -685,14 +742,6 @@ export function getCamPausedState(): boolean {
 
 export function getMicPausedState(): boolean {
 	return micPausedState;
-}
-
-export function getScreenPausedState(): boolean {
-	return screenPausedState;
-}
-
-export function getScreenAudioPausedState(): boolean {
-	return screenAudioPausedState;
 }
 
 export async function changeCamPaused(paused?: boolean) {
@@ -710,24 +759,6 @@ export async function changeMicPaused(paused?: boolean) {
 		await pauseProducer(camAudioProducer);
 	} else {
 		await resumeProducer(camAudioProducer);
-	}
-}
-
-export async function changeScreenPaused(paused?: boolean) {
-	screenPausedState = paused !== undefined ? paused : !screenPausedState;
-	if (screenPausedState) {
-		await pauseProducer(screenVideoProducer);
-	} else {
-		await resumeProducer(screenVideoProducer);
-	}
-}
-
-export async function changeScreenAudioPaused(paused?: boolean) {
-	screenAudioPausedState = paused !== undefined ? paused : !screenAudioPausedState;
-	if (screenAudioPausedState) {
-		await pauseProducer(screenAudioProducer);
-	} else {
-		await resumeProducer(screenAudioProducer);
 	}
 }
 
@@ -762,11 +793,6 @@ const CAM_VIDEO_SIMULCAST_ENCODINGS = [
 
 function camEncodings() {
 	return CAM_VIDEO_SIMULCAST_ENCODINGS;
-}
-
-// how do we limit bandwidth for screen share streams?
-function screenshareEncodings() {
-	return [{ maxBitrate: 5000000 }];
 }
 
 //
