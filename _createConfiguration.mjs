@@ -67,10 +67,10 @@ export async function createConfiguration() {
 	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Port", Chalk.bold(port));
 
 	// The LOCAL options enables the stage server to be reached from the loopback interface of the machine running the server
-	const local = cli.local !== undefined ? cli.LOCAL : env.local != "false" || true;
+	const local = cli.local !== undefined ? cli.local : env.LOCAL != "false" || true;
 
 	// The LAN options enables the stage server to be reached from within the current local area network
-	const lan = cli.lan !== undefined ? cli.LAN : env.lan != "false" || true;
+	const lan = cli.lan !== undefined ? cli.lan : env.LAN != "false" || true;
 
 	// The WAN options enables the stage server to be reached from the current wide area network, i.e.  the public internet
 	const wan = cli.wan !== undefined ? cli.wan : env.WAN != "false" || production;
@@ -92,6 +92,7 @@ export async function createConfiguration() {
 	// with configurations depending on the given wan, lan and local settings
 	// lower array-placement indicates preference in media soup
 	const webRTCTransportListenInfos = [];
+
 	if (start) {
 		if (wan) {
 			// Get the public IP of this server NOTE: hangs forever when not connected to internet
