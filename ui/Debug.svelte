@@ -17,6 +17,7 @@
 		hasLocalCamStore,
 		hasSendTransportStore,
 		hasRecvTransportStore,
+		peersStore,
 	} from "./room/debugfunctions";
 
 	// Local state for UI
@@ -47,6 +48,14 @@
 		video: consumers.filter((c) => c.appData.mediaTag?.includes("video")).length,
 		audio: consumers.filter((c) => c.appData.mediaTag?.includes("audio")).length,
 	};
+	$: peers = $peersStore;
+	$: peersList = Object.entries(peers).map(([id, info]: [string, any]) => ({
+		id,
+		...info,
+		hasVideo: info.media && (info.media["cam-video"] || info.media["screen-video"]),
+		hasAudio: info.media && (info.media["cam-audio"] || info.media["screen-audio"]),
+		mediaTags: info.media ? Object.keys(info.media) : [],
+	}));
 
 	// Update video elements when streams change
 	$: if (localCamVideo && $localCamStore) {
@@ -347,6 +356,135 @@
 				</table>
 			</div>
 		</div>
+	</div>
+
+	<!-- Peers Section -->
+	<div class="box">
+		<h2 class="subtitle">Connected Peers</h2>
+
+		<!-- Peer Statistics -->
+		<div class="level is-mobile mb-3">
+			<div class="level-item has-text-centered">
+				<div>
+					<p class="heading">Total Peers</p>
+					<p class="title is-5">{peersList.length}</p>
+				</div>
+			</div>
+			<div class="level-item has-text-centered">
+				<div>
+					<p class="heading">With Video</p>
+					<p class="title is-5">{peersList.filter((p) => p.hasVideo).length}</p>
+				</div>
+			</div>
+			<div class="level-item has-text-centered">
+				<div>
+					<p class="heading">With Audio</p>
+					<p class="title is-5">{peersList.filter((p) => p.hasAudio).length}</p>
+				</div>
+			</div>
+			<div class="level-item has-text-centered">
+				<div>
+					<p class="heading">Subscribed</p>
+					<p class="title is-5">{new Set(consumers.map((c) => c.appData.peerId)).size}</p>
+				</div>
+			</div>
+		</div>
+
+		{#if peersList.length > 0}
+			<div class="table-container">
+				<table class="table is-fullwidth is-narrow is-hoverable">
+					<thead>
+						<tr>
+							<th>Peer ID</th>
+							<th>Media</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each peersList as peer}
+							<tr>
+								<td>
+									<span class="has-text-weight-semibold">{peer.id}</span>
+									{#if peer.id === myPeerId}
+										<span class="tag is-small is-primary ml-2">You</span>
+									{/if}
+									{#if peer.id === activeSpeaker}
+										<span class="tag is-small is-success ml-2">Speaking</span>
+									{/if}
+								</td>
+								<td>
+									<div class="tags are-small">
+										{#each peer.mediaTags as tag}
+											<span class="tag" class:is-info={tag.includes("video")} class:is-warning={tag.includes("audio")}>
+												{tag}
+											</span>
+										{/each}
+										{#if peer.mediaTags.length === 0}
+											<span class="tag">No media</span>
+										{/if}
+									</div>
+								</td>
+								<td>
+									<div class="buttons are-small">
+										{#if peer.hasVideo}
+											{#if peer.media["cam-video"]}
+												{#if !consumers.find((c) => c.appData.peerId === peer.id && c.appData.mediaTag === "cam-video")}
+													<button
+														class="button is-small is-success"
+														on:click={() =>
+															handleAction(() => Debug.subscribeToTrack(peer.id, "cam-video"), "Subscribed to camera video")}
+														disabled={!joined || peer.id === myPeerId}
+													>
+														Subscribe Cam
+													</button>
+												{:else}
+													<button
+														class="button is-small is-danger"
+														on:click={() =>
+															handleAction(
+																() => Debug.unsubscribeFromTrack(peer.id, "cam-video"),
+																"Unsubscribed from camera video",
+															)}
+													>
+														Unsubscribe Cam
+													</button>
+												{/if}
+											{/if}
+										{/if}
+										{#if peer.hasAudio}
+											{#if peer.media["cam-audio"]}
+												{#if !consumers.find((c) => c.appData.peerId === peer.id && c.appData.mediaTag === "cam-audio")}
+													<button
+														class="button is-small is-success"
+														on:click={() => handleAction(() => Debug.subscribeToTrack(peer.id, "cam-audio"), "Subscribed to audio")}
+														disabled={!joined || peer.id === myPeerId}
+													>
+														Subscribe Audio
+													</button>
+												{:else}
+													<button
+														class="button is-small is-danger"
+														on:click={() =>
+															handleAction(() => Debug.unsubscribeFromTrack(peer.id, "cam-audio"), "Unsubscribed from audio")}
+													>
+														Unsubscribe Audio
+													</button>
+												{/if}
+											{/if}
+										{/if}
+										{#if peer.id === myPeerId || (!peer.hasVideo && !peer.hasAudio)}
+											<button class="button is-small" disabled>No actions</button>
+										{/if}
+									</div>
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
+		{:else}
+			<p class="has-text-grey">No peers connected</p>
+		{/if}
 	</div>
 
 	<!-- Controls Section -->

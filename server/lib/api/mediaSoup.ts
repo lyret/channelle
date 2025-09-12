@@ -3,12 +3,20 @@ import * as MediaSoup from "mediasoup";
 let _router: MediaSoup.types.Router<ExtendedAppData> | undefined;
 let _worker: MediaSoup.types.Worker<ExtendedAppData> | undefined;
 
+/** MediaSoup App Data Tags for identifying the type of media transmitted */
+type MediaTag = "cam-video" | "cam-audio";
+
 /** MediaSoup App Data */
 export interface ExtendedAppData extends MediaSoup.types.AppData {
 	peerId: string;
-	mediaTag?: string;
+	mediaTag: MediaTag | undefined;
 	clientDirection?: any;
 }
+
+// interface ConsumerAppData extends MediaSoup.types.AppData {
+// 	peerId: string;
+// 	mediaTag: string;
+// }
 
 /** Returns the global MediaSoup worker and media router pair  */
 export async function mediaSoup() {

@@ -1,377 +1,294 @@
 import DeepEqual from "deep-equal";
 import * as MediaSoup from "mediasoup-client";
-import { writable, derived } from "svelte/store";
+import { writable, derived, get } from "svelte/store";
 import { roomClient } from "./room-client";
-
-// Export all the references we use internally to manage call state,
-// to make it easy to tinker from the js console. for example:
-//
-//   `Client.camVideoProducer.paused`
-//
+import type { ExtendedAppData } from "../../server/lib/api";
 
 // Svelte stores for reactive state
 export const deviceStore = writable<MediaSoup.types.Device | null>(null);
 export const joinedStore = writable(false);
-export const localCamStore = writable<MediaStream | null>(null);
+export const localMediaStream = writable<MediaStream | null>(null);
 export const recvTransportStore = writable<MediaSoup.types.Transport | null>(null);
-export const sendTransportStore = writable<MediaSoup.types.Transport | null>(null);
-export const camVideoProducerStore = writable<MediaSoup.types.Producer | null>(null);
-export const camAudioProducerStore = writable<MediaSoup.types.Producer | null>(null);
+export const sendTransport = writable<MediaSoup.types.Transport | null>(null);
+export const videoProducer = writable<MediaSoup.types.Producer | null>(null);
+export const audioProducer = writable<MediaSoup.types.Producer | null>(null);
 export const currentActiveSpeakerStore = writable<{ peerId?: string | null }>({});
-export const lastPollSyncDataStore = writable<Record<string, any>>({});
 export const consumersStore = writable<MediaSoup.types.Consumer[]>([]);
 export const myPeerIdStore = writable<string>("");
+export const peersStore = writable<Record<string, any>>({});
 
 // Internal variables (not reactive) - also exported for console debugging
 export let device: MediaSoup.types.Device;
-export let joined: boolean;
-export let localCam: MediaStream;
-export let recvTransport: MediaSoup.types.Transport;
-export let sendTransport: MediaSoup.types.Transport;
-export let camVideoProducer: MediaSoup.types.Producer;
-export let camAudioProducer: MediaSoup.types.Producer;
-export let currentActiveSpeaker: { peerId?: string | null } = {};
-export let lastPollSyncData: Record<string, any> = {};
-export let consumers: MediaSoup.types.Consumer[] = [];
+
+export let _localMediaStream: MediaStream;
+export let recvTransport: MediaSoup.types.Transport<ExtendedAppData>;
+export let _sendTransport: MediaSoup.types.Transport<ExtendedAppData>;
+export let _videoProducer: MediaSoup.types.Producer;
+export let _audioProducer: MediaSoup.types.Producer;
+export let consumers: MediaSoup.types.Consumer<ExtendedAppData>[] = [];
 export let pollingInterval: ReturnType<typeof setInterval>;
-export let myPeerId: string = "";
 
 // Derived stores for convenience
-export const hasLocalCamStore = derived(localCamStore, ($localCam) => !!$localCam);
-export const hasSendTransportStore = derived(sendTransportStore, ($transport) => !!$transport);
+export const hasLocalCamStore = derived(localMediaStream, ($localCam) => !!$localCam);
+export const hasSendTransportStore = derived(sendTransport, ($transport) => !!$transport);
 export const hasRecvTransportStore = derived(recvTransportStore, ($transport) => !!$transport);
 
-export async function onPageLoad() {
-	try {
-		device = new MediaSoup.Device();
-		deviceStore.set(device);
-		// join the room
-		await joinRoom();
+/** Room joined status */
+let _joined: boolean;
 
-		// super-simple signaling: let's poll at 1-second intervals
-		pollingInterval = setInterval(async () => {
-			try {
-				await pollAndUpdate();
-			} catch (err) {
-				console.error("Poll stopped:", err);
-				clearInterval(pollingInterval);
-			}
-		}, 1000);
-	} catch (e: any) {
-		if (e.name === "UnsupportedError") {
-			console.error("browser not supported for video calls");
-			return;
-		} else {
-			console.error(e);
-		}
-	}
+/** Camera paused status */
+let _camPaused = false;
 
-	// use sendBeacon to tell the server we're disconnecting when
-	// the page unloads
-	window.addEventListener("unload", () => roomClient.leave.mutate());
-}
+/** Micrphone paused status */
+let _micPaused = false;
 
-//
-// meeting control actions
-//
+/** Interval timer for polling the backend server */
+let _pollingInterval: ReturnType<typeof setInterval> | undefined;
+
+/** Keep a reference to the previous synced peers for comparisons */
+let _previousSyncedPeers: Record<string, any> = {};
+
+/** Keep track of client code rebuilds during development */
+let _localBuildCounter = -1;
+
+/** Join the room */
 export async function joinRoom() {
-	if (joined) {
-		return;
-	}
+	// Signal that we're a new peer and initialize our
+	// mediasoup-client device, if this is our first time connecting
+	const { peerId, routerRtpCapabilities } = await roomClient.join.mutate();
+	myPeerIdStore.set(peerId);
+	joinedStore.set(true);
+	console.log("[Room] Joined, my peerId is", peerId);
 
-	console.log("[Room] joined");
-
+	// Initialize the MediaSoup device
 	try {
-		// signal that we're a new peer and initialize our
-		// mediasoup-client device, if this is our first time connecting
-		const { peerId, routerRtpCapabilities } = await roomClient.join.mutate();
-		console.log("[Room] my peerId is", peerId);
-		myPeerId = peerId;
-		myPeerIdStore.set(peerId);
-		if (!device.loaded) {
+		if (!get(deviceStore)) {
+			const device = new MediaSoup.Device();
 			await device.load({ routerRtpCapabilities });
+			deviceStore.set(device);
 		}
-		joined = true;
-		joinedStore.set(true);
-	} catch (e: any) {
-		console.error(e);
-		return;
+	} catch (err: any) {
+		if (err.name === "UnsupportedError") {
+			console.error("[MEDIA DEVICE] The browser not supported for video calls");
+			throw err;
+		} else {
+			console.error("[MEDIA DEVICE] The media device could not be initialized");
+			throw err;
+		}
 	}
+
+	// Let's poll at 1-second intervals when joined
+	_pollingInterval = setInterval(async () => {
+		try {
+			await syncRoom();
+		} catch (err) {
+			console.error("[Room] Poll stopped:", err);
+			clearInterval(_pollingInterval);
+		}
+	}, 1000);
+
+	// Update the joined status
+	_joined = true;
 }
 
-export async function sendCameraStreams() {
-	console.log("send camera streams");
+/** Leave the room */
+export async function leaveRoom() {
+	console.log("[Room] leaving the room");
 
-	// make sure we've joined the room and started our camera. these
-	// functions don't do anything if they've already been called this
-	// session
-	await joinRoom();
-	await startCamera();
-
-	// create a transport for outgoing media, if we don't already have one
-	if (!sendTransport) {
-		sendTransport = await createTransport("send");
-		sendTransportStore.set(sendTransport);
+	// Stop polling
+	if (_pollingInterval) {
+		clearInterval(_pollingInterval);
+		_pollingInterval = undefined;
 	}
 
-	// start sending video. the transport logic will initiate a
+	// Close everything on the server-side (transports, producers, consumers)
+	await roomClient.leave.mutate();
+	// Closing the transports closes all producers and consumers. we
+	// don't need to do anything beyond closing the transports, except
+	// to set all our local variables to their initial states
+	recvTransport?.close();
+	_sendTransport?.close();
+
+	_previousSyncedPeers = {};
+	// TODO: Make sure everything is closed
+	recvTransportStore.set(null);
+	sendTransport.set(null);
+	videoProducer.set(null);
+	audioProducer.set(null);
+	localMediaStream.set(null);
+	consumersStore.set([]);
+	joinedStore.set(false);
+	myPeerIdStore.set("");
+
+	// Reset the room status
+	_joined = false;
+}
+
+/** State polling and update logic */
+async function syncRoom() {
+	const { peers, activeSpeaker, buildCounter } = await roomClient.sync.query();
+
+	// Reload the window if the build counter has changed during development
+	if (buildCounter > _localBuildCounter && _localBuildCounter != -1) {
+		window.location.reload();
+	} else {
+		_localBuildCounter = buildCounter;
+	}
+
+	// Update the active speaker
+	currentActiveSpeakerStore.set(activeSpeaker);
+
+	// Decide if we need to update tracks list
+	// build list of peers, sorted by join time, removing last
+	// seen time and stats, so we can easily do a deep-equals
+	// comparison. compare this list with the cached list from last poll.
+	const thisPeersList = sortPeers(peers);
+	const lastPeersList = sortPeers(_previousSyncedPeers);
+
+	if (!DeepEqual(thisPeersList, lastPeersList)) {
+		// TODO: Remove?
+		// Update happens in UI, which we've removed
+	}
+
+	// If a peer has gone away, we need to close all consumers we have
+	// for that peer
+	for (const id in _previousSyncedPeers) {
+		if (!peers[id]) {
+			console.log(`[Room] Peer ${id} has left`);
+			consumers.forEach((consumer) => {
+				if (consumer.appData.peerId === id) {
+					closeConsumer(consumer);
+				}
+			});
+		}
+	}
+
+	// If a peer has stopped sending media that we are consuming, we
+	// need to close the consumer
+	consumers.forEach((consumer) => {
+		const { peerId, mediaTag } = consumer.appData;
+
+		// Type guard to ensure peers[peerId] is an object
+		if (!peers[peerId] || typeof peers[peerId] !== "object") {
+			console.log(`[Room] Peer ${peerId} has left or is invalid`);
+			closeConsumer(consumer);
+			return;
+		}
+
+		// Access media safely
+		const peer = peers[peerId];
+		if (!peer.media || typeof peer.media !== "object") {
+			console.log(`[Room] Peer ${peerId} has no media`);
+			closeConsumer(consumer);
+			return;
+		}
+
+		// Check if the specific mediaTag exists
+		if (!Object.prototype.hasOwnProperty.call(peer.media, mediaTag)) {
+			console.log(`[Room] Peer ${peerId} has stopped transmitting ${mediaTag}`);
+			closeConsumer(consumer);
+			return;
+		}
+	});
+
+	// Update the peers store with full peer information
+	peersStore.set(peers);
+
+	// Update the last poll sync data
+	_previousSyncedPeers = peers;
+}
+
+export async function startLocalMediaStream(audio: boolean = true, video: boolean = true) {
+	console.log(`[Media] Accessing the local media stream (audio: ${audio ? 1 : 0}, video: ${video ? 1 : 0})`);
+	_localMediaStream = await navigator.mediaDevices.getUserMedia({
+		video: video,
+		audio: audio,
+	});
+	localMediaStream.set(_localMediaStream);
+}
+
+export async function sendMediaStreams() {
+	console.log("[Room] Sending streams");
+
+	// Make sure we're joined and have a local media stream
+	if (!_joined) {
+		throw new Error("Not joined");
+	}
+	if (!_localMediaStream) {
+		throw new Error("Local media stream not available");
+	}
+
+	// Create a transport for outgoing media, if we don't already have one
+	if (!_sendTransport) {
+		_sendTransport = await createTransport("send");
+		sendTransport.set(_sendTransport);
+	}
+
+	// Start sending video if we have a local video stream
+	// the transport logic will initiate a
 	// signaling conversation with the server to set up an outbound rtp
 	// stream for the camera video track.
-	camVideoProducer = await sendTransport.produce({
-		track: localCam.getVideoTracks()[0],
-		encodings: camEncodings(),
-		appData: { mediaTag: "cam-video" },
-	});
-	camVideoProducerStore.set(camVideoProducer);
-
-	if (getCamPausedState()) {
-		try {
-			camVideoProducer.pause();
-		} catch (e: any) {
-			console.error(e);
-		}
-	}
-
-	// same thing for audio
-	camAudioProducer = await sendTransport.produce({
-		track: localCam.getAudioTracks()[0],
-		appData: { mediaTag: "cam-audio" },
-	});
-	camAudioProducerStore.set(camAudioProducer);
-
-	if (getMicPausedState()) {
-		try {
-			camAudioProducer.pause();
-		} catch (e: any) {
-			console.error(e);
-		}
-	}
-}
-
-export async function startCamera() {
-	if (localCam) {
-		return;
-	}
-	console.log("starting camera");
-	try {
-		localCam = await navigator.mediaDevices.getUserMedia({
-			video: true,
-			audio: true,
-		});
-		localCamStore.set(localCam);
-	} catch (e: any) {
-		console.error("start camera error", e);
-	}
-}
-
-export async function startAudioOnly() {
-	if (localCam) {
-		return;
-	}
-	console.log("starting audio only");
-	try {
-		localCam = await navigator.mediaDevices.getUserMedia({
-			video: false,
-			audio: true,
-		});
-		localCamStore.set(localCam);
-	} catch (e: any) {
-		console.error("start audio error", e);
-	}
-}
-
-export async function startVideoOnly() {
-	if (localCam) {
-		return;
-	}
-	console.log("starting video only");
-	try {
-		localCam = await navigator.mediaDevices.getUserMedia({
-			video: true,
-			audio: false,
-		});
-		localCamStore.set(localCam);
-	} catch (e: any) {
-		console.error("start video error", e);
-	}
-}
-
-export async function sendVideoStream() {
-	console.log("send video stream");
-
-	// make sure we've joined the room and started our camera
-	await joinRoom();
-	await startVideoOnly();
-
-	// create a transport for outgoing media, if we don't already have one
-	if (!sendTransport) {
-		sendTransport = await createTransport("send");
-		sendTransportStore.set(sendTransport);
-	}
-
-	// only send video if we have a video track
-	if (localCam.getVideoTracks().length > 0) {
-		camVideoProducer = await sendTransport.produce({
-			track: localCam.getVideoTracks()[0],
+	if (_localMediaStream.getVideoTracks().length > 0) {
+		_videoProducer = await _sendTransport.produce({
+			track: _localMediaStream.getVideoTracks()[0],
 			encodings: camEncodings(),
 			appData: { mediaTag: "cam-video" },
 		});
-		camVideoProducerStore.set(camVideoProducer);
+		videoProducer.set(_videoProducer);
 
-		if (getCamPausedState()) {
-			try {
-				camVideoProducer.pause();
-			} catch (e: any) {
-				console.error(e);
-			}
+		if (_camPaused) {
+			_videoProducer.pause();
 		}
 	}
-}
 
-export async function sendAudioStream() {
-	console.log("send audio stream");
-
-	// make sure we've joined the room and started our microphone
-	await joinRoom();
-	await startAudioOnly();
-
-	// create a transport for outgoing media, if we don't already have one
-	if (!sendTransport) {
-		sendTransport = await createTransport("send");
-		sendTransportStore.set(sendTransport);
-	}
-
-	// only send audio if we have an audio track
-	if (localCam.getAudioTracks().length > 0) {
-		camAudioProducer = await sendTransport.produce({
-			track: localCam.getAudioTracks()[0],
+	// Start sending audio if we have a local audio stream
+	if (_localMediaStream.getAudioTracks().length > 0) {
+		_audioProducer = await _sendTransport.produce({
+			track: _localMediaStream.getAudioTracks()[0],
 			appData: { mediaTag: "cam-audio" },
 		});
-		camAudioProducerStore.set(camAudioProducer);
+		audioProducer.set(_audioProducer);
 
-		if (getMicPausedState()) {
+		if (_micPaused) {
 			try {
-				camAudioProducer.pause();
+				_audioProducer.pause();
 			} catch (e: any) {
 				console.error(e);
 			}
 		}
 	}
-}
-
-// switch to sending video from the "next" camera device in our device
-// list (if we have multiple cameras)
-export async function cycleCamera() {
-	if (!(camVideoProducer && camVideoProducer.track)) {
-		console.warn("cannot cycle camera - no current camera track");
-		return;
-	}
-
-	console.log("cycle camera");
-
-	// find "next" device in device list
-	const deviceId = await getCurrentDeviceId();
-	const allDevices = await navigator.mediaDevices.enumerateDevices();
-	const vidDevices = allDevices.filter((d) => d.kind === "videoinput");
-	if (!(vidDevices.length > 1)) {
-		console.warn("cannot cycle camera - only one camera");
-		return;
-	}
-	let idx = vidDevices.findIndex((d) => d.deviceId === deviceId);
-	if (idx === vidDevices.length - 1) {
-		idx = 0;
-	} else {
-		idx += 1;
-	}
-
-	// get a new video stream. might as well get a new audio stream too,
-	// just in case browsers want to group audio/video streams together
-	// from the same device when possible (though they don't seem to,
-	// currently)
-	console.log("getting a video stream from new device", vidDevices[idx].label);
-	localCam = await navigator.mediaDevices.getUserMedia({
-		video: { deviceId: { exact: vidDevices[idx].deviceId } },
-		audio: true,
-	});
-	localCamStore.set(localCam);
-
-	// replace the tracks we are sending
-	await camVideoProducer.replaceTrack({ track: localCam.getVideoTracks()[0] });
-	await camAudioProducer.replaceTrack({ track: localCam.getAudioTracks()[0] });
 }
 
 export async function stopStreams() {
-	if (!localCam) {
+	if (!_localMediaStream) {
 		return;
 	}
-	if (!sendTransport) {
+	if (!_sendTransport) {
 		return;
 	}
 
 	console.log("stop sending media streams");
 
-	await roomClient.closeTransport.mutate({ transportId: sendTransport.id });
+	await roomClient.closeTransport.mutate({ transportId: _sendTransport.id });
 
 	// closing the sendTransport closes all associated producers. when
 	// the camVideoProducer and camAudioProducer are closed,
 	// mediasoup-client stops the local cam tracks, so we don't need to
 	// do anything except set all our local variables to null.
 	try {
-		sendTransport.close();
+		_sendTransport.close();
 	} catch (e: any) {
 		console.error(e);
 	}
 
-	sendTransport = null!;
-	sendTransportStore.set(null);
-	camVideoProducer = null!;
-	camVideoProducerStore.set(null);
-	camAudioProducer = null!;
-	camAudioProducerStore.set(null);
-	localCam = null!;
-	localCamStore.set(null);
-}
-
-export async function leaveRoom() {
-	if (!joined) {
-		return;
-	}
-
-	console.log("[Room] leaved the room");
-
-	// stop polling
-	clearInterval(pollingInterval);
-
-	try {
-		// close everything on the server-side (transports, producers, consumers)
-		await roomClient.leave.mutate();
-		// closing the transports closes all producers and consumers. we
-		// don't need to do anything beyond closing the transports, except
-		// to set all our local variables to their initial states
-		recvTransport?.close();
-		sendTransport?.close();
-	} catch (e: any) {
-		console.error(e);
-	}
-
-	recvTransport = null!;
-	recvTransportStore.set(null);
-	sendTransport = null!;
-	sendTransportStore.set(null);
-	camVideoProducer = null!;
-	camVideoProducerStore.set(null);
-	camAudioProducer = null!;
-	camAudioProducerStore.set(null);
-	localCam = null!;
-	localCamStore.set(null);
-	lastPollSyncData = {};
-	lastPollSyncDataStore.set({});
-	consumers = [];
-	consumersStore.set([]);
-	joined = false;
-	joinedStore.set(false);
-	myPeerId = "";
-	myPeerIdStore.set("");
+	_sendTransport = null!;
+	sendTransport.set(null);
+	_videoProducer = null!;
+	videoProducer.set(null);
+	_audioProducer = null!;
+	audioProducer.set(null);
+	_localMediaStream = null!;
+	localMediaStream.set(null);
 }
 
 export async function subscribeToTrack(peerId: string, mediaTag: string) {
@@ -545,68 +462,64 @@ async function closeConsumer(consumer: MediaSoup.types.Consumer) {
 	}
 }
 
-// utility function to create a transport and hook up signaling logic
-// appropriate to the transport's direction
-async function createTransport(direction: string): Promise<MediaSoup.types.Transport> {
-	console.log(`create ${direction} transport`);
+/** Utility function to create a transport and hook up signaling logic appropriate to the transport's direction */
+async function createTransport(direction: "send" | "recv"): Promise<MediaSoup.types.Transport<ExtendedAppData>> {
+	console.log(`[MS] Creating ${direction}-transport`);
 
-	// ask the server to create a server-side transport object and send
+	// Ask the server to create a server-side transport object and send
 	// us back the info we need to create a client-side transport
-	let transport: MediaSoup.types.Transport;
+	let transport: MediaSoup.types.Transport<ExtendedAppData>;
 	const { transportOptions } = await roomClient.createTransport.mutate({ direction });
-	console.log("transport options", transportOptions);
 
 	if (direction === "recv") {
 		transport = device.createRecvTransport(transportOptions);
 	} else if (direction === "send") {
 		transport = device.createSendTransport(transportOptions);
 	} else {
-		throw new Error(`bad transport 'direction': ${direction}`);
+		throw new Error(`Bad transport direction: ${direction}`);
 	}
 
+	// Connect
 	// mediasoup-client will emit a connect event when media needs to
 	// start flowing for the first time. send dtlsParameters to the
-	// server, then call callback() on success or errback() on failure.
-	transport.on("connect", (params, callback, errback) => {
+	// server, then call resolve() on success or reject() on failure.
+	transport.on("connect", (params, resolve, reject) => {
 		const dtlsParameters = params.dtlsParameters;
-		console.log("transport connect event", direction);
+		console.log("[MS] transport connect event", direction);
 
 		roomClient.connectTransport
 			.mutate({
 				transportId: transportOptions.id,
 				dtlsParameters,
 			})
-			.then(() => {
-				callback();
-			})
+			.then(resolve)
 			.catch((err) => {
-				console.error("error connecting transport", direction, err);
-				errback(err);
+				console.error("[MS] Error connecting transport", direction, err);
+				reject(err);
 			});
 	});
 
+	// Produce
+	// sending transports will emit a produce event when a new track
+	// needs to be set up to start sending. the producer's appData is
+	// passed as a parameter
 	if (direction === "send") {
-		// sending transports will emit a produce event when a new track
-		// needs to be set up to start sending. the producer's appData is
-		// passed as a parameter
-		transport.on("produce", (params: any, callback: any, errback: any) => {
-			const { kind, rtpParameters, appData } = params;
-			console.log("transport produce event", appData.mediaTag);
+		transport.on("produce", (params, resolve, reject) => {
+			const { kind, rtpParameters } = params;
+			const appData = params.appData as ExtendedAppData;
+			console.log("[MS] transport produce event", appData);
 
-			// we may want to start out paused (if the checkboxes in the ui
-			// aren't checked, for each media type. not very clean code, here
-			// but, you know, this isn't a real application.)
-			let paused = false;
+			// Respect the current paused status
+			let paused = true;
 			if (appData.mediaTag === "cam-video") {
-				paused = getCamPausedState();
+				paused = _camPaused;
 			} else if (appData.mediaTag === "cam-audio") {
-				paused = getMicPausedState();
+				paused = _micPaused;
 			}
 
-			// tell the server what it needs to know from us in order to set
+			// Tell the server what it needs to know from us in order to set
 			// up a server-side producer object, and get back a
-			// producer.id. call callback() on success or errback() on
-			// failure.
+			// producer.id.
 			roomClient.sendTrack
 				.mutate({
 					transportId: transportOptions.id,
@@ -617,104 +530,30 @@ async function createTransport(direction: string): Promise<MediaSoup.types.Trans
 				})
 				.then((response) => {
 					const producerId = response.id;
-					callback({ id: producerId });
+					resolve({ id: producerId });
 				})
 				.catch((err) => {
-					console.error("error setting up server-side producer", err);
-					errback(err);
+					console.error("[MS] Error setting up server-side producer", err);
+					reject(err);
 				});
 		});
 	}
 
+	// Connection state changes
 	// for this simple demo, any time a transport transitions to closed,
 	// failed, or disconnected, leave the room and reset
+	// TODO: Is this ok?
 	transport.on("connectionstatechange", async (state: string) => {
-		console.log(`transport ${transport.id} connectionstatechange ${state}`);
+		console.log(`[MS] Transport ${transport.id} connection state changed to ${state}`);
 
-		// for this simple sample code, assume that transports being
-		// closed is an error (we never close these transports except when
-		// we leave the room)
 		if (state === "closed" || state === "failed" || state === "disconnected") {
-			console.log("transport closed ... leaving the room and resetting");
+			console.log("[MS] Transport closed... leaving the room and resetting");
 			leaveRoom();
 		}
 	});
 
+	// Return the transport
 	return transport;
-}
-
-//
-// polling/update logic
-//
-let localBuildCounter = -1;
-async function pollAndUpdate() {
-	const { peers, activeSpeaker, buildCounter } = await roomClient.sync.query();
-	if (buildCounter > localBuildCounter && localBuildCounter != -1) {
-		window.location.reload();
-	} else {
-		localBuildCounter = buildCounter;
-	}
-
-	// update active speaker
-	currentActiveSpeaker = activeSpeaker;
-	currentActiveSpeakerStore.set(activeSpeaker);
-
-	// decide if we need to update tracks list
-	// build list of peers, sorted by join time, removing last
-	// seen time and stats, so we can easily do a deep-equals
-	// comparison. compare this list with the cached list from last poll.
-	const thisPeersList = sortPeers(peers);
-	const lastPeersList = sortPeers(lastPollSyncData);
-
-	if (!DeepEqual(thisPeersList, lastPeersList)) {
-		// Update happens in UI, which we've removed
-	}
-
-	// if a peer has gone away, we need to close all consumers we have
-	// for that peer
-	for (const id in lastPollSyncData) {
-		if (!peers[id]) {
-			console.log(`peer ${id} has exited`);
-			consumers.forEach((consumer) => {
-				if (consumer.appData.peerId === id) {
-					closeConsumer(consumer);
-				}
-			});
-		}
-	}
-
-	// if a peer has stopped sending media that we are consuming, we
-	// need to close the consumer
-	consumers.forEach((consumer) => {
-		const appData = consumer.appData as { peerId: string; mediaTag: string };
-		const peerId = appData.peerId;
-		const mediaTag = appData.mediaTag;
-
-		// Type guard to ensure peers[peerId] is an object
-		if (!peers[peerId] || typeof peers[peerId] !== "object") {
-			console.log(`peer ${peerId} has exited or is invalid`);
-			closeConsumer(consumer);
-			return;
-		}
-
-		// Access media safely
-		const peer = peers[peerId] as Record<string, any>;
-		if (!peer.media || typeof peer.media !== "object") {
-			console.log(`peer ${peerId} has no media`);
-			closeConsumer(consumer);
-			return;
-		}
-
-		// Check if the specific mediaTag exists
-		if (!Object.prototype.hasOwnProperty.call(peer.media, mediaTag)) {
-			console.log(`peer ${peerId} has stopped transmitting ${mediaTag}`);
-			closeConsumer(consumer);
-		}
-	});
-
-	lastPollSyncData = peers;
-	lastPollSyncDataStore.set(peers);
-	return {}; // return an empty object if there isn't an error
 }
 
 function sortPeers(peers: Record<string, any>) {
@@ -732,46 +571,34 @@ function findConsumerForTrack(peerId: string, mediaTag: string): MediaSoup.types
 // They can be modified to provide appropriate behavior as needed
 //
 
-// Default values for states (replacing UI checkboxes)
-let camPausedState = false;
-let micPausedState = false;
+// export async function changeCamPaused(paused?: boolean) {
+// 	camPausedState = paused !== undefined ? paused : !camPausedState;
+// 	if (camPausedState) {
+// 		await pauseProducer(camVideoProducer);
+// 	} else {
+// 		await resumeProducer(camVideoProducer);
+// 	}
+// }
 
-export function getCamPausedState(): boolean {
-	return camPausedState;
-}
-
-export function getMicPausedState(): boolean {
-	return micPausedState;
-}
-
-export async function changeCamPaused(paused?: boolean) {
-	camPausedState = paused !== undefined ? paused : !camPausedState;
-	if (camPausedState) {
-		await pauseProducer(camVideoProducer);
-	} else {
-		await resumeProducer(camVideoProducer);
-	}
-}
-
-export async function changeMicPaused(paused?: boolean) {
-	micPausedState = paused !== undefined ? paused : !micPausedState;
-	if (micPausedState) {
-		await pauseProducer(camAudioProducer);
-	} else {
-		await resumeProducer(camAudioProducer);
-	}
-}
+// export async function changeMicPaused(paused?: boolean) {
+// 	micPausedState = paused !== undefined ? paused : !micPausedState;
+// 	if (micPausedState) {
+// 		await pauseProducer(camAudioProducer);
+// 	} else {
+// 		await resumeProducer(camAudioProducer);
+// 	}
+// }
 
 export async function getCurrentDeviceId() {
-	if (!camVideoProducer || !camVideoProducer.track) {
+	if (!_videoProducer || !_videoProducer.track) {
 		return null;
 	}
-	const deviceId = camVideoProducer.track.getSettings().deviceId;
+	const deviceId = _videoProducer.track.getSettings().deviceId;
 	if (deviceId) {
 		return deviceId;
 	}
 	// Firefox doesn't have deviceId in MediaTrackSettings object
-	const track = localCam && localCam.getVideoTracks()[0];
+	const track = _localMediaStream && _localMediaStream.getVideoTracks()[0];
 	if (!track) {
 		return null;
 	}
@@ -801,3 +628,43 @@ function camEncodings() {
 async function sleep(ms: number) {
 	return new Promise<void>((r) => setTimeout(() => r(), ms));
 }
+// // switch to sending video from the "next" camera device in our device
+// // list (if we have multiple cameras)
+// export async function cycleCamera() {
+// 	if (!(_videoProducer && _videoProducer.track)) {
+// 		console.warn("cannot cycle camera - no current camera track");
+// 		return;
+// 	}
+
+// 	console.log("cycle camera");
+
+// 	// find "next" device in device list
+// 	const deviceId = await getCurrentDeviceId();
+// 	const allDevices = await navigator.mediaDevices.enumerateDevices();
+// 	const vidDevices = allDevices.filter((d) => d.kind === "videoinput");
+// 	if (!(vidDevices.length > 1)) {
+// 		console.warn("cannot cycle camera - only one camera");
+// 		return;
+// 	}
+// 	let idx = vidDevices.findIndex((d) => d.deviceId === deviceId);
+// 	if (idx === vidDevices.length - 1) {
+// 		idx = 0;
+// 	} else {
+// 		idx += 1;
+// 	}
+
+// 	// get a new video stream. might as well get a new audio stream too,
+// 	// just in case browsers want to group audio/video streams together
+// 	// from the same device when possible (though they don't seem to,
+// 	// currently)
+// 	console.log("getting a video stream from new device", vidDevices[idx].label);
+// 	_localMediaStream = await navigator.mediaDevices.getUserMedia({
+// 		video: { deviceId: { exact: vidDevices[idx].deviceId } },
+// 		audio: true,
+// 	});
+// 	localMediaStream.set(_localMediaStream);
+
+// 	// replace the tracks we are sending
+// 	await _videoProducer.replaceTrack({ track: _localMediaStream.getVideoTracks()[0] });
+// 	await _audioProducer.replaceTrack({ track: _localMediaStream.getAudioTracks()[0] });
+// }

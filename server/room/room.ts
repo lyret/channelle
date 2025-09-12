@@ -31,7 +31,7 @@ const { router: trcpRouter, procedure: trcpProcedure } = trcp();
 type Peer = {
 	lastSeenTs: number;
 	joinTs: number;
-	media: any;
+	media: Record<MediaTag, any>;
 	consumerLayers: any;
 	stats: any;
 };
@@ -44,9 +44,7 @@ type Peer = {
  * correlate tracks.
  */
 type Room = {
-	peers: {
-		[id: string]: Peer;
-	};
+	peers: Record<string, Peer>;
 	activeSpeaker: {
 		producerId: string | null;
 		volume: number | null;
@@ -150,7 +148,7 @@ export const roomRouter = trcpRouter({
 	// Called from inside a client's `transport.on('connect')` event
 	// handler.
 	connectTransport: roomProcedure
-		.input(z.object({ transportId: z.string(), dtlsParameters: z.any() }))
+		.input(z.object({ transportId: z.string(), dtlsParameters: z.custom<MediaSoup.types.DtlsParameters>() }))
 		.mutation(async ({ ctx, input: { transportId, dtlsParameters } }) => {
 			const transport = _room.transports[transportId];
 
@@ -180,7 +178,15 @@ export const roomRouter = trcpRouter({
 
 	// Called from inside a client's `transport.on('produce')` event handler.
 	sendTrack: roomProcedure
-		.input(z.object({ transportId: z.string(), kind: z.any(), rtpParameters: z.any(), paused: z.boolean().default(false), appData: z.any() }))
+		.input(
+			z.object({
+				transportId: z.string(),
+				kind: z.custom<MediaSoup.types.MediaKind>(),
+				rtpParameters: z.custom<MediaSoup.types.RtpParameters>(),
+				paused: z.boolean().default(true),
+				appData: z.custom<ExtendedAppData>(),
+			}),
+		)
 		.mutation(async ({ ctx, input: { transportId, kind, rtpParameters, paused, appData } }) => {
 			const transport = _room.transports[transportId];
 
