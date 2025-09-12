@@ -6,11 +6,11 @@
 	// Import all the stores
 	import {
 		joinedStore,
-		localCamStore,
-		sendTransportStore,
+		localMediaStream,
+		sendTransport,
 		recvTransportStore,
-		camVideoProducerStore,
-		camAudioProducerStore,
+		videoProducer,
+		audioProducer,
 		currentActiveSpeakerStore,
 		consumersStore,
 		myPeerIdStore,
@@ -36,8 +36,8 @@
 	$: hasLocalCam = $hasLocalCamStore;
 	$: hasSendTransport = $hasSendTransportStore;
 	$: hasRecvTransport = $hasRecvTransportStore;
-	$: hasCamVideo = !!$camVideoProducerStore;
-	$: hasCamAudio = !!$camAudioProducerStore;
+	$: hasCamVideo = !!$videoProducer;
+	$: hasCamAudio = !!$audioProducer;
 	$: activeSpeaker = $currentActiveSpeakerStore?.peerId || "None";
 	$: consumers = $consumersStore;
 	$: consumerCount = consumers.length;
@@ -58,10 +58,10 @@
 	}));
 
 	// Update video elements when streams change
-	$: if (localCamVideo && $localCamStore) {
-		localCamVideo.srcObject = $localCamStore;
+	$: if (localCamVideo && $localMediaStream) {
+		localCamVideo.srcObject = $localMediaStream;
 		localCamVideo.play().catch((e) => console.error("Error playing local camera:", e));
-	} else if (localCamVideo && !$localCamStore) {
+	} else if (localCamVideo && !$localMediaStream) {
 		localCamVideo.srcObject = null;
 	}
 
@@ -79,11 +79,11 @@
 	}
 
 	// Computed properties for producer states
-	$: camVideoPaused = $camVideoProducerStore?.paused || false;
-	$: camAudioPaused = $camAudioProducerStore?.paused || false;
+	$: camVideoPaused = $videoProducer?.paused || false;
+	$: camAudioPaused = $audioProducer?.paused || false;
 
 	onMount(() => {
-		Debug.onPageLoad();
+		Debug.joinRoom();
 	});
 
 	onDestroy(() => {
@@ -504,16 +504,24 @@
 		<div class="field">
 			<label class="label is-small">Camera Controls</label>
 			<div class="buttons are-small">
-				<button class="button is-info" on:click={() => handleAction(Debug.startVideoOnly, "Camera started")} disabled={hasLocalCam}>
+				<button
+					class="button is-info"
+					on:click={() => handleAction(() => Debug.startLocalMediaStream(false, true), "Camera started")}
+					disabled={hasLocalCam}
+				>
 					Start Camera
 				</button>
 				<button class="button is-info" on:click={() => handleAction(Debug.sendVideoStream, "Video stream sent")} disabled={!hasLocalCam || !joined}>
 					Send Video
 				</button>
-				<button class="button is-info" on:click={() => handleAction(Debug.startCamera, "Camera + Mic started")} disabled={hasLocalCam}>
+				<button
+					class="button is-info"
+					on:click={() => handleAction(() => Debug.startLocalMediaStream(true, true), "Camera + Mic started")}
+					disabled={hasLocalCam}
+				>
 					Start Both
 				</button>
-				<button class="button is-info" on:click={() => handleAction(Debug.sendCameraStreams, "All streams sent")} disabled={!hasLocalCam || !joined}>
+				<button class="button is-info" on:click={() => handleAction(Debug.sendMediaStreams, "All streams sent")} disabled={!hasLocalCam || !joined}>
 					Send Both
 				</button>
 				<button class="button is-warning" on:click={() => handleAction(Debug.cycleCamera, "Camera cycled")} disabled={!hasCamVideo}>
@@ -529,7 +537,11 @@
 		<div class="field">
 			<label class="label is-small">Audio Controls</label>
 			<div class="buttons are-small">
-				<button class="button is-info" on:click={() => handleAction(Debug.startAudioOnly, "Microphone started")} disabled={hasLocalCam}>
+				<button
+					class="button is-info"
+					on:click={() => handleAction(() => Debug.startLocalMediaStream(true, false), "Microphone started")}
+					disabled={hasLocalCam}
+				>
 					Start Microphone
 				</button>
 				<button class="button is-info" on:click={() => handleAction(Debug.sendAudioStream, "Audio stream sent")} disabled={!hasLocalCam || !joined}>
