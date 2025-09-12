@@ -113,19 +113,18 @@ export const roomRouter = trcpRouter({
 			throw new TRPCError({ code: "BAD_REQUEST", message: "No peer information given" });
 		}
 
-		const peerId = Math.round(Math.random() * 1000000).toString();
 		const msRouter = await mediaSoupRouter();
 		const now = Date.now();
 
-		_room.peers[peerId] = {
+		_room.peers[ctx.peer.id] = {
 			joinTs: now,
 			lastSeenTs: now,
 			media: {},
 			consumerLayers: {},
 			stats: {},
 		};
-		console.log("[Room]", peerId, "joined as new peer");
-		return { peerId, routerRtpCapabilities: msRouter.rtpCapabilities };
+		console.log("[Room]", ctx.peer.id, "joined as new peer");
+		return { peerId: ctx.peer.id, routerRtpCapabilities: msRouter.rtpCapabilities };
 	}),
 	// Removes the peer from the room data structure and and closes
 	// all associated mediasoup objects

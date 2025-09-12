@@ -23,12 +23,11 @@ export let consumers: MediaSoup.types.Consumer[] = [];
 export let pollingInterval: ReturnType<typeof setInterval>;
 
 export async function onPageLoad() {
-	console.log("starting up ... my peerId is ???");
 	try {
 		device = new MediaSoup.Device();
 		// join the room
 		await joinRoom();
-		console.log("here");
+
 		// super-simple signaling: let's poll at 1-second intervals
 		pollingInterval = setInterval(async () => {
 			try {
@@ -60,12 +59,13 @@ export async function joinRoom() {
 		return;
 	}
 
-	console.log("join room");
+	console.log("[Room] joined");
 
 	try {
 		// signal that we're a new peer and initialize our
 		// mediasoup-client device, if this is our first time connecting
-		const { routerRtpCapabilities } = await roomClient.join.mutate();
+		const { peerId, routerRtpCapabilities } = await roomClient.join.mutate();
+		console.log("[Room] my peerId is", peerId);
 		if (!device.loaded) {
 			await device.load({ routerRtpCapabilities });
 		}
@@ -266,7 +266,7 @@ export async function leaveRoom() {
 		return;
 	}
 
-	console.log("leave room");
+	console.log("[Room] leaved the room");
 
 	// stop polling
 	clearInterval(pollingInterval);
