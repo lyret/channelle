@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from "svelte";
 	import { blur } from "svelte/transition";
-	import * as Debug from "./room/debugfunctions";
+	import * as Debug from "./room/apiFunctions";
 
 	// Import all the stores
 	import {
@@ -19,7 +19,7 @@
 		hasSendTransportStore,
 		hasRecvTransportStore,
 		peersStore,
-	} from "./room/debugfunctions";
+	} from "./room/apiFunctions";
 
 	// Local state for UI
 	let peerIdInput = "";
@@ -53,7 +53,7 @@
 		id,
 		...info,
 		hasVideo: info.media && (info.media["cam-video"] || info.media["screen-video"]),
-		hasAudio: info.media && (info.media["cam-audio"] || info.media["screen-audio"]),
+		hasAudio: info.media && (info.media["mic-audio"] || info.media["screen-audio"]),
 		mediaTags: info.media ? Object.keys(info.media) : [],
 	}));
 
@@ -398,17 +398,17 @@
 											{/if}
 										{/if}
 										{#if peer.hasAudio}
-											{#if peer.media["cam-audio"]}
-												{#if !consumers.find((c) => c.appData.peerId === peer.id && c.appData.mediaTag === "cam-audio")}
+											{#if peer.media["mic-audio"]}
+												{#if !consumers.find((c) => c.appData.peerId === peer.id && c.appData.mediaTag === "mic-audio")}
 													<button
 														class="button is-small is-success"
-														on:click={() => Debug.subscribeToTrack(peer.id, "cam-audio")}
+														on:click={() => Debug.subscribeToTrack(peer.id, "mic-audio")}
 														disabled={!joined || peer.id === myPeerId}
 													>
 														Subscribe Audio
 													</button>
 												{:else}
-													<button class="button is-small is-danger" on:click={() => Debug.unsubscribeFromTrack(peer.id, "cam-audio")}>
+													<button class="button is-small is-danger" on:click={() => Debug.unsubscribeFromTrack(peer.id, "mic-audio")}>
 														Unsubscribe Audio
 													</button>
 												{/if}
@@ -451,7 +451,7 @@
 				<button class="button is-info" on:click={() => Debug.startLocalMediaStream(true, true)} disabled={hasLocalCam}> Start Both </button>
 				<button class="button is-info" on:click={() => Debug.sendMediaStreams()} disabled={!hasLocalCam || !joined}> Send Both </button>
 				<button class="button is-warning" on:click={() => Debug.cycleCamera()} disabled={!hasCamVideo}> Cycle Camera </button>
-				<button class="button is-danger" on:click={() => Debug.stopStreams()} disabled={!hasSendTransport}> Stop All </button>
+				<button class="button is-danger" on:click={() => Debug.closeMediaStreams()} disabled={!hasSendTransport}> Stop All </button>
 			</div>
 		</div>
 
@@ -465,7 +465,7 @@
 					class="button is-warning"
 					on:click={async () => {
 						const currentState = Debug.getMicPausedState();
-						await Debug.changeMicPaused(!currentState);
+						await Debug.toggleAudioPaused(!currentState);
 					}}
 					disabled={!hasCamAudio}
 				>
@@ -482,7 +482,7 @@
 					class="button is-warning"
 					on:click={async () => {
 						const currentState = Debug.getCamPausedState();
-						await Debug.changeCamPaused(!currentState);
+						await Debug.toggleVideoPaused(!currentState);
 					}}
 					disabled={!hasCamVideo}
 				>
