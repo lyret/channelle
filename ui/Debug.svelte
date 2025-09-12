@@ -24,6 +24,7 @@
 	// Local state for UI
 	let peerIdInput = "";
 	let mediaTagInput = "";
+	let showConfig = false;
 
 	// Video element refs
 	let localCamVideo: HTMLVideoElement;
@@ -580,6 +581,22 @@
 			</button>
 		</div>
 	</div>
+
+	<!-- CONFIG Section -->
+	<div class="box">
+		<h2 class="subtitle">
+			Configuration
+			<button class="button is-small is-pulled-right" on:click={() => (showConfig = !showConfig)}>
+				{showConfig ? "Hide" : "Show"} CONFIG
+			</button>
+		</h2>
+
+		{#if showConfig}
+			<div class="json-container">
+				<pre class="json-output"><code>{JSON.stringify(CONFIG, null, 2)}</code></pre>
+			</div>
+		{/if}
+	</div>
 </div>
 
 <style lang="scss">
@@ -623,5 +640,31 @@
 
 	.table td {
 		padding: 0.25em 0.5em;
+	}
+
+	.json-container {
+		border-radius: 8px;
+		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+		padding: 3px;
+		margin-top: 1rem;
+	}
+
+	.json-output {
+		background: #1e1e1e;
+		color: #d4d4d4;
+		border-radius: 6px;
+		padding: 1.5rem;
+		margin: 0;
+		overflow-x: auto;
+		font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+		font-size: 0.85rem;
+		line-height: 1.6;
+		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+	}
+
+	.json-output code {
+		color: #9cdcfe;
+		background: transparent;
+		padding: 0;
 	}
 </style>
