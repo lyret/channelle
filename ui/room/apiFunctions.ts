@@ -1,13 +1,8 @@
-import DeepEqual from "deep-equal";
 import * as MediaSoup from "mediasoup-client";
-import { writable, derived, get } from "svelte/store";
-import { roomClient } from "./room-client";
-import type { ExtendedAppData, MediaTag } from "../../server/lib/api";
-import type { Peer } from "../../server/room/room";
-
-type Producer = MediaSoup.types.Producer<ExtendedAppData>;
-type Consumer = MediaSoup.types.Consumer<ExtendedAppData>;
-type Transport = MediaSoup.types.Transport<ExtendedAppData>;
+import DeepEqual from "deep-equal";
+import { writable, derived } from "svelte/store";
+import { roomClient } from "./roomClient";
+import type { CustomAppData, MediaTag, Transport, Producer, Consumer, TransportDirection, Peer } from "./types";
 
 // Svelte stores for reactive state
 export const deviceStore = writable<MediaSoup.types.Device | null>(null);
@@ -24,13 +19,13 @@ export const myPeerIdStore = writable<string>("");
 export const peersStore = writable<Record<string, any>>({});
 
 // Internal variables (not reactive) - also exported for console debugging
-
 export let _localMediaStream: MediaStream;
 export let _recvTransport: Transport;
 export let _sendTransport: Transport;
 export let _videoProducer: Producer;
 export let _audioProducer: Producer;
-export let consumers: Consumer[] = [];
+export let _peerId: string = "";
+export let _consumers: Consumer[] = [];
 export let pollingInterval: ReturnType<typeof setInterval>;
 
 // Derived stores for convenience
@@ -44,7 +39,7 @@ let _joined: boolean;
 /** Camera paused status */
 let _camPaused = false;
 
-/** Micrphone paused status */
+/** Microphone paused status */
 let _micPaused = false;
 
 /** Interval timer for polling the backend server */
@@ -67,6 +62,7 @@ export async function joinRoom() {
 	myPeerIdStore.set(peerId);
 	joinedStore.set(true);
 	console.log("[Room] Joined, my peerId is", peerId);
+	_peerId = peerId;
 
 	// Initialize the MediaSoup device
 	try {
@@ -163,7 +159,7 @@ async function syncRoom() {
 	for (const id in _previousSyncedPeers) {
 		if (!peers[id]) {
 			console.log(`[Room] Peer ${id} has left`);
-			consumers.forEach((consumer) => {
+			_consumers.forEach((consumer) => {
 				if (consumer.appData.peerId === id) {
 					closeConsumer(consumer);
 				}
@@ -173,7 +169,7 @@ async function syncRoom() {
 
 	// If a peer has stopped sending media that we are consuming, we
 	// need to close the consumer
-	consumers.forEach((consumer) => {
+	_consumers.forEach((consumer) => {
 		const { peerId, mediaTag } = consumer.appData;
 
 		// Type guard to ensure peers[peerId] is an object
@@ -241,8 +237,13 @@ export async function sendMediaStreams() {
 	if (_localMediaStream.getVideoTracks().length > 0) {
 		_videoProducer = await _sendTransport.produce({
 			track: _localMediaStream.getVideoTracks()[0],
-			encodings: camEncodings(),
-			appData: { mediaTag: "cam-video" },
+			// Just two resolutions, for now, as chrome 75 seems to ignore more
+			// than two encodings
+			encodings: [
+				{ maxBitrate: 96000, scaleResolutionDownBy: 4 },
+				{ maxBitrate: 680000, scaleResolutionDownBy: 1 },
+			],
+			appData: { mediaTag: "cam-video", peerId: _peerId },
 		});
 		videoProducer.set(_videoProducer);
 
@@ -255,7 +256,7 @@ export async function sendMediaStreams() {
 	if (_localMediaStream.getAudioTracks().length > 0) {
 		_audioProducer = await _sendTransport.produce({
 			track: _localMediaStream.getAudioTracks()[0],
-			appData: { mediaTag: "cam-audio" },
+			appData: { mediaTag: "mic-audio", peerId: _peerId },
 		});
 		audioProducer.set(_audioProducer);
 
@@ -269,35 +270,55 @@ export async function sendMediaStreams() {
 	}
 }
 
-//TODO:
-export async function stopStreams() {
-	// if (!_localMediaStream) {
-	// 	return;
-	// }
-	// if (!_sendTransport) {
-	// 	return;
-	// }
-	// console.log("stop sending media streams");
-	// await roomClient.closeTransport.mutate({ transportId: _sendTransport.id });
-	// // closing the sendTransport closes all associated producers. when
-	// // the camVideoProducer and camAudioProducer are closed,
-	// // mediasoup-client stops the local cam tracks, so we don't need to
-	// // do anything except set all our local variables to null.
-	// try {
-	// 	_sendTransport.close();
-	// } catch (e: any) {
-	// 	console.error(e);
-	// }
-	// _sendTransport = null!;
-	// sendTransport.set(null);
-	// _videoProducer = null!;
-	// videoProducer.set(null);
-	// _audioProducer = null!;
-	// audioProducer.set(null);
-	// _localMediaStream = null!;
-	// localMediaStream.set(null);
+/** Set the paused status of the video producer */
+export async function toggleVideoPaused(paused?: boolean) {
+	_camPaused = paused !== undefined ? paused : !_camPaused;
+	if (_camPaused && _videoProducer) {
+		await pauseProducer(_videoProducer);
+	} else {
+		await resumeProducer(_videoProducer);
+	}
 }
 
+/** Set the paused status of the audio producer */
+export async function toggleAudioPaused(paused?: boolean) {
+	_micPaused = paused !== undefined ? paused : !_micPaused;
+	if (_micPaused && _audioProducer) {
+		await pauseProducer(_audioProducer);
+	} else {
+		await resumeProducer(_audioProducer);
+	}
+}
+
+/** Stop transporting all media to the server */
+export async function closeMediaStreams() {
+	if (!_localMediaStream) {
+		return;
+	}
+	if (!_sendTransport) {
+		return;
+	}
+	console.log("[MS] Stopping sending of media streams");
+	await roomClient.closeTransport.mutate({ transportId: _sendTransport.id });
+
+	// Closing the sendTransport closes all associated producers. when
+	// the Video Producer and Audio Producer are closed,
+	// mediasoup-client stops the local camera tracks, so we don't need to
+	// do anything except set all our local variables to null.
+	_sendTransport.close();
+
+	// TODO: Make sure this is correct
+	_sendTransport = null!;
+	sendTransport.set(null);
+	_videoProducer = null!;
+	videoProducer.set(null);
+	_audioProducer = null!;
+	audioProducer.set(null);
+	_localMediaStream = null!;
+	localMediaStream.set(null);
+}
+
+/** Creates a consumer for a remote track from the given peer and for the given media tag */
 export async function subscribeToTrack(peerId: string, mediaTag: MediaTag) {
 	// Create a receiver transport if we don't already have one
 	if (!_recvTransport) {
@@ -309,13 +330,13 @@ export async function subscribeToTrack(peerId: string, mediaTag: MediaTag) {
 	// method
 	const existingConsumer = _findConsumerForTrack(peerId, mediaTag);
 	if (existingConsumer) {
-		console.error("already have consumer for track", peerId, mediaTag);
+		console.warn("[MS] There is already a consumer for this track", peerId, mediaTag);
 		return;
 	}
 
 	console.log(`[Room] Subscribing to ${mediaTag} track from ${peerId}`);
 
-	// ask the server to create a server-side consumer object and send
+	// Ask the server to create a server-side consumer object and send
 	// us back the info we need to create a client-side consumer
 	const consumerParameters = await roomClient.recvTrack.mutate({
 		mediaTag,
@@ -336,87 +357,35 @@ export async function subscribeToTrack(peerId: string, mediaTag: MediaTag) {
 	// until we're connected, then send a resume request to the server
 	// to get our first keyframe and start displaying video
 	while (_recvTransport.connectionState !== "connected") {
-		console.log("[MS] transport connstate", _recvTransport.connectionState);
-		await sleep(100);
+		console.log("[MS] transport connection state is ", _recvTransport.connectionState);
+		await _sleep(100);
 	}
 
-	// okay, we're ready. let's ask the peer to send us media
+	// Okay, we're ready. let's ask the peer to send us media
 	await resumeConsumer(consumer);
 
-	// keep track of all our consumers
-	consumers.push(consumer);
-	consumersStore.set([...consumers]);
+	// Keep track of all our consumers
+	_consumers.push(consumer);
 }
 
-export async function unsubscribeFromTrack(peerId: string, mediaTag: string) {
-	try {
-		const consumer = _findConsumerForTrack(peerId, mediaTag);
-		if (!consumer) {
-			return;
-		}
-		console.log("unsubscribe from track", peerId, mediaTag);
-		await closeConsumer(consumer);
-	} catch (e) {
-		console.error(e);
+/** Removes the consumer for a remote track from the given peer and for the given media tag */
+export async function unsubscribeFromTrack(peerId: string, mediaTag: MediaTag) {
+	const consumer = _findConsumerForTrack(peerId, mediaTag);
+	if (!consumer) {
+		console.warn("[MS] No consumer exists for this track", peerId, mediaTag);
+		return;
 	}
+	console.log("[MS] unsubscribing from track", peerId, mediaTag);
+	await closeConsumer(consumer);
 }
 
-export async function pauseConsumer(consumer: MediaSoup.types.Consumer) {
-	if (consumer) {
-		try {
-			console.log("pause consumer", consumer.appData.peerId, consumer.appData.mediaTag);
-			await roomClient.pauseConsumer.mutate({ consumerId: consumer.id });
-			consumer.pause();
-		} catch (e) {
-			console.error(e);
-		}
-	}
-}
-
-export async function resumeConsumer(consumer: MediaSoup.types.Consumer) {
-	if (consumer) {
-		try {
-			console.log("resume consumer", consumer.appData.peerId, consumer.appData.mediaTag);
-			await roomClient.resumeConsumer.mutate({ consumerId: consumer.id });
-			consumer.resume();
-		} catch (e) {
-			console.error(e);
-		}
-	}
-}
-
-export async function pauseAllConsumers() {
-	console.log("pausing all consumers");
-	for (const consumer of consumers) {
-		if (!consumer.paused) {
-			await pauseConsumer(consumer);
-		}
-	}
-}
-
-export async function resumeAllConsumers() {
-	console.log("resuming all consumers");
-	for (const consumer of consumers) {
-		if (consumer.paused) {
-			await resumeConsumer(consumer);
-		}
-	}
-}
-
-export async function closeAllConsumers() {
-	console.log("closing all consumers");
-	const consumersToClose = [...consumers];
-	for (const consumer of consumersToClose) {
-		await closeConsumer(consumer);
-	}
-}
-
-export function getConsumerStats() {
-	const total = consumers.length;
-	const paused = consumers.filter((c) => c.paused).length;
+/** Returns a statistics object for remote peers and local consumers */
+export function getTrackStats() {
+	const total = _consumers.length;
+	const paused = _consumers.filter((c) => c.paused).length;
 	const active = total - paused;
-	const video = consumers.filter((c) => c.appData.mediaTag?.includes("video")).length;
-	const audio = consumers.filter((c) => c.appData.mediaTag?.includes("audio")).length;
+	const video = _consumers.filter((c) => c.appData.mediaTag?.includes("video")).length;
+	const audio = _consumers.filter((c) => c.appData.mediaTag?.includes("audio")).length;
 
 	return {
 		total,
@@ -427,22 +396,73 @@ export function getConsumerStats() {
 	};
 }
 
-export async function pauseProducer(producer: MediaSoup.types.Producer) {
-	if (producer) {
-		try {
-			console.log("pause producer", producer.appData.mediaTag);
-			await roomClient.pauseProducer.mutate({ producerId: producer.id });
-			producer.pause();
-		} catch (e) {
-			console.error(e);
+/** Pauses the given consumer */
+export async function pauseConsumer(consumer: Consumer) {
+	console.log("[MS] Pausing consumer for track", consumer.appData.peerId, consumer.appData.mediaTag);
+	await roomClient.pauseConsumer.mutate({ consumerId: consumer.id });
+	consumer.pause();
+}
+
+/** Resumes the given paused consumer */
+export async function resumeConsumer(consumer: Consumer) {
+	console.log("[MS] Resuming the consumer for track", consumer.appData.peerId, consumer.appData.mediaTag);
+	await roomClient.resumeConsumer.mutate({ consumerId: consumer.id });
+	consumer.resume();
+}
+
+/** Closes and remove the given consumer */
+export async function closeConsumer(consumer: Consumer) {
+	console.log("[MS] Closing the consumer for track", consumer.appData.peerId, consumer.appData.mediaTag);
+
+	// Tell the server we're closing this consumer. (the server-side
+	// consumer may have been closed already, but that's okay.)
+	await roomClient.closeConsumer.mutate({ consumerId: consumer.id });
+	consumer.close();
+
+	_consumers = _consumers.filter(({ id }) => id !== consumer.id);
+	consumersStore.set([..._consumers]);
+}
+
+/** Pauses all active consumers */
+export async function pauseAllConsumers() {
+	for (const consumer of _consumers) {
+		if (!consumer.paused) {
+			await pauseConsumer(consumer);
 		}
 	}
 }
 
-export async function resumeProducer(producer: MediaSoup.types.Producer) {
-	if (producer) {
+/** Resumes all paused consumers */
+export async function resumeAllConsumers() {
+	for (const consumer of _consumers) {
+		if (consumer.paused) {
+			await resumeConsumer(consumer);
+		}
+	}
+}
+
+/** Closes all consumers */
+export async function closeAllConsumers() {
+	const consumersToClose = [..._consumers];
+	for (const consumer of consumersToClose) {
+		await closeConsumer(consumer);
+	}
+}
+
+/** Pauses the given producer */
+export async function pauseProducer(producer: Producer) {
+	if (!producer.paused) {
+		console.log("[MS] Pausing producer for", producer.appData.mediaTag);
+		await roomClient.pauseProducer.mutate({ producerId: producer.id });
+		producer.pause();
+	}
+}
+
+/** Resumes the given producer if paused */
+export async function resumeProducer(producer: Producer) {
+	if (producer.paused) {
 		try {
-			console.log("resume producer", producer.appData.mediaTag);
+			console.log("[MS]Resuming producer for", producer.appData.mediaTag);
 			await roomClient.resumeProducer.mutate({ producerId: producer.id });
 			producer.resume();
 		} catch (e) {
@@ -451,32 +471,13 @@ export async function resumeProducer(producer: MediaSoup.types.Producer) {
 	}
 }
 
-async function closeConsumer(consumer: MediaSoup.types.Consumer) {
-	try {
-		if (!consumer) {
-			return;
-		}
-		console.log("closing consumer", consumer.appData.peerId, consumer.appData.mediaTag);
-
-		// tell the server we're closing this consumer. (the server-side
-		// consumer may have been closed already, but that's okay.)
-		await roomClient.closeConsumer.mutate({ consumerId: consumer.id });
-		consumer.close();
-
-		consumers = consumers.filter((c) => c !== consumer);
-		consumersStore.set([...consumers]);
-	} catch (e) {
-		console.error(e);
-	}
-}
-
 /** Utility function to create a transport and hook up signaling logic appropriate to the transport's direction */
-async function _createTransport(direction: "send" | "recv"): Promise<Transport> {
+async function _createTransport(direction: TransportDirection): Promise<Transport> {
 	console.log(`[MS] Creating ${direction}-transport`);
 
 	// Ask the server to create a server-side transport object and send
 	// us back the info we need to create a client-side transport
-	let transport: MediaSoup.types.Transport<ExtendedAppData>;
+	let transport: MediaSoup.types.Transport<CustomAppData>;
 	const { transportOptions } = await roomClient.createTransport.mutate({ direction });
 
 	if (direction === "recv") {
@@ -514,14 +515,14 @@ async function _createTransport(direction: "send" | "recv"): Promise<Transport> 
 	if (direction === "send") {
 		transport.on("produce", (params, resolve, reject) => {
 			const { kind, rtpParameters } = params;
-			const appData = params.appData as ExtendedAppData;
+			const appData = params.appData as CustomAppData;
 			console.log("[MS] transport produce event", appData);
 
 			// Respect the current paused status
 			let paused = true;
 			if (appData.mediaTag === "cam-video") {
 				paused = _camPaused;
-			} else if (appData.mediaTag === "cam-audio") {
+			} else if (appData.mediaTag === "mic-audio") {
 				paused = _micPaused;
 			}
 
@@ -566,78 +567,19 @@ async function _createTransport(direction: "send" | "recv"): Promise<Transport> 
 
 /** Utility function for finding a consumer matching the given peerId and mediaTag */
 function _findConsumerForTrack(peerId: string, mediaTag: MediaTag): Consumer | undefined {
-	return consumers.find((c) => c.appData.peerId === peerId && c.appData.mediaTag === mediaTag);
+	return _consumers.find((c) => c.appData.peerId === peerId && c.appData.mediaTag === mediaTag);
 }
 
 /** Utility function for sorting peers by join time */
 function _sortPeers(peers: Record<string, Peer>): Array<Peer> {
-	return Object.entries(peers)
-		.map(([id, info]) => ({ id, joinTs: info.joinTs, media: { ...info.media } }))
-		.sort((a, b) => (a.joinTs > b.joinTs ? 1 : b.joinTs > a.joinTs ? -1 : 0));
+	return Object.values(peers).sort((a, b) => (a.joinTs > b.joinTs ? 1 : b.joinTs > a.joinTs ? -1 : 0));
 }
 
-//
-// These functions are placeholders that replace the UI interactions
-// They can be modified to provide appropriate behavior as needed
-//
-
-// export async function changeCamPaused(paused?: boolean) {
-// 	camPausedState = paused !== undefined ? paused : !camPausedState;
-// 	if (camPausedState) {
-// 		await pauseProducer(camVideoProducer);
-// 	} else {
-// 		await resumeProducer(camVideoProducer);
-// 	}
-// }
-
-// export async function changeMicPaused(paused?: boolean) {
-// 	micPausedState = paused !== undefined ? paused : !micPausedState;
-// 	if (micPausedState) {
-// 		await pauseProducer(camAudioProducer);
-// 	} else {
-// 		await resumeProducer(camAudioProducer);
-// 	}
-// }
-
-export async function getCurrentDeviceId() {
-	if (!_videoProducer || !_videoProducer.track) {
-		return null;
-	}
-	const deviceId = _videoProducer.track.getSettings().deviceId;
-	if (deviceId) {
-		return deviceId;
-	}
-	// Firefox doesn't have deviceId in MediaTrackSettings object
-	const track = _localMediaStream && _localMediaStream.getVideoTracks()[0];
-	if (!track) {
-		return null;
-	}
-	const devices = await navigator.mediaDevices.enumerateDevices();
-	const deviceInfo = devices.find((d) => d.label.startsWith(track.label));
-	return deviceInfo ? deviceInfo.deviceId : null;
-}
-
-//
-// encodings for outgoing video
-//
-
-// just two resolutions, for now, as chrome 75 seems to ignore more
-// than two encodings
-const CAM_VIDEO_SIMULCAST_ENCODINGS = [
-	{ maxBitrate: 96000, scaleResolutionDownBy: 4 },
-	{ maxBitrate: 680000, scaleResolutionDownBy: 1 },
-];
-
-function camEncodings() {
-	return CAM_VIDEO_SIMULCAST_ENCODINGS;
-}
-
-//
-// promisified sleep
-//
-async function sleep(ms: number) {
+/** Utility function to sleep for a given number of milliseconds */
+async function _sleep(ms: number) {
 	return new Promise<void>((r) => setTimeout(() => r(), ms));
 }
+
 // // switch to sending video from the "next" camera device in our device
 // // list (if we have multiple cameras)
 // export async function cycleCamera() {
@@ -677,4 +619,21 @@ async function sleep(ms: number) {
 // 	// replace the tracks we are sending
 // 	await _videoProducer.replaceTrack({ track: _localMediaStream.getVideoTracks()[0] });
 // 	await _audioProducer.replaceTrack({ track: _localMediaStream.getAudioTracks()[0] });
+// }
+// export async function getCurrentDeviceId() {
+// 	if (!_videoProducer || !_videoProducer.track) {
+// 		return null;
+// 	}
+// 	const deviceId = _videoProducer.track.getSettings().deviceId;
+// 	if (deviceId) {
+// 		return deviceId;
+// 	}
+// 	// Firefox doesn't have deviceId in MediaTrackSettings object
+// 	const track = _localMediaStream && _localMediaStream.getVideoTracks()[0];
+// 	if (!track) {
+// 		return null;
+// 	}
+// 	const devices = await navigator.mediaDevices.enumerateDevices();
+// 	const deviceInfo = devices.find((d) => d.label.startsWith(track.label));
+// 	return deviceInfo ? deviceInfo.deviceId : null;
 // }

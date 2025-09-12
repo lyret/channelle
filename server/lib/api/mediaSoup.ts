@@ -1,22 +1,21 @@
 import * as MediaSoup from "mediasoup";
 
-let _router: MediaSoup.types.Router<ExtendedAppData> | undefined;
-let _worker: MediaSoup.types.Worker<ExtendedAppData> | undefined;
+/** Tag for identifying the type of media transmitted in a MediaSoup transport */
+export type MediaTag = "cam-video" | "mic-audio";
 
-/** MediaSoup App Data Tags for identifying the type of media transmitted */
-export type MediaTag = "cam-video" | "cam-audio";
+/** For identifying the direction of media transmission in a MediaSoup transport */
+export type TransportDirection = "send" | "recv";
 
-/** MediaSoup App Data */
-export interface ExtendedAppData extends MediaSoup.types.AppData {
+/** Customized MediaSoup App Data for the the entire application */
+export interface CustomAppData extends MediaSoup.types.AppData {
+	/** Identifies the peer that is sending the media */
 	peerId: string;
+	/** Identifies the type of media transmitted */
 	mediaTag: MediaTag;
-	clientDirection?: any;
 }
 
-// interface ConsumerAppData extends MediaSoup.types.AppData {
-// 	peerId: string;
-// 	mediaTag: string;
-// }
+let _router: MediaSoup.types.Router<CustomAppData> | undefined;
+let _worker: MediaSoup.types.Worker<CustomAppData> | undefined;
 
 /** Returns the global MediaSoup worker and media router pair  */
 export async function mediaSoup() {
@@ -41,7 +40,7 @@ export async function mediaSoupWorker() {
 	}
 
 	// Create the worker
-	_worker = await MediaSoup.createWorker<ExtendedAppData>({
+	_worker = await MediaSoup.createWorker<CustomAppData>({
 		logLevel: CONFIG.mediasoup.worker.logLevel as MediaSoup.types.WorkerLogLevel,
 		logTags: CONFIG.mediasoup.worker.logTags as MediaSoup.types.WorkerLogTag[],
 		rtcMinPort: CONFIG.mediasoup.worker.rtcMinPort,

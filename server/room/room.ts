@@ -1,11 +1,15 @@
 import type * as MediaSoup from "mediasoup";
-import type { ExtendedAppData, MediaTag } from "../lib/api/mediaSoup";
+import type { CustomAppData, MediaTag, Room, Transport, Producer, Consumer } from "./types";
 import { BroadcastChannel } from "broadcast-channel";
 import { TRPCError } from "@trpc/server";
 import { trcp, mediaSoupRouter } from "../lib/api";
 import { z } from "zod";
 
+/** HTTP peer stale timeout in milliseconds. */
 const HTTP_PEER_STALE = 15000;
+
+// Get the trcp router constructor and default procedure
+const { router: trcpRouter, procedure: trcpProcedure } = trcp();
 
 // Handle incomming debugging messages from the cli over trpc
 // TODO: Move to a separate router
@@ -26,57 +30,23 @@ if (CONFIG.runtime.debug) {
 	});
 }
 
-const { router: trcpRouter, procedure: trcpProcedure } = trcp();
-
-export type Peer = {
-	lastSeenTs: number;
-	joinTs: number;
-	media: Record<MediaTag, any>;
-	consumerLayers: any;
-	stats: any;
-};
-
-/**
- * Internally, we keep lists of transports, producers, and
- * consumers. whenever we create a transport, producer, or consumer,
- * we save the remote peerId in the object's `appData`. for producers
- * and consumers we also keep track of the client-side "media tag", to
- * correlate tracks.
- */
-type Room = {
-	peers: Record<string, Peer>;
-	activeSpeaker: {
-		producerId: string | null;
-		volume: number | null;
-		peerId: string | null;
-	};
-	// internal
-	transports: {
-		[id: string]: MediaSoup.types.WebRtcTransport<ExtendedAppData>;
-	};
-	producers: {
-		[id: string]: MediaSoup.types.Producer<ExtendedAppData>;
-	};
-	consumers: {
-		[id: string]: MediaSoup.types.Consumer<ExtendedAppData>;
-	};
-};
-
+/** Internal state */
 const _room: Room = {
-	// External
+	// Connections
 	peers: {},
 	activeSpeaker: {
 		producerId: null,
 		volume: null,
 		peerId: null,
 	},
-	// Internal
+	// MediaSoup
 	transports: {},
 	producers: {},
 	consumers: {},
 };
 
-// make sure this peer is connected. if we've disconnected the
+// Peer connection procedure
+// Make sure this peer is connected. if we've disconnected the
 // peer because of a network outage we want the peer to know that
 // happened, when/if it returns
 const roomProcedure = trcpProcedure.use(async ({ ctx, next }) => {
@@ -91,8 +61,13 @@ const roomProcedure = trcpProcedure.use(async ({ ctx, next }) => {
 	return next({ ctx });
 });
 
+/**
+ * Room Router
+ * Handles server and client communication for orchastrating peer to peer media transmission
+ */
 export const roomRouter = trcpRouter({
-	// client polling endpoint. send back our 'peers' data structure and
+	// Sync
+	// Client polling endpoint. send back our 'peers' data structure and
 	// 'activeSpeaker' info
 	sync: roomProcedure.query(async () => {
 		return {
@@ -101,6 +76,7 @@ export const roomRouter = trcpRouter({
 			activeSpeaker: _room.activeSpeaker,
 		};
 	}),
+	// Join
 	// Adds the peer to the room data structure and creates a
 	// transport that the peer will use for receiving media. returns
 	// router rtpCapabilities for mediasoup-client device initialization
@@ -123,20 +99,22 @@ export const roomRouter = trcpRouter({
 		console.log("[Room]", ctx.peer.id, "joined as new peer");
 		return { peerId: ctx.peer.id, routerRtpCapabilities: msRouter.rtpCapabilities };
 	}),
+	// Leave
 	// Removes the peer from the room data structure and and closes
 	// all associated mediasoup objects
 	leave: roomProcedure.mutation(async ({ ctx }) => {
 		const peerId = ctx.peer.id;
-		closePeer(peerId);
-		console.log("[Room] peer", peerId, "left");
+		_closePeer(peerId);
+		console.log("[Room] Peer", peerId, "left");
 		return;
 	}),
+	// Create Transport
 	// Create a mediasoup transport object and send back info needed
 	// to create a transport object on the client side
 	createTransport: roomProcedure.input(z.object({ direction: z.string() })).mutation(async ({ ctx, input: { direction } }) => {
-		console.log("create-transport", ctx.peer.id, direction);
+		console.log(`[MS] Creating a ${direction} transport for peer ${ctx.peer.id}`);
 
-		const transport = await createWebRtcTransport({ peerId: ctx.peer.id, direction });
+		const transport = await _createWebRtcTransport({ peerId: ctx.peer.id, direction });
 		_room.transports[transport.id] = transport;
 
 		const { id, iceParameters, iceCandidates, dtlsParameters } = transport;
@@ -144,6 +122,7 @@ export const roomRouter = trcpRouter({
 			transportOptions: { id, iceParameters, iceCandidates, dtlsParameters },
 		};
 	}),
+	// Connect Transport
 	// Called from inside a client's `transport.on('connect')` event
 	// handler.
 	connectTransport: roomProcedure
@@ -155,11 +134,12 @@ export const roomRouter = trcpRouter({
 				throw new TRPCError({ code: "NOT_FOUND", message: `server-side transport ${transportId} not found` });
 			}
 
-			console.log("connect-transport", ctx.peer.id, transport.appData);
+			console.log(`[MS] Connecting a ${transport.appData.clientDirection} transport for ${ctx.peer.id} to ${transport.appData.peerId}`);
 
 			await transport.connect({ dtlsParameters });
 			return { connected: true };
 		}),
+	// Close Transport
 	// Called by a client that wants to close a single transport (for
 	// example, a client that is no longer sending any media).
 	closeTransport: roomProcedure.input(z.object({ transportId: z.string() })).mutation(async ({ ctx, input: { transportId } }) => {
@@ -169,12 +149,12 @@ export const roomRouter = trcpRouter({
 			throw new TRPCError({ code: "NOT_FOUND", message: `server-side transport ${transportId} not found` });
 		}
 
-		console.log("close-transport", ctx.peer.id, transport.appData);
+		console.log("[MS] Closing transport for", ctx.peer.id);
 
-		await closeTransport(transport);
+		await _closeTransport(transport);
 		return { closed: true };
 	}),
-
+	// Send Track
 	// Called from inside a client's `transport.on('produce')` event handler.
 	sendTrack: roomProcedure
 		.input(
@@ -183,7 +163,7 @@ export const roomRouter = trcpRouter({
 				kind: z.custom<MediaSoup.types.MediaKind>(),
 				rtpParameters: z.custom<MediaSoup.types.RtpParameters>(),
 				paused: z.boolean().default(true),
-				appData: z.custom<ExtendedAppData>(),
+				appData: z.custom<CustomAppData>(),
 			}),
 		)
 		.mutation(async ({ ctx, input: { transportId, kind, rtpParameters, paused, appData } }) => {
@@ -202,8 +182,8 @@ export const roomRouter = trcpRouter({
 
 			// If our associated transport closes, close ourself, too
 			producer.on("transportclose", () => {
-				console.log("producer's transport closed", producer.id);
-				closeProducer(producer);
+				console.log(`[MS] Producer's (${producer.id}) transport closed`);
+				_closeProducer(producer);
 			});
 
 			// Monitor audio level of this producer. we call addProducer() here,
@@ -222,6 +202,7 @@ export const roomRouter = trcpRouter({
 
 			return { id: producer.id };
 		}),
+	// Receive Track
 	// Create a mediasoup consumer object, hook it up to a producer here
 	// on the server side, and send back info needed to create a consumer
 	// object on the client side. always start consumers paused. client
@@ -258,12 +239,12 @@ export const roomRouter = trcpRouter({
 			// to make sure we close and clean up consumers in all
 			// circumstances
 			consumer.on("transportclose", () => {
-				console.log("consumer's transport closed", consumer.id);
-				closeConsumer(consumer);
+				console.log(`[MS] Consumer's (${consumer.id}) transport closed`);
+				_closeConsumer(consumer);
 			});
 			consumer.on("producerclose", () => {
-				console.log("consumer's producer closed", consumer.id);
-				closeConsumer(consumer);
+				console.log(`[MS] Consumer's (${consumer.id}) producer closed`);
+				_closeConsumer(consumer);
 			});
 
 			// Stick this consumer in our list of consumers to keep track of,
@@ -277,7 +258,7 @@ export const roomRouter = trcpRouter({
 
 			// Update above data structure when layer changes.
 			consumer.on("layerschange", (layers) => {
-				console.log(`consumer layerschange ${mediaPeerId}->${ctx.peer.id}`, mediaTag, layers);
+				console.log(`[MS] Consumer layers changed ${mediaPeerId}->${ctx.peer.id}`, mediaTag, layers);
 				if (_room.peers[ctx.peer.id] && _room.peers[ctx.peer.id].consumerLayers[consumer.id]) {
 					_room.peers[ctx.peer.id].consumerLayers[consumer.id].currentLayer = layers && layers.spatialLayer;
 				}
@@ -292,6 +273,7 @@ export const roomRouter = trcpRouter({
 				producerPaused: consumer.producerPaused,
 			};
 		}),
+	// Pause Consumer
 	// Called to pause receiving a track for a specific client
 	pauseConsumer: roomProcedure.input(z.object({ consumerId: z.string() })).mutation(async ({ input: { consumerId } }) => {
 		const consumer = _room.consumers[consumerId];
@@ -300,12 +282,13 @@ export const roomRouter = trcpRouter({
 			throw new TRPCError({ code: "NOT_FOUND", message: `server-side consumer ${consumerId} not found` });
 		}
 
-		console.log("pause-consumer", consumer.appData);
+		console.log("[MS] Paused consumer for track", consumer.appData.peerId, consumer.appData.mediaTag);
 
 		await consumer.pause();
 
 		return { paused: true };
 	}),
+	// Resume Consumer
 	// Called to resume receiving a track for a specific client
 	resumeConsumer: roomProcedure.input(z.object({ consumerId: z.string() })).mutation(async ({ input: { consumerId } }) => {
 		const consumer = _room.consumers[consumerId];
@@ -314,12 +297,13 @@ export const roomRouter = trcpRouter({
 			throw new TRPCError({ code: "NOT_FOUND", message: `server-side consumer ${consumerId} not found` });
 		}
 
-		console.log("resume-consumer", consumer.appData);
+		console.log("[MS] Resumed consumer for track", consumer.appData.peerId, consumer.appData.mediaTag);
 
 		await consumer.resume();
 
 		return { resumed: true };
 	}),
+	// Close Consumer
 	// Called to stop receiving a track for a specific client. close and
 	// clean up consumer object
 	closeConsumer: roomProcedure.input(z.object({ consumerId: z.string() })).mutation(async ({ input: { consumerId } }) => {
@@ -329,10 +313,11 @@ export const roomRouter = trcpRouter({
 			throw new TRPCError({ code: "NOT_FOUND", message: `server-side consumer ${consumerId} not found` });
 		}
 
-		await closeConsumer(consumer);
+		await _closeConsumer(consumer);
 
 		return { closed: true };
 	}),
+	// Consumer Set Layers
 	// Called to set the largest spatial layer that a specific client
 	// wants to receive
 	consumerSetLayers: roomProcedure
@@ -344,12 +329,13 @@ export const roomRouter = trcpRouter({
 				throw new TRPCError({ code: "NOT_FOUND", message: `server-side consumer ${consumerId} not found` });
 			}
 
-			console.log("consumer-set-layers", spatialLayer, consumer.appData);
+			console.log("[MS] Setting consumer layers", spatialLayer, consumer.appData);
 
 			await consumer.setPreferredLayers({ spatialLayer });
 
 			return { layersSet: true };
 		}),
+	// Pause Producer
 	// Called to stop sending a track from a specific client
 	pauseProducer: roomProcedure.input(z.object({ producerId: z.string() })).mutation(async ({ ctx, input: { producerId } }) => {
 		const producer = _room.producers[producerId];
@@ -358,7 +344,7 @@ export const roomRouter = trcpRouter({
 			throw new TRPCError({ code: "NOT_FOUND", message: `server-side producer ${producerId} not found` });
 		}
 
-		console.log("pause-producer", producer.appData);
+		console.log("[MS] Paused producer", producer.appData);
 
 		await producer.pause();
 
@@ -366,7 +352,7 @@ export const roomRouter = trcpRouter({
 
 		return { paused: true };
 	}),
-
+	// Resume Producer
 	// Called to resume sending a track from a specific client
 	resumeProducer: roomProcedure.input(z.object({ producerId: z.string() })).mutation(async ({ ctx, input: { producerId } }) => {
 		const producer = _room.producers[producerId];
@@ -375,7 +361,7 @@ export const roomRouter = trcpRouter({
 			throw new TRPCError({ code: "NOT_FOUND", message: `server-side producer ${producerId} not found` });
 		}
 
-		console.log("[Room] resume-producer", producer.appData);
+		console.log("[MS] Resumed producer", producer.appData);
 
 		producer.resume();
 
@@ -383,6 +369,7 @@ export const roomRouter = trcpRouter({
 
 		return { resumed: true };
 	}),
+	// Close Producer
 	// Called by a client that is no longer sending a specific track
 	closeProducer: roomProcedure.input(z.object({ producerId: z.string() })).mutation(async ({ ctx, input: { producerId } }) => {
 		const producer = _room.producers[producerId];
@@ -391,101 +378,29 @@ export const roomRouter = trcpRouter({
 			throw new TRPCError({ code: "NOT_FOUND", message: `server-side producer ${producerId} not found` });
 		}
 
-		console.log("close-producer", ctx.peer.id, producer.appData);
+		console.log("[MS] Closed producer", ctx.peer.id, producer.appData);
 
-		await closeProducer(producer);
+		await _closeProducer(producer);
 		return { closed: true };
 	}),
 });
+
+/** Room Router Definition */
 export type RoomRouter = typeof roomRouter;
 
-function closePeer(peerId: string) {
-	console.log("closing peer", peerId);
-	for (const transport of Object.values(_room.transports)) {
-		if (transport.appData.peerId === peerId) {
-			closeTransport(transport);
-		}
-	}
-	delete _room.peers[peerId];
-}
-
-async function closeTransport(transport: MediaSoup.types.WebRtcTransport<ExtendedAppData>) {
-	try {
-		console.log("closing transport", transport.id, transport.appData);
-
-		// our producer and consumer event handlers will take care of
-		// calling closeProducer() and closeConsumer() on all the producers
-		// and consumers associated with this transport
-		transport.close();
-
-		// so all we need to do, after we call transport.close(), is update
-		// our _room data structure
-		delete _room.transports[transport.id];
-	} catch (e) {
-		console.error(e);
-	}
-}
-
-async function closeProducer(producer: MediaSoup.types.Producer<ExtendedAppData>) {
-	console.log("closing producer", producer.id, producer.appData);
-	try {
-		producer.close();
-
-		// Remove this producer from our room.producers list
-		_room.producers = Object.fromEntries(Object.entries(_room.producers).filter(([, p]) => p.id !== producer.id));
-
-		// remove this track's info from our room...mediaTag bookkeeping
-		if (_room.peers[producer.appData.peerId]) {
-			delete _room.peers[producer.appData.peerId].media[producer.appData.mediaTag];
-		}
-	} catch (e) {
-		console.error(e);
-	}
-}
-
-async function closeConsumer(consumer: MediaSoup.types.Consumer<ExtendedAppData>) {
-	console.log("closing consumer", consumer.id, consumer.appData);
-	consumer.close();
-
-	// Remove this consumer from our _room.consumers list
-	_room.consumers = Object.fromEntries(Object.entries(_room.consumers).filter(([, c]) => c.id !== consumer.id));
-
-	// Remove layer info from from our _room...consumerLayers bookkeeping
-	if (_room.peers[consumer.appData.peerId]) {
-		delete _room.peers[consumer.appData.peerId].consumerLayers[consumer.id];
-	}
-}
-
-async function createWebRtcTransport({ peerId, direction }) {
-	const { listenInfos, initialAvailableOutgoingBitrate } = CONFIG.mediasoup.webRTCTransport;
-
-	const _router = await mediaSoupRouter();
-	const transport = await _router.createWebRtcTransport({
-		listenInfos: listenInfos,
-		enableUdp: true,
-		enableTcp: true,
-		preferUdp: true,
-		initialAvailableOutgoingBitrate: initialAvailableOutgoingBitrate,
-		appData: { peerId, clientDirection: direction },
-	});
-
-	return transport;
-}
-
-// Periodically clean up peers that disconnected without sending us
-// a leaving message
+/** Intervalled function run to periodically clean up peers that disconnected without sending us a leaving message */
 async function removeStalePeers() {
 	const now = Date.now();
 	for (const [id, peer] of Object.entries(_room.peers)) {
 		if (now - peer.lastSeenTs > HTTP_PEER_STALE) {
-			console.warn(`removing stale peer ${id}`);
-			closePeer(id);
+			console.log(`[Room] Removing stale peer ${id}`);
+			_closePeer(id);
 		}
 	}
 }
 setInterval(removeStalePeers, 1000);
 
-// Periodically update video stats we're sending to peers
+/** Intervalled function to update video statistics that we're sending to peers */
 async function updatePeerStats() {
 	for (const producer of Object.values(_room.producers)) {
 		if (producer.kind !== "video") {
@@ -505,7 +420,7 @@ async function updatePeerStats() {
 				});
 			});
 		} catch (e) {
-			console.warn("error while updating producer stats", e);
+			console.warn("[MS] Error while updating producer stats", e);
 		}
 	}
 
@@ -522,13 +437,13 @@ async function updatePeerStats() {
 				score: stats.score,
 			};
 		} catch (e) {
-			console.warn("error while updating consumer stats", e);
+			console.warn("[MS] Error while updating consumer stats", e);
 		}
 	}
 }
 setInterval(updatePeerStats, 3000);
 
-// Create an Audio Level Observer for signaling active speakers
+/** Creates an Audio Level Observer for signaling active speakers */
 async function observeActiveSpeakers() {
 	const _router = await mediaSoupRouter();
 	const audioLevelObserver = await _router.createAudioLevelObserver({
@@ -536,16 +451,94 @@ async function observeActiveSpeakers() {
 	});
 	audioLevelObserver.on("volumes", (volumes) => {
 		const { producer, volume } = volumes[0];
-		console.log("audio-level volumes event", producer.appData.peerId, volume);
+		console.log("[MS] Audio-level volumes event", producer.appData.peerId, volume);
 		_room.activeSpeaker.producerId = producer.id;
 		_room.activeSpeaker.volume = volume;
-		_room.activeSpeaker.peerId = (producer.appData as ExtendedAppData).peerId;
+		_room.activeSpeaker.peerId = (producer.appData as CustomAppData).peerId;
 	});
 	audioLevelObserver.on("silence", () => {
-		console.log("audio-level silence event");
+		console.log("[MS] Audio-level silence event");
 		_room.activeSpeaker.producerId = null;
 		_room.activeSpeaker.volume = null;
 		_room.activeSpeaker.peerId = null;
 	});
 }
 observeActiveSpeakers();
+
+/** Utility function to closing the transports related to a given peer */
+function _closePeer(peerId: string) {
+	console.log("[MS] closing peer", peerId);
+	for (const transport of Object.values(_room.transports)) {
+		if (transport.appData.peerId === peerId) {
+			_closeTransport(transport);
+		}
+	}
+	delete _room.peers[peerId];
+}
+
+/** Utility function to close a given transport */
+async function _closeTransport(transport: Transport) {
+	try {
+		console.log("[MS] Closing transport", transport.id, transport.appData);
+
+		// our producer and consumer event handlers will take care of
+		// calling closeProducer() and closeConsumer() on all the producers
+		// and consumers associated with this transport
+		transport.close();
+
+		// so all we need to do, after we call transport.close(), is update
+		// our _room data structure
+		delete _room.transports[transport.id];
+	} catch (e) {
+		console.error(e);
+	}
+}
+
+/** Utility function to close a given producer */
+async function _closeProducer(producer: Producer) {
+	console.log("[MS] Closing producer", producer.id, producer.appData);
+	try {
+		producer.close();
+
+		// Remove this producer from our room.producers list
+		_room.producers = Object.fromEntries(Object.entries(_room.producers).filter(([, p]) => p.id !== producer.id));
+
+		// remove this track's info from our room...mediaTag bookkeeping
+		if (_room.peers[producer.appData.peerId]) {
+			delete _room.peers[producer.appData.peerId].media[producer.appData.mediaTag];
+		}
+	} catch (e) {
+		console.error(e);
+	}
+}
+
+/** Utility function to close a given consumer */
+async function _closeConsumer(consumer: Consumer) {
+	console.log("[MS] Closing consumer", consumer.id, consumer.appData);
+	consumer.close();
+
+	// Remove this consumer from our _room.consumers list
+	_room.consumers = Object.fromEntries(Object.entries(_room.consumers).filter(([, c]) => c.id !== consumer.id));
+
+	// Remove layer info from from our _room...consumerLayers bookkeeping
+	if (_room.peers[consumer.appData.peerId]) {
+		delete _room.peers[consumer.appData.peerId].consumerLayers[consumer.id];
+	}
+}
+
+/** Utility function to create a WebRTC Transport */
+async function _createWebRtcTransport({ peerId, direction }): Promise<Transport> {
+	const { listenInfos, initialAvailableOutgoingBitrate } = CONFIG.mediasoup.webRTCTransport;
+
+	const _router = await mediaSoupRouter();
+	const transport = await _router.createWebRtcTransport({
+		listenInfos: listenInfos,
+		enableUdp: true,
+		enableTcp: true,
+		preferUdp: true,
+		initialAvailableOutgoingBitrate: initialAvailableOutgoingBitrate,
+		appData: { peerId, clientDirection: direction },
+	});
+
+	return transport;
+}
