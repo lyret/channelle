@@ -2,30 +2,35 @@ import DeepEqual from "deep-equal";
 import * as MediaSoup from "mediasoup-client";
 import { writable, derived, get } from "svelte/store";
 import { roomClient } from "./room-client";
-import type { ExtendedAppData } from "../../server/lib/api";
+import type { ExtendedAppData, MediaTag } from "../../server/lib/api";
+import type { Peer } from "../../server/room/room";
+
+type Producer = MediaSoup.types.Producer<ExtendedAppData>;
+type Consumer = MediaSoup.types.Consumer<ExtendedAppData>;
+type Transport = MediaSoup.types.Transport<ExtendedAppData>;
 
 // Svelte stores for reactive state
 export const deviceStore = writable<MediaSoup.types.Device | null>(null);
 export const joinedStore = writable(false);
+export const paused = writable(false);
 export const localMediaStream = writable<MediaStream | null>(null);
-export const recvTransportStore = writable<MediaSoup.types.Transport | null>(null);
-export const sendTransport = writable<MediaSoup.types.Transport | null>(null);
-export const videoProducer = writable<MediaSoup.types.Producer | null>(null);
-export const audioProducer = writable<MediaSoup.types.Producer | null>(null);
+export const recvTransportStore = writable<Transport | null>(null);
+export const sendTransport = writable<Transport | null>(null);
+export const videoProducer = writable<Producer | null>(null);
+export const audioProducer = writable<Producer | null>(null);
 export const currentActiveSpeakerStore = writable<{ peerId?: string | null }>({});
-export const consumersStore = writable<MediaSoup.types.Consumer[]>([]);
+export const consumersStore = writable<Consumer[]>([]);
 export const myPeerIdStore = writable<string>("");
 export const peersStore = writable<Record<string, any>>({});
 
 // Internal variables (not reactive) - also exported for console debugging
-export let device: MediaSoup.types.Device;
 
 export let _localMediaStream: MediaStream;
-export let recvTransport: MediaSoup.types.Transport<ExtendedAppData>;
-export let _sendTransport: MediaSoup.types.Transport<ExtendedAppData>;
-export let _videoProducer: MediaSoup.types.Producer;
-export let _audioProducer: MediaSoup.types.Producer;
-export let consumers: MediaSoup.types.Consumer<ExtendedAppData>[] = [];
+export let _recvTransport: Transport;
+export let _sendTransport: Transport;
+export let _videoProducer: Producer;
+export let _audioProducer: Producer;
+export let consumers: Consumer[] = [];
 export let pollingInterval: ReturnType<typeof setInterval>;
 
 // Derived stores for convenience
@@ -51,6 +56,9 @@ let _previousSyncedPeers: Record<string, any> = {};
 /** Keep track of client code rebuilds during development */
 let _localBuildCounter = -1;
 
+/** MediaSoup device */
+export let _device: MediaSoup.types.Device;
+
 /** Join the room */
 export async function joinRoom() {
 	// Signal that we're a new peer and initialize our
@@ -62,10 +70,9 @@ export async function joinRoom() {
 
 	// Initialize the MediaSoup device
 	try {
-		if (!get(deviceStore)) {
-			const device = new MediaSoup.Device();
-			await device.load({ routerRtpCapabilities });
-			deviceStore.set(device);
+		if (!_device) {
+			_device = new MediaSoup.Device();
+			await _device.load({ routerRtpCapabilities });
 		}
 	} catch (err: any) {
 		if (err.name === "UnsupportedError") {
@@ -106,7 +113,7 @@ export async function leaveRoom() {
 	// Closing the transports closes all producers and consumers. we
 	// don't need to do anything beyond closing the transports, except
 	// to set all our local variables to their initial states
-	recvTransport?.close();
+	_recvTransport?.close();
 	_sendTransport?.close();
 
 	_previousSyncedPeers = {};
@@ -127,6 +134,7 @@ export async function leaveRoom() {
 /** State polling and update logic */
 async function syncRoom() {
 	const { peers, activeSpeaker, buildCounter } = await roomClient.sync.query();
+	console.debug({ peers });
 
 	// Reload the window if the build counter has changed during development
 	if (buildCounter > _localBuildCounter && _localBuildCounter != -1) {
@@ -142,8 +150,8 @@ async function syncRoom() {
 	// build list of peers, sorted by join time, removing last
 	// seen time and stats, so we can easily do a deep-equals
 	// comparison. compare this list with the cached list from last poll.
-	const thisPeersList = sortPeers(peers);
-	const lastPeersList = sortPeers(_previousSyncedPeers);
+	const thisPeersList = _sortPeers(peers);
+	const lastPeersList = _sortPeers(_previousSyncedPeers);
 
 	if (!DeepEqual(thisPeersList, lastPeersList)) {
 		// TODO: Remove?
@@ -198,6 +206,7 @@ async function syncRoom() {
 	_previousSyncedPeers = peers;
 }
 
+/** Access the local media streams from the browser */
 export async function startLocalMediaStream(audio: boolean = true, video: boolean = true) {
 	console.log(`[Media] Accessing the local media stream (audio: ${audio ? 1 : 0}, video: ${video ? 1 : 0})`);
 	_localMediaStream = await navigator.mediaDevices.getUserMedia({
@@ -207,6 +216,7 @@ export async function startLocalMediaStream(audio: boolean = true, video: boolea
 	localMediaStream.set(_localMediaStream);
 }
 
+/** Start transporting activated local streams to the server */
 export async function sendMediaStreams() {
 	console.log("[Room] Sending streams");
 
@@ -220,7 +230,7 @@ export async function sendMediaStreams() {
 
 	// Create a transport for outgoing media, if we don't already have one
 	if (!_sendTransport) {
-		_sendTransport = await createTransport("send");
+		_sendTransport = await _createTransport("send");
 		sendTransport.set(_sendTransport);
 	}
 
@@ -259,76 +269,74 @@ export async function sendMediaStreams() {
 	}
 }
 
+//TODO:
 export async function stopStreams() {
-	if (!_localMediaStream) {
-		return;
-	}
-	if (!_sendTransport) {
-		return;
-	}
-
-	console.log("stop sending media streams");
-
-	await roomClient.closeTransport.mutate({ transportId: _sendTransport.id });
-
-	// closing the sendTransport closes all associated producers. when
-	// the camVideoProducer and camAudioProducer are closed,
-	// mediasoup-client stops the local cam tracks, so we don't need to
-	// do anything except set all our local variables to null.
-	try {
-		_sendTransport.close();
-	} catch (e: any) {
-		console.error(e);
-	}
-
-	_sendTransport = null!;
-	sendTransport.set(null);
-	_videoProducer = null!;
-	videoProducer.set(null);
-	_audioProducer = null!;
-	audioProducer.set(null);
-	_localMediaStream = null!;
-	localMediaStream.set(null);
+	// if (!_localMediaStream) {
+	// 	return;
+	// }
+	// if (!_sendTransport) {
+	// 	return;
+	// }
+	// console.log("stop sending media streams");
+	// await roomClient.closeTransport.mutate({ transportId: _sendTransport.id });
+	// // closing the sendTransport closes all associated producers. when
+	// // the camVideoProducer and camAudioProducer are closed,
+	// // mediasoup-client stops the local cam tracks, so we don't need to
+	// // do anything except set all our local variables to null.
+	// try {
+	// 	_sendTransport.close();
+	// } catch (e: any) {
+	// 	console.error(e);
+	// }
+	// _sendTransport = null!;
+	// sendTransport.set(null);
+	// _videoProducer = null!;
+	// videoProducer.set(null);
+	// _audioProducer = null!;
+	// audioProducer.set(null);
+	// _localMediaStream = null!;
+	// localMediaStream.set(null);
 }
 
-export async function subscribeToTrack(peerId: string, mediaTag: string) {
-	console.log("subscribe to track", peerId, mediaTag);
-
-	// create a receive transport if we don't already have one
-	if (!recvTransport) {
-		recvTransport = await createTransport("recv");
-		recvTransportStore.set(recvTransport);
+export async function subscribeToTrack(peerId: string, mediaTag: MediaTag) {
+	// Create a receiver transport if we don't already have one
+	if (!_recvTransport) {
+		_recvTransport = await _createTransport("recv");
+		recvTransportStore.set(_recvTransport);
 	}
 
-	// if we do already have a consumer, we shouldn't have called this
+	// If we do already have a consumer, we shouldn't have called this
 	// method
-	const existingConsumer = findConsumerForTrack(peerId, mediaTag);
+	const existingConsumer = _findConsumerForTrack(peerId, mediaTag);
 	if (existingConsumer) {
 		console.error("already have consumer for track", peerId, mediaTag);
 		return;
 	}
+
+	console.log(`[Room] Subscribing to ${mediaTag} track from ${peerId}`);
 
 	// ask the server to create a server-side consumer object and send
 	// us back the info we need to create a client-side consumer
 	const consumerParameters = await roomClient.recvTrack.mutate({
 		mediaTag,
 		mediaPeerId: peerId,
-		rtpCapabilities: device.rtpCapabilities,
+		rtpCapabilities: _device.rtpCapabilities,
 	});
 
-	console.log("consumer parameters", consumerParameters);
-	const consumer = await recvTransport.consume({
+	console.log("[MS] Got consumer parameters:", consumerParameters);
+
+	const consumer = await _recvTransport.consume({
 		...consumerParameters,
 		appData: { peerId, mediaTag },
 	});
 
-	console.log("created new consumer", consumer.id);
+	console.log("[MS] Created new consumer:", consumer.id);
 
-	// the server-side consumer will be started in paused state. wait
+	// The server-side consumer will be started in paused state. wait
 	// until we're connected, then send a resume request to the server
 	// to get our first keyframe and start displaying video
-	while (recvTransport.connectionState !== "connected") {
-		console.log("  transport connstate", recvTransport.connectionState);
+	while (_recvTransport.connectionState !== "connected") {
+		console.log("[MS] transport connstate", _recvTransport.connectionState);
 		await sleep(100);
 	}
 
@@ -342,7 +350,7 @@ export async function subscribeToTrack(peerId: string, mediaTag: string) {
 
 export async function unsubscribeFromTrack(peerId: string, mediaTag: string) {
 	try {
-		const consumer = findConsumerForTrack(peerId, mediaTag);
+		const consumer = _findConsumerForTrack(peerId, mediaTag);
 		if (!consumer) {
 			return;
 		}
@@ -463,7 +471,7 @@ async function closeConsumer(consumer: MediaSoup.types.Consumer) {
 }
 
 /** Utility function to create a transport and hook up signaling logic appropriate to the transport's direction */
-async function createTransport(direction: "send" | "recv"): Promise<MediaSoup.types.Transport<ExtendedAppData>> {
+async function _createTransport(direction: "send" | "recv"): Promise<Transport> {
 	console.log(`[MS] Creating ${direction}-transport`);
 
 	// Ask the server to create a server-side transport object and send
@@ -472,9 +480,9 @@ async function createTransport(direction: "send" | "recv"): Promise<MediaSoup.ty
 	const { transportOptions } = await roomClient.createTransport.mutate({ direction });
 
 	if (direction === "recv") {
-		transport = device.createRecvTransport(transportOptions);
+		transport = _device.createRecvTransport(transportOptions);
 	} else if (direction === "send") {
-		transport = device.createSendTransport(transportOptions);
+		transport = _device.createSendTransport(transportOptions);
 	} else {
 		throw new Error(`Bad transport direction: ${direction}`);
 	}
@@ -556,14 +564,16 @@ async function createTransport(direction: "send" | "recv"): Promise<MediaSoup.ty
 	return transport;
 }
 
-function sortPeers(peers: Record<string, any>) {
+/** Utility function for finding a consumer matching the given peerId and mediaTag */
+function _findConsumerForTrack(peerId: string, mediaTag: MediaTag): Consumer | undefined {
+	return consumers.find((c) => c.appData.peerId === peerId && c.appData.mediaTag === mediaTag);
+}
+
+/** Utility function for sorting peers by join time */
+function _sortPeers(peers: Record<string, Peer>): Array<Peer> {
 	return Object.entries(peers)
 		.map(([id, info]) => ({ id, joinTs: info.joinTs, media: { ...info.media } }))
 		.sort((a, b) => (a.joinTs > b.joinTs ? 1 : b.joinTs > a.joinTs ? -1 : 0));
-}
-
-function findConsumerForTrack(peerId: string, mediaTag: string): MediaSoup.types.Consumer | undefined {
-	return consumers.find((c) => c.appData.peerId === peerId && c.appData.mediaTag === mediaTag);
 }
 
 //

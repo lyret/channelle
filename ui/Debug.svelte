@@ -7,6 +7,7 @@
 	import {
 		joinedStore,
 		localMediaStream,
+		paused,
 		sendTransport,
 		recvTransportStore,
 		videoProducer,
@@ -23,8 +24,6 @@
 	// Local state for UI
 	let peerIdInput = "";
 	let mediaTagInput = "";
-	let statusMessage = "";
-	let error = "";
 
 	// Video element refs
 	let localCamVideo: HTMLVideoElement;
@@ -87,38 +86,8 @@
 	});
 
 	onDestroy(() => {
-		// Clean up video elements
-		if (localCamVideo) {
-			localCamVideo.srcObject = null;
-		}
-		Object.values(consumerVideos).forEach((video) => {
-			if (video) {
-				video.srcObject = null;
-			}
-		});
+		Debug.leaveRoom();
 	});
-
-	async function handleAction(fn: () => Promise<void>, successMsg: string) {
-		try {
-			error = "";
-			statusMessage = "Processing...";
-			await fn();
-			statusMessage = successMsg;
-			setTimeout(() => {
-				statusMessage = "";
-			}, 3000);
-		} catch (e: any) {
-			error = `Error: ${e.message || e}`;
-			statusMessage = "";
-			setTimeout(() => {
-				error = "";
-			}, 5000);
-		}
-	}
-
-	async function handleToggle(fn: (paused?: boolean) => Promise<void>, currentState: boolean, type: string) {
-		await handleAction(() => fn(!currentState), `${type} ${!currentState ? "paused" : "resumed"}`);
-	}
 
 	function getConsumerKey(consumer: any): string {
 		return `${consumer.appData.peerId}-${consumer.appData.mediaTag}`;
@@ -135,18 +104,6 @@
 
 <div class="container is-fluid" in:blur={{ delay: 500, duration: 1000 }}>
 	<h1 class="title">Debug Interface</h1>
-
-	{#if statusMessage}
-		<div class="notification is-success is-light">
-			{statusMessage}
-		</div>
-	{/if}
-
-	{#if error}
-		<div class="notification is-danger is-light">
-			{error}
-		</div>
-	{/if}
 
 	<!-- Video Streams Section -->
 	<div class="box">
@@ -198,21 +155,19 @@
 							<div class="buttons are-small mt-1">
 								<button
 									class="button is-small is-warning"
-									on:click={() =>
-										handleAction(
-											async () => (consumer.paused ? await Debug.resumeConsumer(consumer) : await Debug.pauseConsumer(consumer)),
-											`Consumer ${consumer.paused ? "resumed" : "paused"}`,
-										)}
+									on:click={async () => {
+										if (consumer.paused) {
+											await Debug.resumeConsumer(consumer);
+										} else {
+											await Debug.pauseConsumer(consumer);
+										}
+									}}
 								>
 									{consumer.paused ? "Resume" : "Pause"}
 								</button>
 								<button
 									class="button is-small is-danger"
-									on:click={() =>
-										handleAction(
-											() => Debug.unsubscribeFromTrack(consumer.appData.peerId, consumer.appData.mediaTag),
-											`Unsubscribed from ${consumer.appData.mediaTag}`,
-										)}
+									on:click={() => Debug.unsubscribeFromTrack(consumer.appData.peerId, consumer.appData.mediaTag)}
 								>
 									Close
 								</button>
@@ -248,21 +203,19 @@
 								<div class="buttons are-small">
 									<button
 										class="button is-small is-warning"
-										on:click={() =>
-											handleAction(
-												async () => (consumer.paused ? await Debug.resumeConsumer(consumer) : await Debug.pauseConsumer(consumer)),
-												`Audio ${consumer.paused ? "resumed" : "paused"}`,
-											)}
+										on:click={async () => {
+											if (consumer.paused) {
+												await Debug.resumeConsumer(consumer);
+											} else {
+												await Debug.pauseConsumer(consumer);
+											}
+										}}
 									>
 										{consumer.paused ? "Resume" : "Pause"}
 									</button>
 									<button
 										class="button is-small is-danger"
-										on:click={() =>
-											handleAction(
-												() => Debug.unsubscribeFromTrack(consumer.appData.peerId, consumer.appData.mediaTag),
-												`Unsubscribed from audio`,
-											)}
+										on:click={() => Debug.unsubscribeFromTrack(consumer.appData.peerId, consumer.appData.mediaTag)}
 									>
 										Close
 									</button>
@@ -402,7 +355,7 @@
 					</thead>
 					<tbody>
 						{#each peersList as peer}
-							<tr>
+							<tr key={peer.id}>
 								<td>
 									<span class="has-text-weight-semibold">{peer.id}</span>
 									{#if peer.id === myPeerId}
@@ -431,21 +384,13 @@
 												{#if !consumers.find((c) => c.appData.peerId === peer.id && c.appData.mediaTag === "cam-video")}
 													<button
 														class="button is-small is-success"
-														on:click={() =>
-															handleAction(() => Debug.subscribeToTrack(peer.id, "cam-video"), "Subscribed to camera video")}
+														on:click={() => Debug.subscribeToTrack(peer.id, "cam-video")}
 														disabled={!joined || peer.id === myPeerId}
 													>
 														Subscribe Cam
 													</button>
 												{:else}
-													<button
-														class="button is-small is-danger"
-														on:click={() =>
-															handleAction(
-																() => Debug.unsubscribeFromTrack(peer.id, "cam-video"),
-																"Unsubscribed from camera video",
-															)}
-													>
+													<button class="button is-small is-danger" on:click={() => Debug.unsubscribeFromTrack(peer.id, "cam-video")}>
 														Unsubscribe Cam
 													</button>
 												{/if}
@@ -456,17 +401,13 @@
 												{#if !consumers.find((c) => c.appData.peerId === peer.id && c.appData.mediaTag === "cam-audio")}
 													<button
 														class="button is-small is-success"
-														on:click={() => handleAction(() => Debug.subscribeToTrack(peer.id, "cam-audio"), "Subscribed to audio")}
+														on:click={() => Debug.subscribeToTrack(peer.id, "cam-audio")}
 														disabled={!joined || peer.id === myPeerId}
 													>
 														Subscribe Audio
 													</button>
 												{:else}
-													<button
-														class="button is-small is-danger"
-														on:click={() =>
-															handleAction(() => Debug.unsubscribeFromTrack(peer.id, "cam-audio"), "Unsubscribed from audio")}
-													>
+													<button class="button is-small is-danger" on:click={() => Debug.unsubscribeFromTrack(peer.id, "cam-audio")}>
 														Unsubscribe Audio
 													</button>
 												{/if}
@@ -495,8 +436,8 @@
 		<div class="field">
 			<label class="label is-small">Room Controls</label>
 			<div class="buttons are-small">
-				<button class="button is-primary" on:click={() => handleAction(Debug.joinRoom, "Joined room")} disabled={joined}> Join Room </button>
-				<button class="button is-danger" on:click={() => handleAction(Debug.leaveRoom, "Left room")} disabled={!joined}> Leave Room </button>
+				<button class="button is-primary" on:click={Debug.joinRoom} disabled={joined}> Join Room </button>
+				<button class="button is-danger" on:click={Debug.leaveRoom} disabled={!joined}> Leave Room </button>
 			</div>
 		</div>
 
@@ -504,32 +445,12 @@
 		<div class="field">
 			<label class="label is-small">Camera Controls</label>
 			<div class="buttons are-small">
-				<button
-					class="button is-info"
-					on:click={() => handleAction(() => Debug.startLocalMediaStream(false, true), "Camera started")}
-					disabled={hasLocalCam}
-				>
-					Start Camera
-				</button>
-				<button class="button is-info" on:click={() => handleAction(Debug.sendVideoStream, "Video stream sent")} disabled={!hasLocalCam || !joined}>
-					Send Video
-				</button>
-				<button
-					class="button is-info"
-					on:click={() => handleAction(() => Debug.startLocalMediaStream(true, true), "Camera + Mic started")}
-					disabled={hasLocalCam}
-				>
-					Start Both
-				</button>
-				<button class="button is-info" on:click={() => handleAction(Debug.sendMediaStreams, "All streams sent")} disabled={!hasLocalCam || !joined}>
-					Send Both
-				</button>
-				<button class="button is-warning" on:click={() => handleAction(Debug.cycleCamera, "Camera cycled")} disabled={!hasCamVideo}>
-					Cycle Camera
-				</button>
-				<button class="button is-danger" on:click={() => handleAction(Debug.stopStreams, "Streams stopped")} disabled={!hasSendTransport}>
-					Stop All
-				</button>
+				<button class="button is-info" on:click={() => Debug.startLocalMediaStream(false, true)} disabled={hasLocalCam}> Start Camera </button>
+				<button class="button is-info" on:click={() => Debug.sendMediaStreams()} disabled={!hasLocalCam || !joined}> Send Video </button>
+				<button class="button is-info" on:click={() => Debug.startLocalMediaStream(true, true)} disabled={hasLocalCam}> Start Both </button>
+				<button class="button is-info" on:click={() => Debug.sendMediaStreams()} disabled={!hasLocalCam || !joined}> Send Both </button>
+				<button class="button is-warning" on:click={() => Debug.cycleCamera()} disabled={!hasCamVideo}> Cycle Camera </button>
+				<button class="button is-danger" on:click={() => Debug.stopStreams()} disabled={!hasSendTransport}> Stop All </button>
 			</div>
 		</div>
 
@@ -537,22 +458,17 @@
 		<div class="field">
 			<label class="label is-small">Audio Controls</label>
 			<div class="buttons are-small">
-				<button
-					class="button is-info"
-					on:click={() => handleAction(() => Debug.startLocalMediaStream(true, false), "Microphone started")}
-					disabled={hasLocalCam}
-				>
-					Start Microphone
-				</button>
-				<button class="button is-info" on:click={() => handleAction(Debug.sendAudioStream, "Audio stream sent")} disabled={!hasLocalCam || !joined}>
-					Send Audio
-				</button>
+				<button class="button is-info" on:click={() => Debug.startLocalMediaStream(true, false)} disabled={hasLocalCam}> Start Microphone </button>
+				<button class="button is-info" on:click={() => Debug.sendAudioStream()} disabled={!hasLocalCam || !joined}> Send Audio </button>
 				<button
 					class="button is-warning"
-					on:click={() => handleToggle(Debug.changeMicPaused, Debug.getMicPausedState(), "Microphone")}
+					on:click={async () => {
+						const currentState = Debug.getMicPausedState();
+						await Debug.changeMicPaused(!currentState);
+					}}
 					disabled={!hasCamAudio}
 				>
-					{Debug.getMicPausedState() ? "Unmute" : "Mute"} Mic
+					{$paused ? "Unmute" : "Mute"} Mic
 				</button>
 			</div>
 		</div>
@@ -563,10 +479,13 @@
 			<div class="buttons are-small">
 				<button
 					class="button is-warning"
-					on:click={() => handleToggle(Debug.changeCamPaused, Debug.getCamPausedState(), "Camera")}
+					on:click={async () => {
+						const currentState = Debug.getCamPausedState();
+						await Debug.changeCamPaused(!currentState);
+					}}
 					disabled={!hasCamVideo}
 				>
-					{Debug.getCamPausedState() ? "Show Video" : "Hide Video"}
+					{$paused ? "Show Video" : "Hide Video"}
 				</button>
 			</div>
 		</div>
@@ -584,8 +503,7 @@
 				<p class="control">
 					<button
 						class="button is-small is-success"
-						on:click={() =>
-							handleAction(() => Debug.subscribeToTrack(peerIdInput, mediaTagInput), `Subscribed to ${mediaTagInput} from ${peerIdInput}`)}
+						on:click={() => Debug.subscribeToTrack(peerIdInput, mediaTagInput)}
 						disabled={!peerIdInput || !mediaTagInput || !joined}
 					>
 						Subscribe
@@ -594,11 +512,7 @@
 				<p class="control">
 					<button
 						class="button is-small is-danger"
-						on:click={() =>
-							handleAction(
-								() => Debug.unsubscribeFromTrack(peerIdInput, mediaTagInput),
-								`Unsubscribed from ${mediaTagInput} from ${peerIdInput}`,
-							)}
+						on:click={() => Debug.unsubscribeFromTrack(peerIdInput, mediaTagInput)}
 						disabled={!peerIdInput || !mediaTagInput || !joined}
 					>
 						Unsubscribe
@@ -613,41 +527,38 @@
 			<div class="buttons are-small">
 				<button
 					class="button is-small is-warning"
-					on:click={() =>
-						handleAction(async () => {
-							for (const consumer of consumers) {
-								if (consumer.paused) {
-									await Debug.resumeConsumer(consumer);
-								}
+					on:click={async () => {
+						for (const consumer of consumers) {
+							if (consumer.paused) {
+								await Debug.resumeConsumer(consumer);
 							}
-						}, "All consumers resumed")}
+						}
+					}}
 					disabled={consumers.length === 0}
 				>
 					Resume All
 				</button>
 				<button
 					class="button is-small is-warning"
-					on:click={() =>
-						handleAction(async () => {
-							for (const consumer of consumers) {
-								if (!consumer.paused) {
-									await Debug.pauseConsumer(consumer);
-								}
+					on:click={async () => {
+						for (const consumer of consumers) {
+							if (!consumer.paused) {
+								await Debug.pauseConsumer(consumer);
 							}
-						}, "All consumers paused")}
+						}
+					}}
 					disabled={consumers.length === 0}
 				>
 					Pause All
 				</button>
 				<button
 					class="button is-small is-danger"
-					on:click={() =>
-						handleAction(async () => {
-							const consumersToClose = [...consumers];
-							for (const consumer of consumersToClose) {
-								await Debug.unsubscribeFromTrack(consumer.appData.peerId, consumer.appData.mediaTag);
-							}
-						}, "All consumers closed")}
+					on:click={async () => {
+						const consumersToClose = [...consumers];
+						for (const consumer of consumersToClose) {
+							await Debug.unsubscribeFromTrack(consumer.appData.peerId, consumer.appData.mediaTag);
+						}
+					}}
 					disabled={consumers.length === 0}
 				>
 					Close All
@@ -662,7 +573,7 @@
 				class="button is-small is-info"
 				on:click={async () => {
 					const deviceId = await Debug.getCurrentDeviceId();
-					statusMessage = deviceId ? `Current device ID: ${deviceId}` : "No device ID available";
+					console.log(deviceId ? `Current device ID: ${deviceId}` : "No device ID available");
 				}}
 			>
 				Get Current Device ID

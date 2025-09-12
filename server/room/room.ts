@@ -1,5 +1,5 @@
 import type * as MediaSoup from "mediasoup";
-import type { ExtendedAppData } from "../lib/api";
+import type { ExtendedAppData, MediaTag } from "../lib/api/mediaSoup";
 import { BroadcastChannel } from "broadcast-channel";
 import { TRPCError } from "@trpc/server";
 import { trcp, mediaSoupRouter } from "../lib/api";
@@ -28,7 +28,7 @@ if (CONFIG.runtime.debug) {
 
 const { router: trcpRouter, procedure: trcpProcedure } = trcp();
 
-type Peer = {
+export type Peer = {
 	lastSeenTs: number;
 	joinTs: number;
 	media: Record<MediaTag, any>;
@@ -95,7 +95,6 @@ export const roomRouter = trcpRouter({
 	// client polling endpoint. send back our 'peers' data structure and
 	// 'activeSpeaker' info
 	sync: roomProcedure.query(async () => {
-		console.log("sync", _room);
 		return {
 			buildCounter: buildCounter,
 			peers: _room.peers,
@@ -228,7 +227,7 @@ export const roomRouter = trcpRouter({
 	// object on the client side. always start consumers paused. client
 	// will request media to resume when the connection completes
 	recvTrack: roomProcedure
-		.input(z.object({ mediaPeerId: z.string(), mediaTag: z.any(), rtpCapabilities: z.any() }))
+		.input(z.object({ mediaPeerId: z.string(), mediaTag: z.custom<MediaTag>(), rtpCapabilities: z.custom<MediaSoup.types.RtpCapabilities>() }))
 		.mutation(async ({ ctx, input: { mediaPeerId, mediaTag, rtpCapabilities } }) => {
 			const producer = Object.values(_room.producers).find((p) => p.appData.mediaTag === mediaTag && p.appData.peerId === mediaPeerId);
 

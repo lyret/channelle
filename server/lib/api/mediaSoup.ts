@@ -4,12 +4,12 @@ let _router: MediaSoup.types.Router<ExtendedAppData> | undefined;
 let _worker: MediaSoup.types.Worker<ExtendedAppData> | undefined;
 
 /** MediaSoup App Data Tags for identifying the type of media transmitted */
-type MediaTag = "cam-video" | "cam-audio";
+export type MediaTag = "cam-video" | "cam-audio";
 
 /** MediaSoup App Data */
 export interface ExtendedAppData extends MediaSoup.types.AppData {
 	peerId: string;
-	mediaTag: MediaTag | undefined;
+	mediaTag: MediaTag;
 	clientDirection?: any;
 }
 
