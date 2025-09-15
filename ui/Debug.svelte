@@ -9,7 +9,7 @@
 		localMediaStream,
 		paused,
 		sendTransport,
-		recvTransport,
+		recvTransports,
 		videoProducer,
 		audioProducer,
 		currentActiveSpeakerStore,
@@ -38,6 +38,7 @@
 	$: hasLocalCam = $hasLocalCamStore;
 	$: hasSendTransport = $hasSendTransportStore;
 	$: hasRecvTransport = $hasRecvTransportStore;
+	$: recvTransportCount = Object.keys($recvTransports).length;
 	$: hasCamVideo = !!$videoProducer;
 	$: hasCamAudio = !!$audioProducer;
 	$: activeSpeaker = $currentActiveSpeakerStore?.peerId || "None";
@@ -57,6 +58,7 @@
 		hasVideo: info.media && (info.media["cam-video"] || info.media["screen-video"]),
 		hasAudio: info.media && (info.media["mic-audio"] || info.media["screen-audio"]),
 		mediaTags: info.media ? Object.keys(info.media) : [],
+		hasTransport: $recvTransports[id] !== undefined,
 	}));
 
 	// Update video elements when streams change
@@ -255,8 +257,13 @@
 							<td><span class="tag is-small" class:is-success={hasSendTransport}>{hasSendTransport ? "Active" : "Inactive"}</span></td>
 						</tr>
 						<tr>
-							<td><strong>Receive Transport:</strong></td>
-							<td><span class="tag is-small" class:is-success={hasRecvTransport}>{hasRecvTransport ? "Active" : "Inactive"}</span></td>
+							<td><strong>Receive Transports:</strong></td>
+							<td>
+								<span class="tag is-small" class:is-success={hasRecvTransport}>
+									{recvTransportCount}
+									{recvTransportCount === 1 ? "transport" : "transports"}
+								</span>
+							</td>
 						</tr>
 						<tr>
 							<td><strong>Active Speaker:</strong></td>
@@ -352,6 +359,7 @@
 					<thead>
 						<tr>
 							<th>Peer ID</th>
+							<th>Transport</th>
 							<th>Media</th>
 							<th>Actions</th>
 						</tr>
@@ -367,6 +375,11 @@
 									{#if peer.id === activeSpeaker}
 										<span class="tag is-small is-success ml-2">Speaking</span>
 									{/if}
+								</td>
+								<td>
+									<span class="tag is-small" class:is-success={peer.hasTransport} class:is-light={!peer.hasTransport}>
+										{peer.hasTransport ? "Connected" : "No Transport"}
+									</span>
 								</td>
 								<td>
 									<div class="tags are-small">

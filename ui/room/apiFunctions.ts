@@ -32,10 +32,11 @@ export const paused = writable(false);
 export const localMediaStream = writable<MediaStream | null>(null);
 
 /**
- * Transport for receiving media from other peers
+ * Map of transports for receiving media from other peers
+ * Each peer gets its own transport, keyed by peerId
  * Created on-demand when subscribing to remote tracks
  */
-export const recvTransport = writable<Transport | null>(null);
+export const recvTransports = writable<Record<string, Transport>>({});
 
 /**
  * Transport for sending media to other peers
@@ -115,9 +116,9 @@ export const hasLocalCamStore = derived(localMediaStream, ($localCam) => !!$loca
 export const hasSendTransportStore = derived(sendTransport, ($transport) => !!$transport);
 
 /**
- * Indicates whether receive transport is available for incoming media
+ * Indicates whether any receive transports are available for incoming media
  */
-export const hasRecvTransportStore = derived(recvTransport, ($transport) => !!$transport);
+export const hasRecvTransportStore = derived(recvTransports, ($transports) => Object.keys($transports).length > 0);
 
 // ============================================================================
 // PUBLIC API FUNCTIONS
@@ -183,16 +184,17 @@ export async function leaveRoom() {
 	// Closing the transports closes all producers and consumers. we
 	// don't need to do anything beyond closing the transports, except
 	// to set all our local variables to their initial states
-	const currentRecvTransport = get(recvTransport);
+	const currentRecvTransports = get(recvTransports);
 	const currentSendTransport = get(sendTransport);
 
-	currentRecvTransport?.close();
+	// Close all receive transports
+	Object.values(currentRecvTransports).forEach((transport) => transport.close());
 	currentSendTransport?.close();
 
 	_previousSyncedPeers = {};
 
 	// Reset all stores
-	recvTransport.set(null);
+	recvTransports.set({});
 	sendTransport.set(null);
 	videoProducer.set(null);
 	audioProducer.set(null);
@@ -240,6 +242,17 @@ async function syncRoom() {
 						closeConsumer(consumer);
 					}
 				});
+				// Close and remove the transport for this peer
+				const transports = get(recvTransports);
+				if (transports[id]) {
+					console.log(`[Room] Closing transport for peer ${id}`);
+					transports[id].close();
+					recvTransports.update((t) => {
+						const updated = { ...t };
+						delete updated[id];
+						return updated;
+					});
+				}
 			}
 		}
 	}
@@ -313,7 +326,8 @@ export async function sendMediaStreams() {
 	// Create a transport for outgoing media, if we don't already have one
 	let transport = get(sendTransport);
 	if (!transport) {
-		transport = await _createTransport("send");
+		const myPeerId = get(myPeerIdStore);
+		transport = await _createTransport("send", myPeerId);
 		sendTransport.set(transport);
 	}
 
@@ -429,11 +443,13 @@ export async function closeMediaStreams() {
  * @param mediaTag - Type of media to subscribe to (e.g., "cam-video", "mic-audio")
  */
 export async function subscribeToTrack(peerId: string, mediaTag: MediaTag) {
-	// Create a receiver transport if we don't already have one
-	let transport = get(recvTransport);
+	// Get or create a receiver transport for this specific peer
+	const transports = get(recvTransports);
+	let transport = transports[peerId];
 	if (!transport) {
-		transport = await _createTransport("recv");
-		recvTransport.set(transport);
+		console.log(`[Room] Creating receive transport for peer ${peerId}`);
+		transport = await _createTransport("recv", peerId);
+		recvTransports.update((t) => ({ ...t, [peerId]: transport }));
 	}
 
 	// If we do already have a consumer, we shouldn't have called this method
@@ -623,10 +639,11 @@ export async function resumeProducer(producer: Producer) {
 /**
  * Create a transport and hook up signaling logic
  * @param direction - Direction of transport ("send" or "recv")
+ * @param peerId - Peer ID (local peer for send, remote peer for recv)
  * @returns Created transport
  */
-async function _createTransport(direction: TransportDirection): Promise<Transport> {
-	console.log(`[MS] Creating ${direction}-transport`);
+async function _createTransport(direction: TransportDirection, peerId: string): Promise<Transport> {
+	console.log(`[MS] Creating ${direction}-transport for peer ${peerId}`);
 
 	const device = get(deviceStore);
 	if (!device) {
@@ -711,11 +728,29 @@ async function _createTransport(direction: TransportDirection): Promise<Transpor
 	// failed, or disconnected, leave the room and reset
 	// FIXME: Is this ok? Probably not.
 	transport.on("connectionstatechange", async (state: string) => {
-		console.log(`[MS] Transport ${transport.id} connection state changed to ${state}`);
+		console.log(`[MS] Transport ${transport.id} (peer: ${peerId}) connection state changed to ${state}`);
 
 		if (state === "closed" || state === "failed" || state === "disconnected") {
-			console.log("[MS] Transport closed... leaving the room and resetting");
-			leaveRoom();
+			if (direction === "recv") {
+				// For receive transports, just remove this specific peer's transport
+				console.log(`[MS] Receive transport for peer ${peerId} closed`);
+				recvTransports.update((t) => {
+					const updated = { ...t };
+					delete updated[peerId];
+					return updated;
+				});
+				// Also close consumers for this peer
+				const consumers = get(consumersStore);
+				consumers.forEach((consumer) => {
+					if (consumer.appData.peerId === peerId) {
+						closeConsumer(consumer);
+					}
+				});
+			} else if (direction === "send") {
+				// For send transport, leave the room entirely
+				console.log("[MS] Send transport closed... leaving the room and resetting");
+				leaveRoom();
+			}
 		}
 	});
 
