@@ -1,60 +1,132 @@
 import * as MediaSoup from "mediasoup-client";
 import DeepEqual from "deep-equal";
-import { writable, derived } from "svelte/store";
+import { writable, derived, get } from "svelte/store";
 import { roomClient } from "./roomClient";
 import type { CustomAppData, MediaTag, Transport, Producer, Consumer, TransportDirection, Peer } from "./types";
 
-// Svelte stores for reactive state
+// ============================================================================
+// SVELTE STORES
+// ============================================================================
+
+/**
+ * MediaSoup device instance for WebRTC capabilities
+ * Initialized when joining a room with router RTP capabilities
+ */
 export const deviceStore = writable<MediaSoup.types.Device | null>(null);
+
+/**
+ * Indicates whether the client has successfully joined the room
+ */
 export const joinedStore = writable(false);
+
+/**
+ * General paused state for media streaming
+ * @deprecated Consider using camPausedStore and micPausedStore instead
+ */
 export const paused = writable(false);
+
+/**
+ * Local media stream containing audio/video tracks from user's devices
+ * Set when accessing user media through getUserMedia
+ */
 export const localMediaStream = writable<MediaStream | null>(null);
-export const recvTransportStore = writable<Transport | null>(null);
+
+/**
+ * Transport for receiving media from other peers
+ * Created on-demand when subscribing to remote tracks
+ */
+export const recvTransport = writable<Transport | null>(null);
+
+/**
+ * Transport for sending media to other peers
+ * Created when starting to send media streams
+ */
 export const sendTransport = writable<Transport | null>(null);
+
+/**
+ * Producer for sending video track to server
+ * Created when producing video media
+ */
 export const videoProducer = writable<Producer | null>(null);
+
+/**
+ * Producer for sending audio track to server
+ * Created when producing audio media
+ */
 export const audioProducer = writable<Producer | null>(null);
+
+/**
+ * Currently active speaker in the room
+ * Updated periodically through room sync
+ */
 export const currentActiveSpeakerStore = writable<{ peerId?: string | null }>({});
+
+/**
+ * List of all active consumers for receiving remote media
+ * Each consumer represents a remote track being received
+ */
 export const consumersStore = writable<Consumer[]>([]);
+
+/**
+ * This client's peer ID assigned by the server
+ * Set when joining the room
+ */
 export const myPeerIdStore = writable<string>("");
+
+/**
+ * Map of all peers in the room with their metadata
+ * Updated periodically through room sync
+ */
 export const peersStore = writable<Record<string, any>>({});
 
-// Internal variables (not reactive) - also exported for console debugging
-export let _localMediaStream: MediaStream;
-export let _recvTransport: Transport;
-export let _sendTransport: Transport;
-export let _videoProducer: Producer;
-export let _audioProducer: Producer;
-export let _peerId: string = "";
-export let _consumers: Consumer[] = [];
-export let pollingInterval: ReturnType<typeof setInterval>;
+/**
+ * Camera paused state
+ * When true, video track is paused
+ */
+export const camPausedStore = writable(false);
 
-// Derived stores for convenience
-export const hasLocalCamStore = derived(localMediaStream, ($localCam) => !!$localCam);
-export const hasSendTransportStore = derived(sendTransport, ($transport) => !!$transport);
-export const hasRecvTransportStore = derived(recvTransportStore, ($transport) => !!$transport);
+/**
+ * Microphone paused state
+ * When true, audio track is paused
+ */
+export const micPausedStore = writable(false);
 
-/** Room joined status */
-let _joined: boolean;
+// ============================================================================
+// INTERNAL STATE (NOT EXPOSED AS STORES)
+// ============================================================================
 
-/** Camera paused status */
-let _camPaused = false;
-
-/** Microphone paused status */
-let _micPaused = false;
-
-/** Interval timer for polling the backend server */
+// These are truly internal and don't need to be reactive
 let _pollingInterval: ReturnType<typeof setInterval> | undefined;
-
-/** Keep a reference to the previous synced peers for comparisons */
 let _previousSyncedPeers: Record<string, any> = {};
-
-/** Keep track of client code rebuilds during development */
 let _localBuildCounter = -1;
 
-/** MediaSoup device */
-export let _device: MediaSoup.types.Device;
+// ============================================================================
+// DERIVED STORES
+// ============================================================================
 
-/** Join the room */
+/**
+ * Indicates whether local camera/media stream is available
+ */
+export const hasLocalCamStore = derived(localMediaStream, ($localCam) => !!$localCam);
+
+/**
+ * Indicates whether send transport is available for outgoing media
+ */
+export const hasSendTransportStore = derived(sendTransport, ($transport) => !!$transport);
+
+/**
+ * Indicates whether receive transport is available for incoming media
+ */
+export const hasRecvTransportStore = derived(recvTransport, ($transport) => !!$transport);
+
+// ============================================================================
+// PUBLIC API FUNCTIONS
+// ============================================================================
+
+/**
+ * Join the room and initialize MediaSoup device
+ * Sets up polling interval for room state synchronization
+ */
 export async function joinRoom() {
 	// Signal that we're a new peer and initialize our
 	// mediasoup-client device, if this is our first time connecting
@@ -62,13 +134,14 @@ export async function joinRoom() {
 	myPeerIdStore.set(peerId);
 	joinedStore.set(true);
 	console.log("[Room] Joined, my peerId is", peerId);
-	_peerId = peerId;
 
 	// Initialize the MediaSoup device
 	try {
-		if (!_device) {
-			_device = new MediaSoup.Device();
-			await _device.load({ routerRtpCapabilities });
+		let device = get(deviceStore);
+		if (!device) {
+			device = new MediaSoup.Device();
+			await device.load({ routerRtpCapabilities });
+			deviceStore.set(device);
 		}
 	} catch (err: any) {
 		if (err.name === "UnsupportedError") {
@@ -89,12 +162,12 @@ export async function joinRoom() {
 			clearInterval(_pollingInterval);
 		}
 	}, 1000);
-
-	// Update the joined status
-	_joined = true;
 }
 
-/** Leave the room */
+/**
+ * Leave the room and clean up all resources
+ * Stops polling, closes transports, and resets all state
+ */
 export async function leaveRoom() {
 	console.log("[Room] leaving the room");
 
@@ -106,15 +179,20 @@ export async function leaveRoom() {
 
 	// Close everything on the server-side (transports, producers, consumers)
 	await roomClient.leave.mutate();
+
 	// Closing the transports closes all producers and consumers. we
 	// don't need to do anything beyond closing the transports, except
 	// to set all our local variables to their initial states
-	_recvTransport?.close();
-	_sendTransport?.close();
+	const currentRecvTransport = get(recvTransport);
+	const currentSendTransport = get(sendTransport);
+
+	currentRecvTransport?.close();
+	currentSendTransport?.close();
 
 	_previousSyncedPeers = {};
-	// TODO: Make sure everything is closed
-	recvTransportStore.set(null);
+
+	// Reset all stores
+	recvTransport.set(null);
 	sendTransport.set(null);
 	videoProducer.set(null);
 	audioProducer.set(null);
@@ -122,12 +200,13 @@ export async function leaveRoom() {
 	consumersStore.set([]);
 	joinedStore.set(false);
 	myPeerIdStore.set("");
-
-	// Reset the room status
-	_joined = false;
 }
 
-/** State polling and update logic */
+/**
+ * Synchronize room state with server
+ * Updates peers, active speaker, and manages consumers
+ * Called periodically via polling interval
+ */
 async function syncRoom() {
 	const { peers, activeSpeaker, buildCounter } = await roomClient.sync.query();
 	console.debug({ peers });
@@ -156,10 +235,11 @@ async function syncRoom() {
 
 	// If a peer has gone away, we need to close all consumers we have
 	// for that peer
+	const consumers = get(consumersStore);
 	for (const id in _previousSyncedPeers) {
 		if (!peers[id]) {
 			console.log(`[Room] Peer ${id} has left`);
-			_consumers.forEach((consumer) => {
+			consumers.forEach((consumer) => {
 				if (consumer.appData.peerId === id) {
 					closeConsumer(consumer);
 				}
@@ -169,7 +249,7 @@ async function syncRoom() {
 
 	// If a peer has stopped sending media that we are consuming, we
 	// need to close the consumer
-	_consumers.forEach((consumer) => {
+	consumers.forEach((consumer) => {
 		const { peerId, mediaTag } = consumer.appData;
 
 		// Type guard to ensure peers[peerId] is an object
@@ -202,67 +282,80 @@ async function syncRoom() {
 	_previousSyncedPeers = peers;
 }
 
-/** Access the local media streams from the browser */
+/**
+ * Access local media streams from the browser
+ * @param audio - Whether to request audio access (default: true)
+ * @param video - Whether to request video access (default: true)
+ */
 export async function startLocalMediaStream(audio: boolean = true, video: boolean = true) {
 	console.log(`[Media] Accessing the local media stream (audio: ${audio ? 1 : 0}, video: ${video ? 1 : 0})`);
-	_localMediaStream = await navigator.mediaDevices.getUserMedia({
+	const stream = await navigator.mediaDevices.getUserMedia({
 		video: video,
 		audio: audio,
 	});
-	localMediaStream.set(_localMediaStream);
+	localMediaStream.set(stream);
 }
 
-/** Start transporting activated local streams to the server */
+/**
+ * Start transporting activated local streams to the server
+ * Creates send transport and producers for audio/video tracks
+ */
 export async function sendMediaStreams() {
 	console.log("[Room] Sending streams");
 
 	// Make sure we're joined and have a local media stream
-	if (!_joined) {
+	if (!get(joinedStore)) {
 		throw new Error("Not joined");
 	}
-	if (!_localMediaStream) {
+
+	const stream = get(localMediaStream);
+	if (!stream) {
 		throw new Error("Local media stream not available");
 	}
 
 	// Create a transport for outgoing media, if we don't already have one
-	if (!_sendTransport) {
-		_sendTransport = await _createTransport("send");
-		sendTransport.set(_sendTransport);
+	let transport = get(sendTransport);
+	if (!transport) {
+		transport = await _createTransport("send");
+		sendTransport.set(transport);
 	}
 
 	// Start sending video if we have a local video stream
 	// the transport logic will initiate a
 	// signaling conversation with the server to set up an outbound rtp
 	// stream for the camera video track.
-	if (_localMediaStream.getVideoTracks().length > 0) {
-		_videoProducer = await _sendTransport.produce({
-			track: _localMediaStream.getVideoTracks()[0],
+	if (stream.getVideoTracks().length > 0) {
+		console.log(2, stream.getVideoTracks());
+		const producer = await transport.produce({
+			track: stream.getVideoTracks()[0],
 			// Just two resolutions, for now, as chrome 75 seems to ignore more
 			// than two encodings
 			encodings: [
 				{ maxBitrate: 96000, scaleResolutionDownBy: 4 },
 				{ maxBitrate: 680000, scaleResolutionDownBy: 1 },
 			],
-			appData: { mediaTag: "cam-video", peerId: _peerId },
+			appData: { mediaTag: "cam-video", peerId: get(myPeerIdStore) },
 		});
-		videoProducer.set(_videoProducer);
+		console.log(3);
+		videoProducer.set(producer);
+		console.log(4);
 
-		if (_camPaused) {
-			_videoProducer.pause();
+		if (get(camPausedStore)) {
+			producer.pause();
 		}
 	}
 
 	// Start sending audio if we have a local audio stream
-	if (_localMediaStream.getAudioTracks().length > 0) {
-		_audioProducer = await _sendTransport.produce({
-			track: _localMediaStream.getAudioTracks()[0],
-			appData: { mediaTag: "mic-audio", peerId: _peerId },
+	if (stream.getAudioTracks().length > 0) {
+		const producer = await transport.produce({
+			track: stream.getAudioTracks()[0],
+			appData: { mediaTag: "mic-audio", peerId: get(myPeerIdStore) },
 		});
-		audioProducer.set(_audioProducer);
+		audioProducer.set(producer);
 
-		if (_micPaused) {
+		if (get(micPausedStore)) {
 			try {
-				_audioProducer.pause();
+				producer.pause();
 			} catch (e: any) {
 				console.error(e);
 			}
@@ -270,64 +363,83 @@ export async function sendMediaStreams() {
 	}
 }
 
-/** Set the paused status of the video producer */
+/**
+ * Toggle video producer paused state
+ * @param paused - Optional explicit paused state, toggles if not provided
+ */
 export async function toggleVideoPaused(paused?: boolean) {
-	_camPaused = paused !== undefined ? paused : !_camPaused;
-	if (_camPaused && _videoProducer) {
-		await pauseProducer(_videoProducer);
-	} else {
-		await resumeProducer(_videoProducer);
+	const currentPaused = get(camPausedStore);
+	const newPaused = paused !== undefined ? paused : !currentPaused;
+	camPausedStore.set(newPaused);
+
+	const producer = get(videoProducer);
+	if (newPaused && producer) {
+		await pauseProducer(producer);
+	} else if (!newPaused && producer) {
+		await resumeProducer(producer);
 	}
 }
 
-/** Set the paused status of the audio producer */
+/**
+ * Toggle audio producer paused state
+ * @param paused - Optional explicit paused state, toggles if not provided
+ */
 export async function toggleAudioPaused(paused?: boolean) {
-	_micPaused = paused !== undefined ? paused : !_micPaused;
-	if (_micPaused && _audioProducer) {
-		await pauseProducer(_audioProducer);
-	} else {
-		await resumeProducer(_audioProducer);
+	const currentPaused = get(micPausedStore);
+	const newPaused = paused !== undefined ? paused : !currentPaused;
+	micPausedStore.set(newPaused);
+
+	const producer = get(audioProducer);
+	if (newPaused && producer) {
+		await pauseProducer(producer);
+	} else if (!newPaused && producer) {
+		await resumeProducer(producer);
 	}
 }
 
-/** Stop transporting all media to the server */
+/**
+ * Stop transporting all media to the server
+ * Closes send transport and all associated producers
+ */
 export async function closeMediaStreams() {
-	if (!_localMediaStream) {
+	const stream = get(localMediaStream);
+	const transport = get(sendTransport);
+
+	if (!stream || !transport) {
 		return;
 	}
-	if (!_sendTransport) {
-		return;
-	}
+
 	console.log("[MS] Stopping sending of media streams");
-	await roomClient.closeTransport.mutate({ transportId: _sendTransport.id });
+	await roomClient.closeTransport.mutate({ transportId: transport.id });
 
 	// Closing the sendTransport closes all associated producers. when
 	// the Video Producer and Audio Producer are closed,
 	// mediasoup-client stops the local camera tracks, so we don't need to
 	// do anything except set all our local variables to null.
-	_sendTransport.close();
+	transport.close();
 
-	// TODO: Make sure this is correct
-	_sendTransport = null!;
+	// Reset all related stores
 	sendTransport.set(null);
-	_videoProducer = null!;
 	videoProducer.set(null);
-	_audioProducer = null!;
 	audioProducer.set(null);
-	_localMediaStream = null!;
 	localMediaStream.set(null);
 }
 
-/** Creates a consumer for a remote track from the given peer and for the given media tag */
+/**
+ * Subscribe to a remote track from a peer
+ * Creates consumer for receiving the specified media
+ * @param peerId - ID of the peer to subscribe to
+ * @param mediaTag - Type of media to subscribe to (e.g., "cam-video", "mic-audio")
+ */
 export async function subscribeToTrack(peerId: string, mediaTag: MediaTag) {
 	// Create a receiver transport if we don't already have one
-	if (!_recvTransport) {
-		_recvTransport = await _createTransport("recv");
-		recvTransportStore.set(_recvTransport);
+	let transport = get(recvTransport);
+	if (!transport) {
+		transport = await _createTransport("recv");
+		recvTransport.set(transport);
 	}
 
-	// If we do already have a consumer, we shouldn't have called this
-	// method
+	// If we do already have a consumer, we shouldn't have called this method
 	const existingConsumer = _findConsumerForTrack(peerId, mediaTag);
 	if (existingConsumer) {
 		console.warn("[MS] There is already a consumer for this track", peerId, mediaTag);
@@ -338,15 +450,20 @@ export async function subscribeToTrack(peerId: string, mediaTag: MediaTag) {
 
 	// Ask the server to create a server-side consumer object and send
 	// us back the info we need to create a client-side consumer
+	const device = get(deviceStore);
+	if (!device) {
+		throw new Error("Device not initialized");
+	}
+
 	const consumerParameters = await roomClient.recvTrack.mutate({
 		mediaTag,
 		mediaPeerId: peerId,
-		rtpCapabilities: _device.rtpCapabilities,
+		rtpCapabilities: device.rtpCapabilities,
 	});
 
 	console.log("[MS] Got consumer parameters:", consumerParameters);
 
-	const consumer = await _recvTransport.consume({
+	const consumer = await transport.consume({
 		...consumerParameters,
 		appData: { peerId, mediaTag },
 	});
@@ -356,8 +473,8 @@ export async function subscribeToTrack(peerId: string, mediaTag: MediaTag) {
 	// The server-side consumer will be started in paused state. wait
 	// until we're connected, then send a resume request to the server
 	// to get our first keyframe and start displaying video
-	while (_recvTransport.connectionState !== "connected") {
-		console.log("[MS] transport connection state is ", _recvTransport.connectionState);
+	while (transport.connectionState !== "connected") {
+		console.log("[MS] transport connection state is ", transport.connectionState);
 		await _sleep(100);
 	}
 
@@ -365,10 +482,15 @@ export async function subscribeToTrack(peerId: string, mediaTag: MediaTag) {
 	await resumeConsumer(consumer);
 
 	// Keep track of all our consumers
-	_consumers.push(consumer);
+	consumersStore.update((consumers) => [...consumers, consumer]);
 }
 
-/** Removes the consumer for a remote track from the given peer and for the given media tag */
+/**
+ * Unsubscribe from a remote track
+ * Closes the consumer for the specified peer and media
+ * @param peerId - ID of the peer to unsubscribe from
+ * @param mediaTag - Type of media to unsubscribe from
+ */
 export async function unsubscribeFromTrack(peerId: string, mediaTag: MediaTag) {
 	const consumer = _findConsumerForTrack(peerId, mediaTag);
 	if (!consumer) {
@@ -379,13 +501,17 @@ export async function unsubscribeFromTrack(peerId: string, mediaTag: MediaTag) {
 	await closeConsumer(consumer);
 }
 
-/** Returns a statistics object for remote peers and local consumers */
+/**
+ * Get statistics about current track consumption
+ * @returns Object with stats about active, paused, video, and audio consumers
+ */
 export function getTrackStats() {
-	const total = _consumers.length;
-	const paused = _consumers.filter((c) => c.paused).length;
+	const consumers = get(consumersStore);
+	const total = consumers.length;
+	const paused = consumers.filter((c) => c.paused).length;
 	const active = total - paused;
-	const video = _consumers.filter((c) => c.appData.mediaTag?.includes("video")).length;
-	const audio = _consumers.filter((c) => c.appData.mediaTag?.includes("audio")).length;
+	const video = consumers.filter((c) => c.appData.mediaTag?.includes("video")).length;
+	const audio = consumers.filter((c) => c.appData.mediaTag?.includes("audio")).length;
 
 	return {
 		total,
@@ -396,21 +522,30 @@ export function getTrackStats() {
 	};
 }
 
-/** Pauses the given consumer */
+/**
+ * Pause a consumer to stop receiving media
+ * @param consumer - Consumer to pause
+ */
 export async function pauseConsumer(consumer: Consumer) {
 	console.log("[MS] Pausing consumer for track", consumer.appData.peerId, consumer.appData.mediaTag);
 	await roomClient.pauseConsumer.mutate({ consumerId: consumer.id });
 	consumer.pause();
 }
 
-/** Resumes the given paused consumer */
+/**
+ * Resume a paused consumer to start receiving media
+ * @param consumer - Consumer to resume
+ */
 export async function resumeConsumer(consumer: Consumer) {
 	console.log("[MS] Resuming the consumer for track", consumer.appData.peerId, consumer.appData.mediaTag);
 	await roomClient.resumeConsumer.mutate({ consumerId: consumer.id });
 	consumer.resume();
 }
 
-/** Closes and remove the given consumer */
+/**
+ * Close and remove a consumer
+ * @param consumer - Consumer to close
+ */
 export async function closeConsumer(consumer: Consumer) {
 	console.log("[MS] Closing the consumer for track", consumer.appData.peerId, consumer.appData.mediaTag);
 
@@ -419,37 +554,47 @@ export async function closeConsumer(consumer: Consumer) {
 	await roomClient.closeConsumer.mutate({ consumerId: consumer.id });
 	consumer.close();
 
-	_consumers = _consumers.filter(({ id }) => id !== consumer.id);
-	consumersStore.set([..._consumers]);
+	consumersStore.update((consumers) => consumers.filter(({ id }) => id !== consumer.id));
 }
 
-/** Pauses all active consumers */
+/**
+ * Pause all active consumers
+ */
 export async function pauseAllConsumers() {
-	for (const consumer of _consumers) {
+	const consumers = get(consumersStore);
+	for (const consumer of consumers) {
 		if (!consumer.paused) {
 			await pauseConsumer(consumer);
 		}
 	}
 }
 
-/** Resumes all paused consumers */
+/**
+ * Resume all paused consumers
+ */
 export async function resumeAllConsumers() {
-	for (const consumer of _consumers) {
+	const consumers = get(consumersStore);
+	for (const consumer of consumers) {
 		if (consumer.paused) {
 			await resumeConsumer(consumer);
 		}
 	}
 }
 
-/** Closes all consumers */
+/**
+ * Close all consumers
+ */
 export async function closeAllConsumers() {
-	const consumersToClose = [..._consumers];
-	for (const consumer of consumersToClose) {
+	const consumers = [...get(consumersStore)];
+	for (const consumer of consumers) {
 		await closeConsumer(consumer);
 	}
 }
 
-/** Pauses the given producer */
+/**
+ * Pause a producer to stop sending media
+ * @param producer - Producer to pause
+ */
 export async function pauseProducer(producer: Producer) {
 	if (!producer.paused) {
 		console.log("[MS] Pausing producer for", producer.appData.mediaTag);
@@ -458,7 +603,10 @@ export async function pauseProducer(producer: Producer) {
 	}
 }
 
-/** Resumes the given producer if paused */
+/**
+ * Resume a paused producer to start sending media
+ * @param producer - Producer to resume
+ */
 export async function resumeProducer(producer: Producer) {
 	if (producer.paused) {
 		try {
@@ -471,9 +619,22 @@ export async function resumeProducer(producer: Producer) {
 	}
 }
 
-/** Utility function to create a transport and hook up signaling logic appropriate to the transport's direction */
+// ============================================================================
+// INTERNAL HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Create a transport and hook up signaling logic
+ * @param direction - Direction of transport ("send" or "recv")
+ * @returns Created transport
+ */
 async function _createTransport(direction: TransportDirection): Promise<Transport> {
 	console.log(`[MS] Creating ${direction}-transport`);
+
+	const device = get(deviceStore);
+	if (!device) {
+		throw new Error("Device not initialized");
+	}
 
 	// Ask the server to create a server-side transport object and send
 	// us back the info we need to create a client-side transport
@@ -481,9 +642,9 @@ async function _createTransport(direction: TransportDirection): Promise<Transpor
 	const { transportOptions } = await roomClient.createTransport.mutate({ direction });
 
 	if (direction === "recv") {
-		transport = _device.createRecvTransport(transportOptions);
+		transport = device.createRecvTransport(transportOptions);
 	} else if (direction === "send") {
-		transport = _device.createSendTransport(transportOptions);
+		transport = device.createSendTransport(transportOptions);
 	} else {
 		throw new Error(`Bad transport direction: ${direction}`);
 	}
@@ -521,9 +682,9 @@ async function _createTransport(direction: TransportDirection): Promise<Transpor
 			// Respect the current paused status
 			let paused = true;
 			if (appData.mediaTag === "cam-video") {
-				paused = _camPaused;
+				paused = get(camPausedStore);
 			} else if (appData.mediaTag === "mic-audio") {
-				paused = _micPaused;
+				paused = get(micPausedStore);
 			}
 
 			// Tell the server what it needs to know from us in order to set
@@ -565,75 +726,30 @@ async function _createTransport(direction: TransportDirection): Promise<Transpor
 	return transport;
 }
 
-/** Utility function for finding a consumer matching the given peerId and mediaTag */
+/**
+ * Find a consumer matching the given peer and media tag
+ * @param peerId - Peer ID to search for
+ * @param mediaTag - Media tag to search for
+ * @returns Matching consumer or undefined
+ */
 function _findConsumerForTrack(peerId: string, mediaTag: MediaTag): Consumer | undefined {
-	return _consumers.find((c) => c.appData.peerId === peerId && c.appData.mediaTag === mediaTag);
+	const consumers = get(consumersStore);
+	return consumers.find((c) => c.appData.peerId === peerId && c.appData.mediaTag === mediaTag);
 }
 
-/** Utility function for sorting peers by join time */
+/**
+ * Sort peers by join time
+ * @param peers - Map of peers to sort
+ * @returns Array of peers sorted by join timestamp
+ */
 function _sortPeers(peers: Record<string, Peer>): Array<Peer> {
 	return Object.values(peers).sort((a, b) => (a.joinTs > b.joinTs ? 1 : b.joinTs > a.joinTs ? -1 : 0));
 }
 
-/** Utility function to sleep for a given number of milliseconds */
+/**
+ * Sleep utility for async delays
+ * @param ms - Milliseconds to sleep
+ */
 async function _sleep(ms: number) {
 	return new Promise<void>((r) => setTimeout(() => r(), ms));
 }
-
-// // switch to sending video from the "next" camera device in our device
-// // list (if we have multiple cameras)
-// export async function cycleCamera() {
-// 	if (!(_videoProducer && _videoProducer.track)) {
-// 		console.warn("cannot cycle camera - no current camera track");
-// 		return;
-// 	}
-
-// 	console.log("cycle camera");
-
-// 	// find "next" device in device list
-// 	const deviceId = await getCurrentDeviceId();
-// 	const allDevices = await navigator.mediaDevices.enumerateDevices();
-// 	const vidDevices = allDevices.filter((d) => d.kind === "videoinput");
-// 	if (!(vidDevices.length > 1)) {
-// 		console.warn("cannot cycle camera - only one camera");
-// 		return;
-// 	}
-// 	let idx = vidDevices.findIndex((d) => d.deviceId === deviceId);
-// 	if (idx === vidDevices.length - 1) {
-// 		idx = 0;
-// 	} else {
-// 		idx += 1;
-// 	}
-
-// 	// get a new video stream. might as well get a new audio stream too,
-// 	// just in case browsers want to group audio/video streams together
-// 	// from the same device when possible (though they don't seem to,
-// 	// currently)
-// 	console.log("getting a video stream from new device", vidDevices[idx].label);
-// 	_localMediaStream = await navigator.mediaDevices.getUserMedia({
-// 		video: { deviceId: { exact: vidDevices[idx].deviceId } },
-// 		audio: true,
-// 	});
-// 	localMediaStream.set(_localMediaStream);
-
-// 	// replace the tracks we are sending
-// 	await _videoProducer.replaceTrack({ track: _localMediaStream.getVideoTracks()[0] });
-// 	await _audioProducer.replaceTrack({ track: _localMediaStream.getAudioTracks()[0] });
-// }
-// export async function getCurrentDeviceId() {
-// 	if (!_videoProducer || !_videoProducer.track) {
-// 		return null;
-// 	}
-// 	const deviceId = _videoProducer.track.getSettings().deviceId;
-// 	if (deviceId) {
-// 		return deviceId;
-// 	}
-// 	// Firefox doesn't have deviceId in MediaTrackSettings object
-// 	const track = _localMediaStream && _localMediaStream.getVideoTracks()[0];
-// 	if (!track) {
-// 		return null;
-// 	}
-// 	const devices = await navigator.mediaDevices.enumerateDevices();
-// 	const deviceInfo = devices.find((d) => d.label.startsWith(track.label));
-// 	return deviceInfo ? deviceInfo.deviceId : null;
-// }

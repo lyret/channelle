@@ -9,7 +9,7 @@
 		localMediaStream,
 		paused,
 		sendTransport,
-		recvTransportStore,
+		recvTransport,
 		videoProducer,
 		audioProducer,
 		currentActiveSpeakerStore,
@@ -19,6 +19,8 @@
 		hasSendTransportStore,
 		hasRecvTransportStore,
 		peersStore,
+		camPausedStore,
+		micPausedStore,
 	} from "./room/apiFunctions";
 
 	// Local state for UI
@@ -78,9 +80,9 @@
 		});
 	}
 
-	// Computed properties for producer states
-	$: camVideoPaused = $videoProducer?.paused || false;
-	$: camAudioPaused = $audioProducer?.paused || false;
+	// Use the paused stores directly
+	$: camVideoPaused = $camPausedStore;
+	$: camAudioPaused = $micPausedStore;
 
 	onMount(() => {
 		Debug.joinRoom();
@@ -442,58 +444,44 @@
 			</div>
 		</div>
 
-		<!-- Camera Controls -->
+		<!-- Media Stream Controls -->
 		<div class="field">
-			<label class="label is-small">Camera Controls</label>
+			<label class="label is-small">Media Stream Controls</label>
 			<div class="buttons are-small">
-				<button class="button is-info" on:click={() => Debug.startLocalMediaStream(false, true)} disabled={hasLocalCam}> Start Camera </button>
-				<button class="button is-info" on:click={() => Debug.sendMediaStreams()} disabled={!hasLocalCam || !joined}> Send Video </button>
-				<button class="button is-info" on:click={() => Debug.startLocalMediaStream(true, true)} disabled={hasLocalCam}> Start Both </button>
-				<button class="button is-info" on:click={() => Debug.sendMediaStreams()} disabled={!hasLocalCam || !joined}> Send Both </button>
-				<button class="button is-warning" on:click={() => Debug.cycleCamera()} disabled={!hasCamVideo}> Cycle Camera </button>
-				<button class="button is-danger" on:click={() => Debug.closeMediaStreams()} disabled={!hasSendTransport}> Stop All </button>
+				<button class="button is-info" on:click={() => Debug.startLocalMediaStream(false, true)} disabled={hasLocalCam}> Video Only </button>
+				<button class="button is-info" on:click={() => Debug.startLocalMediaStream(true, false)} disabled={hasLocalCam}> Audio Only </button>
+				<button class="button is-info" on:click={() => Debug.startLocalMediaStream(true, true)} disabled={hasLocalCam}> Audio + Video </button>
+				<button class="button is-success" on:click={() => Debug.sendMediaStreams()} disabled={!hasLocalCam || !joined}> Send Streams </button>
+				<button class="button is-danger" on:click={() => Debug.closeMediaStreams()} disabled={!hasSendTransport}> Stop Sending </button>
 			</div>
 		</div>
 
-		<!-- Audio Controls -->
+		<!-- Producer Controls -->
 		<div class="field">
-			<label class="label is-small">Audio Controls</label>
+			<label class="label is-small">Producer Controls</label>
 			<div class="buttons are-small">
-				<button class="button is-info" on:click={() => Debug.startLocalMediaStream(true, false)} disabled={hasLocalCam}> Start Microphone </button>
-				<button class="button is-info" on:click={() => Debug.sendAudioStream()} disabled={!hasLocalCam || !joined}> Send Audio </button>
-				<button
-					class="button is-warning"
-					on:click={async () => {
-						const currentState = Debug.getMicPausedState();
-						await Debug.toggleAudioPaused(!currentState);
-					}}
-					disabled={!hasCamAudio}
-				>
-					{$paused ? "Unmute" : "Mute"} Mic
+				<button class="button is-warning" on:click={() => Debug.toggleVideoPaused()} disabled={!hasCamVideo}>
+					{camVideoPaused ? "Resume Video" : "Pause Video"}
+				</button>
+				<button class="button is-warning" on:click={() => Debug.toggleAudioPaused()} disabled={!hasCamAudio}>
+					{camAudioPaused ? "Unmute Mic" : "Mute Mic"}
 				</button>
 			</div>
 		</div>
 
-		<!-- Video Pause/Resume Controls -->
+		<!-- Consumer Controls -->
 		<div class="field">
-			<label class="label is-small">Video Controls</label>
+			<label class="label is-small">Consumer Controls</label>
 			<div class="buttons are-small">
-				<button
-					class="button is-warning"
-					on:click={async () => {
-						const currentState = Debug.getCamPausedState();
-						await Debug.toggleVideoPaused(!currentState);
-					}}
-					disabled={!hasCamVideo}
-				>
-					{$paused ? "Show Video" : "Hide Video"}
-				</button>
+				<button class="button is-warning" on:click={() => Debug.resumeAllConsumers()} disabled={consumers.length === 0}> Resume All </button>
+				<button class="button is-warning" on:click={() => Debug.pauseAllConsumers()} disabled={consumers.length === 0}> Pause All </button>
+				<button class="button is-danger" on:click={() => Debug.closeAllConsumers()} disabled={consumers.length === 0}> Close All </button>
 			</div>
 		</div>
 
-		<!-- Track Subscription -->
+		<!-- Manual Track Subscription -->
 		<div class="field">
-			<label class="label is-small">Track Subscription</label>
+			<label class="label is-small">Manual Track Subscription</label>
 			<div class="field is-grouped">
 				<p class="control">
 					<input class="input is-small" type="text" placeholder="Peer ID" bind:value={peerIdInput} />
@@ -522,62 +510,17 @@
 			</div>
 		</div>
 
-		<!-- Consumer Controls -->
+		<!-- Track Statistics -->
 		<div class="field">
-			<label class="label is-small">Consumer Controls</label>
-			<div class="buttons are-small">
-				<button
-					class="button is-small is-warning"
-					on:click={async () => {
-						for (const consumer of consumers) {
-							if (consumer.paused) {
-								await Debug.resumeConsumer(consumer);
-							}
-						}
-					}}
-					disabled={consumers.length === 0}
-				>
-					Resume All
-				</button>
-				<button
-					class="button is-small is-warning"
-					on:click={async () => {
-						for (const consumer of consumers) {
-							if (!consumer.paused) {
-								await Debug.pauseConsumer(consumer);
-							}
-						}
-					}}
-					disabled={consumers.length === 0}
-				>
-					Pause All
-				</button>
-				<button
-					class="button is-small is-danger"
-					on:click={async () => {
-						const consumersToClose = [...consumers];
-						for (const consumer of consumersToClose) {
-							await Debug.unsubscribeFromTrack(consumer.appData.peerId, consumer.appData.mediaTag);
-						}
-					}}
-					disabled={consumers.length === 0}
-				>
-					Close All
-				</button>
-			</div>
-		</div>
-
-		<!-- Device Info -->
-		<div class="field">
-			<label class="label is-small">Device Info</label>
+			<label class="label is-small">Track Statistics</label>
 			<button
 				class="button is-small is-info"
-				on:click={async () => {
-					const deviceId = await Debug.getCurrentDeviceId();
-					console.log(deviceId ? `Current device ID: ${deviceId}` : "No device ID available");
+				on:click={() => {
+					const stats = Debug.getTrackStats();
+					console.log("Track Statistics:", stats);
 				}}
 			>
-				Get Current Device ID
+				Log Track Stats
 			</button>
 		</div>
 	</div>
