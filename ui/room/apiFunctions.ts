@@ -227,23 +227,20 @@ async function syncRoom() {
 	// comparison. compare this list with the cached list from last poll.
 	const thisPeersList = _sortPeers(peers);
 	const lastPeersList = _sortPeers(_previousSyncedPeers);
-
-	if (!DeepEqual(thisPeersList, lastPeersList)) {
-		// TODO: Remove?
-		// Update happens in UI, which we've removed
-	}
+	const consumers = get(consumersStore);
 
 	// If a peer has gone away, we need to close all consumers we have
 	// for that peer
-	const consumers = get(consumersStore);
-	for (const id in _previousSyncedPeers) {
-		if (!peers[id]) {
-			console.log(`[Room] Peer ${id} has left`);
-			consumers.forEach((consumer) => {
-				if (consumer.appData.peerId === id) {
-					closeConsumer(consumer);
-				}
-			});
+	if (!DeepEqual(thisPeersList, lastPeersList)) {
+		for (const id in _previousSyncedPeers) {
+			if (!peers[id]) {
+				console.log(`[Room] Peer ${id} has left`);
+				consumers.forEach((consumer) => {
+					if (consumer.appData.peerId === id) {
+						closeConsumer(consumer);
+					}
+				});
+			}
 		}
 	}
 
@@ -712,7 +709,7 @@ async function _createTransport(direction: TransportDirection): Promise<Transpor
 	// Connection state changes
 	// for this simple demo, any time a transport transitions to closed,
 	// failed, or disconnected, leave the room and reset
-	// TODO: Is this ok?
+	// FIXME: Is this ok? Probably not.
 	transport.on("connectionstatechange", async (state: string) => {
 		console.log(`[MS] Transport ${transport.id} connection state changed to ${state}`);
 
