@@ -1,8 +1,15 @@
-import type { Socket } from "socket.io-client";
-import { derived, readable } from "svelte/store";
+import { get, derived, readable } from "svelte/store";
+import { persisted } from "svelte-persisted-store";
 import type { DataTypes, SubscriptionMessage } from "~/lib";
 import { createSubscriptionPath } from "../../../shared";
-import { ws } from "../api";
+
+const cookiesOK = persisted("cookies-accepted", false);
+const peerID = persisted("peer-id", "");
+status: "disconnected",
+				cookiesAccepted,
+				isReady: false,
+				isConnected: false,
+const readable = readable("")
 
 /** The API store holds the context information needed to determine connection and participation status */
 export const APIStore = createAPIStore();
@@ -22,32 +29,15 @@ export const currentParticipant = derived([APIStore], ([$APIStore]) => {
 });
 
 /** Creates a Svelte Store from a local subscription */
-function createAPIStore(): APIStore {
-	const _socket: Socket = ws();
+function createAPIStore() {
+	const cookiesAccepted = get(cookiesOK);
+	const participantId = get(peerID);
 
-	const cookiesAccepted = !!localStorage.getItem("cookies-accepted");
-	const participantId = localStorage.getItem("participant-id")
-		? Number(localStorage.getItem("participant-id"))
-		: undefined;
 	let participantSubscriptionPath: string | undefined;
-	let participantSubscriptionMessage:
-		| Omit<SubscriptionMessage, "messageId">
-		| undefined;
-	let _value: APIStoreValue = !_socket.connected
-		? {
-			status: "disconnected",
-			cookiesAccepted,
-			isReady: false,
-			isConnected: false,
-		}
-		: {
-			status: "connected",
-			cookiesAccepted,
-			isReady: false,
-			isConnected: true,
-		};
+	let participantSubscriptionMessage: Omit<SubscriptionMessage, "messageId"> | undefined;
+	let _value: APIStoreValue;
 
-	const { subscribe } = readable<APIStoreValue>(_value, function start(_set) {
+
 		// Handle new participant data
 		const _onParticipantData = (participant: DataTypes["participant"] | null) => {
 			if (!participant) {
@@ -89,8 +79,7 @@ function createAPIStore(): APIStore {
 			const currentUrl = new URL(window.location.href);
 
 			const hasFollowedInviteLinkForActors: boolean =
-				currentUrl.searchParams.has("invite") &&
-				currentUrl.searchParams.get("invite") == CONFIG.stage.inviteKey;
+				currentUrl.searchParams.has("invite") && currentUrl.searchParams.get("invite") == CONFIG.stage.inviteKey;
 
 			// Register a participant on the server side API
 			// Either with the existing id stored in local storage or,
@@ -111,19 +100,14 @@ function createAPIStore(): APIStore {
 						window.location.reload();
 					} else {
 						// Store the current participants id in local storage
-						localStorage.setItem(
-							"participant-id",
-							String(response.participant.id)
-						);
+						localStorage.setItem("participant-id", String(response.participant.id));
 
 						// Create a subscription to the current participants data in the database
 						participantSubscriptionMessage = {
 							repository: "participant",
 							id: response.participant.id,
 						};
-						participantSubscriptionPath = createSubscriptionPath(
-							participantSubscriptionMessage
-						);
+						participantSubscriptionPath = createSubscriptionPath(participantSubscriptionMessage);
 
 						// Load any initial data
 						_onParticipantData(response.participant);
@@ -132,7 +116,7 @@ function createAPIStore(): APIStore {
 						_socket.on(participantSubscriptionPath, _onParticipantData);
 						_socket.emit("subscribe", participantSubscriptionMessage);
 					}
-				}
+				},
 			);
 		};
 		_socket.on("connect", _onConnect);
@@ -195,67 +179,55 @@ function createAPIStore(): APIStore {
 		};
 	});
 
-	return {
-		get: () => _value,
-		subscribe,
-	};
-}
-
 /** API Store Value */
 type APIStoreValue =
 	| {
-		/** Current API status */
-		status: "error";
-		/** Indicates if the API is connected and ready */
-		isReady: false;
-		/** The API has crashed due to an error */
-		hasError: true;
-		/** The textual desciption of the error message */
-		errorMessage: string;
-	}
+			/** Current API status */
+			status: "error";
+			/** Indicates if the API is connected and ready */
+			isReady: false;
+			/** The API has crashed due to an error */
+			hasError: true;
+			/** The textual desciption of the error message */
+			errorMessage: string;
+	  }
 	| {
-		/** Current API status */
-		status: "blocked";
-		/** Indicates if the API is connected and ready */
-		isReady: true;
-	}
+			/** Current API status */
+			status: "blocked";
+			/** Indicates if the API is connected and ready */
+			isReady: true;
+	  }
 	| {
-		/** Current API status */
-		status: "disconnected";
-		/** Indicates if the API is connected and ready */
-		isReady: false;
-		/** The Websocket connection status */
-		isConnected: false;
-		/** Indicates that cookies are either accepted or denied/unknown */
-		cookiesAccepted: boolean;
-	}
+			/** Current API status */
+			status: "disconnected";
+			/** Indicates if the API is connected and ready */
+			isReady: false;
+			/** The Websocket connection status */
+			isConnected: false;
+			/** Indicates that cookies are either accepted or denied/unknown */
+			cookiesAccepted: boolean;
+	  }
 	| {
-		/** Current API status */
-		status: "connected";
-		/** Indicates if the API is connected and ready */
-		isReady: false;
-		/** The Websocket connection status */
-		isConnected: true;
-		/** Indicates that cookies are either accepted or denied/unknown */
-		cookiesAccepted: boolean;
-	}
+			/** Current API status */
+			status: "connected";
+			/** Indicates if the API is connected and ready */
+			isReady: false;
+			/** The Websocket connection status */
+			isConnected: true;
+			/** Indicates that cookies are either accepted or denied/unknown */
+			cookiesAccepted: boolean;
+	  }
 	| {
-		/** Current API status */
-		status: "ready";
-		/** Indicates if the API is connected and ready */
-		isReady: true;
-		/** The Websocket connection status */
-		isConnected: true;
-		/** Indicates that cookies are either accepted or denied/unknown */
-		cookiesAccepted: boolean;
-		/** Current participant id */
-		participantId: number;
-		/** Current participant */
-		participant: DataTypes["participant"];
-	};
-
-/** API Store Interface */
-type APIStore = {
-	get: () => APIStoreValue;
-	subscribe: (handler: (value: APIStoreValue) => void) => () => void;
-};
+			/** Current API status */
+			status: "ready";
+			/** Indicates if the API is connected and ready */
+			isReady: true;
+			/** The Websocket connection status */
+			isConnected: true;
+			/** Indicates that cookies are either accepted or denied/unknown */
+			cookiesAccepted: boolean;
+			/** Current participant id */
+			participantId: number;
+			/** Current participant */
+			participant: DataTypes["participant"];
+	  };

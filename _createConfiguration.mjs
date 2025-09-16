@@ -5,7 +5,6 @@ import { readFileSync } from "node:fs";
 import { networkInterfaces } from "node:os";
 import Nopt from "nopt";
 import { publicIpv4 } from "public-ip";
-import { id } from "zod/v4/locales";
 
 /** @typedef {import('./shared/types/config.mjs').CONFIG} CONFIG */
 
@@ -208,12 +207,7 @@ export async function createConfiguration() {
 			/** The directory to use for client builds */
 			clientOutput: ".dist/ui",
 			/** The files to use as build inputs for the client, relative to the 'ui' folder. */
-			clientInputs: ["index.html", "debug.html", "_index.ts"],
-		},
-		/** Router Settings */
-		routes: {
-			"/": "index.html",
-			"/debug": "debug.html",
+			clientInputs: ["index.html", "debug.html", "stage.html"],
 		},
 		/** Debug Settings */
 		debug: {

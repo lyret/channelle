@@ -1,8 +1,8 @@
 import * as MediaSoup from "mediasoup-client";
 import DeepEqual from "deep-equal";
 import { writable, derived, get } from "svelte/store";
-import { roomClient } from "./_trpcClient";
-import type { Peer, TransportDirection, CustomAppData, MediaTag } from "../../server/_types";
+import { roomClient } from "../_trpcClient";
+import type { Peer, TransportDirection, CustomAppData, MediaTag } from "../../../server/_types";
 
 type Transport = MediaSoup.types.Transport<CustomAppData>;
 type Consumer = MediaSoup.types.Consumer<CustomAppData>;

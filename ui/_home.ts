@@ -1,7 +1,7 @@
 import "@babel/polyfill";
 import { enableMediaSoupDebugging, enableHotReloadingOnRebuilds } from "./api/development";
 
-import DebugApp from "./Debug.svelte";
+import Home from "./Home.svelte";
 
 // Set correct debug output level for MediaSoup
 enableMediaSoupDebugging();
@@ -10,9 +10,9 @@ enableMediaSoupDebugging();
 enableHotReloadingOnRebuilds();
 
 // Mount the Svelte interface
-const debugComponent = new DebugApp({
+const homeComponent = new Home({
 	target: document.body,
 	props: {},
 });
 
-export default debugComponent;
+export default homeComponent;

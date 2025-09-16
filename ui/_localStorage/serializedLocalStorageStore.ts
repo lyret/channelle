@@ -6,7 +6,7 @@ export function createSerializedLocalStorageStore<V>(
 	options: {
 		serialize: (data: V | undefined) => string;
 		deserialize: (data: string | null) => V;
-	}
+	},
 ) {
 	const _identifier = identifier;
 	let _value = options.deserialize(localStorage.getItem(_identifier));
@@ -27,7 +27,7 @@ export function createSerializedLocalStorageStore<V>(
 				set(_value);
 				if (serializedValue) {
 					localStorage.setItem(_identifier, serializedValue);
-				} else if (serializedValue) {
+				} else {
 					localStorage.removeItem(_identifier);
 				}
 			} catch (err) {

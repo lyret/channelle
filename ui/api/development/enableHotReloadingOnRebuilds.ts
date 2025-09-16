@@ -1,12 +1,12 @@
-import { debugClient } from "./_trpcClient";
-
-/** Keep track of the local build counter */
-let _localBuildCounter = -1;
+import { debugClient } from "../_trpcClient";
 
 /**
  * Enables browser reloading when the server side build counter changes during development
  */
 export async function enableHotReloadingOnRebuilds() {
+	// Keep track of the local build counter
+	let _localBuildCounter = -1;
+
 	if (CONFIG.isProduction) {
 		return;
 	}

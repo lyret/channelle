@@ -13,6 +13,12 @@ const wsClient = createWSClient({
 			token: uuidv4,
 		};
 	},
+	onOpen: () => {
+		console.log("WebSocket connection opened");
+	},
+	onClose: () => {
+		console.log("WebSocket connection closed");
+	},
 });
 
 /** The TRPC client for the Room API  */
