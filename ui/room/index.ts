@@ -1,2 +1,2 @@
-export * from "./room-client";
-export * from "./debugfunctions";
+export * from "./roomClient";
+export * from "./apiFunctions";

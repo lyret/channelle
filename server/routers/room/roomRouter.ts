@@ -1,34 +1,11 @@
 import type * as MediaSoup from "mediasoup";
 import type { CustomAppData, MediaTag, Room, Transport, Producer, Consumer } from "./types";
-import { BroadcastChannel } from "broadcast-channel";
 import { TRPCError } from "@trpc/server";
-import { trcp, mediaSoupRouter } from "../lib/api";
+import { trpc, mediaSoupRouter } from "../../lib";
 import { z } from "zod";
 
-/** HTTP peer stale timeout in milliseconds. */
-const HTTP_PEER_STALE = 15000;
-
 // Get the trcp router constructor and default procedure
-const { router: trcpRouter, procedure: trcpProcedure } = trcp();
-
-// Handle incomming debugging messages from the cli over trpc
-// TODO: Move to a separate router
-let buildCounter = 0;
-if (CONFIG.runtime.debug) {
-	const channel = new BroadcastChannel<{ type: "build-event"; data: any }>("cli-channel");
-	channel.addEventListener("message", ({ type }) => {
-		switch (type) {
-			// Refresh the connected clients
-			case "build-event":
-				buildCounter++;
-				break;
-			// Unhandled messages
-			default:
-				console.log(`[DEBUG] Received unhandled ipc message of type: ${type}`);
-				break;
-		}
-	});
-}
+const { router: trcpRouter, procedure: trcpProcedure } = trpc();
 
 /** Internal state */
 const _room: Room = {
@@ -71,7 +48,6 @@ export const roomRouter = trcpRouter({
 	// 'activeSpeaker' info
 	sync: roomProcedure.query(async () => {
 		return {
-			buildCounter: buildCounter,
 			peers: _room.peers,
 			activeSpeaker: _room.activeSpeaker,
 		};
@@ -392,7 +368,7 @@ export type RoomRouter = typeof roomRouter;
 async function removeStalePeers() {
 	const now = Date.now();
 	for (const [id, peer] of Object.entries(_room.peers)) {
-		if (now - peer.lastSeenTs > HTTP_PEER_STALE) {
+		if (now - peer.lastSeenTs > 15000) {
 			console.log(`[Room] Removing stale peer ${id}`);
 			_closePeer(id);
 		}

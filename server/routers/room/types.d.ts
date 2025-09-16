@@ -1,8 +1,8 @@
 import type * as MediaSoup from "mediasoup";
-import type { MediaTag, CustomAppData } from "../lib/api/mediaSoup";
+import type { MediaTag, CustomAppData } from "../../lib/mediaSoup";
 
-export type { RoomRouter } from "./room";
-export type { MediaTag, TransportDirection, CustomAppData } from "../lib/api/mediaSoup";
+export type { RoomRouter } from "./roomRouter";
+export type { MediaTag, TransportDirection, CustomAppData } from "../../lib/mediaSoup";
 
 export type Transport = MediaSoup.types.WebRtcTransport<{ peerId: string; clientDirection: string }>;
 export type Consumer = MediaSoup.types.Consumer<CustomAppData>;

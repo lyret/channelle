@@ -53,6 +53,8 @@ type WebConfig = {
 };
 
 type SocketConfig = {
+	/** The port for the websocket server. */
+	port: number;
 	/** The path for the socket. */
 	path: string;
 	/** The transports for the socket. */

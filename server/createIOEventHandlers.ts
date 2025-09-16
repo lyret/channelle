@@ -5,7 +5,7 @@ import { client, Repository, RepositoryOperations, RepositoryOperationsThatIntro
 import type { SubscriptionMessage } from "../shared/subscriptions";
 import { createSubscriptionPath } from "../shared/subscriptions";
 
-import { mediaSoupRouter, ws } from "./lib/api";
+import { mediaSoupRouter, ws } from "./lib/lib";
 import { createRTCResponseHandler } from "./lib/rtc";
 
 import { userCameraBans, userMicrophoneBans, userOnlineStatus } from "./stores/users";

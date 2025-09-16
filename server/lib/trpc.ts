@@ -4,7 +4,7 @@ import { initTRPC } from "@trpc/server";
 let _trcp: TRPCRootObject<Context, object, TRPCRuntimeConfigOptions<object, object>> | undefined;
 
 /** Returns the global trcp backend server  */
-export function trcp(): TRPCRootObject<Context, object, TRPCRuntimeConfigOptions<object, object>> {
+export function trpc(): TRPCRootObject<Context, object, TRPCRuntimeConfigOptions<object, object>> {
 	// Return already initialized singelton instance
 	if (_trcp) {
 		return _trcp;

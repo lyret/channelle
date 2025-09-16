@@ -1,9 +1,10 @@
 // import * as MediaSoup from "mediasoup";
 import type * as Http from "http";
+import { http, sequelize } from "./lib";
+import { createAppRouter } from "./_router";
 
 //import { createIOEventHandlers } from "./createIOEventHandlers";
 // import { loadStores } from "./loadStores";
-import { http, sequelize, ws } from "./lib/api";
 
 // import * as SceneStores from "./stores/scene";
 // import * as UserStores from "./stores/users";
@@ -19,11 +20,11 @@ export async function createServer(): Promise<Http.Server> {
 	// Create the http server
 	const httpServer = await http();
 
-	// Create the socket server
-	ws();
-
 	// Create the database connection
 	await sequelize();
+
+	// Create the app router
+	await createAppRouter();
 
 	// // Load stores so that they are not removed from the server bundle
 	// loadStores(
@@ -51,6 +52,7 @@ export async function createServer(): Promise<Http.Server> {
 
 	// Handle websocket events
 	//io.on("connection", createIOEventHandlers);
+	//
 
 	// Start the server
 	httpServer.listen(CONFIG.web.port);

@@ -42,6 +42,7 @@
 
 /**
  * @typedef {Object} Socket
+ * @property {number} port - The port for the websocket server.
  * @property {string} path - The path for the socket.
  * @property {string[]} transports - The transports for the socket.
  */

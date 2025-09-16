@@ -64,7 +64,7 @@ export async function createConfiguration() {
 	// The PORT option sets the network interface port for the server to bind to.
 	// Defaults to 3000.
 	const port = cli.port !== undefined ? cli.port : env.PORT ? Number(env.PORT) : 3000;
-	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Port", Chalk.bold(port));
+	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "HTTP Port", Chalk.bold(port), `WS Port: ${port + 1}`);
 
 	// The LOCAL options enables the stage server to be reached from the loopback interface of the machine running the server
 	const local = cli.local !== undefined ? cli.local : env.LOCAL != "false" || true;
@@ -203,9 +203,10 @@ export async function createConfiguration() {
 			/** Exposed listening port */
 			port: port,
 		},
-		/** Socket IO Settings */
+		/** Websockets Settings */
 		socket: {
-			path: "/ws",
+			port: port + 1,
+			path: "/ws", // TODO: no longer used?
 			transports: ["websocket"],
 		},
 		/** MediaSoup Settings */
