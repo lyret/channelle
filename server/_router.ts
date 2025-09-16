@@ -1,5 +1,7 @@
 import { applyWSSHandler } from "@trpc/server/adapters/ws";
 import { trpc, ws } from "./lib";
+import { roomRouter } from "./routers/room";
+import { debugRouter } from "./routers/debug";
 
 /**
  * Creates and returns the application router
@@ -9,15 +11,15 @@ export async function createAppRouter() {
 	const { router: trcpRouter } = trpc();
 
 	// Create the sub-route configuration
-	const { roomRouter } = await import("./routers/room");
 	const routerConfig = {
 		room: roomRouter,
+		debug: debugRouter,
 	};
 
-	// Add handling of incomming debugging messages from the cli
-	if (CONFIG.runtime.debug) {
-		const { debugRouter } = await import("./routers/debug");
-		routerConfig["debug"] = debugRouter;
+	// Remove handling of incomming debugging messages from the cli
+	// when not debugging
+	if (!CONFIG.runtime.debug) {
+		delete routerConfig["debug"];
 	}
 
 	// Create the application router
@@ -51,3 +53,6 @@ export async function createAppRouter() {
 	// Return the application trpc router
 	return appRouter;
 }
+
+/** The Application TRPC Router */
+export type AppRouter = Awaited<ReturnType<typeof createAppRouter>>;

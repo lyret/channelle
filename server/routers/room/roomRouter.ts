@@ -1,11 +1,37 @@
 import type * as MediaSoup from "mediasoup";
-import type { CustomAppData, MediaTag, Room, Transport, Producer, Consumer } from "./types";
+import type { Transport, Peer, CustomAppData, MediaTag, Producer, Consumer } from "../../_types";
 import { TRPCError } from "@trpc/server";
 import { trpc, mediaSoupRouter } from "../../lib";
 import { z } from "zod";
 
 // Get the trcp router constructor and default procedure
 const { router: trcpRouter, procedure: trcpProcedure } = trpc();
+
+/**
+ * On the server we keep lists of transports, producers, and
+ * consumers. whenever we create a transport, producer, or consumer,
+ * we save the remote peerId in the object's `appData`. for producers
+ * and consumers we also keep track of the client-side "media tag", to
+ * correlate tracks.
+ */
+type Room = {
+	peers: Record<string, Peer>;
+	activeSpeaker: {
+		producerId: string | null;
+		volume: number | null;
+		peerId: string | null;
+	};
+	// internal
+	transports: {
+		[id: string]: Transport;
+	};
+	producers: {
+		[id: string]: Producer;
+	};
+	consumers: {
+		[id: string]: Consumer;
+	};
+};
 
 /** Internal state */
 const _room: Room = {

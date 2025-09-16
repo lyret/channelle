@@ -31,6 +31,7 @@
  * @typedef {Object} StageConfig
  * @property {string} name - The name of the stage.
  * @property {string} inviteKey - The invite key for the stage.
+ * @property {string} id - The identifier for the stage.
  */
 
 /**

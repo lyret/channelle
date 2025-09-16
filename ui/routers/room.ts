@@ -1,8 +1,12 @@
 import * as MediaSoup from "mediasoup-client";
 import DeepEqual from "deep-equal";
 import { writable, derived, get } from "svelte/store";
-import { roomClient } from "./roomClient";
-import type { CustomAppData, MediaTag, Transport, Producer, Consumer, TransportDirection, Peer } from "./types";
+import { roomClient } from "./_trpcClient";
+import type { Peer, TransportDirection, CustomAppData, MediaTag } from "../../server/_types";
+
+type Transport = MediaSoup.types.Transport<CustomAppData>;
+type Consumer = MediaSoup.types.Consumer<CustomAppData>;
+type Producer = MediaSoup.types.Producer<CustomAppData>;
 
 // ============================================================================
 // SVELTE STORES
@@ -99,7 +103,6 @@ export const micPausedStore = writable(false);
 // These are truly internal and don't need to be reactive
 let _pollingInterval: ReturnType<typeof setInterval> | undefined;
 let _previousSyncedPeers: Record<string, any> = {};
-let _localBuildCounter = -1;
 
 // ============================================================================
 // DERIVED STORES
@@ -210,15 +213,8 @@ export async function leaveRoom() {
  * Called periodically via polling interval
  */
 async function syncRoom() {
-	const { peers, activeSpeaker, buildCounter } = await roomClient.sync.query();
+	const { peers, activeSpeaker } = await roomClient.sync.query();
 	console.debug({ peers });
-
-	// Reload the window if the build counter has changed during development
-	if (buildCounter > _localBuildCounter && _localBuildCounter != -1) {
-		window.location.reload();
-	} else {
-		_localBuildCounter = buildCounter;
-	}
 
 	// Update the active speaker
 	currentActiveSpeakerStore.set(activeSpeaker);
@@ -337,7 +333,7 @@ export async function sendMediaStreams() {
 	// stream for the camera video track.
 	if (stream.getVideoTracks().length > 0) {
 		console.log(2, stream.getVideoTracks());
-		const producer = await transport.produce({
+		const producer: Producer = await transport.produce({
 			track: stream.getVideoTracks()[0],
 			// Just two resolutions, for now, as chrome 75 seems to ignore more
 			// than two encodings
@@ -358,7 +354,7 @@ export async function sendMediaStreams() {
 
 	// Start sending audio if we have a local audio stream
 	if (stream.getAudioTracks().length > 0) {
-		const producer = await transport.produce({
+		const producer: Producer = await transport.produce({
 			track: stream.getAudioTracks()[0],
 			appData: { mediaTag: "mic-audio", peerId: get(myPeerIdStore) },
 		});

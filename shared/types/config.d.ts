@@ -41,6 +41,8 @@ type StageConfig = {
 	name: string;
 	/** The invite key for the stage. */
 	inviteKey: string;
+	/** The identifier for the stage. */
+	id: string;
 };
 
 type WebConfig = {

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from "svelte";
 	import { blur } from "svelte/transition";
-	import * as Debug from "./room/apiFunctions";
+	import * as Debug from "./routers/room";
 
 	// Import all the stores
 	import {
@@ -21,7 +21,7 @@
 		peersStore,
 		camPausedStore,
 		micPausedStore,
-	} from "./room/apiFunctions";
+	} from "./routers/room";
 
 	// Local state for UI
 	let peerIdInput = "";

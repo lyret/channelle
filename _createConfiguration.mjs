@@ -1,9 +1,11 @@
 import Chalk from "chalk";
+import Slug from "slug";
 import "dotenv/config";
 import { readFileSync } from "node:fs";
 import { networkInterfaces } from "node:os";
 import Nopt from "nopt";
 import { publicIpv4 } from "public-ip";
+import { id } from "zod/v4/locales";
 
 /** @typedef {import('./shared/types/config.mjs').CONFIG} CONFIG */
 
@@ -22,6 +24,9 @@ export async function createConfiguration() {
 	// @see https://www.npmjs.com/package/nopt
 	const cli = Nopt(
 		{
+			name: String,
+			inviteKey: String,
+			id: String,
 			production: Boolean,
 			port: Number,
 			verbose: Boolean,
@@ -45,6 +50,29 @@ export async function createConfiguration() {
 	// Determine and define the most important runtime options given
 	// either by cli options, or set as environment variables
 	// Output relevant information along the way
+
+	// Stage configuration
+	console.log();
+
+	// If STAGE_NAME is set or the 'name' option is given in the CLI the
+	// deployment/stage will be named after the given string, otherwise it
+	// will be unnamned
+	const stageName = cli.name !== undefined ? cli.name : env.STAGE_NAME || "";
+	console.log("🏷️ ", Chalk.bgBlueBright("[CONFIG]"), "Stage Name", stageName);
+
+	// If STAGE_INVITE_LINK_KEY is set it will default the deployed stage to be password protected with the string given
+	// otherwise it will be set to an empty string and the stage will be public
+	const stageInviteLinkKey = cli.name !== undefined ? cli.inviteKey : env.STAGE_INVITE_LINK_KEY || "";
+	if (stageInviteLinkKey) {
+		console.log("🏷️ ", Chalk.bgBlueBright("[CONFIG]"), "Invite Link Key", stageInviteLinkKey);
+	}
+
+	// If STAGE_ID is set or 'id' is given in the CLI it will be used to identify this deployment (stage), otherwise a slug
+	// from the STAGE_NAME will be used
+	const stageId = cli.id !== undefined ? cli.id : env.STAGE_ID || Slug(stageName);
+	console.log("🏷️ ", Chalk.bgBlueBright("[CONFIG]"), "Identifier", stageId);
+
+	// Runtime options
 	console.log();
 
 	// The PRODUCTION option indicates to the source code that the stage server
@@ -95,8 +123,11 @@ export async function createConfiguration() {
 
 	if (start) {
 		if (wan) {
-			// Get the public IP of this server NOTE: hangs forever when not connected to internet
-			const publicIP = await publicIpv4();
+			// Get the public IP of this server
+			const publicIP = await publicIpv4({ version: 4, timeout: 10000 }).catch((error) => {
+				console.error("💥 Failed to get a public IP:", error);
+				return undefined;
+			});
 
 			// Add listening infos for WAN,
 			webRTCTransportListenInfos.push({
@@ -191,8 +222,9 @@ export async function createConfiguration() {
 		},
 		/** Stage Settings */
 		stage: {
-			name: process.env.STAGE_NAME || "",
-			inviteKey: process.env.STAGE_INVITE_LINK_KEY || "123",
+			name: stageName,
+			inviteKey: stageInviteLinkKey,
+			id: stageId,
 		},
 		/** Web Server Settings */
 		web: {

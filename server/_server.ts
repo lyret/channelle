@@ -56,7 +56,7 @@ export async function createServer(): Promise<Http.Server> {
 
 	// Start the server
 	httpServer.listen(CONFIG.web.port);
-	console.log(`[Server] HTTP server listening on port ${CONFIG.web.port}`);
+	console.log(`[Server] Server listening on port ${CONFIG.web.port}`);
 
 	// Return the http server
 	return httpServer;

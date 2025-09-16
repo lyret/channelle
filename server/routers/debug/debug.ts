@@ -1,27 +1,27 @@
+import { tracked } from "@trpc/server";
+import Emittery from "emittery";
 import { trpc } from "../../lib";
 import { BroadcastChannel } from "broadcast-channel";
-import { EventEmitter, on } from "node:events";
 
 // Get the trcp router constructor and default procedure
 const { router: trcpRouter, procedure: trcpProcedure } = trpc();
 
-/** Number of times the build counter has been incremented, happens when the client side code has been rebuiled */
+/** Counts the number of times the rebuild message has been received, which happens when the client side code has been rebuiled */
 let _buildCounter = 0;
 
+/** Internal event emitter */
+const _emitter = new Emittery<{ buildCounter: number }>();
+
 /** Inter-process communication channel */
-const _debugChannel = new BroadcastChannel<{ type: "build-event"; data: any }>("cli-channel");
+const _cliChannel = new BroadcastChannel<{ type: "build-event"; data: any }>("cli-channel");
 
-/** Local event emitter */
-const _ee = new EventEmitter<{
-	buildCounter: [buildCounter: number];
-}>();
-
-_debugChannel.addEventListener("message", ({ type }) => {
+// Listen to build events from the cli process
+_cliChannel.addEventListener("message", ({ type }) => {
 	switch (type) {
 		// Refresh the build counter for connected clients
 		case "build-event":
-			_buildCounter++;
-			_ee.emit("buildCounter", _buildCounter);
+			_buildCounter = _buildCounter + 1;
+			_emitter.emit("buildCounter", _buildCounter);
 			break;
 		// Unhandled messages
 		default:
@@ -37,9 +37,9 @@ _debugChannel.addEventListener("message", ({ type }) => {
 export const debugRouter = trcpRouter({
 	buildCounter: trcpProcedure.subscription(async function* () {
 		// listen for new events
-		for await (const [counter] of on(_ee, "buildCounter")) {
+		for await (const counter of _emitter.events("buildCounter")) {
 			console.log(`[DEBUG ROUTER] Debug counter increased: ${counter}`);
-			yield counter;
+			yield tracked(String(counter), counter);
 		}
 	}),
 });
