@@ -25,24 +25,24 @@ _cliChannel.addEventListener("message", ({ type }) => {
 			break;
 		// Unhandled messages
 		default:
-			console.log(`[DEBUG] Received unhandled IPC message of type: ${type}`);
+			console.log(`[Dev Router] Received unhandled IPC message of type: ${type}`);
 			break;
 	}
 });
 
 /**
- * Debug Router
- * Handles incomming debugging messages from the cli to the browser client over trpc
+ * Development Router
+ * Handles incomming messages from the cli to the browser client over trpc
  */
-export const debugRouter = trcpRouter({
+export const developmentRouter = trcpRouter({
 	buildCounter: trcpProcedure.subscription(async function* () {
 		// listen for new events
 		for await (const counter of _emitter.events("buildCounter")) {
-			console.log(`[DEBUG ROUTER] Debug counter increased: ${counter}`);
+			console.log(`[Dev Router] Build counter increased to ${counter}`);
 			yield tracked(String(counter), counter);
 		}
 	}),
 });
 
 /** Debug Router Definition */
-export type DebugRouter = typeof debugRouter;
+export type DebugRouter = typeof developmentRouter;

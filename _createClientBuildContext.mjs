@@ -68,7 +68,8 @@ export async function createClientBuildContext(CONFIG, callback) {
 				name: "EsbuildCallback",
 				setup(build) {
 					build.onEnd((results) => {
-						if (results.metafile?.outputs[".dist/ui/index.html"] && results.metafile?.outputs[".dist/ui/_index.js"]) {
+						const hasJSCode = Object.keys(results.metafile?.outputs || {}).findIndex((key) => key.endsWith(".js")) > 0;
+						if (hasJSCode) {
 							console.log("\n📦", Chalk.white.bgGreen("[BUILD]"), Chalk.bold("New client code available\n"));
 
 							if (callback) {

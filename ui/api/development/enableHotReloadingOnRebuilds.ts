@@ -1,4 +1,4 @@
-import { debugClient } from "../_trpcClient";
+import { developmentClient } from "../_trpcClient";
 
 /**
  * Enables browser reloading when the server side build counter changes during development
@@ -10,24 +10,25 @@ export async function enableHotReloadingOnRebuilds() {
 	if (CONFIG.isProduction) {
 		return;
 	}
-	debugClient.buildCounter.subscribe(undefined, {
+	developmentClient.buildCounter.subscribe(undefined, {
 		onData: ({ data: buildCounter }) => {
-			console.log("Build counter:", buildCounter);
+			console.log("[Dev Router] Rebuild counter:", buildCounter);
 			// Reload the window if the build counter has changed during development
 			if (buildCounter > _localBuildCounter && _localBuildCounter != -1) {
+				console.log("[Dev Router] Reloading...");
 				window.location.reload();
 			} else {
 				_localBuildCounter = buildCounter;
 			}
 		},
 		onError: (error) => {
-			console.error("Build counter error:", error);
+			console.error("[Dev Router] Error:", error);
 		},
 		onStarted: () => {
-			console.log("Build counter started");
+			console.log("[Dev Router] Connected");
 		},
 		onComplete: () => {
-			console.log("Build counter completed");
+			console.log("[Dev Router] Completed");
 		},
 	});
 }

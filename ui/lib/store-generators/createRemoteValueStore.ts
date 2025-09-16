@@ -3,18 +3,12 @@ import { readable } from "svelte/store";
 import { ws } from "../api";
 
 /** Store interface */
-type RemoteValueStore<V> = Pick<
-	ServerObservableValueStore<V>,
-	"key" | "set" | "subscribe"
-> & {
+type RemoteValueStore<V> = Pick<ServerObservableValueStore<V>, "key" | "set" | "subscribe"> & {
 	isConnected: () => boolean;
 };
 
 /** Creates a Svelte Store for an remote observable value on the server side */
-export function createRemoteValueStore<V>(
-	identifier: string,
-	defaultValue: V | null = null
-): RemoteValueStore<V> {
+export function createRemoteValueStore<V>(identifier: string, defaultValue: V | null = null): RemoteValueStore<V> {
 	const _identifier = identifier;
 	const _socket = ws(`/${identifier}`);
 

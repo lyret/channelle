@@ -33,5 +33,5 @@ export const appClient = createTRPCClient<AppRouter>({
 /** Client for the Room API only */
 export const roomClient = appClient.room;
 
-/** Client for the Debug API only */
-export const debugClient = appClient.debug;
+/** Client for the Development API only */
+export const developmentClient = appClient.development;

@@ -1,4 +1,4 @@
 export * from "./mediaDevice";
 export * from "./rtcSendTransport";
 export * from "./rtpCapabilities";
-export * from "./ws";
+export const ws: any = undefined;

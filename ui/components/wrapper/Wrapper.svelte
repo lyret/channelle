@@ -1,21 +1,19 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { blur } from "svelte/transition";
-	import logoSrc from "~/assets/images/masks.gif";
-	import { APIStore } from "~/lib/stores/api";
 
-	import AuthenticateCurtainMessage from "~/components/curtains/AuthenticateCurtainMessage.svelte";
-	import BlockedCurtainMessage from "~/components/curtains/BlockedCurtainMessage.svelte";
-	import ContinueCurtainMessage from "~/components/curtains/ContinueCurtainMessage.svelte";
-	import LoaderCurtainMessage from "~/components/curtains/LoadingCurtainMessage.svelte";
-	import ProblemCurtainMessage from "~/components/curtains/ProblemCurtainMessage.svelte";
-	import PasswordCurtainMessage from "~/components/curtains/PasswordCurtainMessage.svelte";
-	import Curtains from "~/components/curtains/Curtains.svelte";
+	//TODO: re-add
+	// import { blur } from "svelte/transition";
+	// import logoSrc from "~/assets/images/masks.gif";
+	// import AuthenticateCurtainMessage from "~/components/curtains/AuthenticateCurtainMessage.svelte";
+	// import BlockedCurtainMessage from "~/components/curtains/BlockedCurtainMessage.svelte";
+	// import ContinueCurtainMessage from "~/components/curtains/ContinueCurtainMessage.svelte";
+	// import LoaderCurtainMessage from "~/components/curtains/LoadingCurtainMessage.svelte";
+	// import ProblemCurtainMessage from "~/components/curtains/ProblemCurtainMessage.svelte";
+	// import PasswordCurtainMessage from "~/components/curtains/PasswordCurtainMessage.svelte";
+	// import Curtains from "~/components/curtains/Curtains.svelte";
 
-	import { scenePasswordIsOk } from "~/stores/scene/scenePassword";
-	import { sceneCurtains } from "~/stores/scene/sceneCurtains";
-
-	import CONFIG from "~/_config";
+	// import { scenePasswordIsOk } from "~/stores/scene/scenePassword";
+	// import { sceneCurtains } from "~/stores/scene/sceneCurtains";
 
 	console.log(CONFIG.stage.name, "HERE");
 	// Delays the rendering of any content to avoid the "pop-in" effect
@@ -37,29 +35,29 @@
 	export let hasInteractedWithTheDocument = !CONFIG.runtime.production;
 
 	// Determine what should be rendered
-	$: isBlocked = $APIStore.status == "blocked";
-	$: isPreparing = $APIStore.isReady == false;
-	$: hasEnteredName = !isPreparing && $APIStore.participant.name;
-	$: needsToBeManager = lockedToManager && !(!isPreparing && $APIStore.participant.manager);
-	$: needsInviteKey = lockedToInviteKey && !$scenePasswordIsOk;
-	$: renderMessages =
-		!determiningState && (isPreparing || !hasEnteredName || !hasInteractedWithTheDocument || isBlocked || needsInviteKey || needsToBeManager);
-	$: renderContent = !determiningState && !renderMessages;
-	$: renderCurtains = determiningState || renderMessages || ($sceneCurtains && renderStage);
+	// $: isBlocked = $APIStore.status == "blocked";
+	// $: isPreparing = $APIStore.isReady == false;
+	// $: hasEnteredName = !isPreparing && $APIStore.participant.name;
+	// $: needsToBeManager = lockedToManager && !(!isPreparing && $APIStore.participant.manager);
+	// $: needsInviteKey = lockedToInviteKey && !$scenePasswordIsOk;
+	// $: renderMessages =
+	// 	!determiningState && (isPreparing || !hasEnteredName || !hasInteractedWithTheDocument || isBlocked || needsInviteKey || needsToBeManager);
+	// $: renderContent = !determiningState && !renderMessages;
+	// $: renderCurtains = determiningState || renderMessages || ($sceneCurtains && renderStage);
 </script>
 
 <!-- Content -->
-{#if renderContent && $$slots.default}
+<!-- {#if renderContent && $$slots.default}
 	<slot></slot>
-{/if}
+{/if} -->
 
 <!-- Curtains -->
-{#if renderCurtains}
+<!-- {#if renderCurtains}
 	<Curtains />
-{/if}
+{/if} -->
 
-<!-- Curtain Messages -->
-{#if renderMessages}
+<!-- TODO: re-add Curtain Messages -->
+<!-- {#if renderMessages}
 	<div class="overlay">
 		<div class="menu" in:blur={{ duration: 1000 }} out:blur={{ duration: 500 }}>
 			<img class="logo" src={logoSrc} alt="Channelle" />
@@ -81,7 +79,7 @@
 			{/if}
 		</div>
 	</div>
-{/if}
+{/if} -->
 
 <style lang="scss">
 	img.logo {
