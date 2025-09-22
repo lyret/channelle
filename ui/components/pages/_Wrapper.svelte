@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
+	declare const CONFIG: any;
 
 	//TODO: re-add
 	// import { blur } from "svelte/transition";

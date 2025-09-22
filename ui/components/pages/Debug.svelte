@@ -21,7 +21,7 @@
 		peersStore,
 		camPausedStore,
 		micPausedStore,
-	} from "./api/room";
+	} from "~/api/room";
 
 	// Local state for UI
 	let peerIdInput = "";
