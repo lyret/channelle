@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { windowSizeStore } from "$ui/device";
+	import { windowSizeStore } from "~/_device";
 	import { onMount } from "svelte";
 	import { blur } from "svelte/transition";
 	import { createEffectsStore } from "~/stores/particles/effectsStore";
 	import { sceneChatIsEnabled } from "~/stores/scene/sceneChatIsEnabled";
 	import { sceneEffectsIsEnabled } from "~/stores/scene/sceneEffectsIsEnabled";
-	import { stageChat } from "~/stores/scene/stageChatPanelsOpen";
+	import { showStageChatStore } from "~/stores/scene/stageChatPanelsOpen";
 	import { stageSettings } from "~/stores/scene/stageSettingsIsOpen";
 	import { fullscreenStore } from "~/stores/stage/fullscreen";
 	import IconMaximize from "../icons/Icon-maximize.svelte";
@@ -33,8 +33,7 @@
 
 	// Class list of all buttons in the action bar
 	const btnClassList = "button is-small";
-	const effectBtnClassList =
-		"button effect is-small is-danger is-rounded is-light is-outlined is-warning";
+	const effectBtnClassList = "button effect is-small is-danger is-rounded is-light is-outlined is-warning";
 	const iconClassList = "icon is-size-4";
 </script>
 
@@ -49,18 +48,10 @@
 	{/if}
 	<!-- EFFECTS -->
 	{#if $sceneEffectsIsEnabled}
-		<button
-			class={effectBtnClassList}
-			transition:blur
-			on:click={() => effects.set({ type: "applause", number: 1 })}
-		>
+		<button class={effectBtnClassList} transition:blur on:click={() => effects.set({ type: "applause", number: 1 })}>
 			<span class={iconClassList}>👏</span></button
 		>
-		<button
-			class={effectBtnClassList}
-			transition:blur
-			on:click={() => effects.set({ type: "flowers", number: 1 })}
-		>
+		<button class={effectBtnClassList} transition:blur on:click={() => effects.set({ type: "flowers", number: 1 })}>
 			<span class={iconClassList}>🌹</span></button
 		>
 		{#if !isMobile}
@@ -93,9 +84,9 @@
 		<button
 			class={btnClassList}
 			transition:blur
-			class:active={$stageChat}
+			class:active={$showStageChatStore}
 			on:click={() => {
-				stageChat.set(!$stageChat);
+				showStageChatStore.set(!$showStageChatStore);
 				stageSettings.set(false);
 			}}
 		>
@@ -112,7 +103,7 @@
 		class:active={$stageSettings}
 		on:click={() => {
 			stageSettings.set(!$stageSettings);
-			stageChat.set(false);
+			showStageChatStore.set(false);
 		}}
 	>
 		<span class={iconClassList}>

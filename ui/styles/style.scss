@@ -9,15 +9,15 @@ $danger: #b83334;
 $background: #000;
 
 /* Use Bulma */
-@use 'bulma/sass' with (
+@use "bulma/sass" with (
 	// Responsive breakpoints
 	$tablet: 600px,
 
 	// Fonts
-	$title-family: 'Georgia',
-	$family-secondary: 'OpenSans',
-	$family-primary: 'OpenSansItalic',
-	$family-sans-serif: 'OpenSans',
+	$title-family: "Georgia",
+	$family-secondary: "OpenSans",
+	$family-primary: "OpenSansItalic",
+	$family-sans-serif: "OpenSans",
 	$weight-light: 300,
 	$weight-normal: 400,
 	$weight-medium: 700,
@@ -29,7 +29,7 @@ $background: #000;
 	$size-3: 1.4rem,
 	$size-4: 1.2rem,
 	$size-5: 1.1rem,
-	$size-6: 1.0rem,
+	$size-6: 1rem,
 	$size-7: 0.8rem,
 
 	// Radius
@@ -54,8 +54,7 @@ $background: #000;
 	$notification-code-background-color: $primary
 );
 /* Use the extension Bulma List */
-@use './lib/bulma-list.scss';
-
+@use "./_bulmaList.scss";
 
 // Breakpoints:
 // mobile: up to 768px
@@ -63,8 +62,6 @@ $background: #000;
 // desktop: from 1024px to 1215px
 // widescreen: from 1216px to 1407px
 // fullhd: from 1408px
-
-
 
 .has-main-background {
 	background-color: var(--channelle-main-bg-color);
@@ -85,31 +82,27 @@ $background: #000;
 	color: var(--channelle-backstage-text-color);
 }
 
-
-
 /* Fonts and external resources */
 @font-face {
-	font-family: 'OpenSansItalic';
-	src: url('../assets/fonts/OpenSans/OpenSans-Italic-VariableFont_wdth,wght.ttf') format('truetype');
+	font-family: "OpenSansItalic";
+	src: url("../assets/fonts/OpenSans/OpenSans-Italic-VariableFont_wdth,wght.ttf") format("truetype");
 }
 @font-face {
-	font-family: 'OpenSans';
-	src: url('../assets/fonts/OpenSans/OpenSans-VariableFont_wdth,wght.ttf') format('truetype');
+	font-family: "OpenSans";
+	src: url("../assets/fonts/OpenSans/OpenSans-VariableFont_wdth,wght.ttf") format("truetype");
 }
-
-
 
 /* Add custom class decelerations for changing the font family */
 .is-family-default {
-	font-family: 'OpenSansItalic' !important;
+	font-family: "OpenSansItalic" !important;
 	font-weight: 400;
 }
 .is-family-secondary {
-	font-family: 'OpenSans' !important;
+	font-family: "OpenSans" !important;
 	font-weight: 300;
 }
 .is-family-title {
-	font-family: 'Georgia' !important;
+	font-family: "Georgia" !important;
 	text-transform: uppercase;
 	font-weight: 900;
 }

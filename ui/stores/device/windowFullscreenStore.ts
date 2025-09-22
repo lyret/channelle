@@ -1,6 +1,6 @@
 import type { Writable } from "svelte/store";
 
-export function fullscreenStore() : Omit<Writable<boolean>, "update"> & { toggle: () => void } {
+export function windowFullscreenStore(): Omit<Writable<boolean>, "update"> & { toggle: () => void } {
 	return {
 		subscribe: (set) => {
 			const fullscreenEventHandler = () => {
@@ -10,34 +10,26 @@ export function fullscreenStore() : Omit<Writable<boolean>, "update"> & { toggle
 					set(false);
 				}
 			};
-	
-			document?.addEventListener(
-				"fullscreenchange",
-				fullscreenEventHandler
-			);
-	
+
+			document?.addEventListener("fullscreenchange", fullscreenEventHandler);
+
 			return () => {
-				document?.removeEventListener(
-					"fullscreenchange",
-					fullscreenEventHandler
-				);
+				document?.removeEventListener("fullscreenchange", fullscreenEventHandler);
 			};
 		},
 		toggle: () => {
 			if (document?.fullscreenElement) {
 				document.exitFullscreen();
-			}
-			else {
+			} else {
 				document.body.requestFullscreen();
 			}
 		},
-		set: (value : boolean) => {
+		set: (value: boolean) => {
 			if (value) {
 				document.body.requestFullscreen();
-			}
-			else {
+			} else {
 				document.exitFullscreen();
 			}
-		}
+		},
 	};
 }

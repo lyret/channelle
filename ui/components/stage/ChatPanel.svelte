@@ -1,20 +1,20 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { currentParticipant } from "~/lib/stores/api";
 	import { createLocalStore } from "~/stores";
 	import { sceneChatIsEnabled } from "~/stores/scene/sceneChatIsEnabled";
-	import { stageChat } from "~/stores/scene/stageChatPanelsOpen";
+	import { showStageChatStore } from "~/stores/scene/stageChatPanelsOpen";
 	import ChatInput from "../chat/ChatInput.svelte";
 	import ChatList from "../chat/ChatList.svelte";
 	import IconStar from "../icons/Icon-star.svelte";
 	import IconUsers from "../icons/Icon-users.svelte";
+	import { peerStore } from "~/api/room";
 
 	const backstageOnly = createLocalStore("panel-chat-backstage-only", false);
 
 	onMount(() => {
 		const stop = sceneChatIsEnabled.subscribe((enabled) => {
 			if (!enabled) {
-				stageChat.set(false);
+				showStageChatStore.set(false);
 			}
 		});
 
@@ -25,7 +25,7 @@
 <div class="instrument">
 	<ChatList backstageOnly={$backstageOnly} />
 
-	{#if $currentParticipant.actor || $currentParticipant.manager}
+	{#if $peerStore.actor || $peerStore.manager}
 		<div class="tab-container">
 			<div class="tabs is-fullwidth">
 				<ul>
@@ -36,10 +36,7 @@
 						</a>
 					</li>
 					<li class:is-active={$backstageOnly}>
-						<a
-							class:has-text-link={$backstageOnly}
-							on:click={() => ($backstageOnly = true)}
-						>
+						<a class:has-text-link={$backstageOnly} on:click={() => ($backstageOnly = true)}>
 							<span class="icon is-small"><IconStar /></span>
 							<span>Backstage</span>
 						</a>

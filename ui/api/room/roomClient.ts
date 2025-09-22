@@ -2,7 +2,7 @@ import * as MediaSoup from "mediasoup-client";
 import DeepEqual from "deep-equal";
 import { writable, derived, get } from "svelte/store";
 import { roomClient, wsPeerIdStore } from "../_trpcClient";
-import type { Peer, TransportDirection, CustomAppData, MediaTag } from "../../../server/_types";
+import type { Peer, TransportDirection, CustomAppData, MediaTag, StageLayout, PredefinedLayout } from "~/types/serverSideTypes";
 
 type Transport = MediaSoup.types.Transport<CustomAppData>;
 type Consumer = MediaSoup.types.Consumer<CustomAppData>;
@@ -24,9 +24,39 @@ export const deviceStore = writable<MediaSoup.types.Device | null>(null);
 export const stagePasswordStore = writable<string | undefined>(undefined);
 
 /**
+ * The known remotely set layout to use on the stage
+ */
+export const stageLayoutStore = writable<StageLayout>([]);
+
+/**
+ * The known remotely set layout to use on the stage
+ */
+export const stagePredefinedLayoutStore = writable<PredefinedLayout | undefined>(undefined);
+
+/**
  * The known remotely set status of the curtain that can cover the stage
  */
 export const stageCurtainsStore = writable<boolean>(true);
+
+/**
+ * The known remotely set status of the whenever the chat is enabled on the stage
+ */
+export const stageChatEnabledStore = writable<boolean>(true);
+
+/**
+ * The known remotely set status of the whenever the effects are enabled on the stage
+ */
+export const stageEffectsEnabledStore = writable<boolean>(true);
+
+/**
+ * The known remotely set status of the whenever the visitors are allowed to send audio
+ */
+export const stageHaveVisitorAudioEnabledStore = writable<boolean>(true);
+
+/**
+ * The known remotely set status of the whenever the visitors are allowed to send video
+ */
+export const stageHaveVisitorVideoEnabledStore = writable<boolean>(true);
 
 /**
  * General paused state for media streaming
@@ -227,13 +257,43 @@ export async function leaveRoom() {
  * Called periodically via polling interval
  */
 async function syncRoom() {
-	const { peers, activeSpeaker, password, curtains } = await roomClient.sync.query();
+	const {
+		peers,
+		sessions,
+		activeSpeaker,
+		password,
+		curtains,
+		chatEnabled,
+		currentLayout,
+		currentPredefinedLayout,
+		effectsEnabled,
+		visitorAudioEnabled,
+		visitorVideoEnabled,
+	} = await roomClient.sync.query();
+
+	// Update current layout
+	stageLayoutStore.set(currentLayout);
+
+	// Update current predefined layout
+	stagePredefinedLayoutStore.set(currentPredefinedLayout);
 
 	// Update the known stage password
 	stagePasswordStore.set(password);
 
 	// Update the known curtain status
 	stageCurtainsStore.set(curtains);
+
+	// Update the known chat status
+	stageChatEnabledStore.set(chatEnabled);
+
+	// Update the known effects status
+	stageEffectsEnabledStore.set(effectsEnabled);
+
+	// Update the known visitor audio status
+	stageHaveVisitorAudioEnabledStore.set(visitorAudioEnabled);
+
+	// Update the known visitor video status
+	stageHaveVisitorVideoEnabledStore.set(visitorVideoEnabled);
 
 	// Update the active speaker
 	currentActiveSpeakerStore.set(activeSpeaker);
@@ -276,24 +336,24 @@ async function syncRoom() {
 	// need to close the consumer
 	consumers.forEach((consumer) => {
 		const { peerId, mediaTag } = consumer.appData;
+		const session = sessions[peerId];
 
 		// Type guard to ensure peers[peerId] is an object
-		if (!peers[peerId] || typeof peers[peerId] !== "object") {
+		if (!session || typeof session !== "object") {
 			console.log(`[Room] Peer ${peerId} has left or is invalid`);
 			closeConsumer(consumer);
 			return;
 		}
 
-		// Access media safely
-		const peer = peers[peerId];
-		if (!peer.media || typeof peer.media !== "object") {
+		// Access media session safely
+		if (!session.media || typeof session.media !== "object") {
 			console.log(`[Room] Peer ${peerId} has no media`);
 			closeConsumer(consumer);
 			return;
 		}
 
 		// Check if the specific mediaTag exists
-		if (!Object.prototype.hasOwnProperty.call(peer.media, mediaTag)) {
+		if (!Object.prototype.hasOwnProperty.call(session.media, mediaTag)) {
 			console.log(`[Room] Peer ${peerId} has stopped transmitting ${mediaTag}`);
 			closeConsumer(consumer);
 			return;

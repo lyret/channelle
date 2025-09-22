@@ -1,4 +1,4 @@
-@use 'bulma/sass/utilities/mixins.scss' as mixins;
+@use "bulma/sass/utilities/mixins.scss" as mixins;
 
 @mixin has-mouse-pointer {
 	@media (hover: hover) {

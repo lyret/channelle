@@ -1,14 +1,16 @@
 import { mediaRequest } from "~/lib";
 import { readable } from "svelte/store";
-import { triggerApplauseEffect, triggerFlowerGiftEffect } from "./effects";
-import { ws } from "~/lib/api";
+import { triggerApplauseEffect, triggerFlowerGiftEffect } from "./_effectFunctions";
+import { roomClient } from "~/api";
 
 /** Store value */
 type EffectsValue = { type: "flowers" | "applause"; number: number };
 
 /** Store interface */
 interface EffectsStore {
+	// eslint-disable-next-line no-unused-vars
 	subscribe: (subscription: (value: EffectsValue) => void) => () => void;
+	// eslint-disable-next-line no-unused-vars
 	set: (value: EffectsValue) => void;
 }
 
@@ -27,11 +29,15 @@ export function createEffectsStore(): EffectsStore {
 			set(value);
 		};
 
-		// Listen to any status updates from the websocket connection
-		ws().on("effects_trigger", handler);
+		// Listen to any effects updates from the websocket connection
+		const { unsubscribe } = roomClient.effects.subscribe(undefined, {
+			onData: (value) => {
+				handler(value);
+			},
+		});
 
 		return function stop() {
-			ws().off("effects_trigger", handler);
+			unsubscribe();
 		};
 	});
 

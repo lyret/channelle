@@ -22,13 +22,21 @@ export type Peer = {
 	id: string;
 	joinTs: number;
 	lastSeenTs: number;
-	media: Partial<Record<MediaTag, any>>;
-	stats: any;
-	consumerLayers: any;
+	online: boolean;
 	name: string;
 	actor: boolean;
 	manager: boolean;
 	banned: boolean;
+	audioMuted: boolean;
+	videoMuted: boolean;
+};
+
+/** Information for a peer containing webrtc and trpc data that is unique to a single connection session */
+export type Session = {
+	peerId: string;
+	media: Partial<Record<MediaTag, any>>;
+	stats: any;
+	consumerLayers: any;
 };
 
 /** TRPC Context */

@@ -62,7 +62,7 @@ export function triggerFlowerGiftEffect() {
 				shapes: [flower, "circle"],
 				scalar: 2,
 			}),
-		100
+		100,
 	);
 }
 
@@ -86,7 +86,7 @@ export function triggerApplauseEffect() {
 		colors: ["#f9e231"],
 		shapes: ["star"],
 		scalar: 0.8,
-		//@ts-ignore
+		//@ts-expect-error unknown property
 		flat: false,
 	});
 	Confetti({
@@ -100,7 +100,7 @@ export function triggerApplauseEffect() {
 		colors: ["#f9e231"],
 		shapes: [hands],
 		scalar: 5,
-		//@ts-ignore
+		//@ts-expect-error unknown property
 		flat: true,
 	});
 }

@@ -1,5 +1,5 @@
 import type * as MediaSoup from "mediasoup";
-import type { Transport, Peer, CustomAppData, MediaTag, Producer, Consumer } from "../_types";
+import type { Transport, Peer, Session, CustomAppData, MediaTag, Producer, Consumer, PredefinedLayout, StageLayout } from "../_types";
 import { TRPCError } from "@trpc/server";
 import { trpc, mediaSoupRouter } from "../lib";
 import { z } from "zod";
@@ -17,22 +17,23 @@ const { router: trcpRouter, procedure: trcpProcedure } = trpc();
 type Room = {
 	password: string | undefined;
 	curtains: boolean;
+	chatEnabled: boolean;
+	effectsEnabled: boolean;
+	visitorAudioEnabled: boolean;
+	visitorVideoEnabled: boolean;
+	currentLayout: StageLayout;
+	currentPredefinedLayout: PredefinedLayout | undefined;
 	peers: Record<string, Peer>;
 	activeSpeaker: {
 		producerId: string | null;
 		volume: number | null;
 		peerId: string | null;
 	};
-	// internal
-	transports: {
-		[id: string]: Transport;
-	};
-	producers: {
-		[id: string]: Producer;
-	};
-	consumers: {
-		[id: string]: Consumer;
-	};
+	// Internals
+	sessions: Record<string, Session>;
+	transports: Record<string, Transport>;
+	producers: Record<string, Producer>;
+	consumers: Record<string, Consumer>;
 };
 
 /** Internal state */
@@ -40,14 +41,20 @@ const _room: Room = {
 	// Settings
 	password: undefined,
 	curtains: false,
-	// Connections
+	chatEnabled: false,
+	effectsEnabled: false,
+	visitorAudioEnabled: false,
+	visitorVideoEnabled: false,
+	currentLayout: [],
+	currentPredefinedLayout: undefined,
 	peers: {},
 	activeSpeaker: {
 		producerId: null,
 		volume: null,
 		peerId: null,
 	},
-	// MediaSoup
+	// Internals
+	sessions: {},
 	transports: {},
 	producers: {},
 	consumers: {},
@@ -61,10 +68,21 @@ const roomProcedure = trcpProcedure.use(async ({ ctx, next }) => {
 	if (!ctx.peer?.id) {
 		throw new TRPCError({ code: "BAD_REQUEST", message: "No peer information given" });
 	} else if (!_room.peers[ctx.peer.id]) {
-		throw new TRPCError({ code: "BAD_REQUEST", message: "The given peer has left the room" });
+		throw new TRPCError({ code: "BAD_REQUEST", message: "The given peer has not joined the room" });
 	} else {
 		// Update our most-recently-seem timestamp -- we're not stale!
+		_room.peers[ctx.peer.id].online = true;
 		_room.peers[ctx.peer.id].lastSeenTs = Date.now();
+
+		// Make sure we have a session for this peer
+		if (!_room.sessions[ctx.peer.id]) {
+			_room.sessions[ctx.peer.id] = {
+				peerId: ctx.peer.id,
+				consumerLayers: {},
+				media: {},
+				stats: {},
+			};
+		}
 	}
 	return next({ ctx: { peer: _room.peers[ctx.peer.id] } });
 });
@@ -80,9 +98,16 @@ export const roomRouter = trcpRouter({
 	sync: roomProcedure.query(async () => {
 		return {
 			peers: _room.peers,
+			sessions: _room.sessions,
 			activeSpeaker: _room.activeSpeaker,
 			password: _room.password,
 			curtains: _room.curtains,
+			chatEnabled: _room.chatEnabled,
+			effectsEnabled: _room.effectsEnabled,
+			visitorAudioEnabled: _room.visitorAudioEnabled,
+			visitorVideoEnabled: _room.visitorVideoEnabled,
+			currentLayout: _room.currentLayout,
+			currentPredefinedLayout: _room.currentPredefinedLayout,
 		};
 	}),
 	// Join
@@ -94,23 +119,36 @@ export const roomRouter = trcpRouter({
 		if (!ctx.peer?.id) {
 			throw new TRPCError({ code: "BAD_REQUEST", message: "No peer information given" });
 		}
+		if (_room.sessions[ctx.peer.id]) {
+			throw new TRPCError({ code: "BAD_REQUEST", message: "Peer already joined, please leave first" });
+		}
 
 		const msRouter = await mediaSoupRouter();
 		const now = Date.now();
 
 		_room.peers[ctx.peer.id] = {
 			id: ctx.peer.id,
-			media: {},
-			consumerLayers: {},
-			stats: {},
 			name: "",
 			actor: false,
 			manager: false,
 			banned: false,
 			joinTs: now,
-			..._room.peers[ctx.peer.id],
+			// Inherit any previous properties if re-joining
+			...(_room.peers[ctx.peer.id] || {}),
+			// Update current status
+			online: true,
+			audioMuted: false,
+			videoMuted: false,
 			lastSeenTs: now,
 		};
+		// Create a new session
+		_room.sessions[ctx.peer.id] = {
+			peerId: ctx.peer.id,
+			media: {},
+			consumerLayers: {},
+			stats: {},
+		};
+
 		console.log("[Room]", ctx.peer.id, "joined as new peer");
 		return { peerId: ctx.peer.id, routerRtpCapabilities: msRouter.rtpCapabilities };
 	}),
@@ -122,6 +160,9 @@ export const roomRouter = trcpRouter({
 		_closePeer(peerId);
 		console.log("[Room] Peer", peerId, "left");
 		return;
+	}),
+	effects: roomProcedure.subscription(async function* () {
+		yield null as { type: "flowers" | "applause"; number: number }; // FIXME: Send effects over trpc
 	}),
 	// Update Peer
 	// Updates the information about a given peer
@@ -267,7 +308,7 @@ export const roomRouter = trcpRouter({
 			// }
 
 			_room.producers[producer.id] = producer;
-			_room.peers[ctx.peer.id].media[appData.mediaTag] = {
+			_room.sessions[ctx.peer.id].media[appData.mediaTag] = {
 				paused,
 				encodings: rtpParameters.encodings,
 			};
@@ -323,7 +364,7 @@ export const roomRouter = trcpRouter({
 			// and create a data structure to track the client-relevant state
 			// of this consumer
 			_room.consumers[consumer.id] = consumer;
-			_room.peers[ctx.peer.id].consumerLayers[consumer.id] = {
+			_room.sessions[ctx.peer.id].consumerLayers[consumer.id] = {
 				currentLayer: null,
 				clientSelectedLayer: null,
 			};
@@ -331,8 +372,8 @@ export const roomRouter = trcpRouter({
 			// Update above data structure when layer changes.
 			consumer.on("layerschange", (layers) => {
 				console.log(`[MS] Consumer layers changed ${mediaPeerId}->${ctx.peer.id}`, mediaTag, layers);
-				if (_room.peers[ctx.peer.id] && _room.peers[ctx.peer.id].consumerLayers[consumer.id]) {
-					_room.peers[ctx.peer.id].consumerLayers[consumer.id].currentLayer = layers && layers.spatialLayer;
+				if (_room.sessions[ctx.peer.id] && _room.sessions[ctx.peer.id].consumerLayers[consumer.id]) {
+					_room.sessions[ctx.peer.id].consumerLayers[consumer.id].currentLayer = layers && layers.spatialLayer;
 				}
 			});
 
@@ -420,7 +461,7 @@ export const roomRouter = trcpRouter({
 
 		await producer.pause();
 
-		_room.peers[ctx.peer.id].media[producer.appData.mediaTag].paused = true;
+		_room.sessions[ctx.peer.id].media[producer.appData.mediaTag].paused = true;
 
 		return { paused: true };
 	}),
@@ -437,7 +478,7 @@ export const roomRouter = trcpRouter({
 
 		producer.resume();
 
-		_room.peers[ctx.peer.id].media[producer.appData.mediaTag].paused = false;
+		_room.sessions[ctx.peer.id].media[producer.appData.mediaTag].paused = false;
 
 		return { resumed: true };
 	}),
@@ -481,9 +522,9 @@ async function updatePeerStats() {
 		try {
 			const stats = await producer.getStats();
 			const peerId = producer.appData.peerId;
-			_room.peers[peerId].stats[producer.id] = [];
+			_room.sessions[peerId].stats[producer.id] = [];
 			stats.forEach((s) => {
-				_room.peers[peerId].stats[producer.id].push({
+				_room.sessions[peerId].stats[producer.id].push({
 					bitrate: s.bitrate,
 					fractionLost: s.fractionLost,
 					jitter: s.jitter,
@@ -500,10 +541,10 @@ async function updatePeerStats() {
 		try {
 			const stats = Array.from((await consumer.getStats()).values()).find((s) => s.type === "outbound-rtp");
 			const peerId = consumer.appData.peerId;
-			if (!stats || !_room.peers[peerId]) {
+			if (!stats || !_room.sessions[peerId]) {
 				continue;
 			}
-			_room.peers[peerId].stats[consumer.id] = {
+			_room.sessions[peerId].stats[consumer.id] = {
 				bitrate: stats.bitrate,
 				fractionLost: stats.fractionLost,
 				score: stats.score,
@@ -538,14 +579,15 @@ async function observeActiveSpeakers() {
 observeActiveSpeakers();
 
 /** Utility function to closing the transports related to a given peer */
-function _closePeer(peerId: string) {
+async function _closePeer(peerId: string) {
 	console.log("[MS] closing peer", peerId);
 	for (const transport of Object.values(_room.transports)) {
 		if (transport.appData.peerId === peerId) {
-			_closeTransport(transport);
+			await _closeTransport(transport);
 		}
 	}
-	delete _room.peers[peerId];
+	_room.peers[peerId].online = false;
+	delete _room.sessions[peerId];
 }
 
 /** Utility function to close a given transport */
@@ -576,8 +618,8 @@ async function _closeProducer(producer: Producer) {
 		_room.producers = Object.fromEntries(Object.entries(_room.producers).filter(([, p]) => p.id !== producer.id));
 
 		// remove this track's info from our room...mediaTag bookkeeping
-		if (_room.peers[producer.appData.peerId]) {
-			delete _room.peers[producer.appData.peerId].media[producer.appData.mediaTag];
+		if (_room.sessions[producer.appData.peerId]) {
+			delete _room.sessions[producer.appData.peerId].media[producer.appData.mediaTag];
 		}
 	} catch (e) {
 		console.error(e);
@@ -593,8 +635,8 @@ async function _closeConsumer(consumer: Consumer) {
 	_room.consumers = Object.fromEntries(Object.entries(_room.consumers).filter(([, c]) => c.id !== consumer.id));
 
 	// Remove layer info from from our _room...consumerLayers bookkeeping
-	if (_room.peers[consumer.appData.peerId]) {
-		delete _room.peers[consumer.appData.peerId].consumerLayers[consumer.id];
+	if (_room.sessions[consumer.appData.peerId]) {
+		delete _room.sessions[consumer.appData.peerId].consumerLayers[consumer.id];
 	}
 }
 
