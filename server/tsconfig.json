@@ -8,7 +8,9 @@
 		"paths": {
 			"~/*": ["./*"]
 		},
-		"moduleResolution": "node"
+		"moduleResolution": "node",
+		"typeRoots": ["../node_modules/@types", "../shared/types", "./types"],
+		"types": ["node"]
 	},
 	"include": ["./**/*", "../shared/**/*"]
 }

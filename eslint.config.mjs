@@ -9,7 +9,7 @@ export default [
 	/** Files to lint */
 	{ files: ["**/*.{js,mjs,cjs,ts,svelte}"] },
 	/** Globals */
-	{ languageOptions: { globals: { ...Globals.browser, ...Globals.node } } },
+	{ languageOptions: { globals: { ...Globals.browser, ...Globals.node, CONFIG: "readonly" } } },
 	/** Javascript */
 	EsLintJs.configs.recommended,
 	/** Typescript */

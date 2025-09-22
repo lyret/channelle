@@ -11,14 +11,13 @@
 		"skipLibCheck": true,
 		"sourceMap": true,
 		"baseUrl": "./ui",
-		"typeRoots": ["./shared/types"],
+		"typeRoots": ["./node_modules/@types", "./shared/types", "./ui/types"],
+		"types": ["node"],
 		"paths": {
-			"*": ["./shared/types/*.d.ts"],
-			"~/*": ["./*"],
-			"$ui/device": ["./_device/index.ts"]
+			"~/*": ["./*"]
 		},
 		"outDir": "./.dist"
 	},
-	"include": ["shared/**/*", "./global.d.ts", "eslint.config.mjs"],
-	"exclude": ["node_modules/*", "public/*", "server/*"]
+	"include": ["shared/**/*", "ui/types/**/*", "eslint.config.mjs"],
+	"exclude": ["node_modules/*", "server/*", ".dist/*", ".vscode/*"]
 }

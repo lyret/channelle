@@ -1,5 +1,8 @@
 {
 	"extends": "../tsconfig.json",
 	"references": [{ "path": "../server" }],
-	"include": ["./**/*", "../shared/**/*", "../global.d.ts"]
+	"include": ["./**/*", "../shared/**/*", "./types/**/*.d.ts"],
+	"compilerOptions": {
+		"typeRoots": ["../node_modules/@types", "../shared/types", "./types"]
+	}
 }
