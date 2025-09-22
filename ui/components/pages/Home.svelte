@@ -5,21 +5,19 @@
 	import rosesSrc from "~/assets/images/roses.gif";
 	import smokerSrc from "~/assets/images/smoker-cropped.png";
 	import ticketsSrc from "~/assets/images/tickets.png";
+	import { scenePasswordIsOk } from "~/stores/scene/scenePassword";
+	import Wrapper from "./_Wrapper.svelte";
 	import PasswordCurtainMessage from "~/components/curtains/PasswordCurtainMessage.svelte";
 	import FloatingImage from "~/components/home/FloatingImage.svelte";
 	import IconArrowRight from "~/components/icons/Icon-arrow-right.svelte";
 	import PicolCancel from "~/components/picol/icons/Picol-cancel.svelte";
 	import { APIStore } from "~/lib/stores/api";
-	import { scenePasswordIsOk } from "../stores/scene/scenePassword";
 
 	onMount(() => {
 		document.querySelectorAll("a, .button").forEach((element) =>
 			element.addEventListener("mouseenter", () => {
-				document.documentElement.style.setProperty(
-					"--channelle-random-rotation",
-					`rotate(${Math.floor(Math.random() * 6) - 4}deg)`
-				);
-			})
+				document.documentElement.style.setProperty("--channelle-random-rotation", `rotate(${Math.floor(Math.random() * 6) - 4}deg)`);
+			}),
 		);
 	});
 
@@ -36,110 +34,75 @@
 <FloatingImage src={rosesSrc} alt="two roses shining" zIndex={2} />
 <FloatingImage src={rosesSrc} alt="two roses shining" zIndex={2} />
 
-<main>
-	{#if howToModalIsOpen}
-		<div class="popup">
-			<button class="close icon" on:click={() => (howToModalIsOpen = false)}
-				><PicolCancel /></button
-			>
-			<h1 class="title">
-				<span class="is-family-default">Jo det går till såhär</span>
-			</h1>
-			<p>
-				Först blablabka
-				<br />Sedan…<br /><br />Om du inte känner dig bekväm med det…<br /><br
-				/>Om du redan betalat och har en kod går du hit: Annars gör du såhär
-			</p>
-		</div>
-	{:else}
-		<div class="poster">
-			<h2 class="subtitle is-1">Föreställning</h2>
-			<h1 class="title is-1">{CONFIG.stage.name}</h1>
-			{#if needStagePassword}
-				<div class="item">
-					<div>
-						<img src={ticketsSrc} alt="A man in a ticket booth" />
+<Wrapper lockedToManager={false} lockedToInviteKey={false} hasInteractedWithTheDocument={true}>
+	<main>
+		{#if howToModalIsOpen}
+			<div class="popup">
+				<button class="close icon" on:click={() => (howToModalIsOpen = false)}><PicolCancel /></button>
+				<h1 class="title">
+					<span class="is-family-default">Jo det går till såhär</span>
+				</h1>
+				<p>
+					Först blablabka
+					<br />Sedan…<br /><br />Om du inte känner dig bekväm med det…<br /><br />Om du redan betalat och har en kod går du hit: Annars gör du såhär
+				</p>
+			</div>
+		{:else}
+			<div class="poster">
+				<h2 class="subtitle is-1">Föreställning</h2>
+				<h1 class="title is-1">{CONFIG.stage.name}</h1>
+				{#if needStagePassword}
+					<div class="item">
+						<div>
+							<img src={ticketsSrc} alt="A man in a ticket booth" />
+						</div>
+						<div>
+							<PasswordCurtainMessage />
+						</div>
 					</div>
-					<div>
-						<PasswordCurtainMessage />
-					</div>
+				{:else}
+					<button
+						class="button main"
+						on:click={() => {
+							if (!isBlocked) {
+								window.location.href = "/stage";
+							}
+						}}><span class="is-family-secondary" class:is-strikethrough={isBlocked}>{hasEnteredName ? "GÅ TILLBAKA IN" : "BESÖK"}</span></button
+					>
+				{/if}
+				<a class="button alt" target="_blank" href="https://www.youtube.com/watch?v=8IXjE4a5Tj4"
+					><span class="is-family-default p-2">Om föreställningen <span class="icon"><IconArrowRight /></span></span></a
+				>
+				<button class="button"><span class="is-family-default" on:click={() => (howToModalIsOpen = true)}>Hur funkar det?</span></button>
+			</div>
+			<div class="info">
+				<div class="area left">
+					<h1 class="title is-1">Channelle</h1>
 				</div>
-			{:else}
-				<button
-					class="button main"
-					on:click={() => {
-						if (!isBlocked) {
-							window.location.href = "/stage";
-						}
-					}}
-					><span class="is-family-secondary" class:is-strikethrough={isBlocked}
-						>{hasEnteredName ? "GÅ TILLBAKA IN" : "BESÖK"}</span
-					></button
-				>
-			{/if}
-			<a
-				class="button alt"
-				target="_blank"
-				href="https://www.youtube.com/watch?v=8IXjE4a5Tj4"
-				><span class="is-family-default p-2"
-					>Om föreställningen <span class="icon"><IconArrowRight /></span></span
-				></a
-			>
-			<button class="button"
-				><span
-					class="is-family-default"
-					on:click={() => (howToModalIsOpen = true)}>Hur funkar det?</span
-				></button
-			>
-		</div>
-		<div class="info">
-			<div class="area left">
-				<h1 class="title is-1">Channelle</h1>
+				<div class="area right">
+					<img src={smokerSrc} alt="a woman smoking" />
+				</div>
 			</div>
-			<div class="area right">
-				<img src={smokerSrc} alt="a woman smoking" />
+			<div class="menu">
+				<div class="area left">
+					<a href="https://maskinrepubliken.se" class="is-family-secondary has-text-weight-bold">Maskinrepubliken</a>
+					<a href="https://www.facebook.com/people/Skärmteatern/100076254422586/" class="is-family-secondary has-text-weight-bold">Skärmteatern</a>
+				</div>
+				<div class="area center">
+					<img class="logo" src={cureFlowersSrc} alt="cute flowers dancing around" />
+				</div>
+				<div class="area right">
+					<a class="is-family-secondary has-text-weight-medium" href="/backstage" target="_blank"
+						>Gå Backstage <span class="icon"><IconArrowRight /></span></a
+					>
+					<img src={moneyPowerGreedSrc} alt="text saying money power greed" />
+					<h1 class="title is-2 is-family-secondary has-text-weight-medium is-strikethrough mb-0 pb-0">Biljettluckan</h1>
+					<h1 class="title is-3 is-family-secondary has-text-weight-medium is-italic">Gratis föreställning!</h1>
+				</div>
 			</div>
-		</div>
-		<div class="menu">
-			<div class="area left">
-				<a
-					href="https://maskinrepubliken.se"
-					class="is-family-secondary has-text-weight-bold">Maskinrepubliken</a
-				>
-				<a
-					href="https://www.facebook.com/people/Skärmteatern/100076254422586/"
-					class="is-family-secondary has-text-weight-bold">Skärmteatern</a
-				>
-			</div>
-			<div class="area center">
-				<img
-					class="logo"
-					src={cureFlowersSrc}
-					alt="cute flowers dancing around"
-				/>
-			</div>
-			<div class="area right">
-				<a
-					class="is-family-secondary has-text-weight-medium"
-					href="/backstage"
-					target="_blank"
-					>Gå Backstage <span class="icon"><IconArrowRight /></span></a
-				>
-				<img src={moneyPowerGreedSrc} alt="text saying money power greed" />
-				<h1
-					class="title is-2 is-family-secondary has-text-weight-medium is-strikethrough mb-0 pb-0"
-				>
-					Biljettluckan
-				</h1>
-				<h1
-					class="title is-3 is-family-secondary has-text-weight-medium is-italic"
-				>
-					Gratis föreställning!
-				</h1>
-			</div>
-		</div>
-	{/if}
-</main>
+		{/if}
+	</main>
+</Wrapper>
 
 <style lang="scss">
 	.popup {

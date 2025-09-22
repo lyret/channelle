@@ -1,7 +1,7 @@
 import "@babel/polyfill";
 import { enableMediaSoupDebugging, enableHotReloadingOnRebuilds } from "./api/development";
 
-import Backstage from "./Backstage.svelte";
+import Backstage from "~/components/pages/Backstage.svelte";
 
 // Set correct debug output level for MediaSoup
 enableMediaSoupDebugging();

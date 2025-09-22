@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from "svelte";
 	import { blur } from "svelte/transition";
-	import * as Debug from "./api/room";
+	import * as Debug from "~/api/room";
 
 	// Import all the stores
 	import {

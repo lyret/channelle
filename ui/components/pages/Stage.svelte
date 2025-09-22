@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { blur, fly } from "svelte/transition";
+	import Wrapper from "./_Wrapper.svelte";
 	import ActionPanel from "~/components/stage/ActionPanel.svelte";
 	import ChatPanel from "~/components/stage/ChatPanel.svelte";
 	import ChatWindow from "~/components/stage/ChatWindow.svelte";
@@ -32,72 +33,60 @@
 	});
 </script>
 
-<main in:blur={{ delay: 500, duration: 1000 }}>
-	<div class="contents">
-		<div class="windows-wrapper">
-			<div
-				class={`windows window-cols-${width} window-rows-${height}`}
-				style={windowsLayoutStyle}
-			>
-				{#if $StageLayout.isAutoLayout}
-					{#each $StageLayout.leftovers as cell}
-						{#key cell.id}
-							<MediaWindow
-								stream={cell.stream}
-								participant={cell.participant}
-							/>
-						{/key}
-					{/each}
-				{:else}
-					{#each matrix as row}
-						{#each row as cell}
-							{#if cell.type == "chat"}
-								<div class="window">
-									<ChatWindow />
-								</div>
-							{:else if cell.type == "actor"}
-								<MediaWindow
-									stream={cell.stream}
-									participant={cell.participant}
-								/>
-							{:else}
-								<div class="window"></div>
-							{/if}
+<Wrapper lockedToInviteKey={true}>
+	<main in:blur={{ delay: 500, duration: 1000 }}>
+		<div class="contents">
+			<div class="windows-wrapper">
+				<div class={`windows window-cols-${width} window-rows-${height}`} style={windowsLayoutStyle}>
+					{#if $StageLayout.isAutoLayout}
+						{#each $StageLayout.leftovers as cell}
+							{#key cell.id}
+								<MediaWindow stream={cell.stream} participant={cell.participant} />
+							{/key}
 						{/each}
-					{/each}
-				{/if}
-			</div>
-		</div>
-		{#if $stageSettings || $stageChat}
-			<div class="sidebar">
-				<div
-					class="sidebar-contents"
-					style="z-index: 9999"
-					in:fly={{ y: 200 }}
-					out:fly={{ y: 200 }}
-				>
-					{#if $stageSettings}
-						<OptionsPanel />
 					{:else}
-						<ChatPanel />
+						{#each matrix as row}
+							{#each row as cell}
+								{#if cell.type == "chat"}
+									<div class="window">
+										<ChatWindow />
+									</div>
+								{:else if cell.type == "actor"}
+									<MediaWindow stream={cell.stream} participant={cell.participant} />
+								{:else}
+									<div class="window"></div>
+								{/if}
+							{/each}
+						{/each}
 					{/if}
 				</div>
 			</div>
-		{/if}
-	</div>
+			{#if $stageSettings || $stageChat}
+				<div class="sidebar">
+					<div class="sidebar-contents" style="z-index: 9999" in:fly={{ y: 200 }} out:fly={{ y: 200 }}>
+						{#if $stageSettings}
+							<OptionsPanel />
+						{:else}
+							<ChatPanel />
+						{/if}
+					</div>
+				</div>
+			{/if}
+		</div>
 
-	<!-- AUDIO ELEMENTS -->
-	{#each $StageAudio.audio as cell}
-		{#key cell.id}
-			<MediaAudio stream={cell.stream} />
-		{/key}
-	{/each}
+		<!-- AUDIO ELEMENTS -->
+		{#each $StageAudio.audio as cell}
+			{#key cell.id}
+				<MediaAudio stream={cell.stream} />
+			{/key}
+		{/each}
 
-	<!-- FOOTER -->
-	<div class="footer">
-		<ActionPanel />
-	</div>
-</main>
+		<!-- FOOTER -->
+		<div class="footer">
+			<ActionPanel />
+		</div>
+	</main>
+</Wrapper>
 
 <style lang="scss">
 	main {

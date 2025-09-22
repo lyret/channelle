@@ -1,7 +1,7 @@
 import "@babel/polyfill";
 import { enableMediaSoupDebugging, enableHotReloadingOnRebuilds } from "./api/development";
 
-import DebugApp from "./Debug.svelte";
+import DebugApp from "~/components/pages/Debug.svelte";
 
 // Set correct debug output level for MediaSoup
 enableMediaSoupDebugging();
