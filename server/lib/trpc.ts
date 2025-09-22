@@ -1,4 +1,5 @@
 import type { TRPCRootObject, TRPCRuntimeConfigOptions } from "@trpc/server";
+import type { MediaTag } from "./mediaSoup";
 import { initTRPC } from "@trpc/server";
 
 let _trcp: TRPCRootObject<Context, object, TRPCRuntimeConfigOptions<object, object>> | undefined;
@@ -16,9 +17,21 @@ export function trpc(): TRPCRootObject<Context, object, TRPCRuntimeConfigOptions
 	return _trcp;
 }
 
+/** Information about a connected tcrp peer kept in the room state server side */
+export type Peer = {
+	id: string;
+	joinTs: number;
+	lastSeenTs: number;
+	media: Partial<Record<MediaTag, any>>;
+	stats: any;
+	consumerLayers: any;
+	name: string;
+	actor: boolean;
+	manager: boolean;
+	banned: boolean;
+};
+
 /** TRPC Context */
 export interface Context {
-	peer?: {
-		id: string;
-	};
+	peer: undefined | Peer;
 }

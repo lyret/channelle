@@ -1,25 +1,28 @@
 <script lang="ts">
+	import { blur } from "svelte/transition";
 	import { onMount } from "svelte";
 
-	//TODO: re-add
-	// import { blur } from "svelte/transition";
-	// import logoSrc from "~/assets/images/masks.gif";
-	// import AuthenticateCurtainMessage from "~/components/curtains/AuthenticateCurtainMessage.svelte";
-	// import BlockedCurtainMessage from "~/components/curtains/BlockedCurtainMessage.svelte";
-	// import ContinueCurtainMessage from "~/components/curtains/ContinueCurtainMessage.svelte";
-	// import LoaderCurtainMessage from "~/components/curtains/LoadingCurtainMessage.svelte";
-	// import ProblemCurtainMessage from "~/components/curtains/ProblemCurtainMessage.svelte";
-	// import PasswordCurtainMessage from "~/components/curtains/PasswordCurtainMessage.svelte";
-	// import Curtains from "~/components/curtains/Curtains.svelte";
+	import { hasJoinedRoomStore, isBannedFromTheRoom, joinRoom, peerStore, stageCurtainsStore } from "~/api/room";
 
-	// import { scenePasswordIsOk } from "~/stores/scene/scenePassword";
-	// import { sceneCurtains } from "~/stores/scene/sceneCurtains";
+	import AuthenticateCurtainMessage from "~/components/curtains/AuthenticateCurtainMessage.svelte";
+	import BlockedCurtainMessage from "~/components/curtains/BlockedCurtainMessage.svelte";
+	import ContinueCurtainMessage from "~/components/curtains/ContinueCurtainMessage.svelte";
+	import LoaderCurtainMessage from "~/components/curtains/LoadingCurtainMessage.svelte";
+	import ProblemCurtainMessage from "~/components/curtains/ProblemCurtainMessage.svelte";
+	import PasswordCurtainMessage from "~/components/curtains/PasswordCurtainMessage.svelte";
+	import Curtains from "~/components/curtains/Curtains.svelte";
 
-	console.log(CONFIG.stage.name, "HERE");
+	import logoSrc from "~/assets/images/masks.gif";
+
+	import { scenePasswordIsOk } from "~/stores/scene/scenePassword";
+
 	// Delays the rendering of any content to avoid the "pop-in" effect
 	// on initial rendering due to initial determination of state
 	let determiningState = true;
 	onMount(() => {
+		// Joins the room
+		joinRoom();
+
 		setTimeout(() => {
 			determiningState = false;
 		}, 400);
@@ -28,6 +31,9 @@
 	/** Being a manager is neccessary to access this page */
 	export let lockedToManager = false;
 
+	/** The curtains will be shown on this page if triggered remotly */
+	export let curtainsAreEnabled = false;
+
 	/** Entering the Invite key is neccessary to access this page */
 	export let lockedToInviteKey = false;
 
@@ -35,40 +41,39 @@
 	export let hasInteractedWithTheDocument = !CONFIG.runtime.production;
 
 	// Determine what should be rendered
-	// $: isBlocked = $APIStore.status == "blocked";
-	// $: isPreparing = $APIStore.isReady == false;
-	// $: hasEnteredName = !isPreparing && $APIStore.participant.name;
-	// $: needsToBeManager = lockedToManager && !(!isPreparing && $APIStore.participant.manager);
-	// $: needsInviteKey = lockedToInviteKey && !$scenePasswordIsOk;
-	// $: renderMessages =
-	// 	!determiningState && (isPreparing || !hasEnteredName || !hasInteractedWithTheDocument || isBlocked || needsInviteKey || needsToBeManager);
-	// $: renderContent = !determiningState && !renderMessages;
-	// $: renderCurtains = determiningState || renderMessages || ($sceneCurtains && renderStage);
+	$: hasEnteredName = $hasJoinedRoomStore && $peerStore.name;
+	$: needsToBeManager = lockedToManager && !(!$hasJoinedRoomStore && $peerStore.manager);
+	$: needsInviteKey = lockedToInviteKey && !$scenePasswordIsOk;
+	$: renderMessages =
+		!determiningState &&
+		(!$hasJoinedRoomStore || !hasEnteredName || !hasInteractedWithTheDocument || $isBannedFromTheRoom || needsInviteKey || needsToBeManager);
+	$: renderContent = !determiningState && !renderMessages;
+	$: renderCurtains = determiningState || renderMessages || (curtainsAreEnabled && $stageCurtainsStore);
 </script>
 
 <!-- Content -->
-<!-- {#if renderContent && $$slots.default}
+{#if renderContent && $$slots.default}
 	<slot></slot>
-{/if} -->
+{/if}
 
 <!-- Curtains -->
-<!-- {#if renderCurtains}
+{#if renderCurtains}
 	<Curtains />
-{/if} -->
+{/if}
 
 <!-- TODO: re-add Curtain Messages -->
-<!-- {#if renderMessages}
+{#if renderMessages}
 	<div class="overlay">
 		<div class="menu" in:blur={{ duration: 1000 }} out:blur={{ duration: 500 }}>
 			<img class="logo" src={logoSrc} alt="Channelle" />
 			{#if CONFIG.stage.name}<h1 class="title is-family-title">{CONFIG.stage.name}</h1>{/if}
-			{#if isBlocked}
+			{#if $isBannedFromTheRoom}
 				<BlockedCurtainMessage />
-			{:else if $APIStore.status == "ready" && !hasEnteredName}
-				<AuthenticateCurtainMessage participant={$APIStore.participant} on:submit={() => (hasInteractedWithTheDocument = true)} />
-			{:else if $APIStore.status == "ready" && !hasInteractedWithTheDocument}
-				<ContinueCurtainMessage participant={$APIStore?.participant} on:click={() => (hasInteractedWithTheDocument = true)} />
-			{:else if isPreparing}
+			{:else if $hasJoinedRoomStore && !hasEnteredName}
+				<AuthenticateCurtainMessage on:submit={() => (hasInteractedWithTheDocument = true)} />
+			{:else if $hasJoinedRoomStore && !hasInteractedWithTheDocument}
+				<ContinueCurtainMessage on:submit={() => (hasInteractedWithTheDocument = true)} />
+			{:else if !$hasJoinedRoomStore}
 				<LoaderCurtainMessage label="Ansluter..." />
 			{:else if needsToBeManager}
 				<BlockedCurtainMessage message="Sidan är endast för tekniker" />
@@ -79,7 +84,7 @@
 			{/if}
 		</div>
 	</div>
-{/if} -->
+{/if}
 
 <style lang="scss">
 	img.logo {

@@ -1,9 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import {
-		participantScenePassword,
-		scenePasswordIsOk,
-	} from "~/stores/scene/scenePassword";
+	import { participantScenePassword, scenePasswordIsOk } from "~/stores/scene/scenePassword";
 
 	let inputRef: HTMLInputElement;
 	let inputValue: string = "";
@@ -15,7 +12,7 @@
 		e.preventDefault();
 		loading = true;
 		participantScenePassword.set(inputValue);
-		let stop = scenePasswordIsOk.subscribe((ok) => {
+		const stop = scenePasswordIsOk.subscribe((ok) => {
 			if (ok && window.location.href != "/stage") {
 				window.location.href = "/stage";
 			}
@@ -36,13 +33,8 @@
 	});
 </script>
 
-<p class="mb-2 is-family-default has-text-weight-bold">
-	Ange lösenordet för att fortsätta
-</p>
-<div
-	class="control is-fullwidth is-large is-centered has-text-centered"
-	class:is-loading={loading}
->
+<p class="mb-2 is-family-default has-text-weight-bold">Ange lösenordet för att fortsätta</p>
+<div class="control is-fullwidth is-large is-centered has-text-centered" class:is-loading={loading}>
 	<form on:submit={onSubmit} class="form">
 		<input
 			type="text"
@@ -55,13 +47,7 @@
 			class:is-disabled={loading}
 		/>
 		{#if !loading}
-			<input
-				type="submit"
-				value="Fortsätt"
-				class="button is-fullwidth is-large mt-4 is-centered"
-				class:is-loading={loading}
-				disabled={!inputValue}
-			/>
+			<input type="submit" value="Fortsätt" class="button is-fullwidth is-large mt-4 is-centered" class:is-loading={loading} disabled={!inputValue} />
 		{/if}
 		{#if retrying && !loading}
 			<p class="my-2 is-size-6 has-text-gray">Fel lösenord, försök igen</p>{/if}

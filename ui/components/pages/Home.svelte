@@ -11,7 +11,7 @@
 	import FloatingImage from "~/components/home/FloatingImage.svelte";
 	import IconArrowRight from "~/components/icons/Icon-arrow-right.svelte";
 	import PicolCancel from "~/components/picol/icons/Picol-cancel.svelte";
-	import { APIStore } from "~/lib/stores/api";
+	import { hasJoinedRoomStore, isBannedFromTheRoom, peerStore } from "~/api/room";
 
 	onMount(() => {
 		document.querySelectorAll("a, .button").forEach((element) =>
@@ -22,8 +22,7 @@
 	});
 
 	// Determine what should be rendered
-	$: isBlocked = $APIStore.status == "blocked";
-	$: hasEnteredName = $APIStore.status == "ready" && $APIStore.participant.name;
+	$: hasEnteredName = $hasJoinedRoomStore && $peerStore.name;
 	$: needStagePassword = !$scenePasswordIsOk;
 
 	let howToModalIsOpen = false;
@@ -64,10 +63,12 @@
 					<button
 						class="button main"
 						on:click={() => {
-							if (!isBlocked) {
+							if (!$isBannedFromTheRoom) {
 								window.location.href = "/stage";
 							}
-						}}><span class="is-family-secondary" class:is-strikethrough={isBlocked}>{hasEnteredName ? "GÅ TILLBAKA IN" : "BESÖK"}</span></button
+						}}
+						><span class="is-family-secondary" class:is-strikethrough={$isBannedFromTheRoom}>{hasEnteredName ? "GÅ TILLBAKA IN" : "BESÖK"}</span
+						></button
 					>
 				{/if}
 				<a class="button alt" target="_blank" href="https://www.youtube.com/watch?v=8IXjE4a5Tj4"

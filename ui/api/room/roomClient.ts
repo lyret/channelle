@@ -1,7 +1,7 @@
 import * as MediaSoup from "mediasoup-client";
 import DeepEqual from "deep-equal";
 import { writable, derived, get } from "svelte/store";
-import { roomClient } from "../_trpcClient";
+import { roomClient, wsPeerIdStore } from "../_trpcClient";
 import type { Peer, TransportDirection, CustomAppData, MediaTag } from "../../../server/_types";
 
 type Transport = MediaSoup.types.Transport<CustomAppData>;
@@ -19,15 +19,32 @@ type Producer = MediaSoup.types.Producer<CustomAppData>;
 export const deviceStore = writable<MediaSoup.types.Device | null>(null);
 
 /**
- * Indicates whether the client has successfully joined the room
+ * The known remotely set password for accessing the stage
  */
-export const joinedStore = writable(false);
+export const stagePasswordStore = writable<string | undefined>(undefined);
+
+/**
+ * The known remotely set status of the curtain that can cover the stage
+ */
+export const stageCurtainsStore = writable<boolean>(true);
 
 /**
  * General paused state for media streaming
  * @deprecated Consider using camPausedStore and micPausedStore instead
  */
 export const paused = writable(false);
+
+/**
+ * Camera paused state
+ * When true, video track is paused
+ */
+export const camPausedStore = writable(false);
+
+/**
+ * Microphone paused state
+ * When true, audio track is paused
+ */
+export const micPausedStore = writable(false);
 
 /**
  * Local media stream containing audio/video tracks from user's devices
@@ -73,28 +90,29 @@ export const currentActiveSpeakerStore = writable<{ peerId?: string | null }>({}
 export const consumersStore = writable<Consumer[]>([]);
 
 /**
- * This client's peer ID assigned by the server
- * Set when joining the room
- */
-export const myPeerIdStore = writable<string>("");
-
-/**
  * Map of all peers in the room with their metadata
  * Updated periodically through room sync
  */
-export const peersStore = writable<Record<string, any>>({});
+export const peersStore = writable<Record<string, Peer>>({});
+
+/** The current users peer information  */
+export const peerStore = derived([peersStore, wsPeerIdStore], ([$peers, $peerId]) => {
+	return $peers[$peerId] || ({} as Peer);
+});
 
 /**
- * Camera paused state
- * When true, video track is paused
+ * Indicates whether the client has successfully joined the room
  */
-export const camPausedStore = writable(false);
+export const hasJoinedRoomStore = derived([peerStore], ([$peer]) => {
+	return Object.keys($peer).length > 0;
+});
 
 /**
- * Microphone paused state
- * When true, audio track is paused
+ * Indicates whether the client is banned from the room
  */
-export const micPausedStore = writable(false);
+export const isBannedFromTheRoom = derived([peerStore], ([$peer]) => {
+	return $peer && $peer.banned;
+});
 
 // ============================================================================
 // INTERNAL STATE (NOT EXPOSED AS STORES)
@@ -135,9 +153,7 @@ export async function joinRoom() {
 	// Signal that we're a new peer and initialize our
 	// mediasoup-client device, if this is our first time connecting
 	const { peerId, routerRtpCapabilities } = await roomClient.join.mutate();
-	myPeerIdStore.set(peerId);
-	joinedStore.set(true);
-	console.log("[Room] Joined, my peerId is", peerId);
+	console.log("[Room] Joined with peer id", peerId);
 
 	// Initialize the MediaSoup device
 	try {
@@ -147,13 +163,13 @@ export async function joinRoom() {
 			await device.load({ routerRtpCapabilities });
 			deviceStore.set(device);
 		}
-	} catch (err: any) {
-		if (err.name === "UnsupportedError") {
+	} catch (error: any) {
+		if (error.name === "UnsupportedError") {
 			console.error("[MEDIA DEVICE] The browser not supported for video calls");
-			throw err;
+			throw error;
 		} else {
 			console.error("[MEDIA DEVICE] The media device could not be initialized");
-			throw err;
+			throw error;
 		}
 	}
 
@@ -203,8 +219,6 @@ export async function leaveRoom() {
 	audioProducer.set(null);
 	localMediaStream.set(null);
 	consumersStore.set([]);
-	joinedStore.set(false);
-	myPeerIdStore.set("");
 }
 
 /**
@@ -213,8 +227,13 @@ export async function leaveRoom() {
  * Called periodically via polling interval
  */
 async function syncRoom() {
-	const { peers, activeSpeaker } = await roomClient.sync.query();
-	console.debug({ peers });
+	const { peers, activeSpeaker, password, curtains } = await roomClient.sync.query();
+
+	// Update the known stage password
+	stagePasswordStore.set(password);
+
+	// Update the known curtain status
+	stageCurtainsStore.set(curtains);
 
 	// Update the active speaker
 	currentActiveSpeakerStore.set(activeSpeaker);
@@ -289,6 +308,46 @@ async function syncRoom() {
 }
 
 /**
+ * Updates the name of a peer in the room
+ */
+export async function updatePeerName(peerId: string, name: string) {
+	await roomClient.updatePeer.mutate({
+		id: peerId,
+		name,
+	});
+}
+
+/**
+ * Updates the banned status of a peer in the room
+ */
+export async function updatePeerBannedStatus(peerId: string, banned: boolean) {
+	await roomClient.updatePeer.mutate({
+		id: peerId,
+		banned,
+	});
+}
+
+/**
+ * Updates the actor status of a peer in the room
+ */
+export async function updatePeerActorStatus(peerId: string, actor: boolean) {
+	await roomClient.updatePeer.mutate({
+		id: peerId,
+		actor,
+	});
+}
+
+/**
+ * Updates the manager status of a peer in the room
+ */
+export async function updatePeerManagerStatus(peerId: string, manager: boolean) {
+	await roomClient.updatePeer.mutate({
+		id: peerId,
+		manager,
+	});
+}
+
+/**
  * Access local media streams from the browser
  * @param audio - Whether to request audio access (default: true)
  * @param video - Whether to request video access (default: true)
@@ -310,7 +369,7 @@ export async function sendMediaStreams() {
 	console.log("[Room] Sending streams");
 
 	// Make sure we're joined and have a local media stream
-	if (!get(joinedStore)) {
+	if (!get(hasJoinedRoomStore)) {
 		throw new Error("Not joined");
 	}
 
@@ -322,7 +381,7 @@ export async function sendMediaStreams() {
 	// Create a transport for outgoing media, if we don't already have one
 	let transport = get(sendTransport);
 	if (!transport) {
-		const myPeerId = get(myPeerIdStore);
+		const myPeerId = get(wsPeerIdStore);
 		transport = await _createTransport("send", myPeerId);
 		sendTransport.set(transport);
 	}
@@ -341,7 +400,7 @@ export async function sendMediaStreams() {
 				{ maxBitrate: 96000, scaleResolutionDownBy: 4 },
 				{ maxBitrate: 680000, scaleResolutionDownBy: 1 },
 			],
-			appData: { mediaTag: "cam-video", peerId: get(myPeerIdStore) },
+			appData: { mediaTag: "cam-video", peerId: get(wsPeerIdStore) },
 		});
 		console.log(3);
 		videoProducer.set(producer);
@@ -356,15 +415,15 @@ export async function sendMediaStreams() {
 	if (stream.getAudioTracks().length > 0) {
 		const producer: Producer = await transport.produce({
 			track: stream.getAudioTracks()[0],
-			appData: { mediaTag: "mic-audio", peerId: get(myPeerIdStore) },
+			appData: { mediaTag: "mic-audio", peerId: get(wsPeerIdStore) },
 		});
 		audioProducer.set(producer);
 
 		if (get(micPausedStore)) {
 			try {
 				producer.pause();
-			} catch (e: any) {
-				console.error(e);
+			} catch (error) {
+				console.error(error);
 			}
 		}
 	}
@@ -673,9 +732,9 @@ async function _createTransport(direction: TransportDirection, peerId: string): 
 				dtlsParameters,
 			})
 			.then(resolve)
-			.catch((err) => {
-				console.error("[MS] Error connecting transport", direction, err);
-				reject(err);
+			.catch((error) => {
+				console.error("[MS] Error connecting transport", direction, error);
+				reject(error);
 			});
 	});
 
@@ -712,9 +771,9 @@ async function _createTransport(direction: TransportDirection, peerId: string): 
 					const producerId = response.id;
 					resolve({ id: producerId });
 				})
-				.catch((err) => {
-					console.error("[MS] Error setting up server-side producer", err);
-					reject(err);
+				.catch((error) => {
+					console.error("[MS] Error setting up server-side producer", error);
+					reject(error);
 				});
 		});
 	}

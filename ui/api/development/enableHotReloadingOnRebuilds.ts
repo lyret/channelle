@@ -17,6 +17,28 @@ export async function enableHotReloadingOnRebuilds() {
 			if (buildCounter > _localBuildCounter && _localBuildCounter != -1) {
 				console.log("[Dev Router] Reloading...");
 				window.location.reload();
+				// TODO: Only reload CSS code if possible, requries some more tinkering
+				// to get working
+				// for (const link of Array.from(document.querySelectorAll('link'))) {
+				// 	const url = new URL(link.href);
+				// 	for (const outputPath of Object.keys(buildOutputs)) {
+				// 		if (
+				// 			url.host === location.host &&
+				// 			`${CONFIG.build.clientOutput}${url.pathname}` == outputPath
+				// 		) {
+				// 			// Create a new link element for the css, load it and delete
+				// 			// the previous link element
+				// 			const nextHref = outputPath.split('/').splice(-1)[0];
+				// 			console.log(nextHref);
+				// 			const nextElement = link.cloneNode() as HTMLLinkElement;
+				// 			nextElement.href =
+				// 				nextHref + ('?' + Math.random().toString(36).slice(2));
+				// 			nextElement.onload = () => link.remove();
+				// 			link.parentNode?.insertBefore(nextElement, link.nextSibling);
+				// 			return;
+				// 		}
+				// 	}
+				// }
 			} else {
 				_localBuildCounter = buildCounter;
 			}

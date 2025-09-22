@@ -1,7 +1,7 @@
 import type * as MediaSoup from "mediasoup";
-import type { Transport, Peer, CustomAppData, MediaTag, Producer, Consumer } from "../../_types";
+import type { Transport, Peer, CustomAppData, MediaTag, Producer, Consumer } from "../_types";
 import { TRPCError } from "@trpc/server";
-import { trpc, mediaSoupRouter } from "../../lib";
+import { trpc, mediaSoupRouter } from "../lib";
 import { z } from "zod";
 
 // Get the trcp router constructor and default procedure
@@ -15,6 +15,8 @@ const { router: trcpRouter, procedure: trcpProcedure } = trpc();
  * correlate tracks.
  */
 type Room = {
+	password: string | undefined;
+	curtains: boolean;
 	peers: Record<string, Peer>;
 	activeSpeaker: {
 		producerId: string | null;
@@ -35,6 +37,9 @@ type Room = {
 
 /** Internal state */
 const _room: Room = {
+	// Settings
+	password: undefined,
+	curtains: false,
 	// Connections
 	peers: {},
 	activeSpeaker: {
@@ -51,17 +56,17 @@ const _room: Room = {
 // Peer connection procedure
 // Make sure this peer is connected. if we've disconnected the
 // peer because of a network outage we want the peer to know that
-// happened, when/if it returns
+// happened
 const roomProcedure = trcpProcedure.use(async ({ ctx, next }) => {
 	if (!ctx.peer?.id) {
 		throw new TRPCError({ code: "BAD_REQUEST", message: "No peer information given" });
 	} else if (!_room.peers[ctx.peer.id]) {
-		throw new TRPCError({ code: "BAD_REQUEST", message: "The given peer id has disconnected" });
+		throw new TRPCError({ code: "BAD_REQUEST", message: "The given peer has left the room" });
 	} else {
 		// Update our most-recently-seem timestamp -- we're not stale!
 		_room.peers[ctx.peer.id].lastSeenTs = Date.now();
 	}
-	return next({ ctx });
+	return next({ ctx: { peer: _room.peers[ctx.peer.id] } });
 });
 
 /**
@@ -76,6 +81,8 @@ export const roomRouter = trcpRouter({
 		return {
 			peers: _room.peers,
 			activeSpeaker: _room.activeSpeaker,
+			password: _room.password,
+			curtains: _room.curtains,
 		};
 	}),
 	// Join
@@ -92,11 +99,17 @@ export const roomRouter = trcpRouter({
 		const now = Date.now();
 
 		_room.peers[ctx.peer.id] = {
-			joinTs: now,
-			lastSeenTs: now,
+			id: ctx.peer.id,
 			media: {},
 			consumerLayers: {},
 			stats: {},
+			name: "",
+			actor: false,
+			manager: false,
+			banned: false,
+			joinTs: now,
+			..._room.peers[ctx.peer.id],
+			lastSeenTs: now,
 		};
 		console.log("[Room]", ctx.peer.id, "joined as new peer");
 		return { peerId: ctx.peer.id, routerRtpCapabilities: msRouter.rtpCapabilities };
@@ -110,6 +123,63 @@ export const roomRouter = trcpRouter({
 		console.log("[Room] Peer", peerId, "left");
 		return;
 	}),
+	// Update Peer
+	// Updates the information about a given peer
+	updatePeer: roomProcedure
+		.input(
+			z.object({
+				id: z.string(),
+				name: z.string().optional(),
+				actor: z.boolean().optional(),
+				manager: z.boolean().optional(),
+				banned: z.boolean().optional(),
+			}),
+		)
+		.mutation(async ({ ctx, input: { id, name, actor, manager, banned } }) => {
+			const peer = _room.peers[id];
+
+			console.log({ ctx, id, name, actor, manager, banned });
+
+			// Make sure that the peer in context is either the same as being updated or a manager
+			if (!(ctx.peer.id == id || ctx.peer.manager)) {
+				throw new TRPCError({ code: "UNAUTHORIZED", message: "Unauthorized" });
+			}
+
+			// Find the peer
+			if (!peer) {
+				throw new TRPCError({ code: "NOT_FOUND", message: "Peer with given id not found" });
+			}
+
+			// Update peer's name
+			if (name !== undefined) {
+				peer.name = name;
+			}
+
+			// Make sure that the peer in context is a manager
+			if (!ctx.peer.manager) {
+				return;
+			}
+
+			// Update peer's actor status
+			if (actor !== undefined) {
+				peer.actor = actor;
+			}
+
+			// Update peer's manager status
+			if (manager !== undefined) {
+				peer.manager = manager;
+			}
+
+			// Update peer's banned status
+			if (banned !== undefined) {
+				peer.banned = banned;
+			}
+
+			// Update the record of peers
+			_room.peers[id] = peer;
+
+			return;
+		}),
 	// Create Transport
 	// Create a mediasoup transport object and send back info needed
 	// to create a transport object on the client side

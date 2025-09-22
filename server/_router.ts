@@ -1,6 +1,7 @@
 import { applyWSSHandler } from "@trpc/server/adapters/ws";
+import type { Peer } from "./lib";
 import { trpc, ws } from "./lib";
-import { roomRouter } from "./routers/room";
+import { roomRouter } from "./routers/roomRouter";
 import { developmentRouter } from "./routers/development";
 
 /**
@@ -30,14 +31,14 @@ export async function createAppRouter() {
 		wss: ws(),
 		router: appRouter,
 		createContext: (options) => {
-			// Get the token from the connection parameters
-			const token = options.info.connectionParams?.token;
-			console.log("[TRPC] New Peer:", token);
+			// Get the peer id from the connection parameters
+			const peerId = options.info.connectionParams?.peerId;
+			console.log("[TRPC] Peer Connected:", peerId);
 
 			return {
 				peer: {
-					id: token, // Use the token as the peer id
-				},
+					id: peerId, // Use the given id as the peer id in the initial context, it will be updated in the authentication middleware when applied
+				} as Peer,
 			};
 		},
 		// Enable heartbeat messages to keep connection open (disabled by default)

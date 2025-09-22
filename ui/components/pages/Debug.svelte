@@ -5,7 +5,7 @@
 
 	// Import all the stores
 	import {
-		joinedStore,
+		hasJoinedRoomStore,
 		localMediaStream,
 		paused,
 		sendTransport,
@@ -34,7 +34,7 @@
 
 	// Subscribe to stores using $ prefix
 	$: myPeerId = $myPeerIdStore;
-	$: joined = $joinedStore;
+	$: joined = $hasJoinedRoomStore;
 	$: hasLocalCam = $hasLocalCamStore;
 	$: hasSendTransport = $hasSendTransportStore;
 	$: hasRecvTransport = $hasRecvTransportStore;

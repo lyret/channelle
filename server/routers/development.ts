@@ -1,7 +1,7 @@
 import { tracked } from "@trpc/server";
 import Emittery from "emittery";
 import { BroadcastChannel } from "broadcast-channel";
-import { trpc } from "../../lib";
+import { trpc } from "../lib";
 
 // Get the trcp router constructor and default procedure
 const { router: trcpRouter, procedure: trcpProcedure } = trpc();

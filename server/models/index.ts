@@ -1,6 +1,7 @@
-import { Participant } from "./Participant";
-import { Message } from "./Message";
-import { Scene } from "./Scene";
+import type { InferAttributes } from "sequelize";
+import type { Participant } from "./Participant";
+import type { Message } from "./Message";
+import type { Scene } from "./Scene";
 
 // Export types for models
 export type ParticipantType = typeof Participant;
@@ -11,3 +12,8 @@ export type SceneType = typeof Scene;
 export type ParticipantInstance = InstanceType<ParticipantType>;
 export type MessageInstance = InstanceType<MessageType>;
 export type SceneInstance = InstanceType<SceneType>;
+
+// Model attributes types
+export type ParticipantAttributes = InferAttributes<Participant>;
+export type MessageAttributes = InferAttributes<Message>;
+export type SceneAttributes = InferAttributes<Scene>;

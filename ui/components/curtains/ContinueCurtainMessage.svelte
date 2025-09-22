@@ -1,27 +1,17 @@
 <script lang="ts">
 	import { createEventDispatcher } from "svelte";
-	import type { DataTypes } from "~/lib";
+	import { peerStore } from "~/api/room";
 
-	const dispatch = createEventDispatcher();
-
-	export let participant: DataTypes["participant"];
-
-	const name: string = "";
-	const loading: boolean = false;
+	const dispatch = createEventDispatcher<{ submit: void }>();
 
 	// Handle the submission
 	async function onClick() {
-		dispatch("click");
+		dispatch("submit");
 	}
 </script>
 
-<h1 class="title is-family-default">Välkommen tillbaka {participant.name}!</h1>
-<button
-	class="button is-rounded is-primary mt-4 is-centered"
-	on:click={onClick}
-	class:is-loading={loading}
-	>Anslut
-</button>
+<h1 class="title is-family-default">Välkommen tillbaka {$peerStore.name}!</h1>
+<button class="button is-rounded is-primary mt-4 is-centered" on:click={onClick}>Anslut</button>
 
 <style lang="scss">
 	h1 {
@@ -29,9 +19,6 @@
 		@include mobile {
 			font-size: 5vw;
 		}
-	}
-	.icon {
-		transform: scale(2);
 	}
 	.button {
 		border-radius: 0;
