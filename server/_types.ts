@@ -18,6 +18,7 @@ export type PredefinedLayout = {
 export type { AppRouter } from "./_router";
 export type { MediaTag, TransportDirection, CustomAppData } from "./lib/mediaSoup";
 export type { Peer, Session } from "./lib/trpc";
+export type { MessageAttributes } from "./models";
 export type Transport = MediaSoup.types.WebRtcTransport<{ peerId: string; clientDirection: TransportDirection }>;
 export type Consumer = MediaSoup.types.Consumer<CustomAppData>;
 export type Producer = MediaSoup.types.Producer<CustomAppData>;

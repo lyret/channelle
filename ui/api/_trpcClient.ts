@@ -48,3 +48,6 @@ export const roomClient = appClient.room;
 
 /** Client for the Development API only */
 export const developmentClient = appClient.development;
+
+/** Client for the Chat API only */
+export const chatClient = appClient.chat;

@@ -1,1 +1,1 @@
-export { roomClient } from "./_trpcClient";
+export { roomClient, chatClient } from "./_trpcClient";
