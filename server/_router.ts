@@ -3,6 +3,7 @@ import type { Peer } from "./lib";
 import { trpc, ws } from "./lib";
 import { roomRouter } from "./routers/roomRouter";
 import { developmentRouter } from "./routers/development";
+import { chatRouter } from "./routers/chatRouter";
 
 /**
  * Creates and returns the application router
@@ -15,6 +16,7 @@ export async function createAppRouter() {
 	const routerConfig = {
 		room: roomRouter,
 		development: developmentRouter,
+		chat: chatRouter,
 	};
 
 	// Remove handling of incomming development messages from the cli

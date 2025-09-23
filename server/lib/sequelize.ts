@@ -1,6 +1,6 @@
 import * as Path from "node:path";
 import { Sequelize } from "sequelize";
-import { initParticipant } from "../models/Participant";
+import { initPeer } from "../models/Peer";
 import { initMessage } from "../models/Message";
 import { initScene } from "../models/Scene";
 
@@ -30,7 +30,7 @@ export async function sequelize(): Promise<Sequelize> {
 	await _sequelize.authenticate();
 
 	// initialize models
-	initParticipant(_sequelize);
+	initPeer(_sequelize);
 	initMessage(_sequelize);
 	initScene(_sequelize);
 

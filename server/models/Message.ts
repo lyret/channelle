@@ -1,14 +1,15 @@
-import { Model, DataTypes, Sequelize } from "sequelize";
-import { Participant } from "./Participant";
+import type { Sequelize } from "sequelize";
+import { Model, DataTypes } from "sequelize";
+import { Peer } from "./Peer";
 
 /** Message model. */
 export class Message extends Model {
 	declare id: number;
-	declare backstage: boolean;
-	declare createdAt: Date;
-	declare participantId: number;
 	declare message: string;
-	declare author: string;
+	declare backstage: boolean;
+	declare peerId: string;
+	declare peerName: string;
+	declare createdAt: Date;
 }
 
 /** Initialize the Message model. */
@@ -20,25 +21,20 @@ export function initMessage(sequelize: Sequelize) {
 				autoIncrement: true,
 				primaryKey: true,
 			},
-			backstage: {
-				type: DataTypes.BOOLEAN,
-				defaultValue: true,
-				allowNull: false,
-			},
-			createdAt: {
-				type: DataTypes.DATE,
-				defaultValue: DataTypes.NOW,
-				allowNull: false,
-			},
-			participantId: {
-				type: DataTypes.INTEGER,
-				allowNull: false,
-			},
 			message: {
 				type: DataTypes.TEXT,
 				allowNull: false,
 			},
-			author: {
+			backstage: {
+				type: DataTypes.BOOLEAN,
+				defaultValue: false,
+				allowNull: false,
+			},
+			peerId: {
+				type: DataTypes.STRING,
+				allowNull: true,
+			},
+			peerName: {
 				type: DataTypes.STRING,
 				defaultValue: "",
 				allowNull: false,
@@ -48,18 +44,22 @@ export function initMessage(sequelize: Sequelize) {
 			sequelize,
 			modelName: "Message",
 			tableName: "Message",
-			timestamps: false,
+			timestamps: true,
+			updatedAt: false,
 		},
 	);
 
-	// Define association with Participant
-	Message.belongsTo(Participant, {
-		foreignKey: "participantId",
-		onDelete: "CASCADE",
+	// Define association with Peer
+	Message.belongsTo(Peer, {
+		foreignKey: "peerId",
+		targetKey: "id",
+		onDelete: "SET NULL",
 		onUpdate: "CASCADE",
+		as: "peer",
 	});
-	Participant.hasMany(Message, {
-		foreignKey: "participantId",
+	Peer.hasMany(Message, {
+		foreignKey: "peerId",
+		sourceKey: "id",
 		as: "messages",
 	});
 }
