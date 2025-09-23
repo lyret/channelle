@@ -39,6 +39,14 @@
 			}
 		}
 	});
+
+	// Handle Enter key for submission
+	function handleKeyDown(e: KeyboardEvent) {
+		if (e.key === "Enter" && !e.shiftKey) {
+			e.preventDefault();
+			onSubmit(new SubmitEvent("submit"));
+		}
+	}
 </script>
 
 <form on:submit={onSubmit} class="form">
@@ -52,7 +60,9 @@
 				class="input is-fullwidth"
 				class:is-large={isLarge}
 				bind:value={inputValue}
-				placeholder="Skriv ett chattmeddelande"
+				placeholder={makeBackstage ? "Skriv ett backstage-meddelande" : "Skriv ett chattmeddelande"}
+				on:keydown={handleKeyDown}
+				{disabled}
 			/>
 		</div>
 		<div class="control">
@@ -61,22 +71,22 @@
 				class="button is-dark"
 				class:is-large={isLarge}
 				{disabled}
-				class:is-loading={loading}
+				class:is-loading={loading || $chatLoadingStore}
 				class:is-primary={!loading && !disabled && !makeBackstage}
 				class:is-link={!loading && !disabled && makeBackstage}
 			>
-				{#if disabled}
-					<span class="icon"><PicolArrowFullLeft /></span><span
-						>Skriv något</span
-					>
+				{#if disabled && !inputValue.trim()}
+					<span class="icon"><PicolArrowFullLeft /></span>
+					<span>Skriv något</span>
+				{:else if makeBackstage && !canSendBackstage}
+					<span class="icon"><PicolArrowFullLeft /></span>
+					<span>Ej tillåtet</span>
 				{:else if makeBackstage}
-					<span class="icon"><PicolArrowFullUp /></span><span
-						>Skicka till backstage</span
-					>
+					<span class="icon"><PicolArrowFullUp /></span>
+					<span>Skicka backstage</span>
 				{:else}
-					<span class="icon"><PicolArrowFullUp /></span><span
-						>Skicka till alla</span
-					>
+					<span class="icon"><PicolArrowFullUp /></span>
+					<span>Skicka till alla</span>
 				{/if}
 			</button>
 		</div>
