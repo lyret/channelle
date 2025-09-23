@@ -408,6 +408,16 @@ export async function updatePeerManagerStatus(peerId: string, manager: boolean) 
 }
 
 /**
+ * Updates multiple peer properties at once
+ */
+export async function updatePeerProperties(peerId: string, data: { actor?: boolean; manager?: boolean; banned?: boolean }) {
+	await roomClient.updatePeer.mutate({
+		id: peerId,
+		...data,
+	});
+}
+
+/**
  * Access local media streams from the browser
  * @param audio - Whether to request audio access (default: true)
  * @param video - Whether to request video access (default: true)

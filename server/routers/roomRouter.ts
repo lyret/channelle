@@ -167,12 +167,7 @@ export const roomRouter = trcpRouter({
 		console.log("[Room] Peer", peerId, "left");
 		return;
 	}),
-	effects: roomProcedure.subscription(async function* () {
-		yield null as { type: "flowers" | "applause"; number: number }; // FIXME: Send effects over trpc
-	}),
-	sendEffect: roomProcedure.input(z.object({ type: z.literal(["flowers", "applause"]), number: z.number() })).mutation(() => {
-		// FIXME: Send effects over trpc
-	}),
+
 	// Update Peer
 	// Updates the information about a given peer
 	updatePeer: roomProcedure
@@ -187,8 +182,6 @@ export const roomRouter = trcpRouter({
 		)
 		.mutation(async ({ ctx, input: { id, name, actor, manager, banned } }) => {
 			const peer = _room.peers[id];
-
-			console.log({ ctx, id, name, actor, manager, banned });
 
 			// Make sure that the peer in context is either the same as being updated or a manager
 			if (!(ctx.peer.id == id || ctx.peer.manager)) {
@@ -514,13 +507,13 @@ export type RoomRouter = typeof roomRouter;
 async function removeStalePeers() {
 	const now = Date.now();
 	for (const [id, peer] of Object.entries(_room.sessions)) {
-		if (now - peer.lastSeenTs > 15000) {
+		if (now - peer.lastSeenTs > 4200) {
 			console.log(`[Room] Removing stale peer ${id}`);
 			_closePeer(id);
 		}
 	}
 }
-setInterval(removeStalePeers, 1000);
+setInterval(removeStalePeers, 2000);
 
 /** Intervalled function to update video statistics that we're sending to peers */
 async function updatePeerStats() {

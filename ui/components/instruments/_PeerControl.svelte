@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { clickOutside } from "~/directives";
-	import { updatePeerName } from "~/api/room";
+	import { updatePeerName, updatePeerProperties } from "~/api/room";
 	import IconAward from "../icons/Icon-award.svelte";
 	import IconBriefcase from "../icons/Icon-briefcase.svelte";
 	import IconCircle from "../icons/Icon-circle.svelte";
@@ -21,8 +21,7 @@
 	async function doUpdate(participant: any, data: any, ask?: string) {
 		loading = true;
 		if (!ask || confirm(ask)) {
-			// TODO: Implement peer update functionality
-			console.warn("Peer update not implemented yet:", data);
+			await updatePeerProperties(participant.id, data);
 		}
 		loading = false;
 	}

@@ -13,6 +13,8 @@ export type PredefinedLayout = {
 	layout: StageLayout;
 };
 
+export type EffectData = { type: "flowers" | "applause"; number: number };
+
 //Export types needed on the client side
 
 export type { AppRouter } from "./_router";

@@ -207,8 +207,7 @@ export async function createConfiguration() {
 			/** The directory to use for client builds */
 			clientOutput: ".dist/ui",
 			/** The files to use as build inputs for the client, relative to the 'ui' folder. */
-			clientInputs: ["stage.html", "_stage.ts"],
-			//TODO: re-add clientInputs: ["index.html", "debug.html", "stage.html", "backstage.html", "_home.ts", "_debug.ts", "_stage.ts", "_backstage.ts"],
+			clientInputs: ["index.html", "debug.html", "stage.html", "backstage.html", "_home.ts", "_debug.ts", "_stage.ts", "_backstage.ts"],
 		},
 		/** Debug Settings */
 		debug: {

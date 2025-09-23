@@ -21,6 +21,9 @@ export const calculatedStageLayoutStore = derived([stageLayoutStore, consumersSt
 			}
 		}),
 	);
+
+	console.log({ cons: $consumers });
+
 	// Determine if the layout is set to auto
 	const isAutoLayout = !$stageLayout.length || ($stageLayout.length == 1 && !$stageLayout[0].length);
 

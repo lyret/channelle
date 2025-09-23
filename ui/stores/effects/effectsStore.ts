@@ -1,23 +1,21 @@
+import type { EffectData } from "~/types/serverSideTypes";
 import { readable } from "svelte/store";
 import { triggerApplauseEffect, triggerFlowerGiftEffect } from "./_effectFunctions";
-import { roomClient } from "~/api";
-
-/** Store value */
-type EffectsValue = { type: "flowers" | "applause"; number: number };
+import { sendEffect, subscribeToEffects } from "~/api/effects";
 
 /** Store interface */
 interface EffectsStore {
 	// eslint-disable-next-line no-unused-vars
-	subscribe: (subscription: (value: EffectsValue) => void) => () => void;
+	subscribe: (subscription: (value: EffectData) => void) => () => void;
 	// eslint-disable-next-line no-unused-vars
-	set: (value: EffectsValue) => void;
+	set: (value: EffectData) => void;
 }
 
 /** Creates a Svelte Store for triggering effects from the server */
 export function createEffectsStore(): EffectsStore {
-	const { subscribe } = readable<EffectsValue>(undefined, function start(set) {
+	const { subscribe } = readable<EffectData>(undefined, function start(set) {
 		// Handle status updates
-		const handler = (value: EffectsValue | null) => {
+		const handler = (value: EffectData | null) => {
 			if (!value) {
 				return;
 			}
@@ -32,11 +30,7 @@ export function createEffectsStore(): EffectsStore {
 		};
 
 		// Listen to any effects updates from the websocket connection
-		const { unsubscribe } = roomClient.effects.subscribe(undefined, {
-			onData: (value) => {
-				handler(value);
-			},
-		});
+		const { unsubscribe } = subscribeToEffects(handler);
 
 		return function stop() {
 			unsubscribe();
@@ -45,10 +39,8 @@ export function createEffectsStore(): EffectsStore {
 
 	return {
 		subscribe,
-		set: (value: EffectsValue) => {
-			setTimeout(() => {
-				roomClient.sendEffect.mutate(value);
-			}, 100);
+		set: async (value: EffectData) => {
+			await sendEffect(value);
 		},
 	};
 }
