@@ -1,23 +1,21 @@
 <script lang="ts">
-	import { windowSizeStore } from "~/_device";
+	import { windowSizeStore } from "~/stores/device";
 	import { onMount } from "svelte";
 	import { blur } from "svelte/transition";
-	import { createEffectsStore } from "~/stores/particles/effectsStore";
-	import { sceneChatIsEnabled } from "~/stores/scene/sceneChatIsEnabled";
-	import { sceneEffectsIsEnabled } from "~/stores/scene/sceneEffectsIsEnabled";
-	import { showStageChatStore } from "~/stores/scene/stageChatPanelsOpen";
-	import { stageSettings } from "~/stores/scene/stageSettingsIsOpen";
-	import { fullscreenStore } from "~/stores/stage/fullscreen";
-	import IconMaximize from "../icons/Icon-maximize.svelte";
-	import IconMessageCircle from "../icons/Icon-message-circle.svelte";
-	import IconMinimize from "../icons/Icon-minimize.svelte";
-	import IconToggleLeft from "../icons/Icon-toggle-left.svelte";
-	import IconToggleRight from "../icons/Icon-toggle-right.svelte";
-	import CameraActionButton from "./actionButtons/CameraActionButton.svelte";
-	import MediaInputStatus from "./actionButtons/MediaInputStatus.svelte";
-	import MicrophoneActionButton from "./actionButtons/MicrophoneActionButton.svelte";
+	import { createEffectsStore } from "~/stores/effects";
+	import { stageChatEnabledStore, stageEffectsEnabledStore } from "~/api/room";
+	import { showStageChatStore, showStageStettingsStore } from "~/stores/stage";
+	import { windowFullscreenStore } from "~/stores/device";
+	import IconMaximize from "../../icons/Icon-maximize.svelte";
+	import IconMessageCircle from "../../icons/Icon-message-circle.svelte";
+	import IconMinimize from "../../icons/Icon-minimize.svelte";
+	import IconToggleLeft from "../../icons/Icon-toggle-left.svelte";
+	import IconToggleRight from "../../icons/Icon-toggle-right.svelte";
+	import CameraControls from "./_CameraControls.svelte";
+	import StageDirections from "./_StageDirections.svelte";
+	import MicrophoneControls from "./_MicrophoneControls.svelte";
 
-	const fullscreen = fullscreenStore();
+	const fullscreen = windowFullscreenStore();
 	const windowSize = windowSizeStore();
 	$: isMobile = $windowSize.width <= 842;
 	const effects = createEffectsStore();
@@ -39,7 +37,7 @@
 
 <div class="bar" style={`flex-wrap: ${isMobile ? "wrap" : "nowrap"};`}>
 	<!-- STATUS -->
-	<span class="block"><MediaInputStatus /></span>
+	<span class="block"><StageDirections /></span>
 	<!-- SPACER / BREAKER -->
 	{#if !isMobile}
 		<div class="spacer" />
@@ -47,7 +45,7 @@
 		<div class="breaker" />
 	{/if}
 	<!-- EFFECTS -->
-	{#if $sceneEffectsIsEnabled}
+	{#if $stageEffectsEnabledStore}
 		<button class={effectBtnClassList} transition:blur on:click={() => effects.set({ type: "applause", number: 1 })}>
 			<span class={iconClassList}>👏</span></button
 		>
@@ -59,10 +57,10 @@
 		{/if}
 	{/if}
 	<!-- VIDEO -->
-	<CameraActionButton minimal={isMobile} />
+	<CameraControls minimal={isMobile} />
 
 	<!-- AUDIO -->
-	<MicrophoneActionButton minimal={isMobile} />
+	<MicrophoneControls minimal={isMobile} />
 	<!-- FULLSCREEN -->
 	<button
 		type="button"
@@ -80,14 +78,14 @@
 		{/if}
 	</button>
 	<!-- CHAT -->
-	{#if $sceneChatIsEnabled}
+	{#if $stageChatEnabledStore}
 		<button
 			class={btnClassList}
 			transition:blur
 			class:active={$showStageChatStore}
 			on:click={() => {
 				showStageChatStore.set(!$showStageChatStore);
-				stageSettings.set(false);
+				showStageStettingsStore.set(false);
 			}}
 		>
 			<span class={iconClassList}><IconMessageCircle /></span>
@@ -100,14 +98,14 @@
 	<button
 		class={btnClassList}
 		transition:blur
-		class:active={$stageSettings}
+		class:active={$showStageStettingsStore}
 		on:click={() => {
-			stageSettings.set(!$stageSettings);
+			showStageStettingsStore.set(!$showStageStettingsStore);
 			showStageChatStore.set(false);
 		}}
 	>
 		<span class={iconClassList}>
-			{#if $stageSettings}
+			{#if $showStageStettingsStore}
 				<IconToggleRight />
 			{:else}
 				<IconToggleLeft />

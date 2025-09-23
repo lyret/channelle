@@ -3,23 +3,22 @@
 	import { blur, fly } from "svelte/transition";
 
 	import Wrapper from "./_Wrapper.svelte";
-	import ActionPanel from "~/components/stage/ActionPanel.svelte";
-	import ChatPanel from "~/components/stage/ChatPanel.svelte";
-	import ChatWindow from "~/components/stage/ChatWindow.svelte";
-	import MediaAudio from "~/components/stage/MediaAudio.svelte";
-	import MediaWindow from "~/components/stage/MediaWindow.svelte";
-	import OptionsPanel from "~/components/stage/OptionsPanel.svelte";
+	import ActioNBar from "~/components/stage/bottom/ActionBar.svelte";
+	import ChatSidepanel from "~/components/stage/sidepanel/ChatSidePanel.svelte";
+	import OptionsSidePanel from "~/components/stage/sidepanel/OptionsSidePanel.svelte";
+	import StageChat from "~/components/stage/elements/Chat.svelte";
+	import StageAudio from "~/components/stage/elements/Audio.svelte";
+	import StageVideo from "~/components/stage/elements/Video.svelte";
 
-	import { StageAudio } from "~/lib/stores/stageAudio";
-	import { StageLayout } from "~/lib/stores/stageLayout";
+	import { calculatedStageLayoutStore } from "~/stores/stage";
 
 	import { showStageChatStore, showStageStettingsStore } from "~/stores/stage";
 
-	$: matrix = $StageLayout.layout || [];
+	$: matrix = $calculatedStageLayoutStore.layout || [];
 	$: height = Math.max(matrix.length, 1);
 	$: width = Math.max(matrix.length ? matrix[0].length : 0, 1);
 
-	$: windowsLayoutStyle = $StageLayout.isAutoLayout
+	$: windowsLayoutStyle = $calculatedStageLayoutStore.isAutoLayout
 		? `
 		 grid-template-columns: repeat(auto-fit, minmax(50%, auto));
 	`
@@ -29,8 +28,8 @@
 		`;
 
 	onMount(() => {
-		StageLayout.subscribe((data) => {
-			console.log("StageLayout", data);
+		calculatedStageLayoutStore.subscribe((data) => {
+			console.log("[Layout]", data);
 		});
 	});
 </script>
@@ -40,19 +39,19 @@
 		<div class="contents">
 			<div class="windows-wrapper">
 				<div class={`windows window-cols-${width} window-rows-${height}`} style={windowsLayoutStyle}>
-					{#if $StageLayout.isAutoLayout}
-						{#each $StageLayout.leftovers as cell (cell.id)}
-							<MediaWindow stream={cell.stream} participant={cell.participant} />
+					{#if $calculatedStageLayoutStore.isAutoLayout}
+						{#each $calculatedStageLayoutStore.videoLeftovers as cell (cell.peerId)}
+							<StageVideo peerId={cell.peerId} />
 						{/each}
 					{:else}
 						{#each matrix as row, rowIndex (rowIndex)}
 							{#each row as cell, cellIndex (`${rowIndex}-${cellIndex}`)}
 								{#if cell.type == "chat"}
 									<div class="window">
-										<ChatWindow />
+										<StageChat />
 									</div>
 								{:else if cell.type == "actor"}
-									<MediaWindow stream={cell.stream} participant={cell.participant} />
+									<StageVideo peerId={cell.peerId} />
 								{:else}
 									<div class="window"></div>
 								{/if}
@@ -65,9 +64,9 @@
 				<div class="sidebar">
 					<div class="sidebar-contents" style="z-index: 9999" in:fly={{ y: 200 }} out:fly={{ y: 200 }}>
 						{#if $showStageStettingsStore}
-							<OptionsPanel />
+							<OptionsSidePanel />
 						{:else}
-							<ChatPanel />
+							<ChatSidepanel />
 						{/if}
 					</div>
 				</div>
@@ -75,13 +74,13 @@
 		</div>
 
 		<!-- AUDIO ELEMENTS -->
-		{#each $StageAudio.audio as cell (cell.id)}
-			<MediaAudio stream={cell.stream} />
+		{#each $calculatedStageLayoutStore.audioLeftovers as cell (cell.peerId)}
+			<StageAudio peerId={cell.peerId} />
 		{/each}
 
 		<!-- FOOTER -->
 		<div class="footer">
-			<ActionPanel />
+			<ActioNBar />
 		</div>
 	</main>
 </Wrapper>

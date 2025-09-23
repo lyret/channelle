@@ -1,18 +1,21 @@
 <script lang="ts">
 	import { blur } from "svelte/transition";
-	import { openInstruments } from "~/stores/backstage";
+	import { openInstruments } from "~/stores/instruments";
+
 	import Wrapper from "./_Wrapper.svelte";
+	import AccessInstrument from "~/components/instruments/AccessInstrument.svelte";
+	import ChatInstrument from "~/components/instruments/ChatInstrument.svelte";
+	import MediaLibraryInstrument from "~/components/instruments/MediaLibraryInstrument.svelte";
+	import ParticipantsInstrument from "~/components/instruments/ParticipantsInstrument.svelte";
+	import SceneSelectorInstrument from "~/components/instruments/SceneSelectorInstrument.svelte";
+
 	import IconCheckCircle from "~/components/icons/Icon-check-circle.svelte";
 	import IconCircle from "~/components/icons/Icon-circle.svelte";
 	import IconKey from "~/components/icons/Icon-key.svelte";
 	import IconLayers from "~/components/icons/Icon-layers.svelte";
 	import IconMessageCircle from "~/components/icons/Icon-message-circle.svelte";
 	import IconUsers from "~/components/icons/Icon-users.svelte";
-	import AccessInstrument from "~/components/instruments/AccessInstrument.svelte";
-	import ChatList from "~/components/instruments/ChatInstrument.svelte";
-	import MediaLibraryInstrument from "~/components/instruments/MediaLibraryInstrument.svelte";
-	import ParticipantsInstrument from "~/components/instruments/ParticipantsInstrument.svelte";
-	import SceneSelectorInstrument from "~/components/instruments/SceneSelectorInstrument.svelte";
+
 	import logoSrc from "~/assets/images/redrose.gif";
 </script>
 
@@ -101,7 +104,7 @@
 			{/if}
 			{#if $openInstruments["chat"]}
 				<div class="instrument">
-					<ChatList />
+					<ChatInstrument />
 				</div>
 			{/if}
 			{#if $openInstruments["access"]}

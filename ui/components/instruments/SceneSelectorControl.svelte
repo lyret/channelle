@@ -1,13 +1,12 @@
 <script lang="ts">
 	import { createEventDispatcher } from "svelte";
-	import type { DataTypes } from "~/lib";
-	import type { PredefinedLayout } from "~/stores/stage/selectedPredefinedStageLayout";
 	import IconMessageCircle from "../icons/Icon-message-circle.svelte";
 	import IconUser from "../icons/Icon-user.svelte";
-	const dispatch = createEventDispatcher();
+	import type { PredefinedLayout } from "~/types/serverSideTypes";
+	const dispatch = createEventDispatcher<{ update: PredefinedLayout; select: PredefinedLayout }>();
 
 	export let selectedLayout: any;
-	export let participants: Array<DataTypes["participant"]>;
+	export let peers: Array<any>;
 	export let layout: PredefinedLayout;
 
 	$: selected = selectedLayout?.name == layout.name;
@@ -25,8 +24,7 @@
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div
-	class="fixed-grid has-{layout?.layout[0] &&
-		layout.layout[0].length}-cols notification is-secondary is-dark"
+	class="fixed-grid has-{layout?.layout[0] && layout.layout[0].length}-cols notification is-secondary is-dark"
 	class:is-primary={selected}
 	on:click={() => dispatch("select", layout)}
 >
@@ -34,8 +32,8 @@
 		{layout.name}
 	</h2>
 	<div class="grid">
-		{#each layout.layout as row}
-			{#each row as cell}
+		{#each layout.layout as row, rowIndex (rowIndex)}
+			{#each row as cell, cellIndex (`${rowIndex}-${cellIndex}`)}
 				<div class="cell">
 					{#if cell.type == "empty"}
 						<button disabled class="button is-fullwidth">
@@ -48,13 +46,10 @@
 							<span>Chatt</span></button
 						>{:else if cell.type == "actor"}
 						<div class="select is-fullwidth">
-							<select
-								on:change={(e) => onChange(e, cell)}
-								on:click={(e) => e.stopPropagation()}
-							>
+							<select on:change={(e) => onChange(e, cell)} on:click={(e) => e.stopPropagation()}>
 								<option value={-1} class="has-text-gray">- Ingen -</option>
-								{#each participants as participant}
-									<option value={participant.id}>{participant.name}</option>
+								{#each peers as peer (peer.id)}
+									<option value={peer.id}>{peer.name}</option>
 								{/each}
 							</select>
 						</div>

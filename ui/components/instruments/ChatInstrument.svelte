@@ -1,15 +1,11 @@
 <script lang="ts">
-	import { createLocalStore } from "~/stores";
-
+	import { persisted } from "svelte-persisted-store";
 	import ChatInput from "../chat/ChatInput.svelte";
 	import ChatList from "../chat/ChatList.svelte";
 	import IconStar from "../icons/Icon-star.svelte";
 	import IconUsers from "../icons/Icon-users.svelte";
 
-	const backstageOnly = createLocalStore(
-		"instruments-chat-backstage-only",
-		false
-	);
+	const backstageOnly = persisted("instruments-chat-backstage-only", false);
 </script>
 
 <div class="chat-instrument">
@@ -25,10 +21,7 @@
 					</a>
 				</li>
 				<li class:is-active={$backstageOnly}>
-					<a
-						class:has-text-link={$backstageOnly}
-						on:click={() => ($backstageOnly = true)}
-					>
+					<a class:has-text-link={$backstageOnly} on:click={() => ($backstageOnly = true)}>
 						<span class="icon is-small"><IconStar /></span>
 						<span>Backstage</span>
 					</a>

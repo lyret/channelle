@@ -70,18 +70,22 @@ const roomProcedure = trcpProcedure.use(async ({ ctx, next }) => {
 	} else if (!_room.peers[ctx.peer.id]) {
 		throw new TRPCError({ code: "BAD_REQUEST", message: "The given peer has not joined the room" });
 	} else {
-		// Update our most-recently-seem timestamp -- we're not stale!
-		_room.peers[ctx.peer.id].online = true;
-		_room.peers[ctx.peer.id].lastSeenTs = Date.now();
-
 		// Make sure we have a session for this peer
 		if (!_room.sessions[ctx.peer.id]) {
+			const now = Date.now();
 			_room.sessions[ctx.peer.id] = {
 				peerId: ctx.peer.id,
+				joinTs: now,
+				lastSeenTs: now,
 				consumerLayers: {},
 				media: {},
 				stats: {},
 			};
+		}
+		// Update our most-recently-seem timestamp -- we're not stale!
+		else {
+			_room.peers[ctx.peer.id].online = true;
+			_room.sessions[ctx.peer.id].lastSeenTs = Date.now();
 		}
 	}
 	return next({ ctx: { peer: _room.peers[ctx.peer.id] } });
@@ -119,30 +123,32 @@ export const roomRouter = trcpRouter({
 		if (!ctx.peer?.id) {
 			throw new TRPCError({ code: "BAD_REQUEST", message: "No peer information given" });
 		}
+		const msRouter = await mediaSoupRouter();
+
 		if (_room.sessions[ctx.peer.id]) {
-			throw new TRPCError({ code: "BAD_REQUEST", message: "Peer already joined, please leave first" });
+			console.log("[Room]", ctx.peer.id, "re-joined, possibly due a browser reload");
+			return { peerId: ctx.peer.id, routerRtpCapabilities: msRouter.rtpCapabilities };
 		}
 
-		const msRouter = await mediaSoupRouter();
 		const now = Date.now();
 
 		_room.peers[ctx.peer.id] = {
 			id: ctx.peer.id,
 			name: "",
 			actor: false,
-			manager: false,
+			manager: Object.keys(_room.peers).length === 0, // The first peer is always a manager
 			banned: false,
-			joinTs: now,
 			// Inherit any previous properties if re-joining
 			...(_room.peers[ctx.peer.id] || {}),
 			// Update current status
 			online: true,
 			audioMuted: false,
 			videoMuted: false,
-			lastSeenTs: now,
 		};
 		// Create a new session
 		_room.sessions[ctx.peer.id] = {
+			joinTs: now,
+			lastSeenTs: now,
 			peerId: ctx.peer.id,
 			media: {},
 			consumerLayers: {},
@@ -163,6 +169,9 @@ export const roomRouter = trcpRouter({
 	}),
 	effects: roomProcedure.subscription(async function* () {
 		yield null as { type: "flowers" | "applause"; number: number }; // FIXME: Send effects over trpc
+	}),
+	sendEffect: roomProcedure.input(z.object({ type: z.literal(["flowers", "applause"]), number: z.number() })).mutation(() => {
+		// FIXME: Send effects over trpc
 	}),
 	// Update Peer
 	// Updates the information about a given peer
@@ -504,7 +513,7 @@ export type RoomRouter = typeof roomRouter;
 /** Intervalled function run to periodically clean up peers that disconnected without sending us a leaving message */
 async function removeStalePeers() {
 	const now = Date.now();
-	for (const [id, peer] of Object.entries(_room.peers)) {
+	for (const [id, peer] of Object.entries(_room.sessions)) {
 		if (now - peer.lastSeenTs > 15000) {
 			console.log(`[Room] Removing stale peer ${id}`);
 			_closePeer(id);
@@ -578,16 +587,16 @@ async function observeActiveSpeakers() {
 }
 observeActiveSpeakers();
 
-/** Utility function to closing the transports related to a given peer */
+/** Utility function to closing the session and transports related to a given peer */
 async function _closePeer(peerId: string) {
 	console.log("[MS] closing peer", peerId);
+	_room.peers[peerId].online = false;
+	delete _room.sessions[peerId];
 	for (const transport of Object.values(_room.transports)) {
 		if (transport.appData.peerId === peerId) {
 			await _closeTransport(transport);
 		}
 	}
-	_room.peers[peerId].online = false;
-	delete _room.sessions[peerId];
 }
 
 /** Utility function to close a given transport */

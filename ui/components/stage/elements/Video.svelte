@@ -1,8 +1,19 @@
 <script lang="ts">
-	import type { DataTypes } from "~/lib";
+	import { peersStore, consumersStore } from "~/api/room";
 
-	export let participant: DataTypes["participant"] | undefined = undefined;
-	export let stream: MediaStream | undefined;
+	export let peerId: string;
+
+	$: peer = $peersStore[peerId];
+
+	$: stream = findStream(peerId);
+
+	function findStream(peerId: string) {
+		const consumer = $consumersStore.find((consumer) => consumer.appData.peerId === peerId);
+		if (consumer) {
+			return new MediaStream([consumer.track]);
+		}
+		return undefined;
+	}
 
 	$: streamHasVideo = stream ? !!stream.getVideoTracks().length : false;
 	$: streamHasAudio = stream ? !!stream.getAudioTracks().length : false;
@@ -23,21 +34,15 @@
 	}
 </script>
 
-{#if participant && !streamHasVideo}
+{#if peer && !streamHasVideo}
 	<div class="window text-window">
 		<h1 class="title has-text-white">
-			{participant.name}
+			{peer.name}
 		</h1>
 	</div>
 {:else}
 	<div class="window">
-		<video
-			use:srcObject={stream}
-			controls={false}
-			autoplay
-			playsinline
-			muted={!streamHasAudio}
-		></video>
+		<video use:srcObject={stream} controls={false} autoplay playsinline muted={!streamHasAudio}></video>
 	</div>
 {/if}
 

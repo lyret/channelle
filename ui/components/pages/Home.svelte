@@ -5,7 +5,7 @@
 	import rosesSrc from "~/assets/images/roses.gif";
 	import smokerSrc from "~/assets/images/smoker-cropped.png";
 	import ticketsSrc from "~/assets/images/tickets.png";
-	import { stagePasswordIsOk } from "~/stores/stage";
+	import { isStagePasswordOkStore } from "~/stores/stage";
 	import Wrapper from "./_Wrapper.svelte";
 	import PasswordCurtainMessage from "~/components/curtains/PasswordCurtainMessage.svelte";
 	import FloatingImage from "~/components/home/FloatingImage.svelte";
@@ -23,7 +23,7 @@
 
 	// Determine what should be rendered
 	$: hasEnteredName = $hasJoinedRoomStore && $peerStore.name;
-	$: needStagePassword = !$stagePasswordIsOk;
+	$: needStagePassword = !$isStagePasswordOkStore;
 
 	let howToModalIsOpen = false;
 </script>

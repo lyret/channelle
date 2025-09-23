@@ -20,8 +20,6 @@ export function trpc(): TRPCRootObject<Context, object, TRPCRuntimeConfigOptions
 /** Information about a connected tcrp peer kept in the room state server side */
 export type Peer = {
 	id: string;
-	joinTs: number;
-	lastSeenTs: number;
 	online: boolean;
 	name: string;
 	actor: boolean;
@@ -34,6 +32,8 @@ export type Peer = {
 /** Information for a peer containing webrtc and trpc data that is unique to a single connection session */
 export type Session = {
 	peerId: string;
+	joinTs: number;
+	lastSeenTs: number;
 	media: Partial<Record<MediaTag, any>>;
 	stats: any;
 	consumerLayers: any;

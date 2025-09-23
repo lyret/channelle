@@ -1,18 +1,17 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { createLocalStore } from "~/stores";
-	import { sceneChatIsEnabled } from "~/stores/scene/sceneChatIsEnabled";
-	import { showStageChatStore } from "~/stores/scene/stageChatPanelsOpen";
-	import ChatInput from "../chat/ChatInput.svelte";
-	import ChatList from "../chat/ChatList.svelte";
-	import IconStar from "../icons/Icon-star.svelte";
-	import IconUsers from "../icons/Icon-users.svelte";
-	import { peerStore } from "~/api/room";
+	import { persisted } from "svelte-persisted-store";
+	import { stageChatEnabledStore, peerStore } from "~/api/room";
+	import { showStageChatStore } from "~/stores/stage";
+	import ChatInput from "../../chat/ChatInput.svelte";
+	import ChatList from "../../chat/ChatList.svelte";
+	import IconStar from "../../icons/Icon-star.svelte";
+	import IconUsers from "../../icons/Icon-users.svelte";
 
-	const backstageOnly = createLocalStore("panel-chat-backstage-only", false);
+	const backstageOnly = persisted("panel-chat-backstage-only", false);
 
 	onMount(() => {
-		const stop = sceneChatIsEnabled.subscribe((enabled) => {
+		const stop = stageChatEnabledStore.subscribe((enabled) => {
 			if (!enabled) {
 				showStageChatStore.set(false);
 			}

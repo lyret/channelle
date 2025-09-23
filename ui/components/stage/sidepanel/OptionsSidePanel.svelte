@@ -1,28 +1,31 @@
 <script lang="ts">
 	import { blur } from "svelte/transition";
 	import logoSrc from "~/assets/images/logo-smoker-free.gif";
+
 	import AccessInstrument from "~/components/instruments/AccessInstrument.svelte";
 	import DebugInstrument from "~/components/instruments/DebugInstrument.svelte";
 	import MediaLibraryInstrument from "~/components/instruments/MediaLibraryInstrument.svelte";
 	import ParticipantsInstrument from "~/components/instruments/ParticipantsInstrument.svelte";
 	import SceneSelectorInstrument from "~/components/instruments/SceneSelectorInstrument.svelte";
-	import { currentParticipant } from "~/lib/stores/api";
-	import { focusedInstrument } from "~/stores/backstage";
-	import IconActivity from "../icons/Icon-activity.svelte";
-	import IconExternalLink from "../icons/Icon-external-link.svelte";
-	import IconKey from "../icons/Icon-key.svelte";
-	import IconLayers from "../icons/Icon-layers.svelte";
-	import IconUsers from "../icons/Icon-users.svelte";
-	import IconXCircle from "../icons/Icon-x-circle.svelte";
-	import MediaInputMenuInstrument from "./menuInstruments/MediaInputMenuInstrument.svelte";
+	import MediaInputSelector from "./_MediaInputSelector.svelte";
+
+	import IconActivity from "../../icons/Icon-activity.svelte";
+	import IconExternalLink from "../../icons/Icon-external-link.svelte";
+	import IconKey from "../../icons/Icon-key.svelte";
+	import IconLayers from "../../icons/Icon-layers.svelte";
+	import IconUsers from "../../icons/Icon-users.svelte";
+	import IconXCircle from "../../icons/Icon-x-circle.svelte";
+
+	import { peerStore } from "~/api/room";
+	import { focusedInstrument } from "~/stores/instruments";
 </script>
 
 <!-- Common Contents -->
 <img src={logoSrc} class="logo" />
-<MediaInputMenuInstrument />
+<MediaInputSelector />
 
 <!-- Manager Contents -->
-{#if $currentParticipant.manager}
+{#if $peerStore.manager}
 	{#if $focusedInstrument != undefined}
 		<div class="instrument-control">
 			<a on:click={() => ($focusedInstrument = undefined)}>
@@ -44,30 +47,22 @@
 		</div>
 	{:else}
 		<div class="select-view mb-4" in:blur={{ duration: 100 }}>
-			<button
-				class="button is-fullwidth mb-4 is-small"
-				on:click={() => ($focusedInstrument = "debug")}
+			<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "debug")}
 				><span class="icon is-size-5"><IconActivity /></span>
 				<span>Avancerad information</span></button
 			>
 			<hr />
-			<button
-				class="button is-fullwidth mb-4 is-small"
-				on:click={() => ($focusedInstrument = "scene-settings")}
+			<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "scene-settings")}
 				><span class="icon is-size-5"><IconLayers /></span>
 				<span>Sceninställningar</span></button
 			>
 			<hr />
-			<button
-				class="button is-fullwidth mb-4 is-small"
-				on:click={() => ($focusedInstrument = "access")}
+			<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "access")}
 				><span class="icon is-size-5"><IconKey /></span>
 				<span>Tillgång</span></button
 			>
 			<hr />
-			<button
-				class="button is-fullwidth mb-4 is-small"
-				on:click={() => ($focusedInstrument = "participants")}
+			<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "participants")}
 				><span class="icon is-size-5"><IconUsers /></span>
 				<span>Deltagare</span></button
 			>

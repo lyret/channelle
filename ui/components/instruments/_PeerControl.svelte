@@ -1,54 +1,45 @@
 <script lang="ts">
 	import { clickOutside } from "~/directives";
-	import type { DataTypes } from "~/lib";
-	import { update } from "~/lib";
-	import { userCameraBans, userMicrophoneBans } from "~/stores/users";
+	import { updatePeerName } from "~/api/room";
 	import IconAward from "../icons/Icon-award.svelte";
 	import IconBriefcase from "../icons/Icon-briefcase.svelte";
 	import IconCircle from "../icons/Icon-circle.svelte";
 	import IconLock from "../icons/Icon-lock.svelte";
-	import IconMicOff from "../icons/Icon-mic-off.svelte";
 	import IconMic from "../icons/Icon-mic.svelte";
 	import IconToggleLeft from "../icons/Icon-toggle-left.svelte";
 	import IconToggleRight from "../icons/Icon-toggle-right.svelte";
 	import IconType from "../icons/Icon-type.svelte";
 	import IconUnlock from "../icons/Icon-unlock.svelte";
-	import IconVideoOff from "../icons/Icon-video-off.svelte";
 	import IconVideo from "../icons/Icon-video.svelte";
 	import IconXCircle from "../icons/Icon-x-circle.svelte";
 
-	export let participant: DataTypes["participant"];
+	export let participant: any;
 	export let online: boolean = false;
 	let loading: boolean = false;
 	let active: boolean = false;
 
-	async function doUpdate(
-		participant: DataTypes["participant"],
-		data: Partial<DataTypes["participant"]>,
-		ask?: string
-	) {
+	async function doUpdate(participant: any, data: any, ask?: string) {
 		loading = true;
 		if (!ask || confirm(ask)) {
-			await update("participant", {
-				where: { id: participant.id },
-				data: data,
-			});
+			// TODO: Implement peer update functionality
+			console.warn("Peer update not implemented yet:", data);
+		}
+		loading = false;
+	}
+
+	async function changeName(participant: any) {
+		loading = true;
+		const newName = prompt("Skriv nytt namn", participant.name);
+		if (newName && newName !== participant.name) {
+			await updatePeerName(participant.id, newName);
 		}
 		loading = false;
 	}
 </script>
 
-<div
-	class="list-item"
-	use:clickOutside
-	on:click_outside={() => (active = false)}
->
+<div class="list-item" use:clickOutside on:click_outside={() => (active = false)}>
 	<div class="accordion-header" class:is-loading={loading}>
-		<div
-			class="icon"
-			class:has-text-grey-light={!online}
-			class:has-text-success={online}
-		>
+		<div class="icon" class:has-text-grey-light={!online} class:has-text-success={online}>
 			{#if participant.manager}
 				<IconBriefcase />
 			{:else if participant.actor}
@@ -58,41 +49,20 @@
 			{/if}
 		</div>
 		&nbsp;
-		<div class="name pr-7" class:is-strikethrough={participant.blocked}>
+		<div class="name pr-7" class:is-strikethrough={participant.banned}>
 			{participant.name}
 		</div>
 		<div class="buttons">
 			{#if participant.manager || participant.actor}
-				<button
-					class="button is-small"
-					class:has-text-danger={$userCameraBans[participant.id]}
-					on:click={() =>
-						userCameraBans.set(
-							participant.id,
-							!$userCameraBans[participant.id]
-						)}
-				>
+				<button class="button is-small" disabled title="Video control not implemented">
 					<span class="icon">
-						{#if $userCameraBans[participant.id]}<IconVideoOff
-							/>{:else}<IconVideo />{/if}
+						<IconVideo />
 					</span>
 				</button>
 			{/if}
-			<button
-				class="button is-small"
-				class:has-text-danger={$userMicrophoneBans[participant.id]}
-				on:click={() =>
-					userMicrophoneBans.set(
-						participant.id,
-						!$userMicrophoneBans[participant.id]
-					)}
-			>
+			<button class="button is-small" disabled title="Audio control not implemented">
 				<span class="icon">
-					{#if $userMicrophoneBans[participant.id]}
-						<IconMicOff />
-					{:else}
-						<IconMic />
-					{/if}
+					<IconMic />
 				</span>
 			</button>
 			<button class="button is-small" on:click={() => (active = !active)}>
@@ -115,12 +85,7 @@
 				<!-- svelte-ignore a11y-no-static-element-interactions -->
 				<a
 					class="dropdown-item"
-					on:click={() =>
-						doUpdate(
-							participant,
-							{ actor: false, manager: false },
-							`Ta bort "${participant.name}" som skådespelare?`
-						)}
+					on:click={() => doUpdate(participant, { actor: false, manager: false }, `Ta bort "${participant.name}" som skådespelare?`)}
 				>
 					<span class="icon"><IconXCircle /> Inte en skådespelare </span></a
 				>
@@ -128,15 +93,7 @@
 				<!-- svelte-ignore a11y-click-events-have-key-events -->
 				<!-- svelte-ignore a11y-missing-attribute -->
 				<!-- svelte-ignore a11y-no-static-element-interactions -->
-				<a
-					class="dropdown-item"
-					on:click={() =>
-						doUpdate(
-							participant,
-							{ actor: true },
-							`Är "${participant.name}" en skådespelare?`
-						)}
-				>
+				<a class="dropdown-item" on:click={() => doUpdate(participant, { actor: true }, `Är "${participant.name}" en skådespelare?`)}>
 					<span class="icon is-small"><IconAward /></span>
 					Gör till skådespelare
 				</a>
@@ -146,30 +103,14 @@
 				<!-- svelte-ignore a11y-click-events-have-key-events -->
 				<!-- svelte-ignore a11y-missing-attribute -->
 				<!-- svelte-ignore a11y-no-static-element-interactions -->
-				<a
-					class="dropdown-item"
-					on:click={() =>
-						doUpdate(
-							participant,
-							{ manager: false },
-							`Ta bort "${participant.name}" som tekniker?`
-						)}
-				>
+				<a class="dropdown-item" on:click={() => doUpdate(participant, { manager: false }, `Ta bort "${participant.name}" som tekniker?`)}>
 					<span class="icon is-small"><IconXCircle /></span> Inte en tekniker</a
 				>
 			{:else}
 				<!-- svelte-ignore a11y-click-events-have-key-events -->
 				<!-- svelte-ignore a11y-missing-attribute -->
 				<!-- svelte-ignore a11y-no-static-element-interactions -->
-				<a
-					class="dropdown-item"
-					on:click={() =>
-						doUpdate(
-							participant,
-							{ manager: true, actor: true },
-							`Är "${participant.name}" en tekniker?`
-						)}
-				>
+				<a class="dropdown-item" on:click={() => doUpdate(participant, { manager: true, actor: true }, `Är "${participant.name}" en tekniker?`)}>
 					<span class="icon is-small"><IconBriefcase /></span> Gör till tekniker</a
 				>
 			{/if}
@@ -177,40 +118,20 @@
 			<!-- svelte-ignore a11y-click-events-have-key-events -->
 			<!-- svelte-ignore a11y-missing-attribute -->
 			<!-- svelte-ignore a11y-no-static-element-interactions -->
-			<a
-				class="dropdown-item"
-				on:click={() =>
-					doUpdate(participant, {
-						name:
-							prompt("Skriv nytt namn", participant.name) || participant.name,
-					})}
-			>
-				<span class="icon is-small"><IconType /></span> Byt namn</a
-			>
+			<a class="dropdown-item" on:click={() => changeName(participant)}> <span class="icon is-small"><IconType /></span> Byt namn</a>
 			<!-- BLOCK -->
-			{#if participant.blocked}
+			{#if participant.banned}
 				<!-- svelte-ignore a11y-click-events-have-key-events -->
 				<!-- svelte-ignore a11y-missing-attribute -->
 				<!-- svelte-ignore a11y-no-static-element-interactions -->
-				<a
-					class="dropdown-item"
-					on:click={() => doUpdate(participant, { blocked: false })}
-				>
+				<a class="dropdown-item" on:click={() => doUpdate(participant, { banned: false })}>
 					<span class="icon is-small"><IconUnlock /></span> Tillåt tillbaka
 				</a>
 			{:else}
 				<!-- svelte-ignore a11y-click-events-have-key-events -->
 				<!-- svelte-ignore a11y-missing-attribute -->
 				<!-- svelte-ignore a11y-no-static-element-interactions -->
-				<a
-					class="dropdown-item"
-					on:click={() =>
-						doUpdate(
-							participant,
-							{ blocked: true },
-							`Vill du blockera och ta bort "${participant.name}"?`
-						)}
-				>
+				<a class="dropdown-item" on:click={() => doUpdate(participant, { banned: true }, `Vill du blockera och ta bort "${participant.name}"?`)}>
 					<span class="icon is-small"><IconLock /></span> Blockera person
 				</a>
 			{/if}

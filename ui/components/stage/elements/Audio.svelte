@@ -1,5 +1,17 @@
 <script lang="ts">
-	export let stream: MediaStream | undefined;
+	import { consumersStore } from "~/api/room";
+
+	export let peerId: string;
+
+	$: stream = findStream(peerId);
+
+	function findStream(peerId: string) {
+		const consumer = $consumersStore.find((consumer) => consumer.appData.peerId === peerId);
+		if (consumer) {
+			return new MediaStream([consumer.track]);
+		}
+		return undefined;
+	}
 
 	$: streamHasAudio = stream ? !!stream.getAudioTracks().length : false;
 
@@ -20,13 +32,7 @@
 </script>
 
 {#if streamHasAudio}
-	<audio
-		use:srcObject={stream}
-		controls={true}
-		autoplay
-		playsinline
-		muted={false}
-	></audio>
+	<audio use:srcObject={stream} controls={true} autoplay playsinline muted={false}></audio>
 {/if}
 
 <style>

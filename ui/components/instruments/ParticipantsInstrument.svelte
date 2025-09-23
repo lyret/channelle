@@ -1,18 +1,13 @@
 <script lang="ts">
-	import { createDatabaseStore } from "~/stores";
-	import { onlineStatus } from "~/stores/users";
-	import ParticipantsControl from "./ParticipantsControl.svelte";
+	import { peersStore } from "~/api/room";
+	import PeerControl from "./_PeerControl.svelte";
 
-	const participants = createDatabaseStore("participant");
-	$: participantsWithName = $participants.filter((p) => p.name && !p.blocked);
-	$: managers = participantsWithName.filter((p) => p.manager);
-	$: actors = participantsWithName.filter((p) => p.actor && !p.manager);
-	$: visitors = participantsWithName.filter(
-		(p) => !p.manager && !p.actor && !p.blocked
-	);
-	$: blocked = $participants.filter((p) => p.blocked && p.name);
-	$: online =
-		$onlineStatus && participantsWithName.filter((p) => $onlineStatus[p.id]);
+	$: peers = Object.values($peersStore).filter((p) => p.name && !p.banned);
+	$: managers = peers.filter((p) => p.manager);
+	$: actors = peers.filter((p) => p.actor && !p.manager);
+	$: visitors = peers.filter((p) => !p.manager && !p.actor && !p.banned);
+	$: blocked = peers.filter((p) => p.banned && p.name);
+	$: online = peers.filter((p) => p.online);
 
 	let filter: string = "Deltagare";
 </script>
@@ -30,32 +25,17 @@
 	{/if}
 	{#if actors.length}
 		<label class="radio has-text-link">
-			<input
-				type="radio"
-				name="filter"
-				bind:group={filter}
-				value="Skådespelare"
-			/>
+			<input type="radio" name="filter" bind:group={filter} value="Skådespelare" />
 			Skådespelare
 		</label>
 	{/if}
 	<label class="radio has-text-success">
-		<input
-			type="radio"
-			name="filter"
-			value="Deltagare online"
-			bind:group={filter}
-		/>
+		<input type="radio" name="filter" value="Deltagare online" bind:group={filter} />
 		Online
 	</label>
 	{#if blocked.length}
 		<label class="radio has-text-danger">
-			<input
-				type="radio"
-				name="filter"
-				value="Blockerade deltagare"
-				bind:group={filter}
-			/>
+			<input type="radio" name="filter" value="Blockerade deltagare" bind:group={filter} />
 			Blockerade
 		</label>
 	{/if}
@@ -72,54 +52,27 @@
 
 <div class="list">
 	{#if blocked.length && filter == "Blockerade deltagare"}
-		{#each blocked as participant}
-			{#key participant.id}
-				<ParticipantsControl
-					{participant}
-					online={$onlineStatus[participant.id]}
-				/>
-			{/key}
+		{#each blocked as peer (peer.id)}
+			<PeerControl participant={peer} online={peer.online} />
 		{/each}
 	{:else if online.length && filter == "Deltagare online"}
-		{#each online as participant}
-			{#key participant.id}
-				<ParticipantsControl
-					{participant}
-					online={$onlineStatus[participant.id]}
-				/>
-			{/key}
+		{#each online as peer (peer.id)}
+			<PeerControl participant={peer} online={peer.online} />
 		{/each}
 	{:else}
 		{#if managers.length && (filter == "Deltagare" || filter == "Tekniker")}
-			{#each managers as participant}
-				{#key participant.id}
-					<ParticipantsControl
-						{participant}
-						online={$onlineStatus[participant.id]}
-					/>
-				{/key}
+			{#each managers as peer (peer.id)}
+				<PeerControl participant={peer} online={peer.online} />
 			{/each}
 		{/if}
 		{#if actors.length && (filter == "Deltagare" || filter == "Skådespelare")}
-			{#each actors as participant}
-				{#key participant.id}
-					<ParticipantsControl
-						{participant}
-						online={$onlineStatus[participant.id]}
-					/>
-				{/key}
+			{#each actors as peer (peer.id)}
+				<PeerControl participant={peer} online={peer.online} />
 			{/each}
 		{/if}
 		{#if visitors.length && filter != "Tekniker" && filter != "Skådespelare"}
-			{#each visitors as participant}
-				{#key participant.id}
-					{#key participant.id}
-						<ParticipantsControl
-							{participant}
-							online={$onlineStatus[participant.id]}
-						/>
-					{/key}
-				{/key}
+			{#each visitors as peer (peer.id)}
+				<PeerControl participant={peer} online={peer.online} />
 			{/each}
 		{/if}
 	{/if}

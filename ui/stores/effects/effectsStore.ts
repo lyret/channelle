@@ -1,4 +1,3 @@
-import { mediaRequest } from "~/lib";
 import { readable } from "svelte/store";
 import { triggerApplauseEffect, triggerFlowerGiftEffect } from "./_effectFunctions";
 import { roomClient } from "~/api";
@@ -18,7 +17,10 @@ interface EffectsStore {
 export function createEffectsStore(): EffectsStore {
 	const { subscribe } = readable<EffectsValue>(undefined, function start(set) {
 		// Handle status updates
-		const handler = (value: EffectsValue) => {
+		const handler = (value: EffectsValue | null) => {
+			if (!value) {
+				return;
+			}
 			for (let i = 0; i < value.number; i++) {
 				if (value.type == "flowers") {
 					triggerFlowerGiftEffect();
@@ -45,7 +47,7 @@ export function createEffectsStore(): EffectsStore {
 		subscribe,
 		set: (value: EffectsValue) => {
 			setTimeout(() => {
-				mediaRequest("effects_add", value);
+				roomClient.sendEffect.mutate(value);
 			}, 100);
 		},
 	};

@@ -1,4 +1,5 @@
 <script lang="ts">
+	/** eslint-disable @typescript-eslint/no-unused-vars */
 	import { onMount, onDestroy } from "svelte";
 	import { blur } from "svelte/transition";
 	import * as Debug from "~/api/room";
@@ -14,7 +15,7 @@
 		audioProducer,
 		currentActiveSpeakerStore,
 		consumersStore,
-		myPeerIdStore,
+		peerStore,
 		hasLocalCamStore,
 		hasSendTransportStore,
 		hasRecvTransportStore,
@@ -30,7 +31,7 @@
 
 	// Video element refs
 	let localCamVideo: HTMLVideoElement;
-	let consumerVideos: { [key: string]: HTMLVideoElement } = {};
+	const consumerVideos: { [key: string]: HTMLVideoElement } = {};
 
 	// Subscribe to stores using $ prefix
 	$: myPeerId = $myPeerIdStore;

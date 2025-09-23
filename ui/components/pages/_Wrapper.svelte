@@ -14,7 +14,7 @@
 
 	import logoSrc from "~/assets/images/masks.gif";
 
-	import { scenePasswordIsOk } from "~/stores/scene/scenePassword";
+	import { isStagePasswordOkStore } from "~/stores/stage";
 
 	// Delays the rendering of any content to avoid the "pop-in" effect
 	// on initial rendering due to initial determination of state
@@ -43,7 +43,7 @@
 	// Determine what should be rendered
 	$: hasEnteredName = $hasJoinedRoomStore && $peerStore.name;
 	$: needsToBeManager = lockedToManager && !(!$hasJoinedRoomStore && $peerStore.manager);
-	$: needsInviteKey = lockedToInviteKey && !$scenePasswordIsOk;
+	$: needsInviteKey = lockedToInviteKey && !$isStagePasswordOkStore;
 	$: renderMessages =
 		!determiningState &&
 		(!$hasJoinedRoomStore || !hasEnteredName || !hasInteractedWithTheDocument || $isBannedFromTheRoom || needsInviteKey || needsToBeManager);
