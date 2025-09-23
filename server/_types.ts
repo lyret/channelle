@@ -4,7 +4,7 @@ import type { CustomAppData, TransportDirection } from "./lib/mediaSoup";
 // TODO: Create a types folder maybe ?
 
 /** Stage Layout Value */
-export type StageLayout = Array<Array<{ type: "actor"; id: number } | { type: "chat" } | { type: "empty" }>>;
+export type StageLayout = Array<Array<{ type: "actor"; peerId: string } | { type: "chat" } | { type: "empty" }>>;
 
 /** A Predefined layout from the scene instrument */
 export type PredefinedLayout = {

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { participantScenePassword, scenePasswordIsOk } from "~/stores/scene/scenePassword";
+	import { enteredStagePasswordStore, isStagePasswordOkStore } from "~/stores/stage";
 
 	let inputRef: HTMLInputElement;
 	let inputValue: string = "";
@@ -11,8 +11,8 @@
 	async function onSubmit(e: SubmitEvent) {
 		e.preventDefault();
 		loading = true;
-		participantScenePassword.set(inputValue);
-		const stop = scenePasswordIsOk.subscribe((ok) => {
+		enteredStagePasswordStore.set(inputValue);
+		const stop = isStagePasswordOkStore.subscribe((ok) => {
 			if (ok && window.location.href != "/stage") {
 				window.location.href = "/stage";
 			}

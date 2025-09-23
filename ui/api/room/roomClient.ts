@@ -839,9 +839,10 @@ async function _createTransport(direction: TransportDirection, peerId: string): 
 	}
 
 	// Connection state changes
-	// for this simple demo, any time a transport transitions to closed,
-	// failed, or disconnected, leave the room and reset
-	// FIXME: Is this ok? Probably not.
+	// Any time a send transport transitions to closed it is because the connection was lost,
+	// failed, or we disconnected for some other reason.
+	// In this case we leave the room entirely
+	// FIXME: Handle this case more gracefully
 	transport.on("connectionstatechange", async (state: string) => {
 		console.log(`[MS] Transport ${transport.id} (peer: ${peerId}) connection state changed to ${state}`);
 
