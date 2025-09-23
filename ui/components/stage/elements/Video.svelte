@@ -42,7 +42,7 @@
 	</div>
 {:else}
 	<div class="window">
-		<video use:srcObject={stream} controls={false} autoplay playsinline muted={!streamHasAudio}></video>
+		<video use:srcObject={stream} controls={false} autoplay={false} playsinline muted={!streamHasAudio}></video>
 	</div>
 {/if}
 
@@ -55,6 +55,7 @@
 		height: 100%;
 	}
 	.window {
+		background-color: green;
 		color: var(--channelle-main-bg-color);
 		flex-grow: 0;
 		flex-shrink: 0;

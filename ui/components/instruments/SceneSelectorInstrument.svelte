@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PredefinedLayout } from "~/types/serverSideTypes";
-	import SceneSelectorControl from "./SceneSelectorControl.svelte";
+	import SceneSelectorControl from "./_SceneSelectorControl.svelte";
 	import { onMount } from "svelte";
 	import {
 		peersStore,
@@ -12,7 +12,9 @@
 		stagePredefinedLayoutStore,
 	} from "~/api/room";
 
-	$: participants = Object.values($peersStore).filter((p) => (p.actor || p.manager) && !p.banned);
+	$: peers = Object.values($peersStore || {}).filter((p) => (p.actor || p.manager) && !p.banned);
+
+	$: test = console.log({ peers });
 
 	const auto: PredefinedLayout = {
 		name: "Automatisk",
@@ -163,24 +165,9 @@
 <hr />
 <h1 class="title">Välj Scenlayout</h1>
 
-<SceneSelectorControl layout={auto} {participants} selectedLayout={$stagePredefinedLayoutStore} on:select={(e) => stagePredefinedLayoutStore.set(e.detail)} />
-<SceneSelectorControl layout={empty} {participants} selectedLayout={$stagePredefinedLayoutStore} on:select={(e) => stagePredefinedLayoutStore.set(e.detail)} />
-<SceneSelectorControl
-	layout={oneXOne}
-	{participants}
-	selectedLayout={$stagePredefinedLayoutStore}
-	on:select={(e) => stagePredefinedLayoutStore.set(e.detail)}
-/>
-<SceneSelectorControl
-	layout={oneXTwo}
-	{participants}
-	selectedLayout={$stagePredefinedLayoutStore}
-	on:select={(e) => stagePredefinedLayoutStore.set(e.detail)}
-/>
-<SceneSelectorControl layout={chat} {participants} selectedLayout={$stagePredefinedLayoutStore} on:select={(e) => stagePredefinedLayoutStore.set(e.detail)} />
-<SceneSelectorControl
-	layout={twoXTwo}
-	{participants}
-	selectedLayout={$stagePredefinedLayoutStore}
-	on:select={(e) => stagePredefinedLayoutStore.set(e.detail)}
-/>
+<SceneSelectorControl layout={auto} {peers} selectedLayout={$stagePredefinedLayoutStore} on:select={(e) => stagePredefinedLayoutStore.set(e.detail)} />
+<SceneSelectorControl layout={empty} {peers} selectedLayout={$stagePredefinedLayoutStore} on:select={(e) => stagePredefinedLayoutStore.set(e.detail)} />
+<SceneSelectorControl layout={oneXOne} {peers} selectedLayout={$stagePredefinedLayoutStore} on:select={(e) => stagePredefinedLayoutStore.set(e.detail)} />
+<SceneSelectorControl layout={oneXTwo} {peers} selectedLayout={$stagePredefinedLayoutStore} on:select={(e) => stagePredefinedLayoutStore.set(e.detail)} />
+<SceneSelectorControl layout={chat} {peers} selectedLayout={$stagePredefinedLayoutStore} on:select={(e) => stagePredefinedLayoutStore.set(e.detail)} />
+<SceneSelectorControl layout={twoXTwo} {peers} selectedLayout={$stagePredefinedLayoutStore} on:select={(e) => stagePredefinedLayoutStore.set(e.detail)} />

@@ -26,9 +26,9 @@
 
 <!-- Manager Contents -->
 {#if $peerStore.manager}
-	{#if $focusedInstrument != undefined}
+	{#if $focusedInstrument}
 		<div class="instrument-control">
-			<a on:click={() => ($focusedInstrument = undefined)}>
+			<a on:click={() => focusedInstrument.set(undefined)}>
 				<span class="icon"><IconXCircle /></span>
 			</a>
 		</div>

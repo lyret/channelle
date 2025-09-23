@@ -135,7 +135,7 @@ export const roomRouter = trcpRouter({
 		_room.peers[ctx.peer.id] = {
 			id: ctx.peer.id,
 			name: "",
-			actor: false,
+			actor: !CONFIG.isProduction, // When developing, all new peers become actors
 			manager: Object.keys(_room.peers).length === 0, // The first peer is always a manager
 			banned: false,
 			// Inherit any previous properties if re-joining
