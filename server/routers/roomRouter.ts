@@ -167,7 +167,16 @@ export const roomRouter = trcpRouter({
 		console.log("[Room] Peer", peerId, "left");
 		return;
 	}),
+	// Set Password
+	// Updates the room password
+	setPassword: roomProcedure.input(z.object({ password: z.string().optional() })).mutation(async ({ ctx, input: { password } }) => {
+		// Only managers can set the password
+		if (!ctx.peer.manager) {
+			throw new TRPCError({ code: "UNAUTHORIZED", message: "Only managers can set the password" });
+		}
 
+		_room.password = password;
+	}),
 	// Update Peer
 	// Updates the information about a given peer
 	updatePeer: roomProcedure

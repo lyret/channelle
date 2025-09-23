@@ -2,7 +2,7 @@
 	import { onMount } from "svelte";
 	import IconLock from "../icons/Icon-lock.svelte";
 	import IconUnlock from "../icons/Icon-unlock.svelte";
-	import { stagePasswordStore } from "~/api/room";
+	import { stagePasswordStore, setStagePassword } from "~/api/room";
 
 	let inputRef: HTMLInputElement;
 	let inputValue: string = "";
@@ -17,11 +17,11 @@
 	async function onSubmit(e: SubmitEvent) {
 		e.preventDefault();
 		isLoading = true;
-
-		setTimeout(() => {
+		try {
+			await setStagePassword(inputValue || undefined);
+		} finally {
 			isLoading = false;
-			// FIXME: re-add ability to lock the screen scenePassword.set(inputValue);
-		}, 1500);
+		}
 	}
 
 	onMount(() => {

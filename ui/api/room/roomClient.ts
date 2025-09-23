@@ -418,6 +418,13 @@ export async function updatePeerProperties(peerId: string, data: { actor?: boole
 }
 
 /**
+ * Sets the stage password
+ */
+export async function setStagePassword(password?: string) {
+	await roomClient.setPassword.mutate({ password });
+}
+
+/**
  * Access local media streams from the browser
  * @param audio - Whether to request audio access (default: true)
  * @param video - Whether to request video access (default: true)
