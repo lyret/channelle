@@ -1,16 +1,31 @@
 <script lang="ts">
-	import { peersStore, consumersStore } from "~/api/room";
+	import { peersStore, consumersStore, sessionsStore, subscribeToTrack } from "~/api/room";
 
 	export let peerId: string;
 
 	$: peer = $peersStore[peerId];
+	$: session = $sessionsStore[peerId];
 
 	$: stream = findStream(peerId);
 
-	$: console.log({ peerId, peer, peersStore: $peersStore, stream });
+	$: console.log({ peerId, peer, peersStore: $peersStore, session, stream });
+
+	// Check if peer has video available and we don't have a consumer for it
+	$: hasVideoAvailable = session && session.media && session.media["cam-video"];
+	$: hasVideoConsumer = $consumersStore.find((consumer) => consumer.appData.peerId === peerId && consumer.appData.mediaTag === "cam-video");
+
+	// Auto-subscribe to video track when peer has video but we don't have a consumer
+	$: {
+		if (hasVideoAvailable && !hasVideoConsumer) {
+			console.log(`[Video] Auto-subscribing to video track for peer ${peerId}`);
+			subscribeToTrack(peerId, "cam-video").catch((error) => {
+				console.error(`[Video] Failed to subscribe to video track for peer ${peerId}:`, error);
+			});
+		}
+	}
 
 	function findStream(peerId: string) {
-		const consumer = $consumersStore.find((consumer) => consumer.appData.peerId === peerId);
+		const consumer = $consumersStore.find((consumer) => consumer.appData.peerId === peerId && consumer.appData.mediaTag === "cam-video");
 		if (consumer) {
 			console.log("HERE", consumer);
 			return new MediaStream([consumer.track]);

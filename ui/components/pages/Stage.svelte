@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from "svelte";
 	import { blur, fly } from "svelte/transition";
 
 	import Wrapper from "./_Wrapper.svelte";

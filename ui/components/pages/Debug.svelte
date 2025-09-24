@@ -25,6 +25,7 @@
 		consumersStore,
 		peersStore,
 		peerStore,
+		sessionsStore,
 		hasJoinedRoomStore,
 		isBannedFromTheRoom,
 		hasLocalCamStore,
@@ -56,10 +57,12 @@
 	$: activeSpeaker = $currentActiveSpeakerStore?.peerId || "None";
 	$: consumers = $consumersStore;
 	$: peers = $peersStore;
+	$: sessions = $sessionsStore;
 	$: peersList = Object.entries(peers).map(([peerId, info]) => ({
 		peerId,
 		...info,
 		hasTransport: $recvTransports[peerId] !== undefined,
+		session: sessions[peerId],
 	}));
 
 	$: peerCount = peersList.length;
@@ -86,6 +89,9 @@
 		paused: consumers.filter((c) => c.paused).length,
 		video: consumers.filter((c) => c.appData.mediaTag?.includes("video")).length,
 		audio: consumers.filter((c) => c.appData.mediaTag?.includes("audio")).length,
+		activeVideo: consumers.filter((c) => c.appData.mediaTag?.includes("video") && !c.paused).length,
+		activeAudio: consumers.filter((c) => c.appData.mediaTag?.includes("audio") && !c.paused).length,
+		uniquePeers: new Set(consumers.map((c) => c.appData.peerId)).size,
 	};
 
 	// Update video elements when streams change
@@ -150,6 +156,20 @@
 
 	function isAudioConsumer(consumer: any): boolean {
 		return consumer.appData.mediaTag.includes("audio");
+	}
+
+	function getPeerMediaStatus(peer: any) {
+		const session = peer.session;
+		if (!session || !session.media) {
+			return { hasVideo: false, hasAudio: false, videoStatus: "Not transmitting", audioStatus: "Not transmitting" };
+		}
+
+		const hasVideo = !!session.media["cam-video"];
+		const hasAudio = !!session.media["mic-audio"];
+		const videoStatus = hasVideo ? (session.media["cam-video"].paused ? "Paused" : "Transmitting") : "Not transmitting";
+		const audioStatus = hasAudio ? (session.media["mic-audio"].paused ? "Paused" : "Transmitting") : "Not transmitting";
+
+		return { hasVideo, hasAudio, videoStatus, audioStatus };
 	}
 
 	async function setStagePassword() {
@@ -247,10 +267,14 @@
 						<tr>
 							<td><strong>Consumer Types:</strong></td>
 							<td>
-								<span class="tag is-small is-info">{consumerStats.video} Video</span>
+								<span class="tag is-small is-info">{consumerStats.video} Video ({consumerStats.activeVideo} active)</span>
 								/
-								<span class="tag is-small is-info">{consumerStats.audio} Audio</span>
+								<span class="tag is-small is-info">{consumerStats.audio} Audio ({consumerStats.activeAudio} active)</span>
 							</td>
+						</tr>
+						<tr>
+							<td><strong>Peers with Media:</strong></td>
+							<td>{consumerStats.uniquePeers} peers sending media</td>
 						</tr>
 						<tr>
 							<td><strong>My Producers:</strong></td>
@@ -505,10 +529,79 @@
 			</div>
 			<div class="level-item has-text-centered">
 				<div>
-					<p class="heading">Subscribed</p>
-					<p class="title is-5">{new Set(consumers.map((c) => c.appData.peerId)).size}</p>
+					<p class="heading">Media Streams</p>
+					<p class="title is-5">{consumerStats.activeVideo}V + {consumerStats.activeAudio}A</p>
 				</div>
 			</div>
+		</div>
+
+		<!-- Media Transmission Overview -->
+		<div class="content mb-4">
+			<p class="subtitle is-6">Media Transmission Overview</p>
+
+			<!-- Legend -->
+			<div class="notification is-light mb-3 p-3">
+				<p class="is-size-7 has-text-weight-semibold mb-2">Legend:</p>
+				<div class="tags are-small">
+					<span class="tag is-success is-small">🟢 Transmitting</span>
+					<span class="tag is-warning is-small">⏸️ Paused</span>
+					<span class="tag is-light is-small">❌ Not transmitting</span>
+					<span class="tag is-info is-small">📥 Subscribed</span>
+				</div>
+			</div>
+
+			<div class="columns is-multiline">
+				{#each peersList.filter((p) => p.session && p.session.media && (p.session.media["cam-video"] || p.session.media["mic-audio"])) as peer (peer.peerId)}
+					{@const mediaStatus = getPeerMediaStatus(peer)}
+					<div class="column is-6-tablet is-4-desktop">
+						<div class="box p-3">
+							<div class="level is-mobile mb-2">
+								<div class="level-left">
+									<div class="level-item">
+										<span class="has-text-weight-semibold">{peer.name || peer.peerId}</span>
+									</div>
+								</div>
+								<div class="level-right">
+									<div class="level-item">
+										{#if peer.peerId === activeSpeaker}
+											<span class="tag is-small is-primary">Speaking</span>
+										{/if}
+									</div>
+								</div>
+							</div>
+							<div class="tags are-small">
+								<span
+									class="tag is-small"
+									class:is-success={mediaStatus.hasVideo && mediaStatus.videoStatus === "Transmitting"}
+									class:is-warning={mediaStatus.hasVideo && mediaStatus.videoStatus === "Paused"}
+									class:is-light={!mediaStatus.hasVideo}
+								>
+									{#if mediaStatus.hasVideo && mediaStatus.videoStatus === "Transmitting"}🟢{:else if mediaStatus.hasVideo && mediaStatus.videoStatus === "Paused"}⏸️{:else}❌{/if}
+									📹 Video
+								</span>
+								<span
+									class="tag is-small"
+									class:is-success={mediaStatus.hasAudio && mediaStatus.audioStatus === "Transmitting"}
+									class:is-warning={mediaStatus.hasAudio && mediaStatus.audioStatus === "Paused"}
+									class:is-light={!mediaStatus.hasAudio}
+								>
+									{#if mediaStatus.hasAudio && mediaStatus.audioStatus === "Transmitting"}🟢{:else if mediaStatus.hasAudio && mediaStatus.audioStatus === "Paused"}⏸️{:else}❌{/if}
+									🎤 Audio
+								</span>
+								{#if consumers.find((c) => c.appData.peerId === peer.peerId && c.appData.mediaTag === "cam-video")}
+									<span class="tag is-small is-info">📥 Video Sub</span>
+								{/if}
+								{#if consumers.find((c) => c.appData.peerId === peer.peerId && c.appData.mediaTag === "mic-audio")}
+									<span class="tag is-small is-info">📥 Audio Sub</span>
+								{/if}
+							</div>
+						</div>
+					</div>
+				{/each}
+			</div>
+			{#if peersList.filter((p) => p.session && p.session.media && (p.session.media["cam-video"] || p.session.media["mic-audio"])).length === 0}
+				<p class="has-text-grey">No peers are currently transmitting media</p>
+			{/if}
 		</div>
 
 		{#if peersList.length > 0}
@@ -554,9 +647,34 @@
 									</span>
 								</td>
 								<td>
-									<div class="tags are-small">
-										<span class="tag">Media Info Available via Sessions</span>
-									</div>
+									{#if peer.session && peer.session.media}
+										{@const mediaStatus = getPeerMediaStatus(peer)}
+										<div class="tags are-small">
+											<span
+												class="tag is-small"
+												class:is-success={mediaStatus.hasVideo && mediaStatus.videoStatus === "Transmitting"}
+												class:is-warning={mediaStatus.hasVideo && mediaStatus.videoStatus === "Paused"}
+												class:is-light={!mediaStatus.hasVideo}
+											>
+												{#if mediaStatus.hasVideo && mediaStatus.videoStatus === "Transmitting"}🟢{:else if mediaStatus.hasVideo && mediaStatus.videoStatus === "Paused"}⏸️{:else}❌{/if}
+												📹
+											</span>
+											<span
+												class="tag is-small"
+												class:is-success={mediaStatus.hasAudio && mediaStatus.audioStatus === "Transmitting"}
+												class:is-warning={mediaStatus.hasAudio && mediaStatus.audioStatus === "Paused"}
+												class:is-light={!mediaStatus.hasAudio}
+											>
+												{#if mediaStatus.hasAudio && mediaStatus.audioStatus === "Transmitting"}🟢{:else if mediaStatus.hasAudio && mediaStatus.audioStatus === "Paused"}⏸️{:else}❌{/if}
+												🎤
+											</span>
+										</div>
+									{:else}
+										<div class="tags are-small">
+											<span class="tag is-light">❓📹</span>
+											<span class="tag is-light">❓🎤</span>
+										</div>
+									{/if}
 								</td>
 								<td>
 									<div class="buttons are-small">

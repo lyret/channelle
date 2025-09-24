@@ -2,7 +2,16 @@
 	import { blur } from "svelte/transition";
 	import IconVideoOff from "~/components/picol/icons/Picol-video-remove.svelte";
 	import IconVideo from "~/components/picol/icons/Picol-video-run.svelte";
-	import { peerStore, videoProducer, camPausedStore, localMediaStream, startLocalMediaStream, sendMediaStreams, toggleVideoPaused } from "~/api/room";
+	import {
+		peerStore,
+		videoProducer,
+		camPausedStore,
+		localMediaStream,
+		startLocalMediaStream,
+		sendMediaStreams,
+		toggleVideoPaused,
+		stageHaveVisitorVideoEnabledStore,
+	} from "~/api/room";
 
 	$: isOn = !!$videoProducer && !$camPausedStore;
 	$: hasLocalStream = !!$localMediaStream;
@@ -28,7 +37,7 @@
 	}
 </script>
 
-{#if $peerStore.actor || $peerStore.manager}
+{#if $peerStore.actor || $peerStore.manager || $stageHaveVisitorVideoEnabledStore}
 	<button type="button" class="button is-small" transition:blur on:click={handleClick}>
 		<span class="icon is-size-4" class:has-text-danger={hasError} class:has-text-success={isOn}
 			>{#if isOn}<IconVideo />{:else}<IconVideoOff />{/if}</span

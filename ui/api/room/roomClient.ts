@@ -142,6 +142,12 @@ export const consumersStore = writable<Consumer[]>([]);
  */
 export const peersStore = writable<Record<string, Peer>>({});
 
+/**
+ * Map of all peer sessions with their media availability and stats
+ * Updated periodically through room sync
+ */
+export const sessionsStore = writable<Record<string, any>>({});
+
 /** The current users peer information  */
 export const peerStore = derived([peersStore, wsPeerIdStore], ([$peers, $peerId]) => {
 	return $peers[$peerId] || ({} as Peer);
@@ -370,6 +376,9 @@ async function syncRoom() {
 
 	// Update the peers store with full peer information
 	peersStore.set(peers);
+
+	// Update the sessions store with media availability information
+	sessionsStore.set(sessions);
 
 	// Update the last poll sync data
 	_previousSyncedPeers = peers;
