@@ -9,6 +9,7 @@
 		stageLayoutStore,
 		stageSceneSettingsStore,
 		sceneStore,
+		setScene,
 		setStageCurtainsForced,
 		setStageChatEnabledForced,
 		setStageEffectsEnabledForced,
@@ -87,13 +88,13 @@
 		],
 	};
 
-	// Sync actual stage layout stores when the selected predefined layout changes
+	// Sync actual stage layout stores when the selected scene changes
 	onMount(() => {
-		const stop = sceneStore.subscribe((layout) => {
-			if (layout) {
-				stageChatEnabledStore.set(layout?.chatEnabled || false);
+		const stop = sceneStore.subscribe((scene) => {
+			if (scene) {
+				stageChatEnabledStore.set(scene?.chatEnabled || false);
+				stageLayoutStore.set(scene?.layout || []);
 			}
-			stageLayoutStore.set(layout?.layout || []);
 		});
 
 		return () => {
@@ -244,9 +245,9 @@
 <hr />
 <h1 class="title">Välj Scenlayout</h1>
 
-<SceneSelectorControl layout={auto} {peers} selectedLayout={$sceneStore} on:select={(e) => sceneStore.set(e.detail)} />
-<SceneSelectorControl layout={empty} {peers} selectedLayout={$sceneStore} on:select={(e) => sceneStore.set(e.detail)} />
-<SceneSelectorControl layout={oneXOne} {peers} selectedLayout={$sceneStore} on:select={(e) => sceneStore.set(e.detail)} />
-<SceneSelectorControl layout={oneXTwo} {peers} selectedLayout={$sceneStore} on:select={(e) => sceneStore.set(e.detail)} />
-<SceneSelectorControl layout={chat} {peers} selectedLayout={$sceneStore} on:select={(e) => sceneStore.set(e.detail)} />
-<SceneSelectorControl layout={twoXTwo} {peers} selectedLayout={$sceneStore} on:select={(e) => sceneStore.set(e.detail)} />
+<SceneSelectorControl layout={auto} {peers} selectedLayout={$sceneStore} on:select={(e) => setScene(e.detail)} />
+<SceneSelectorControl layout={empty} {peers} selectedLayout={$sceneStore} on:select={(e) => setScene(e.detail)} />
+<SceneSelectorControl layout={oneXOne} {peers} selectedLayout={$sceneStore} on:select={(e) => setScene(e.detail)} />
+<SceneSelectorControl layout={oneXTwo} {peers} selectedLayout={$sceneStore} on:select={(e) => setScene(e.detail)} />
+<SceneSelectorControl layout={chat} {peers} selectedLayout={$sceneStore} on:select={(e) => setScene(e.detail)} />
+<SceneSelectorControl layout={twoXTwo} {peers} selectedLayout={$sceneStore} on:select={(e) => setScene(e.detail)} />

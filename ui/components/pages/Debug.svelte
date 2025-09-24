@@ -33,9 +33,6 @@
 	} from "~/api/room/roomClient";
 
 	// Local state for UI
-	let peerIdInput = "";
-	let mediaTagInput = "";
-
 	let newPasswordInput = "";
 	let peerNameInput = "";
 	let targetPeerId = "";
@@ -169,18 +166,6 @@
 			await roomClient.updatePeerName(targetPeerId, peerNameInput.trim());
 			peerNameInput = "";
 			targetPeerId = "";
-		}
-	}
-
-	async function subscribeToTrack() {
-		if (peerIdInput && mediaTagInput) {
-			await roomClient.subscribeToTrack(peerIdInput, mediaTagInput as any);
-		}
-	}
-
-	async function unsubscribeFromTrack() {
-		if (peerIdInput && mediaTagInput) {
-			await roomClient.unsubscribeFromTrack(peerIdInput, mediaTagInput as any);
 		}
 	}
 </script>
@@ -544,6 +529,9 @@
 							<tr>
 								<td>
 									<span class="has-text-weight-semibold">{peer.peerId}</span>
+									<span class="tag is-small ml-2" class:is-success={peer.online} class:is-danger={!peer.online}>
+										{peer.online ? "Online" : "Offline"}
+									</span>
 									{#if peer.peerId === myPeerId}
 										<span class="tag is-small is-primary ml-2">You</span>
 									{/if}
@@ -731,29 +719,6 @@
 				<button class="button is-warning" on:click={roomClient.resumeAllConsumers} disabled={consumers.length === 0}>Resume All Consumers</button>
 				<button class="button is-warning" on:click={roomClient.pauseAllConsumers} disabled={consumers.length === 0}>Pause All Consumers</button>
 				<button class="button is-danger" on:click={roomClient.closeAllConsumers} disabled={consumers.length === 0}>Close All Consumers</button>
-			</div>
-		</div>
-
-		<!-- Manual Track Subscription -->
-		<div class="field">
-			<label class="label is-small">Manual Track Subscription</label>
-			<div class="field is-grouped">
-				<div class="control">
-					<input class="input is-small" type="text" placeholder="Peer ID" bind:value={peerIdInput} />
-				</div>
-				<div class="control">
-					<input class="input is-small" type="text" placeholder="Media Tag (e.g., cam-video)" bind:value={mediaTagInput} />
-				</div>
-				<div class="control">
-					<button class="button is-small is-success" on:click={subscribeToTrack} disabled={!peerIdInput || !mediaTagInput || !joined}>
-						Subscribe to Track
-					</button>
-				</div>
-				<div class="control">
-					<button class="button is-small is-danger" on:click={unsubscribeFromTrack} disabled={!peerIdInput || !mediaTagInput || !joined}>
-						Unsubscribe from Track
-					</button>
-				</div>
 			</div>
 		</div>
 

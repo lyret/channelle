@@ -433,38 +433,45 @@ export async function setStagePassword(password?: string) {
 }
 
 /**
+ * Sets the current scene
+ */
+export async function setScene(scene: Scene) {
+	await roomClient.setScene.mutate(scene);
+}
+
+/**
  * Sets the stage curtains forced setting
  */
 export async function setStageCurtainsForced(value: SceneSetting) {
-	await roomClient.setForcedSceneSetting.mutate({ key: "curtains", value: value });
+	await roomClient.setForcedSceneSetting.mutate({ key: "curtains", value });
 }
 
 /**
  * Sets the stage chat enabled forced setting
  */
 export async function setStageChatEnabledForced(value: SceneSetting) {
-	await roomClient.setForcedSceneSetting.mutate({ key: "chatEnabled", value: value });
+	await roomClient.setForcedSceneSetting.mutate({ key: "chatEnabled", value });
 }
 
 /**
  * Sets the stage effects enabled forced setting
  */
 export async function setStageEffectsEnabledForced(value: SceneSetting) {
-	await roomClient.setForcedSceneSetting.mutate({ key: "effectsEnabled", value: value });
-}
-
-/**
- * Sets the stage visitor video enabled forced setting
- */
-export async function setStageVisitorVideoEnabledForced(value: SceneSetting) {
-	await roomClient.setForcedSceneSetting.mutate({ key: "visitorVideoEnabled", value: value });
+	await roomClient.setForcedSceneSetting.mutate({ key: "effectsEnabled", value });
 }
 
 /**
  * Sets the stage visitor audio enabled forced setting
  */
 export async function setStageVisitorAudioEnabledForced(value: SceneSetting) {
-	await roomClient.setForcedSceneSetting.mutate({ key: "visitorAudioEnabled", value: value });
+	await roomClient.setForcedSceneSetting.mutate({ key: "visitorAudioEnabled", value });
+}
+
+/**
+ * Sets the stage visitor video enabled forced setting
+ */
+export async function setStageVisitorVideoEnabledForced(value: SceneSetting) {
+	await roomClient.setForcedSceneSetting.mutate({ key: "visitorVideoEnabled", value });
 }
 
 /**

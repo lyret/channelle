@@ -7,9 +7,12 @@
 
 	$: stream = findStream(peerId);
 
+	$: console.log({ peerId, peer, peersStore: $peersStore, stream });
+
 	function findStream(peerId: string) {
 		const consumer = $consumersStore.find((consumer) => consumer.appData.peerId === peerId);
 		if (consumer) {
+			console.log("HERE", consumer);
 			return new MediaStream([consumer.track]);
 		}
 		return undefined;
@@ -42,6 +45,9 @@
 	</div>
 {:else}
 	<div class="window">
+		<h1 class="title has-text-white">
+			{peer?.name}
+		</h1>
 		<video use:srcObject={stream} controls={false} autoplay={false} playsinline muted={!streamHasAudio}></video>
 	</div>
 {/if}

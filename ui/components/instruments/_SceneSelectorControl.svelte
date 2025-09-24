@@ -13,7 +13,7 @@
 
 	function onChange(e: any, cell: any) {
 		e.stopPropagation();
-		cell.id = (e.target as any).value;
+		cell.peerId = (e.target as any).value;
 		dispatch("update", layout);
 		if (selected) {
 			dispatch("select", layout);

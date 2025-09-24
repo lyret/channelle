@@ -26,12 +26,6 @@
 			grid-template-columns: repeat(${width}, 1fr);
 			grid-template-rows: repeat(${height}, 1fr);
 		`;
-
-	onMount(() => {
-		calculatedStageLayoutStore.subscribe((data) => {
-			console.log("[Layout]", data);
-		});
-	});
 </script>
 
 <Wrapper lockedToInviteKey={true} curtainsAreEnabled={true}>

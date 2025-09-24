@@ -199,6 +199,17 @@ export const roomRouter = trcpRouter({
 
 			_room.sceneSettings[key] = value;
 		}),
+	// Set Scene
+	// Updates the current scene
+	setScene: roomProcedure.input(z.custom<Scene>()).mutation(async ({ ctx, input: scene }) => {
+		// Only managers can set the scene
+		if (!ctx.peer.manager) {
+			throw new TRPCError({ code: "UNAUTHORIZED", message: "Only managers can set the scene" });
+		}
+
+		_room.currentScene = scene;
+		_room.currentSceneLayout = scene.layout;
+	}),
 	// Update Peer
 	// Updates the information about a given peer
 	updatePeer: roomProcedure
