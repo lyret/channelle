@@ -2,7 +2,7 @@ import * as MediaSoup from "mediasoup-client";
 import DeepEqual from "deep-equal";
 import { writable, derived, get } from "svelte/store";
 import { roomClient, wsPeerIdStore } from "../_trpcClient";
-import type { Peer, TransportDirection, CustomAppData, MediaTag, StageLayout, PredefinedLayout } from "~/types/serverSideTypes";
+import type { Peer, TransportDirection, CustomAppData, MediaTag, StageLayout, Scene, SceneSetting } from "~/types/serverSideTypes";
 
 type Transport = MediaSoup.types.Transport<CustomAppData>;
 type Consumer = MediaSoup.types.Consumer<CustomAppData>;
@@ -24,14 +24,31 @@ export const deviceStore = writable<MediaSoup.types.Device | null>(null);
 export const stagePasswordStore = writable<string | undefined>(undefined);
 
 /**
+ * The known remotely set settings for the stage
+ */
+export const stageSceneSettingsStore = writable<{
+	curtains: SceneSetting;
+	chatEnabled: SceneSetting;
+	effectsEnabled: SceneSetting;
+	visitorAudioEnabled: SceneSetting;
+	visitorVideoEnabled: SceneSetting;
+}>({
+	curtains: 0,
+	chatEnabled: 0,
+	effectsEnabled: 0,
+	visitorAudioEnabled: 0,
+	visitorVideoEnabled: 0,
+});
+
+/**
  * The known remotely set layout to use on the stage
  */
 export const stageLayoutStore = writable<StageLayout>([]);
 
 /**
- * The known remotely set layout to use on the stage
+ * The known remotely set scene to use on the stage
  */
-export const stagePredefinedLayoutStore = writable<PredefinedLayout | undefined>(undefined);
+export const sceneStore = writable<Scene | undefined>(undefined);
 
 /**
  * The known remotely set status of the curtain that can cover the stage
@@ -257,43 +274,34 @@ export async function leaveRoom() {
  * Called periodically via polling interval
  */
 async function syncRoom() {
-	const {
-		peers,
-		sessions,
-		activeSpeaker,
-		password,
-		curtains,
-		chatEnabled,
-		currentLayout,
-		currentPredefinedLayout,
-		effectsEnabled,
-		visitorAudioEnabled,
-		visitorVideoEnabled,
-	} = await roomClient.sync.query();
+	const { peers, sessions, activeSpeaker, password, sceneSettings, currentLayout, currentScene } = await roomClient.sync.query();
 
 	// Update current layout
 	stageLayoutStore.set(currentLayout);
 
 	// Update current predefined layout
-	stagePredefinedLayoutStore.set(currentPredefinedLayout);
+	sceneStore.set(currentScene);
 
 	// Update the known stage password
 	stagePasswordStore.set(password);
 
+	// Update the known stage scene settings
+	stageSceneSettingsStore.set(sceneSettings);
+
 	// Update the known curtain status
-	stageCurtainsStore.set(curtains);
+	stageCurtainsStore.set(currentScene.curtains);
 
 	// Update the known chat status
-	stageChatEnabledStore.set(chatEnabled);
+	stageChatEnabledStore.set(currentScene.chatEnabled);
 
 	// Update the known effects status
-	stageEffectsEnabledStore.set(effectsEnabled);
+	stageEffectsEnabledStore.set(currentScene.effectsEnabled);
 
 	// Update the known visitor audio status
-	stageHaveVisitorAudioEnabledStore.set(visitorAudioEnabled);
+	stageHaveVisitorAudioEnabledStore.set(currentScene.visitorAudioEnabled);
 
 	// Update the known visitor video status
-	stageHaveVisitorVideoEnabledStore.set(visitorVideoEnabled);
+	stageHaveVisitorVideoEnabledStore.set(currentScene.visitorVideoEnabled);
 
 	// Update the active speaker
 	currentActiveSpeakerStore.set(activeSpeaker);
@@ -422,6 +430,41 @@ export async function updatePeerProperties(peerId: string, data: { actor?: boole
  */
 export async function setStagePassword(password?: string) {
 	await roomClient.setPassword.mutate({ password });
+}
+
+/**
+ * Sets the stage curtains forced setting
+ */
+export async function setStageCurtainsForced(value: SceneSetting) {
+	await roomClient.setForcedSceneSetting.mutate({ key: "curtains", value: value });
+}
+
+/**
+ * Sets the stage chat enabled forced setting
+ */
+export async function setStageChatEnabledForced(value: SceneSetting) {
+	await roomClient.setForcedSceneSetting.mutate({ key: "chatEnabled", value: value });
+}
+
+/**
+ * Sets the stage effects enabled forced setting
+ */
+export async function setStageEffectsEnabledForced(value: SceneSetting) {
+	await roomClient.setForcedSceneSetting.mutate({ key: "effectsEnabled", value: value });
+}
+
+/**
+ * Sets the stage visitor video enabled forced setting
+ */
+export async function setStageVisitorVideoEnabledForced(value: SceneSetting) {
+	await roomClient.setForcedSceneSetting.mutate({ key: "visitorVideoEnabled", value: value });
+}
+
+/**
+ * Sets the stage visitor audio enabled forced setting
+ */
+export async function setStageVisitorAudioEnabledForced(value: SceneSetting) {
+	await roomClient.setForcedSceneSetting.mutate({ key: "visitorAudioEnabled", value: value });
 }
 
 /**
@@ -908,7 +951,7 @@ function _findConsumerForTrack(peerId: string, mediaTag: MediaTag): Consumer | u
  * @returns Array of peers sorted by join timestamp
  */
 function _sortPeers(peers: Record<string, Peer>): Array<Peer> {
-	return Object.values(peers).sort((a, b) => (a.joinTs > b.joinTs ? 1 : b.joinTs > a.joinTs ? -1 : 0));
+	return Object.values(peers); // TODO: fix, joinedTS was moved to session!
 }
 
 /**

@@ -1,7 +1,7 @@
 import { applyWSSHandler } from "@trpc/server/adapters/ws";
 import type { Peer } from "./lib";
 import { trpc, ws } from "./lib";
-import { roomRouter } from "./routers/roomRouter";
+import { closePeer, roomRouter } from "./routers/roomRouter";
 import { developmentRouter } from "./routers/development";
 import { chatRouter } from "./routers/chatRouter";
 import { effectsRouter } from "./routers/effectsRouter";
@@ -34,10 +34,15 @@ export async function createAppRouter() {
 	applyWSSHandler({
 		wss: ws(),
 		router: appRouter,
-		createContext: (options) => {
+		createContext: ({ info, res }) => {
 			// Get the peer id from the connection parameters
-			const peerId = options.info.connectionParams?.peerId;
+			const peerId = info.connectionParams?.peerId;
 			console.log("[TRPC] Peer Connected:", peerId);
+			res.once("close", () => {
+				console.log("[TRPC] Peer Disconnected:", peerId);
+				closePeer(peerId);
+			});
+			//consooptions.info
 
 			return {
 				peer: {

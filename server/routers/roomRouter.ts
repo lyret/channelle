@@ -1,5 +1,6 @@
 import type * as MediaSoup from "mediasoup";
-import type { Transport, Peer, Session, CustomAppData, MediaTag, Producer, Consumer, PredefinedLayout, StageLayout } from "../_types";
+import type { Transport, Peer, Session, CustomAppData, MediaTag, Producer, Consumer, Scene, StageLayout } from "../_types";
+import { SceneSetting } from "../_types";
 import { TRPCError } from "@trpc/server";
 import { trpc, mediaSoupRouter } from "../lib";
 import { z } from "zod";
@@ -16,13 +17,15 @@ const { router: trcpRouter, procedure: trcpProcedure } = trpc();
  */
 type Room = {
 	password: string | undefined;
-	curtains: boolean;
-	chatEnabled: boolean;
-	effectsEnabled: boolean;
-	visitorAudioEnabled: boolean;
-	visitorVideoEnabled: boolean;
-	currentLayout: StageLayout;
-	currentPredefinedLayout: PredefinedLayout | undefined;
+	sceneSettings: {
+		curtains: SceneSetting;
+		chatEnabled: SceneSetting;
+		effectsEnabled: SceneSetting;
+		visitorAudioEnabled: SceneSetting;
+		visitorVideoEnabled: SceneSetting;
+	};
+	currentSceneLayout: StageLayout;
+	currentScene: Scene | undefined;
 	peers: Record<string, Peer>;
 	activeSpeaker: {
 		producerId: string | null;
@@ -40,13 +43,15 @@ type Room = {
 const _room: Room = {
 	// Settings
 	password: undefined,
-	curtains: false,
-	chatEnabled: false,
-	effectsEnabled: false,
-	visitorAudioEnabled: false,
-	visitorVideoEnabled: false,
-	currentLayout: [],
-	currentPredefinedLayout: undefined,
+	sceneSettings: {
+		curtains: SceneSetting.AUTOMATIC,
+		chatEnabled: SceneSetting.AUTOMATIC,
+		effectsEnabled: SceneSetting.AUTOMATIC,
+		visitorAudioEnabled: SceneSetting.AUTOMATIC,
+		visitorVideoEnabled: SceneSetting.AUTOMATIC,
+	},
+	currentScene: undefined,
+	currentSceneLayout: [],
 	peers: {},
 	activeSpeaker: {
 		producerId: null,
@@ -105,13 +110,18 @@ export const roomRouter = trcpRouter({
 			sessions: _room.sessions,
 			activeSpeaker: _room.activeSpeaker,
 			password: _room.password,
-			curtains: _room.curtains,
-			chatEnabled: _room.chatEnabled,
-			effectsEnabled: _room.effectsEnabled,
-			visitorAudioEnabled: _room.visitorAudioEnabled,
-			visitorVideoEnabled: _room.visitorVideoEnabled,
-			currentLayout: _room.currentLayout,
-			currentPredefinedLayout: _room.currentPredefinedLayout,
+			sceneSettings: _room.sceneSettings,
+			currentLayout: _room.currentSceneLayout,
+			currentScene: {
+				name: "",
+				layout: _room.currentSceneLayout,
+				...(_room.currentScene || {}),
+				curtains: _determineStateOfSetting("curtains"),
+				chatEnabled: _determineStateOfSetting("chatEnabled"),
+				effectsEnabled: _determineStateOfSetting("effectsEnabled"),
+				visitorAudioEnabled: _determineStateOfSetting("visitorAudioEnabled"),
+				visitorVideoEnabled: _determineStateOfSetting("visitorVideoEnabled"),
+			},
 		};
 	}),
 	// Join
@@ -163,7 +173,7 @@ export const roomRouter = trcpRouter({
 	// all associated mediasoup objects
 	leave: roomProcedure.mutation(async ({ ctx }) => {
 		const peerId = ctx.peer.id;
-		_closePeer(peerId);
+		closePeer(peerId);
 		console.log("[Room] Peer", peerId, "left");
 		return;
 	}),
@@ -177,6 +187,18 @@ export const roomRouter = trcpRouter({
 
 		_room.password = password;
 	}),
+	// Set Forced Scene Value
+	// Updates the forced value of a specific scene setting
+	setForcedSceneSetting: roomProcedure
+		.input(z.object({ key: z.literal(Object.keys(_room.sceneSettings)), value: z.enum(SceneSetting) }))
+		.mutation(async ({ ctx, input: { key, value } }) => {
+			// Only managers can set forced settings
+			if (!ctx.peer.manager) {
+				throw new TRPCError({ code: "UNAUTHORIZED", message: "Only managers can set forced settings" });
+			}
+
+			_room.sceneSettings[key] = value;
+		}),
 	// Update Peer
 	// Updates the information about a given peer
 	updatePeer: roomProcedure
@@ -518,7 +540,7 @@ async function removeStalePeers() {
 	for (const [id, peer] of Object.entries(_room.sessions)) {
 		if (now - peer.lastSeenTs > 4200) {
 			console.log(`[Room] Removing stale peer ${id}`);
-			_closePeer(id);
+			closePeer(id);
 		}
 	}
 }
@@ -589,10 +611,12 @@ async function observeActiveSpeakers() {
 }
 observeActiveSpeakers();
 
-/** Utility function to closing the session and transports related to a given peer */
-async function _closePeer(peerId: string) {
+/** Utility function for closing the session and transports related to a given peer */
+export async function closePeer(peerId: string) {
 	console.log("[MS] closing peer", peerId);
-	_room.peers[peerId].online = false;
+	if (_room.peers[peerId]) {
+		_room.peers[peerId].online = false;
+	}
 	delete _room.sessions[peerId];
 	for (const transport of Object.values(_room.transports)) {
 		if (transport.appData.peerId === peerId) {
@@ -666,4 +690,19 @@ async function _createWebRtcTransport({ peerId, direction }): Promise<Transport>
 	});
 
 	return transport;
+}
+
+/** Utility function to determine the state of a given setting for the current scene */
+function _determineStateOfSetting(key: keyof Room["sceneSettings"]) {
+	if (_room.sceneSettings[key] === SceneSetting.FORCED_ON) {
+		return true;
+	}
+
+	if (_room.sceneSettings[key] === SceneSetting.FORCED_OFF) {
+		return false;
+	}
+	if (_room.currentScene) {
+		return _room.currentScene[key];
+	}
+	return false;
 }

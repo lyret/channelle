@@ -42,7 +42,7 @@
 
 	// Determine what should be rendered
 	$: hasEnteredName = $hasJoinedRoomStore && $peerStore.name;
-	$: needsToBeManager = lockedToManager && !(!$hasJoinedRoomStore && $peerStore.manager);
+	$: needsToBeManager = lockedToManager && !($hasJoinedRoomStore && $peerStore.manager);
 	$: needsInviteKey = lockedToInviteKey && !$isStagePasswordOkStore;
 	$: renderMessages =
 		!determiningState &&

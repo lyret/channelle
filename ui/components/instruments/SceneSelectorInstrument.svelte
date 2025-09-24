@@ -1,44 +1,66 @@
 <script lang="ts">
-	import type { PredefinedLayout } from "~/types/serverSideTypes";
+	import type { Scene } from "~/types/serverSideTypes";
 	import SceneSelectorControl from "./_SceneSelectorControl.svelte";
+	import Accordion from "../Accordion.svelte";
 	import { onMount } from "svelte";
 	import {
 		peersStore,
 		stageChatEnabledStore,
-		stageCurtainsStore,
-		stageEffectsEnabledStore,
-		stageHaveVisitorAudioEnabledStore,
 		stageLayoutStore,
-		stagePredefinedLayoutStore,
+		stageSceneSettingsStore,
+		sceneStore,
+		setStageCurtainsForced,
+		setStageChatEnabledForced,
+		setStageEffectsEnabledForced,
+		setStageVisitorAudioEnabledForced,
+		setStageVisitorVideoEnabledForced,
 	} from "~/api/room";
 
 	$: peers = Object.values($peersStore || {}).filter((p) => (p.actor || p.manager) && !p.banned);
 
-	$: test = console.log({ peers });
-
-	const auto: PredefinedLayout = {
+	const auto: Scene = {
 		name: "Automatisk",
 		chatEnabled: true,
+		curtains: false,
+		effectsEnabled: true,
+		visitorAudioEnabled: false,
+		visitorVideoEnabled: false,
 		layout: [],
 	};
-	const empty: PredefinedLayout = {
+	const empty: Scene = {
 		name: "Helt tom",
 		chatEnabled: true,
+		curtains: false,
+		effectsEnabled: true,
+		visitorAudioEnabled: false,
+		visitorVideoEnabled: false,
 		layout: [[{ type: "empty" }]],
 	};
-	const chat: PredefinedLayout = {
+	const chat: Scene = {
 		name: "Chatduell",
 		chatEnabled: false,
+		curtains: false,
+		effectsEnabled: true,
+		visitorAudioEnabled: true,
+		visitorVideoEnabled: true,
 		layout: [[{ type: "actor", peerId: "-1" }, { type: "chat" }, { type: "actor", peerId: "-1" }]],
 	};
-	const oneXOne: PredefinedLayout = {
+	const oneXOne: Scene = {
 		name: "En i fokus",
 		chatEnabled: true,
+		curtains: false,
+		effectsEnabled: true,
+		visitorAudioEnabled: true,
+		visitorVideoEnabled: true,
 		layout: [[{ type: "actor", peerId: "-1" }]],
 	};
-	const oneXTwo: PredefinedLayout = {
+	const oneXTwo: Scene = {
 		name: "Två bredvid varandra",
 		chatEnabled: true,
+		curtains: false,
+		effectsEnabled: true,
+		visitorAudioEnabled: true,
+		visitorVideoEnabled: true,
 		layout: [
 			[
 				{ type: "actor", peerId: "-1" },
@@ -46,9 +68,13 @@
 			],
 		],
 	};
-	const twoXTwo: PredefinedLayout = {
+	const twoXTwo: Scene = {
 		name: "Fyra rutor",
 		chatEnabled: true,
+		curtains: false,
+		effectsEnabled: true,
+		visitorAudioEnabled: true,
+		visitorVideoEnabled: true,
 		layout: [
 			[
 				{ type: "actor", peerId: "-1" },
@@ -63,7 +89,7 @@
 
 	// Sync actual stage layout stores when the selected predefined layout changes
 	onMount(() => {
-		const stop = stagePredefinedLayoutStore.subscribe((layout) => {
+		const stop = sceneStore.subscribe((layout) => {
 			if (layout) {
 				stageChatEnabledStore.set(layout?.chatEnabled || false);
 			}
@@ -123,51 +149,104 @@
 
 <h1 class="title">Sceninställningar</h1>
 
-<h1 class="title is-4">Tvingade inställningar</h1>
-<p class="subtitle is-6">Dessa inställningar kommer gälla oavsett vilken scen som pågår.</p>
+<Accordion title="Tvingade inställningar" subtitle="Dessa inställningar kommer gälla oavsett vilken scen som pågår." isOpen={true}>
+	<!-- Scene curtains -->
+	<p class="has-text-centered pb-2 mt-2">Visa ridån 🎭</p>
+	<div class="buttons has-addons is-centered">
+		<button class="button is-danger" class:is-light={$stageSceneSettingsStore.curtains !== 2} on:click={() => setStageCurtainsForced(2)}> Dölj </button>
+		<button class="button is-info" class:is-light={$stageSceneSettingsStore.curtains !== 0} on:click={() => setStageCurtainsForced(0)}>
+			Automatiskt
+		</button>
+		<button class="button is-success" class:is-light={$stageSceneSettingsStore.curtains !== 1} on:click={() => setStageCurtainsForced(1)}> Visa </button>
+	</div>
 
-<!-- Scene curtains -->
-<p class="has-text-centered pb-2 mt-2">Visa ridån 🎭</p>
-<div class="buttons has-addons is-centered">
-	<button class="button is-danger" class:is-light={$stageCurtainsStore} on:click={() => stageCurtainsStore.set(false)}>Dölj</button>
-	<button class="button is-info" class:is-light={$stageCurtainsStore}>Automatiskt</button>
-	<button class="button is-success" class:is-light={!$stageCurtainsStore} on:click={() => stageCurtainsStore.set(true)}>Visa</button>
-</div>
+	<!-- Chat button -->
+	<p class="has-text-centered pb-2 mt-2">Visa chatt-panelen 💬</p>
+	<div class="buttons has-addons is-centered">
+		<button class="button is-danger" class:is-light={$stageSceneSettingsStore.chatEnabled !== 2} on:click={() => setStageChatEnabledForced(2)}>
+			Dölj
+		</button>
+		<button class="button is-info" class:is-light={$stageSceneSettingsStore.chatEnabled !== 0} on:click={() => setStageChatEnabledForced(0)}>
+			Automatiskt
+		</button>
+		<button class="button is-success" class:is-light={$stageSceneSettingsStore.chatEnabled !== 1} on:click={() => setStageChatEnabledForced(1)}>
+			Visa
+		</button>
+	</div>
 
-<!-- Chat button -->
-<p class="has-text-centered pb-2 mt-2">Visa chatt-panelen 💬</p>
-<div class="buttons has-addons is-centered">
-	<button class="button is-danger" class:is-light={$stageChatEnabledStore} on:click={() => stageChatEnabledStore.set(false)}>Dölj</button>
-	<button class="button is-info" class:is-light={$stageChatEnabledStore}>Automatiskt</button>
-	<button class="button is-success" class:is-light={!$stageChatEnabledStore} on:click={() => stageChatEnabledStore.set(true)}>Visa</button>
-</div>
+	<!-- Visitor video -->
+	<p class="has-text-centered pb-2 mt-2">Tillåt video från publiken 🤳</p>
+	<div class="buttons has-addons is-centered">
+		<button
+			class="button is-danger"
+			class:is-light={$stageSceneSettingsStore.visitorVideoEnabled !== 2}
+			on:click={() => setStageVisitorVideoEnabledForced(2)}
+		>
+			Nej
+		</button>
+		<button
+			class="button is-info"
+			class:is-light={$stageSceneSettingsStore.visitorVideoEnabled !== 0}
+			on:click={() => setStageVisitorVideoEnabledForced(0)}
+		>
+			Automatiskt
+		</button>
+		<button
+			class="button is-success"
+			class:is-light={$stageSceneSettingsStore.visitorVideoEnabled !== 1}
+			on:click={() => setStageVisitorVideoEnabledForced(1)}
+		>
+			Ja
+		</button>
+	</div>
 
-<!-- Visitor audio -->
-<p class="has-text-centered pb-2 mt-2">Tillåt ljud från publiken 🎤</p>
-<div class="buttons has-addons is-centered">
-	<button class="button is-danger" class:is-light={$stageHaveVisitorAudioEnabledStore} on:click={() => stageHaveVisitorAudioEnabledStore.set(false)}
-		>Nej</button
-	>
-	<button class="button is-info" class:is-light={$stageHaveVisitorAudioEnabledStore}>Automatiskt</button>
-	<button class="button is-success" class:is-light={!$stageHaveVisitorAudioEnabledStore} on:click={() => stageHaveVisitorAudioEnabledStore.set(true)}
-		>Ja</button
-	>
-</div>
+	<!-- Visitor audio -->
+	<p class="has-text-centered pb-2 mt-2">Tillåt ljud från publiken 🎤</p>
+	<div class="buttons has-addons is-centered">
+		<button
+			class="button is-danger"
+			class:is-light={$stageSceneSettingsStore.visitorAudioEnabled !== 2}
+			on:click={() => setStageVisitorAudioEnabledForced(2)}
+		>
+			Nej
+		</button>
+		<button
+			class="button is-info"
+			class:is-light={$stageSceneSettingsStore.visitorAudioEnabled !== 0}
+			on:click={() => setStageVisitorAudioEnabledForced(0)}
+		>
+			Automatiskt
+		</button>
+		<button
+			class="button is-success"
+			class:is-light={$stageSceneSettingsStore.visitorAudioEnabled !== 1}
+			on:click={() => setStageVisitorAudioEnabledForced(1)}
+		>
+			Ja
+		</button>
+	</div>
 
-<!-- Visitor effects -->
-<p class="has-text-centered pb-2 mt-2">Tillåt blommor och applåder 🌹👏</p>
-<div class="buttons has-addons is-centered">
-	<button class="button is-danger" class:is-light={$stageEffectsEnabledStore} on:click={() => stageEffectsEnabledStore.set(false)}>Nej</button>
-	<button class="button is-info" class:is-light={$stageEffectsEnabledStore}>Automatiskt</button>
-	<button class="button is-success" class:is-light={!$stageEffectsEnabledStore} on:click={() => stageEffectsEnabledStore.set(true)}>Ja</button>
-</div>
+	<!-- Visitor effects -->
+	<p class="has-text-centered pb-2 mt-2">Tillåt blommor och applåder 🌹👏</p>
+	<div class="buttons has-addons is-centered">
+		<button class="button is-danger" class:is-light={$stageSceneSettingsStore.effectsEnabled !== 2} on:click={() => setStageEffectsEnabledForced(2)}>
+			Nej
+		</button>
+		<button class="button is-info" class:is-light={$stageSceneSettingsStore.effectsEnabled !== 0} on:click={() => setStageEffectsEnabledForced(0)}>
+			Automatiskt
+		</button>
+		<button class="button is-success" class:is-light={$stageSceneSettingsStore.effectsEnabled !== 1} on:click={() => setStageEffectsEnabledForced(1)}>
+			Ja
+		</button>
+	</div>
+</Accordion>
 
 <hr />
 <h1 class="title">Välj Scenlayout</h1>
 
-<SceneSelectorControl layout={auto} {peers} selectedLayout={$stagePredefinedLayoutStore} on:select={(e) => stagePredefinedLayoutStore.set(e.detail)} />
-<SceneSelectorControl layout={empty} {peers} selectedLayout={$stagePredefinedLayoutStore} on:select={(e) => stagePredefinedLayoutStore.set(e.detail)} />
-<SceneSelectorControl layout={oneXOne} {peers} selectedLayout={$stagePredefinedLayoutStore} on:select={(e) => stagePredefinedLayoutStore.set(e.detail)} />
-<SceneSelectorControl layout={oneXTwo} {peers} selectedLayout={$stagePredefinedLayoutStore} on:select={(e) => stagePredefinedLayoutStore.set(e.detail)} />
-<SceneSelectorControl layout={chat} {peers} selectedLayout={$stagePredefinedLayoutStore} on:select={(e) => stagePredefinedLayoutStore.set(e.detail)} />
-<SceneSelectorControl layout={twoXTwo} {peers} selectedLayout={$stagePredefinedLayoutStore} on:select={(e) => stagePredefinedLayoutStore.set(e.detail)} />
+<SceneSelectorControl layout={auto} {peers} selectedLayout={$sceneStore} on:select={(e) => sceneStore.set(e.detail)} />
+<SceneSelectorControl layout={empty} {peers} selectedLayout={$sceneStore} on:select={(e) => sceneStore.set(e.detail)} />
+<SceneSelectorControl layout={oneXOne} {peers} selectedLayout={$sceneStore} on:select={(e) => sceneStore.set(e.detail)} />
+<SceneSelectorControl layout={oneXTwo} {peers} selectedLayout={$sceneStore} on:select={(e) => sceneStore.set(e.detail)} />
+<SceneSelectorControl layout={chat} {peers} selectedLayout={$sceneStore} on:select={(e) => sceneStore.set(e.detail)} />
+<SceneSelectorControl layout={twoXTwo} {peers} selectedLayout={$sceneStore} on:select={(e) => sceneStore.set(e.detail)} />

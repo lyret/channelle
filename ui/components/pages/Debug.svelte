@@ -9,7 +9,7 @@
 		deviceStore,
 		stagePasswordStore,
 		stageLayoutStore,
-		stagePredefinedLayoutStore,
+		sceneStore,
 		stageCurtainsStore,
 		stageChatEnabledStore,
 		stageEffectsEnabledStore,
@@ -71,7 +71,7 @@
 	// Stage-related reactive statements
 	$: stagePassword = $stagePasswordStore;
 	$: stageLayout = $stageLayoutStore;
-	$: stagePredefinedLayout = $stagePredefinedLayoutStore;
+	$: stagePredefinedLayout = $sceneStore;
 	$: stageCurtains = $stageCurtainsStore;
 	$: stageChatEnabled = $stageChatEnabledStore;
 	$: stageEffectsEnabled = $stageEffectsEnabledStore;

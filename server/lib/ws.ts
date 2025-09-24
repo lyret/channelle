@@ -14,12 +14,14 @@ export function ws(): WebSocketServer {
 		port: CONFIG.socket.port,
 	});
 
-	_ws.on("connection", (ws) => {
-		console.log(`[WS] +Connections (${_ws.clients.size})`);
-		ws.once("close", () => {
-			console.log(`[WS] -Connections (${_ws.clients.size})`);
+	if (CONFIG.runtime.debug) {
+		_ws.on("connection", (ws) => {
+			console.log(`[WS] +Connections (${_ws.clients.size})`);
+			ws.once("close", () => {
+				console.log(`[WS] -Connections (${_ws.clients.size})`);
+			});
 		});
-	});
+	}
 	console.log("[WS] Listening on ws://localhost:3001");
 
 	return _ws;

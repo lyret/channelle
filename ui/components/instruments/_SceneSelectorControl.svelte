@@ -2,12 +2,12 @@
 	import { createEventDispatcher } from "svelte";
 	import IconMessageCircle from "../icons/Icon-message-circle.svelte";
 	import IconUser from "../icons/Icon-user.svelte";
-	import type { Peer, PredefinedLayout } from "~/types/serverSideTypes";
-	const dispatch = createEventDispatcher<{ update: PredefinedLayout; select: PredefinedLayout }>();
+	import type { Peer, Scene } from "~/types/serverSideTypes";
+	const dispatch = createEventDispatcher<{ update: Scene; select: Scene }>();
 
-	export let selectedLayout: PredefinedLayout | undefined;
+	export let selectedLayout: Scene | undefined;
 	export let peers: Array<Peer>;
-	export let layout: PredefinedLayout;
+	export let layout: Scene;
 
 	$: selected = selectedLayout?.name == layout.name;
 

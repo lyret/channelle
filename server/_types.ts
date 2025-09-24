@@ -3,14 +3,31 @@ import type { CustomAppData, TransportDirection } from "./lib/mediaSoup";
 
 // TODO: Create a types folder maybe ?
 
+/** A forcable setting for overriding how the stage behaves, possibly overriding the current scene */
+export enum SceneSetting {
+	/** Use the value from the current scene */
+	// eslint-disable-next-line no-unused-vars
+	AUTOMATIC = 0,
+	/** Force the setting to be enabled, ignoring the setting of the current scene */
+	// eslint-disable-next-line no-unused-vars
+	FORCED_ON = 1,
+	/** Forces the setting to be disabled, ignoring the setting of the current scene */
+	// eslint-disable-next-line no-unused-vars
+	FORCED_OFF = 2,
+}
+
 /** Stage Layout Value */
 export type StageLayout = Array<Array<{ type: "actor"; peerId: string } | { type: "chat" } | { type: "empty" }>>;
 
-/** A Predefined layout from the scene instrument */
-export type PredefinedLayout = {
+/** A Scene contains a predefined layout and settings for how the stage behaves */
+export type Scene = {
 	name: string;
-	chatEnabled: boolean;
 	layout: StageLayout;
+	curtains: boolean;
+	chatEnabled: boolean;
+	effectsEnabled: boolean;
+	visitorAudioEnabled: boolean;
+	visitorVideoEnabled: boolean;
 };
 
 export type EffectData = { type: "flowers" | "applause"; number: number };
