@@ -2,16 +2,7 @@
 	import { blur } from "svelte/transition";
 	import IconMicOff from "~/components/icons/Icon-mic-off.svelte";
 	import IconMic from "~/components/icons/Icon-mic.svelte";
-	import {
-		peerStore,
-		audioProducer,
-		micPausedStore,
-		localMediaStream,
-		startLocalMediaStream,
-		sendMediaStreams,
-		toggleAudioPaused,
-		stageHaveVisitorAudioEnabledStore,
-	} from "~/api/room";
+	import { peerStore, audioProducer, micPausedStore, localMediaStream, enableAudio, toggleAudioPaused, stageHaveVisitorAudioEnabledStore } from "~/api/room";
 
 	$: isOn = !!$audioProducer && !$micPausedStore;
 	$: hasLocalStream = !!$localMediaStream;
@@ -23,9 +14,8 @@
 	async function handleOnClick() {
 		try {
 			errorMessage = "";
-			if (!hasLocalStream) {
-				await startLocalMediaStream(true, false);
-				await sendMediaStreams();
+			if (!hasLocalStream || !$localMediaStream?.getAudioTracks().length) {
+				await enableAudio();
 			} else if (!isOn) {
 				await toggleAudioPaused(false);
 			} else {

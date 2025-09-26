@@ -376,7 +376,6 @@
 	}
 
 	.window {
-		background-color: green;
 		color: var(--channelle-main-bg-color);
 		flex-grow: 0;
 		flex-shrink: 0;

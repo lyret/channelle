@@ -148,9 +148,8 @@
 	//};
 </script>
 
-<h1 class="title">Sceninställningar</h1>
-
-<Accordion title="Tvingade inställningar" subtitle="Dessa inställningar kommer gälla oavsett vilken scen som pågår." isOpen={true}>
+<Accordion title="Tvingade inställningar" isOpen={false}>
+	<p class="has-text-centered pb-2 mt-2">Dessa inställningar kommer gälla oavsett vilken scen som pågår.</p>
 	<!-- Scene curtains -->
 	<p class="has-text-centered pb-2 mt-2">Visa ridån 🎭</p>
 	<div class="buttons has-addons is-centered">
@@ -242,8 +241,7 @@
 	</div>
 </Accordion>
 
-<hr />
-<h1 class="title">Välj Scenlayout</h1>
+<h1 class="title">Välj aktiv scen</h1>
 
 <SceneSelectorControl layout={auto} {peers} selectedLayout={$sceneStore} on:select={(e) => setScene(e.detail)} />
 <SceneSelectorControl layout={empty} {peers} selectedLayout={$sceneStore} on:select={(e) => setScene(e.detail)} />

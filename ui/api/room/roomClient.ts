@@ -451,7 +451,7 @@ async function syncRoom() {
 
 		// Type guard to ensure session exists and peer is still online
 		if (!session || typeof session !== "object" || !peer?.online) {
-			console.log(`[Room] Peer ${peerId} session invalid or offline - marking consumer for closure`);
+			console.log("[Room] Peer " + peerId + " session invalid or offline - marking consumer for closure");
 			consumersToClose.push(consumer);
 			return;
 		}
@@ -614,6 +614,208 @@ export async function startLocalMediaStream(audio: boolean = true, video: boolea
 }
 
 /**
+ * Add audio track to existing media stream or create new stream
+ * Preserves existing video tracks if present
+ */
+export async function enableAudioStream() {
+	console.log("[Media] Enabling audio stream");
+	const existingStream = get(localMediaStream);
+
+	// Check if we already have audio
+	if (existingStream && existingStream.getAudioTracks().length > 0) {
+		console.log("[Media] Audio track already exists");
+		return;
+	}
+
+	console.log("[Media] Current stream state:", {
+		hasStream: !!existingStream,
+		videoTracks: existingStream?.getVideoTracks().length || 0,
+		audioTracks: existingStream?.getAudioTracks().length || 0,
+	});
+
+	try {
+		// Request only audio
+		const audioStream = await navigator.mediaDevices.getUserMedia({
+			audio: true,
+			video: false,
+		});
+
+		if (existingStream) {
+			// Add audio track to existing stream
+			const audioTrack = audioStream.getAudioTracks()[0];
+			existingStream.addTrack(audioTrack);
+			console.log("[Media] Added audio track to existing stream");
+
+			// Stop the temporary audio stream
+			audioStream.getTracks().forEach((track) => {
+				if (track !== audioTrack) {
+					track.stop();
+				}
+			});
+		} else {
+			// Set the new audio stream as the local stream
+			localMediaStream.set(audioStream);
+			console.log("[Media] Created new audio stream");
+		}
+	} catch (error) {
+		console.error("[Media] Failed to enable audio stream:", error);
+		throw error;
+	}
+}
+
+/**
+ * Add video track to existing media stream or create new stream
+ * Preserves existing audio tracks if present
+ */
+export async function enableVideoStream() {
+	console.log("[Media] Enabling video stream");
+	const existingStream = get(localMediaStream);
+
+	// Check if we already have video
+	if (existingStream && existingStream.getVideoTracks().length > 0) {
+		console.log("[Media] Video track already exists");
+		return;
+	}
+
+	console.log("[Media] Current stream state:", {
+		hasStream: !!existingStream,
+		videoTracks: existingStream?.getVideoTracks().length || 0,
+		audioTracks: existingStream?.getAudioTracks().length || 0,
+	});
+
+	try {
+		// Request only video
+		const videoStream = await navigator.mediaDevices.getUserMedia({
+			audio: false,
+			video: true,
+		});
+
+		if (existingStream) {
+			// Add video track to existing stream
+			const videoTrack = videoStream.getVideoTracks()[0];
+			existingStream.addTrack(videoTrack);
+			console.log("[Media] Added video track to existing stream");
+
+			// Stop the temporary video stream
+			videoStream.getTracks().forEach((track) => {
+				if (track !== videoTrack) {
+					track.stop();
+				}
+			});
+		} else {
+			// Set the new video stream as the local stream
+			localMediaStream.set(videoStream);
+			console.log("[Media] Created new video stream");
+		}
+	} catch (error) {
+		console.error("[Media] Failed to enable video stream:", error);
+		throw error;
+	}
+}
+
+/**
+ * Enable video with proper stream and producer management
+ * Creates stream if needed and starts producing
+ */
+export async function enableVideo() {
+	console.log("[Media] Enabling video");
+
+	// First ensure we have a video stream
+	await enableVideoStream();
+
+	// Check if we need to send streams (create producers)
+	if (get(hasJoinedRoomStore)) {
+		const stream = get(localMediaStream);
+		console.log("[Media] Post-enableVideoStream state:", {
+			hasStream: !!stream,
+			videoTracks: stream?.getVideoTracks().length || 0,
+			audioTracks: stream?.getAudioTracks().length || 0,
+			hasVideoProducer: !!get(videoProducer),
+		});
+
+		if (stream && stream.getVideoTracks().length > 0 && !get(videoProducer)) {
+			// Create transport if needed and start producing
+			await sendMediaStreams();
+		}
+	}
+}
+
+/**
+ * Enable audio with proper stream and producer management
+ * Creates stream if needed and starts producing
+ */
+export async function enableAudio() {
+	console.log("[Media] Enabling audio");
+
+	// First ensure we have an audio stream
+	await enableAudioStream();
+
+	// Check if we need to send streams (create producers)
+	if (get(hasJoinedRoomStore)) {
+		const stream = get(localMediaStream);
+		console.log("[Media] Post-enableAudioStream state:", {
+			hasStream: !!stream,
+			videoTracks: stream?.getVideoTracks().length || 0,
+			audioTracks: stream?.getAudioTracks().length || 0,
+			hasAudioProducer: !!get(audioProducer),
+		});
+
+		if (stream && stream.getAudioTracks().length > 0 && !get(audioProducer)) {
+			// Create transport if needed and start producing
+			await sendMediaStreams();
+		}
+	}
+}
+
+/**
+ * Disable video by stopping track and closing producer
+ */
+export async function disableVideo() {
+	console.log("[Media] Disabling video");
+	const stream = get(localMediaStream);
+	const producer = get(videoProducer);
+
+	// Close producer if it exists
+	if (producer) {
+		producer.close();
+		videoProducer.set(null);
+	}
+
+	// Stop and remove video tracks
+	if (stream) {
+		const videoTracks = stream.getVideoTracks();
+		videoTracks.forEach((track) => {
+			track.stop();
+			stream.removeTrack(track);
+		});
+	}
+}
+
+/**
+ * Disable audio by stopping track and closing producer
+ */
+export async function disableAudio() {
+	console.log("[Media] Disabling audio");
+	const stream = get(localMediaStream);
+	const producer = get(audioProducer);
+
+	// Close producer if it exists
+	if (producer) {
+		producer.close();
+		audioProducer.set(null);
+	}
+
+	// Stop and remove audio tracks
+	if (stream) {
+		const audioTracks = stream.getAudioTracks();
+		audioTracks.forEach((track) => {
+			track.stop();
+			stream.removeTrack(track);
+		});
+	}
+}
+
+/**
  * Start transporting activated local streams to the server
  * Creates send transport and producers for audio/video tracks
  */
@@ -638,12 +840,12 @@ export async function sendMediaStreams() {
 		sendTransport.set(transport);
 	}
 
-	// Start sending video if we have a local video stream
+	// Start sending video if we have a local video stream and no existing producer
 	// the transport logic will initiate a
 	// signaling conversation with the server to set up an outbound rtp
 	// stream for the camera video track.
-	if (stream.getVideoTracks().length > 0) {
-		console.log(2, stream.getVideoTracks());
+	if (stream.getVideoTracks().length > 0 && !get(videoProducer)) {
+		console.log("[MS] Creating video producer with tracks:", stream.getVideoTracks());
 		const producer: Producer = await transport.produce({
 			track: stream.getVideoTracks()[0],
 			// Just two resolutions, for now, as chrome 75 seems to ignore more
@@ -654,21 +856,22 @@ export async function sendMediaStreams() {
 			],
 			appData: { mediaTag: "cam-video", peerId: get(wsPeerIdStore) },
 		});
-		console.log(3);
+		console.log("[MS] Video producer created:", producer.id);
 		videoProducer.set(producer);
-		console.log(4);
 
 		if (get(camPausedStore)) {
 			producer.pause();
 		}
 	}
 
-	// Start sending audio if we have a local audio stream
-	if (stream.getAudioTracks().length > 0) {
+	// Start sending audio if we have a local audio stream and no existing producer
+	if (stream.getAudioTracks().length > 0 && !get(audioProducer)) {
+		console.log("[MS] Creating audio producer with tracks:", stream.getAudioTracks());
 		const producer: Producer = await transport.produce({
 			track: stream.getAudioTracks()[0],
 			appData: { mediaTag: "mic-audio", peerId: get(wsPeerIdStore) },
 		});
+		console.log("[MS] Audio producer created:", producer.id);
 		audioProducer.set(producer);
 
 		if (get(micPausedStore)) {
@@ -815,7 +1018,7 @@ export async function subscribeToTrack(peerId: string, mediaTag: MediaTag) {
 	}
 
 	if (transport.connectionState !== "connected") {
-		console.log(`[MS] Transport connection timeout for peer ${peerId}`);
+		console.log("[MS] Transport connection timeout for peer " + peerId);
 		consumer.close();
 		throw new Error(`Transport connection timeout for peer ${peerId}`);
 	}
