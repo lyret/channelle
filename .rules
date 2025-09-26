@@ -1,0 +1,131 @@
+# Channelle Stage - Project Rules
+
+## Overview
+Channelle is a multimedia communication application for online theater performances. This is the "Stage" component - a server/client web application responsible for a single performance/meeting. It replaces traditional video conferencing tools with theater-focused features.
+
+## Languages & Core Technologies
+- **TypeScript/JavaScript**: Primary languages (ES2021+ with Node.js 21+)
+- **Svelte 4**: Frontend framework with TypeScript support
+- **Node.js**: Server runtime (>21.0.0 required)
+- **SQLite**: Database via Sequelize ORM
+- **SASS/SCSS**: Styling with Bulma CSS framework
+
+## Key Libraries & Frameworks
+
+### Server-side
+- **MediaSoup**: Core WebRTC media streaming (one-to-many broadcasting)
+- **tRPC**: Type-safe API layer with WebSocket support
+- **Restify**: HTTP server framework
+- **Sequelize**: Database ORM
+- **WebSocket (ws)**: Real-time communication
+
+### Client-side
+- **MediaSoup Client**: WebRTC client-side media handling
+- **Svelte**: Component framework
+- **Bulma + Bulma-list**: CSS framework and extensions
+- **Universal Router**: Client-side routing
+- **Broadcast Channel**: Cross-tab communication
+
+### Build & Development
+- **ESBuild**: Fast bundler for both client and server
+- **ESLint**: Linting with TypeScript and Svelte support
+- **PostCSS + Autoprefixer**: CSS processing
+
+## Project Structure
+
+```
+stage/
+├── server/           # Backend Node.js application
+│   ├── lib/         # Core server libraries (http, mediasoup, trpc, sequelize, ws)
+│   ├── models/      # Database models (Peer, Message, Scene)
+│   ├── routers/     # tRPC route handlers (room, chat, effects, development)
+│   └── index.ts     # Server entry point
+├── ui/              # Frontend Svelte application
+│   ├── components/  # Svelte components (pages, chat, curtains, debug, icons)
+│   ├── api/         # Client-side API utilities
+│   ├── stores/      # Svelte stores for state management
+│   ├── styles/      # SCSS stylesheets
+│   ├── assets/      # Static assets
+│   └── *.html       # Entry HTML files (index, stage, backstage, debug)
+├── shared/          # Code shared between server and client
+│   └── types/       # TypeScript type definitions
+└── .dist/           # Build output directory
+```
+
+### Module Responsibilities
+- **server/**: MediaSoup workers, tRPC API, database models, WebSocket handling
+- **ui/**: Svelte frontend with theater-specific UI (curtains, stage, backstage views)
+- **shared/**: Common types and configuration interfaces
+- **Build system**: Custom CLI with ESBuild contexts for client/server
+
+## Data Models
+- **Peer**: User/participant (id, name, actor, manager, banned, audio/video muted states)
+- **Message**: Chat messages
+- **Scene**: Theater scene/room configuration
+
+## Key Features
+- **Theater-focused UI**: Stage, backstage, and curtains metaphors
+- **Role-based permissions**: Actors, managers, regular participants
+- **Real-time communication**: Chat, video/audio streaming
+- **MediaSoup integration**: Professional-grade WebRTC streaming
+- **Multi-view support**: Different interfaces for different user roles
+
+## Development & Deployment
+
+### Build System
+- Custom CLI (`cli.mjs`) orchestrates builds
+- ESBuild for both client and server compilation
+- Watch mode for development with hot reloading
+- Separate contexts for client/server builds
+
+### Scripts
+- `npm run dev`: Development mode with watch, build, and start
+- `npm run production:build`: Production build
+- `npm run production:start`: Production start
+- `npm run lint`: ESLint + Svelte-check validation
+
+### Environment
+- Supports local, LAN, and WAN deployment modes
+- SQLite database stored in `.dist/database/`
+- Configuration via CLI args, env vars, and defaults
+- Debug modes available for development
+
+### Infrastructure
+- No containerization currently configured
+- No CI/CD pipelines detected
+- Manual deployment via npm scripts
+- MediaSoup requires Python 3.7+ and pip3 for native dependencies
+
+## Code Style & Guidelines
+
+### ESLint Configuration
+- Tabs for indentation (not spaces)
+- Double quotes for strings
+- Semicolons required
+- Max line length: 160 characters
+- TypeScript strict mode enabled
+- Consistent type imports preferred
+
+### Documentation Standards
+- **JSDocs required** for all exported entities and top-level variables
+- Single-line comments (`//`) for inline function documentation
+- **Avoid** unnecessary error handling wrappers
+- **Avoid** excessive console.log statements
+- Keep code simple and direct
+
+### File Naming
+- TypeScript files use `.ts` extension
+- Svelte components use `.svelte` extension
+- Build scripts use `.mjs` extension
+- Private/internal files prefixed with `_`
+
+## Architecture Notes
+- **Type-safe API**: tRPC provides end-to-end type safety
+- **Real-time communication**: WebSocket-based with heartbeat/keepalive
+- **Media streaming**: MediaSoup handles WebRTC complexity
+- **State management**: Svelte stores + persisted store for client state
+- **Database**: Sequelize with SQLite for simplicity
+- **Build optimization**: Separate client/server builds with shared types
+
+## License
+Creative Commons BY-NC 4.0 (non-commercial use)
