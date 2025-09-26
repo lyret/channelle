@@ -195,6 +195,69 @@ export const hasSendTransportStore = derived(sendTransport, ($transport) => !!$t
 export const hasRecvTransportStore = derived(recvTransports, ($transports) => Object.keys($transports).length > 0);
 
 // ============================================================================
+// DEBUG UTILITIES
+// ============================================================================
+
+/**
+ * Debug utility to get detailed state information about consumers and transports
+ */
+export function getDebugState() {
+	const consumers = get(consumersStore);
+	const transports = get(recvTransports);
+	const peers = get(peersStore);
+	const sessions = get(sessionsStore);
+
+	return {
+		consumers: consumers.map((consumer) => ({
+			id: consumer.id,
+			peerId: consumer.appData.peerId,
+			mediaTag: consumer.appData.mediaTag,
+			paused: consumer.paused,
+			closed: consumer.closed,
+			trackState: consumer.track?.readyState,
+			trackId: consumer.track?.id,
+			transportId: (consumer as any).transport?.id,
+			connectionState: consumer.rtpReceiver?.transport?.state,
+		})),
+		transports: Object.entries(transports).map(([peerId, transport]) => ({
+			peerId,
+			transportId: transport.id,
+			connectionState: transport.connectionState,
+			iceConnectionState: transport.connectionState,
+			iceGatheringState: transport.connectionState,
+			dtlsState: transport.connectionState,
+			closed: transport.closed,
+		})),
+		peers: Object.entries(peers).map(([id, peer]) => ({
+			id,
+			online: peer.online,
+			name: peer.name,
+			videoMuted: peer.videoMuted,
+			audioMuted: peer.audioMuted,
+		})),
+		sessions: Object.entries(sessions).map(([id, session]) => ({
+			id,
+			hasMedia: !!session.media,
+			videoAvailable: !!(session.media && session.media["cam-video"]),
+			audioAvailable: !!(session.media && session.media["mic-audio"]),
+		})),
+	};
+}
+
+/**
+ * Debug utility to log current state
+ */
+export function logDebugState(context = "DEBUG") {
+	const state = getDebugState();
+	console.group(`[${context}] Room Client Debug State`);
+	console.log("Consumers:", state.consumers);
+	console.log("Transports:", state.transports);
+	console.log("Peers:", state.peers);
+	console.log("Sessions:", state.sessions);
+	console.groupEnd();
+}
+
+// ============================================================================
 // PUBLIC API FUNCTIONS
 // ============================================================================
 
@@ -323,56 +386,109 @@ async function syncRoom() {
 	// If a peer has gone away, we need to close all consumers we have
 	// for that peer
 	if (!DeepEqual(thisPeersList, lastPeersList)) {
+		console.log("[Room] Peer list changed, checking for departed peers");
 		for (const id in _previousSyncedPeers) {
 			if (!peers[id]) {
-				console.log(`[Room] Peer ${id} has left`);
-				consumers.forEach((consumer) => {
-					if (consumer.appData.peerId === id) {
-						closeConsumer(consumer);
+				console.log(`[Room] Peer ${id} has left - cleaning up resources`);
+
+				// Close all consumers for this peer
+				const peerConsumers = consumers.filter((consumer) => consumer.appData.peerId === id);
+				console.log(`[Room] Found ${peerConsumers.length} consumers to close for peer ${id}`);
+
+				for (const consumer of peerConsumers) {
+					try {
+						console.log(`[Room] Closing consumer ${consumer.id} for departed peer ${id}`);
+						await closeConsumer(consumer);
+					} catch (error) {
+						console.error(`[Room] Error closing consumer for departed peer ${id}:`, error);
 					}
-				});
+				}
+
 				// Close and remove the transport for this peer
 				const transports = get(recvTransports);
 				if (transports[id]) {
-					console.log(`[Room] Closing transport for peer ${id}`);
-					transports[id].close();
-					recvTransports.update((t) => {
-						const updated = { ...t };
-						delete updated[id];
-						return updated;
-					});
+					console.log(`[Room] Closing transport for departed peer ${id}`);
+					try {
+						transports[id].close();
+						recvTransports.update((t) => {
+							const updated = { ...t };
+							delete updated[id];
+							return updated;
+						});
+						console.log(`[Room] Successfully closed transport for peer ${id}`);
+					} catch (error) {
+						console.error(`[Room] Error closing transport for peer ${id}:`, error);
+					}
 				}
+			}
+		}
+
+		// Check for new peers
+		for (const id in peers) {
+			if (!_previousSyncedPeers[id]) {
+				console.log(`[Room] New peer ${id} (${peers[id].name}) joined`);
 			}
 		}
 	}
 
 	// If a peer has stopped sending media that we are consuming, we
 	// need to close the consumer
+	const consumersToClose: Consumer[] = [];
+
 	consumers.forEach((consumer) => {
 		const { peerId, mediaTag } = consumer.appData;
 		const session = sessions[peerId];
+		const peer = peers[peerId];
 
-		// Type guard to ensure peers[peerId] is an object
-		if (!session || typeof session !== "object") {
-			console.log(`[Room] Peer ${peerId} has left or is invalid`);
-			closeConsumer(consumer);
+		// Enhanced logging for consumer validation
+		console.log(`[Room] Validating consumer ${consumer.id} for peer ${peerId} (${mediaTag}):`, {
+			hasSession: !!session,
+			hasSessionMedia: !!(session && session.media),
+			hasMediaTag: !!(session && session.media && session.media[mediaTag]),
+			peerOnline: peer?.online,
+			consumerClosed: consumer.closed,
+		});
+
+		// Type guard to ensure session exists and peer is still online
+		if (!session || typeof session !== "object" || !peer?.online) {
+			console.log(`[Room] Peer ${peerId} session invalid or offline - marking consumer for closure`);
+			consumersToClose.push(consumer);
 			return;
 		}
 
 		// Access media session safely
 		if (!session.media || typeof session.media !== "object") {
-			console.log(`[Room] Peer ${peerId} has no media`);
-			closeConsumer(consumer);
+			console.log(`[Room] Peer ${peerId} has no media session - marking consumer for closure`);
+			consumersToClose.push(consumer);
 			return;
 		}
 
 		// Check if the specific mediaTag exists
 		if (!Object.prototype.hasOwnProperty.call(session.media, mediaTag)) {
-			console.log(`[Room] Peer ${peerId} has stopped transmitting ${mediaTag}`);
-			closeConsumer(consumer);
+			console.log(`[Room] Peer ${peerId} no longer transmitting ${mediaTag} - marking consumer for closure`);
+			consumersToClose.push(consumer);
+			return;
+		}
+
+		// Additional check for consumer health
+		if (consumer.closed || (consumer.track && consumer.track.readyState === "ended")) {
+			console.log(`[Room] Consumer ${consumer.id} is closed or track ended - marking for cleanup`);
+			consumersToClose.push(consumer);
 			return;
 		}
 	});
+
+	// Close consumers that are no longer valid
+	if (consumersToClose.length > 0) {
+		console.log(`[Room] Closing ${consumersToClose.length} invalid consumers`);
+		for (const consumer of consumersToClose) {
+			try {
+				await closeConsumer(consumer);
+			} catch (error) {
+				console.error(`[Room] Error closing invalid consumer:`, error);
+			}
+		}
+	}
 
 	// Update the peers store with full peer information
 	peersStore.set(peers);
@@ -634,20 +750,32 @@ export async function closeMediaStreams() {
  * @param mediaTag - Type of media to subscribe to (e.g., "cam-video", "mic-audio")
  */
 export async function subscribeToTrack(peerId: string, mediaTag: MediaTag) {
+	console.log(`[MS] Starting subscription to ${mediaTag} track from peer ${peerId}`);
+
 	// Get or create a receiver transport for this specific peer
 	const transports = get(recvTransports);
 	let transport = transports[peerId];
 	if (!transport) {
 		console.log(`[Room] Creating receive transport for peer ${peerId}`);
-		transport = await _createTransport("recv", peerId);
-		recvTransports.update((t) => ({ ...t, [peerId]: transport }));
+		try {
+			transport = await _createTransport("recv", peerId);
+			recvTransports.update((t) => ({ ...t, [peerId]: transport }));
+			console.log(`[Room] Successfully created transport for peer ${peerId}`);
+		} catch (error) {
+			console.error(`[Room] Failed to create transport for peer ${peerId}:`, error);
+			throw error;
+		}
+	} else {
+		console.log(`[Room] Using existing transport for peer ${peerId}, state:`, transport.connectionState);
 	}
 
 	// If we do already have a consumer, we shouldn't have called this method
 	const existingConsumer = _findConsumerForTrack(peerId, mediaTag);
-	if (existingConsumer) {
-		console.warn("[MS] There is already a consumer for this track", peerId, mediaTag);
+	if (existingConsumer && !existingConsumer.closed) {
+		console.warn("[MS] There is already an active consumer for this track", peerId, mediaTag, "ID:", existingConsumer.id);
 		return;
+	} else if (existingConsumer && existingConsumer.closed) {
+		console.log("[MS] Found closed consumer for track, proceeding with new subscription", peerId, mediaTag);
 	}
 
 	console.log(`[Room] Subscribing to ${mediaTag} track from ${peerId}`);
@@ -672,21 +800,41 @@ export async function subscribeToTrack(peerId: string, mediaTag: MediaTag) {
 		appData: { peerId, mediaTag },
 	});
 
-	console.log("[MS] Created new consumer:", consumer.id);
+	console.log("[MS] Created new consumer:", consumer.id, "for", peerId, mediaTag);
 
 	// The server-side consumer will be started in paused state. wait
 	// until we're connected, then send a resume request to the server
 	// to get our first keyframe and start displaying video
-	while (transport.connectionState !== "connected") {
-		console.log("[MS] transport connection state is ", transport.connectionState);
+	let connectionAttempts = 0;
+	const maxAttempts = 100; // 10 seconds max
+
+	while (transport.connectionState !== "connected" && connectionAttempts < maxAttempts) {
+		console.log(`[MS] Waiting for transport connection (${connectionAttempts}/${maxAttempts}), state:`, transport.connectionState);
 		await _sleep(100);
+		connectionAttempts++;
 	}
 
+	if (transport.connectionState !== "connected") {
+		console.log(`[MS] Transport connection timeout for peer ${peerId}`);
+		consumer.close();
+		throw new Error(`Transport connection timeout for peer ${peerId}`);
+	}
+
+	console.log(`[MS] Transport connected for peer ${peerId}, resuming consumer`);
+
 	// Okay, we're ready. let's ask the peer to send us media
-	await resumeConsumer(consumer);
+	try {
+		await resumeConsumer(consumer);
+		console.log(`[MS] Successfully resumed consumer for ${peerId} ${mediaTag}`);
+	} catch (error) {
+		console.error(`[MS] Failed to resume consumer for ${peerId}:`, error);
+		consumer.close();
+		throw error;
+	}
 
 	// Keep track of all our consumers
 	consumersStore.update((consumers) => [...consumers, consumer]);
+	console.log(`[MS] Added consumer to store, total consumers:`, get(consumersStore).length);
 }
 
 /**
@@ -751,14 +899,29 @@ export async function resumeConsumer(consumer: Consumer) {
  * @param consumer - Consumer to close
  */
 export async function closeConsumer(consumer: Consumer) {
-	console.log("[MS] Closing the consumer for track", consumer.appData.peerId, consumer.appData.mediaTag);
+	console.log("[MS] Closing the consumer for track", consumer.appData.peerId, consumer.appData.mediaTag, "ID:", consumer.id);
 
-	// Tell the server we're closing this consumer. (the server-side
-	// consumer may have been closed already, but that's okay.)
-	await roomClient.closeConsumer.mutate({ consumerId: consumer.id });
-	consumer.close();
+	try {
+		// Tell the server we're closing this consumer. (the server-side
+		// consumer may have been closed already, but that's okay.)
+		if (!consumer.closed) {
+			await roomClient.closeConsumer.mutate({ consumerId: consumer.id });
+		}
+	} catch (error) {
+		console.warn("[MS] Error notifying server about consumer closure:", error);
+	}
 
+	try {
+		if (!consumer.closed) {
+			consumer.close();
+		}
+	} catch (error) {
+		console.warn("[MS] Error closing consumer locally:", error);
+	}
+
+	// Remove from store regardless of errors above
 	consumersStore.update((consumers) => consumers.filter(({ id }) => id !== consumer.id));
+	console.log("[MS] Consumer removed from store:", consumer.id);
 }
 
 /**

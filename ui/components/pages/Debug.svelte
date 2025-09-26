@@ -3,34 +3,24 @@
 	import { blur } from "svelte/transition";
 	import * as roomClient from "~/api/room/roomClient";
 	import { wsPeerIdStore } from "~/api/_trpcClient";
+	import { SessionStats, PeerMediaStatus, ConnectionStatus } from "~/components/debug";
 
 	// Import all the stores from roomClient
 	import {
-		deviceStore,
-		stagePasswordStore,
-		stageLayoutStore,
-		sceneStore,
-		stageCurtainsStore,
-		stageChatEnabledStore,
-		stageEffectsEnabledStore,
-		stageHaveVisitorAudioEnabledStore,
-		stageHaveVisitorVideoEnabledStore,
-		camPausedStore,
-		micPausedStore,
 		localMediaStream,
-		recvTransports,
-		videoProducer,
-		audioProducer,
-		currentActiveSpeakerStore,
 		consumersStore,
 		peersStore,
 		peerStore,
 		sessionsStore,
 		hasJoinedRoomStore,
-		isBannedFromTheRoom,
 		hasLocalCamStore,
 		hasSendTransportStore,
-		hasRecvTransportStore,
+		recvTransports,
+		videoProducer,
+		audioProducer,
+		currentActiveSpeakerStore,
+		camPausedStore,
+		micPausedStore,
 	} from "~/api/room/roomClient";
 
 	// Local state for UI
@@ -42,16 +32,12 @@
 	let localCamVideo: HTMLVideoElement;
 	const consumerVideos: { [key: string]: HTMLVideoElement } = {};
 
-	// Reactive statements for all stores
+	// Reactive statements for essential functionality
 	$: myPeerId = $wsPeerIdStore;
-	$: device = $deviceStore;
 	$: joined = $hasJoinedRoomStore;
-	$: banned = $isBannedFromTheRoom;
 	$: peer = $peerStore;
 	$: hasLocalCam = $hasLocalCamStore;
 	$: hasSendTransport = $hasSendTransportStore;
-	$: hasRecvTransport = $hasRecvTransportStore;
-	$: recvTransportCount = Object.keys($recvTransports).length;
 	$: hasCamVideo = !!$videoProducer;
 	$: hasCamAudio = !!$audioProducer;
 	$: activeSpeaker = $currentActiveSpeakerStore?.peerId || "None";
@@ -65,34 +51,9 @@
 		session: sessions[peerId],
 	}));
 
-	$: peerCount = peersList.length;
-	$: onlinePeerCount = peersList.filter((p) => p.online).length;
-
-	// Stage-related reactive statements
-	$: stagePassword = $stagePasswordStore;
-	$: stageLayout = $stageLayoutStore;
-	$: stagePredefinedLayout = $sceneStore;
-	$: stageCurtains = $stageCurtainsStore;
-	$: stageChatEnabled = $stageChatEnabledStore;
-	$: stageEffectsEnabled = $stageEffectsEnabledStore;
-	$: stageVisitorAudioEnabled = $stageHaveVisitorAudioEnabledStore;
-	$: stageVisitorVideoEnabled = $stageHaveVisitorVideoEnabledStore;
-
 	// Paused states
 	$: camVideoPaused = $camPausedStore;
 	$: camAudioPaused = $micPausedStore;
-
-	// Consumer statistics
-	$: consumerStats = {
-		total: consumers.length,
-		active: consumers.filter((c) => !c.paused).length,
-		paused: consumers.filter((c) => c.paused).length,
-		video: consumers.filter((c) => c.appData.mediaTag?.includes("video")).length,
-		audio: consumers.filter((c) => c.appData.mediaTag?.includes("audio")).length,
-		activeVideo: consumers.filter((c) => c.appData.mediaTag?.includes("video") && !c.paused).length,
-		activeAudio: consumers.filter((c) => c.appData.mediaTag?.includes("audio") && !c.paused).length,
-		uniquePeers: new Set(consumers.map((c) => c.appData.peerId)).size,
-	};
 
 	// Update video elements when streams change
 	$: if (localCamVideo && $localMediaStream) {
@@ -104,35 +65,20 @@
 
 	// Update consumer videos when consumers change
 	$: {
-		console.log("[Debug] Updating consumer videos, total consumers:", consumers.length);
 		consumers.forEach((consumer) => {
 			const key = `${consumer.appData.peerId}-${consumer.appData.mediaTag}`;
-			console.log("[Debug] Processing consumer:", {
-				key,
-				hasTrack: !!consumer.track,
-				trackKind: consumer.track?.kind,
-				trackState: consumer.track?.readyState,
-				paused: consumer.paused,
-			});
-
 			if (consumer.track && consumer.track.kind === "video") {
 				const videoElement = consumerVideos[key];
-				console.log("[Debug] Video element found for key:", key, !!videoElement);
-
 				if (videoElement) {
 					try {
 						const stream = new MediaStream([consumer.track]);
 						videoElement.srcObject = stream;
-						console.log("[Debug] Set video source for:", key);
-						// Force play attempt
 						videoElement.play().catch((e) => {
 							console.warn("[Debug] Video play failed for", key, e);
 						});
 					} catch (e) {
 						console.error("[Debug] Error setting video source for", key, e);
 					}
-				} else {
-					console.warn("[Debug] No video element found for key:", key);
 				}
 			}
 		});
@@ -158,20 +104,6 @@
 		return consumer.appData.mediaTag.includes("audio");
 	}
 
-	function getPeerMediaStatus(peer: any) {
-		const session = peer.session;
-		if (!session || !session.media) {
-			return { hasVideo: false, hasAudio: false, videoStatus: "Not transmitting", audioStatus: "Not transmitting" };
-		}
-
-		const hasVideo = !!session.media["cam-video"];
-		const hasAudio = !!session.media["mic-audio"];
-		const videoStatus = hasVideo ? (session.media["cam-video"].paused ? "Paused" : "Transmitting") : "Not transmitting";
-		const audioStatus = hasAudio ? (session.media["mic-audio"].paused ? "Paused" : "Transmitting") : "Not transmitting";
-
-		return { hasVideo, hasAudio, videoStatus, audioStatus };
-	}
-
 	async function setStagePassword() {
 		if (newPasswordInput.trim()) {
 			await roomClient.setStagePassword(newPasswordInput.trim());
@@ -191,184 +123,32 @@
 </script>
 
 <div class="container is-fluid" in:blur={{ delay: 500, duration: 1000 }}>
-	<h1 class="title">Debug Interface</h1>
+	<h1 class="title">🔍 Debug Dashboard</h1>
 
-	<!-- Status Overview -->
+	<!-- Session Statistics Overview -->
+	<SessionStats />
+
+	<!-- My Peer Information -->
 	<div class="box">
-		<h2 class="subtitle">Connection Status</h2>
-		<div class="columns is-multiline">
+		<h2 class="subtitle">My Peer Information</h2>
+		<div class="columns">
 			<div class="column is-6">
-				<table class="table is-fullwidth is-narrow">
-					<tbody>
-						<tr>
-							<td><strong>My Peer ID:</strong></td>
-							<td>{myPeerId || "Not connected"}</td>
-						</tr>
-						<tr>
-							<td><strong>Room Joined:</strong></td>
-							<td><span class="tag is-small" class:is-success={joined} class:is-danger={!joined}>{joined ? "Yes" : "No"}</span></td>
-						</tr>
-						<tr>
-							<td><strong>Account Banned:</strong></td>
-							<td><span class="tag is-small" class:is-danger={banned} class:is-success={!banned}>{banned ? "Yes" : "No"}</span></td>
-						</tr>
-						<tr>
-							<td><strong>MediaSoup Device:</strong></td>
-							<td><span class="tag is-small" class:is-success={device}>{device ? "Loaded" : "Not loaded"}</span></td>
-						</tr>
-						<tr>
-							<td><strong>Local Media Stream:</strong></td>
-							<td><span class="tag is-small" class:is-success={hasLocalCam}>{hasLocalCam ? "Available" : "Not Available"}</span></td>
-						</tr>
-						<tr>
-							<td><strong>Outgoing Transport:</strong></td>
-							<td><span class="tag is-small" class:is-success={hasSendTransport}>{hasSendTransport ? "Connected" : "Not Connected"}</span></td>
-						</tr>
-						<tr>
-							<td><strong>Incoming Transports:</strong></td>
-							<td><span class="tag is-small" class:is-success={hasRecvTransport}>{recvTransportCount} Connected</span></td>
-						</tr>
-						<tr>
-							<td><strong>Active Speaker:</strong></td>
-							<td>{activeSpeaker}</td>
-						</tr>
-					</tbody>
-				</table>
+				<ConnectionStatus peerId={myPeerId} peerData={peer} isOnline={joined} hasTransport={true} isMyPeer={true} />
 			</div>
 			<div class="column is-6">
-				<table class="table is-fullwidth is-narrow">
-					<tbody>
-						<tr>
-							<td><strong>My Role:</strong></td>
-							<td>
-								<div class="tags are-small">
-									{#if peer.actor}<span class="tag is-success">Actor</span>{/if}
-									{#if peer.manager}<span class="tag is-info">Manager</span>{/if}
-									{#if !peer.actor && !peer.manager}<span class="tag">Visitor</span>{/if}
-								</div>
-							</td>
-						</tr>
-						<tr>
-							<td><strong>My Name:</strong></td>
-							<td>{peer.name || "Unnamed"}</td>
-						</tr>
-						<tr>
-							<td><strong>Total Consumers:</strong></td>
-							<td>{consumerStats.total}</td>
-						</tr>
-						<tr>
-							<td><strong>Consumer Status:</strong></td>
-							<td>
-								<span class="tag is-small is-success">{consumerStats.active} Active</span>
-								/
-								<span class="tag is-small is-warning">{consumerStats.paused} Paused</span>
-							</td>
-						</tr>
-						<tr>
-							<td><strong>Consumer Types:</strong></td>
-							<td>
-								<span class="tag is-small is-info">{consumerStats.video} Video ({consumerStats.activeVideo} active)</span>
-								/
-								<span class="tag is-small is-info">{consumerStats.audio} Audio ({consumerStats.activeAudio} active)</span>
-							</td>
-						</tr>
-						<tr>
-							<td><strong>Peers with Media:</strong></td>
-							<td>{consumerStats.uniquePeers} peers sending media</td>
-						</tr>
-						<tr>
-							<td><strong>My Producers:</strong></td>
-							<td>
-								<span class="tag is-small" class:is-success={hasCamVideo && !camVideoPaused} class:is-warning={camVideoPaused}>
-									Video Producer: {hasCamVideo ? (camVideoPaused ? "Paused" : "Sending") : "Not Sending"}
-								</span>
-								<span class="tag is-small" class:is-success={hasCamAudio && !camAudioPaused} class:is-warning={camAudioPaused}>
-									Audio Producer: {hasCamAudio ? (camAudioPaused ? "Paused" : "Sending") : "Not Sending"}
-								</span>
-							</td>
-						</tr>
-					</tbody>
-				</table>
+				<PeerMediaStatus peerId={myPeerId} peerData={peer} sessionData={{ media: {} }} isActiveSpeaker={activeSpeaker === myPeerId} />
 			</div>
 		</div>
 	</div>
 
-	<!-- Stage Configuration -->
+	<!-- Stage Management -->
 	<div class="box">
-		<h2 class="subtitle">Stage Configuration</h2>
-		<div class="columns">
-			<div class="column is-6">
-				<table class="table is-fullwidth is-narrow">
-					<tbody>
-						<tr>
-							<td><strong>Password:</strong></td>
-							<td>{stagePassword || "None"}</td>
-						</tr>
-						<tr>
-							<td><strong>Curtains:</strong></td>
-							<td
-								><span class="tag is-small" class:is-warning={stageCurtains} class:is-success={!stageCurtains}
-									>{stageCurtains ? "Closed" : "Open"}</span
-								></td
-							>
-						</tr>
-						<tr>
-							<td><strong>Chat:</strong></td>
-							<td
-								><span class="tag is-small" class:is-success={stageChatEnabled} class:is-danger={!stageChatEnabled}
-									>{stageChatEnabled ? "Enabled" : "Disabled"}</span
-								></td
-							>
-						</tr>
-						<tr>
-							<td><strong>Effects:</strong></td>
-							<td
-								><span class="tag is-small" class:is-success={stageEffectsEnabled} class:is-danger={!stageEffectsEnabled}
-									>{stageEffectsEnabled ? "Enabled" : "Disabled"}</span
-								></td
-							>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<div class="column is-6">
-				<table class="table is-fullwidth is-narrow">
-					<tbody>
-						<tr>
-							<td><strong>Visitor Audio:</strong></td>
-							<td
-								><span class="tag is-small" class:is-success={stageVisitorAudioEnabled} class:is-danger={!stageVisitorAudioEnabled}
-									>{stageVisitorAudioEnabled ? "Allowed" : "Blocked"}</span
-								></td
-							>
-						</tr>
-						<tr>
-							<td><strong>Visitor Video:</strong></td>
-							<td
-								><span class="tag is-small" class:is-success={stageVisitorVideoEnabled} class:is-danger={!stageVisitorVideoEnabled}
-									>{stageVisitorVideoEnabled ? "Allowed" : "Blocked"}</span
-								></td
-							>
-						</tr>
-						<tr>
-							<td><strong>Layout:</strong></td>
-							<td>{stagePredefinedLayout || "Custom"}</td>
-						</tr>
-						<tr>
-							<td><strong>Layout Items:</strong></td>
-							<td>{stageLayout.length} items</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-		</div>
-
-		<!-- Password Management -->
+		<h2 class="subtitle">Stage Management</h2>
 		<div class="field">
-			<label class="label is-small">Set Stage Password</label>
+			<label class="label is-small" for="stage-password">Set Stage Password</label>
 			<div class="field has-addons">
 				<div class="control is-expanded">
-					<input class="input is-small" type="text" placeholder="New password (empty to remove)" bind:value={newPasswordInput} />
+					<input id="stage-password" class="input is-small" type="text" placeholder="New password (empty to remove)" bind:value={newPasswordInput} />
 				</div>
 				<div class="control">
 					<button class="button is-small is-primary" on:click={setStagePassword}>Set Password</button>
@@ -504,220 +284,28 @@
 	</div>
 
 	<!-- Peers Section -->
+	<!-- All Peers Information -->
 	<div class="box">
-		<h2 class="subtitle">Connected Peers</h2>
+		<h2 class="subtitle">All Peers</h2>
+		<div class="columns is-multiline">
+			{#each peersList as peer (peer.peerId)}
+				<div class="column is-6-tablet is-4-desktop">
+					<ConnectionStatus
+						peerId={peer.peerId}
+						peerData={peer}
+						isOnline={peer.online}
+						hasTransport={peer.hasTransport}
+						isMyPeer={peer.peerId === myPeerId}
+					/>
 
-		<!-- Peer Statistics -->
-		<div class="level is-mobile mb-3">
-			<div class="level-item has-text-centered">
-				<div>
-					<p class="heading">Total Peers</p>
-					<p class="title is-5">{peerCount}</p>
+					{#if peer.session?.media}
+						<PeerMediaStatus peerId={peer.peerId} peerData={peer} sessionData={peer.session} isActiveSpeaker={peer.peerId === activeSpeaker} />
+					{/if}
 				</div>
-			</div>
-			<div class="level-item has-text-centered">
-				<div>
-					<p class="heading">Online Peers</p>
-					<p class="title is-5">{onlinePeerCount}</p>
-				</div>
-			</div>
-			<div class="level-item has-text-centered">
-				<div>
-					<p class="heading">Actors</p>
-					<p class="title is-5">{peersList.filter((p) => p.actor).length}</p>
-				</div>
-			</div>
-			<div class="level-item has-text-centered">
-				<div>
-					<p class="heading">Media Streams</p>
-					<p class="title is-5">{consumerStats.activeVideo}V + {consumerStats.activeAudio}A</p>
-				</div>
-			</div>
+			{/each}
 		</div>
 
-		<!-- Media Transmission Overview -->
-		<div class="content mb-4">
-			<p class="subtitle is-6">Media Transmission Overview</p>
-
-			<!-- Legend -->
-			<div class="notification is-light mb-3 p-3">
-				<p class="is-size-7 has-text-weight-semibold mb-2">Legend:</p>
-				<div class="tags are-small">
-					<span class="tag is-success is-small">🟢 Transmitting</span>
-					<span class="tag is-warning is-small">⏸️ Paused</span>
-					<span class="tag is-light is-small">❌ Not transmitting</span>
-					<span class="tag is-info is-small">📥 Subscribed</span>
-				</div>
-			</div>
-
-			<div class="columns is-multiline">
-				{#each peersList.filter((p) => p.session && p.session.media && (p.session.media["cam-video"] || p.session.media["mic-audio"])) as peer (peer.peerId)}
-					{@const mediaStatus = getPeerMediaStatus(peer)}
-					<div class="column is-6-tablet is-4-desktop">
-						<div class="box p-3">
-							<div class="level is-mobile mb-2">
-								<div class="level-left">
-									<div class="level-item">
-										<span class="has-text-weight-semibold">{peer.name || peer.peerId}</span>
-									</div>
-								</div>
-								<div class="level-right">
-									<div class="level-item">
-										{#if peer.peerId === activeSpeaker}
-											<span class="tag is-small is-primary">Speaking</span>
-										{/if}
-									</div>
-								</div>
-							</div>
-							<div class="tags are-small">
-								<span
-									class="tag is-small"
-									class:is-success={mediaStatus.hasVideo && mediaStatus.videoStatus === "Transmitting"}
-									class:is-warning={mediaStatus.hasVideo && mediaStatus.videoStatus === "Paused"}
-									class:is-light={!mediaStatus.hasVideo}
-								>
-									{#if mediaStatus.hasVideo && mediaStatus.videoStatus === "Transmitting"}🟢{:else if mediaStatus.hasVideo && mediaStatus.videoStatus === "Paused"}⏸️{:else}❌{/if}
-									📹 Video
-								</span>
-								<span
-									class="tag is-small"
-									class:is-success={mediaStatus.hasAudio && mediaStatus.audioStatus === "Transmitting"}
-									class:is-warning={mediaStatus.hasAudio && mediaStatus.audioStatus === "Paused"}
-									class:is-light={!mediaStatus.hasAudio}
-								>
-									{#if mediaStatus.hasAudio && mediaStatus.audioStatus === "Transmitting"}🟢{:else if mediaStatus.hasAudio && mediaStatus.audioStatus === "Paused"}⏸️{:else}❌{/if}
-									🎤 Audio
-								</span>
-								{#if consumers.find((c) => c.appData.peerId === peer.peerId && c.appData.mediaTag === "cam-video")}
-									<span class="tag is-small is-info">📥 Video Sub</span>
-								{/if}
-								{#if consumers.find((c) => c.appData.peerId === peer.peerId && c.appData.mediaTag === "mic-audio")}
-									<span class="tag is-small is-info">📥 Audio Sub</span>
-								{/if}
-							</div>
-						</div>
-					</div>
-				{/each}
-			</div>
-			{#if peersList.filter((p) => p.session && p.session.media && (p.session.media["cam-video"] || p.session.media["mic-audio"])).length === 0}
-				<p class="has-text-grey">No peers are currently transmitting media</p>
-			{/if}
-		</div>
-
-		{#if peersList.length > 0}
-			<div class="table-container">
-				<table class="table is-fullwidth is-narrow is-hoverable">
-					<thead>
-						<tr>
-							<th>Peer ID</th>
-							<th>Name</th>
-							<th>Role</th>
-							<th>Transport</th>
-							<th>Media</th>
-							<th>Actions</th>
-						</tr>
-					</thead>
-					<tbody>
-						{#each peersList as peer (peer.peerId)}
-							<tr>
-								<td>
-									<span class="has-text-weight-semibold">{peer.peerId}</span>
-									<span class="tag is-small ml-2" class:is-success={peer.online} class:is-danger={!peer.online}>
-										{peer.online ? "Online" : "Offline"}
-									</span>
-									{#if peer.peerId === myPeerId}
-										<span class="tag is-small is-primary ml-2">You</span>
-									{/if}
-									{#if peer.peerId === activeSpeaker}
-										<span class="tag is-small is-success ml-2">Speaking</span>
-									{/if}
-								</td>
-								<td>{peer.name || "Unnamed"}</td>
-								<td>
-									<div class="tags are-small">
-										{#if peer.actor}<span class="tag is-success">Actor</span>{/if}
-										{#if peer.manager}<span class="tag is-info">Manager</span>{/if}
-										{#if peer.banned}<span class="tag is-danger">Banned</span>{/if}
-										{#if !peer.actor && !peer.manager}<span class="tag">Visitor</span>{/if}
-									</div>
-								</td>
-								<td>
-									<span class="tag is-small" class:is-success={peer.hasTransport} class:is-danger={!peer.hasTransport}>
-										Transport: {peer.hasTransport ? "Connected" : "Not Connected"}
-									</span>
-								</td>
-								<td>
-									{#if peer.session && peer.session.media}
-										{@const mediaStatus = getPeerMediaStatus(peer)}
-										<div class="tags are-small">
-											<span
-												class="tag is-small"
-												class:is-success={mediaStatus.hasVideo && mediaStatus.videoStatus === "Transmitting"}
-												class:is-warning={mediaStatus.hasVideo && mediaStatus.videoStatus === "Paused"}
-												class:is-light={!mediaStatus.hasVideo}
-											>
-												{#if mediaStatus.hasVideo && mediaStatus.videoStatus === "Transmitting"}🟢{:else if mediaStatus.hasVideo && mediaStatus.videoStatus === "Paused"}⏸️{:else}❌{/if}
-												📹
-											</span>
-											<span
-												class="tag is-small"
-												class:is-success={mediaStatus.hasAudio && mediaStatus.audioStatus === "Transmitting"}
-												class:is-warning={mediaStatus.hasAudio && mediaStatus.audioStatus === "Paused"}
-												class:is-light={!mediaStatus.hasAudio}
-											>
-												{#if mediaStatus.hasAudio && mediaStatus.audioStatus === "Transmitting"}🟢{:else if mediaStatus.hasAudio && mediaStatus.audioStatus === "Paused"}⏸️{:else}❌{/if}
-												🎤
-											</span>
-										</div>
-									{:else}
-										<div class="tags are-small">
-											<span class="tag is-light">❓📹</span>
-											<span class="tag is-light">❓🎤</span>
-										</div>
-									{/if}
-								</td>
-								<td>
-									<div class="buttons are-small">
-										{#if !consumers.find((c) => c.appData.peerId === peer.peerId && c.appData.mediaTag === "cam-video")}
-											<button
-												class="button is-small is-success"
-												on:click={() => roomClient.subscribeToTrack(peer.peerId, "cam-video")}
-												disabled={!joined || peer.peerId === myPeerId}
-											>
-												Subscribe to Video
-											</button>
-										{:else}
-											<button
-												class="button is-small is-danger"
-												on:click={() => roomClient.unsubscribeFromTrack(peer.peerId, "cam-video")}
-											>
-												Unsubscribe Video
-											</button>
-										{/if}
-										{#if !consumers.find((c) => c.appData.peerId === peer.peerId && c.appData.mediaTag === "mic-audio")}
-											<button
-												class="button is-small is-success"
-												on:click={() => roomClient.subscribeToTrack(peer.peerId, "mic-audio")}
-												disabled={!joined || peer.peerId === myPeerId}
-											>
-												Subscribe to Audio
-											</button>
-										{:else}
-											<button
-												class="button is-small is-danger"
-												on:click={() => roomClient.unsubscribeFromTrack(peer.peerId, "mic-audio")}
-											>
-												Unsubscribe Audio
-											</button>
-										{/if}
-									</div>
-								</td>
-							</tr>
-						{/each}
-					</tbody>
-				</table>
-			</div>
-		{:else}
+		{#if peersList.length === 0}
 			<p class="has-text-grey">No peers connected</p>
 		{/if}
 	</div>
@@ -728,11 +316,11 @@
 		<div class="columns">
 			<div class="column is-6">
 				<div class="field">
-					<label class="label is-small">Update Peer Name</label>
+					<label class="label is-small" for="peer-select">Update Peer Name</label>
 					<div class="field is-grouped">
 						<div class="control">
 							<div class="select is-small">
-								<select bind:value={targetPeerId}>
+								<select id="peer-select" bind:value={targetPeerId}>
 									<option value="">Select Peer...</option>
 									{#each peersList as peer (peer.peerId)}
 										<option value={peer.peerId}>{peer.peerId} ({peer.name || "Unnamed"})</option>
@@ -741,51 +329,13 @@
 							</div>
 						</div>
 						<div class="control is-expanded">
-							<input class="input is-small" type="text" placeholder="New name" bind:value={peerNameInput} />
+							<input id="peer-name-input" class="input is-small" type="text" placeholder="New name" bind:value={peerNameInput} />
 						</div>
 						<div class="control">
 							<button class="button is-small is-primary" on:click={updatePeerName} disabled={!targetPeerId || !peerNameInput.trim()}>
 								Update Name
 							</button>
 						</div>
-					</div>
-				</div>
-			</div>
-			<div class="column is-6">
-				<div class="field">
-					<label class="label is-small">Peer Actions</label>
-					<div class="buttons are-small">
-						{#each peersList.filter((p) => p.peerId !== myPeerId) as peer (peer.peerId)}
-							<div class="dropdown is-hoverable">
-								<div class="dropdown-trigger">
-									<button class="button is-small" aria-haspopup="true">
-										{peer.peerId} <span class="icon is-small"><i class="fas fa-angle-down" aria-hidden="true"></i></span>
-									</button>
-								</div>
-								<div class="dropdown-menu">
-									<div class="dropdown-content">
-										<button
-											class="dropdown-item button is-white"
-											on:click={() => roomClient.updatePeerBannedStatus(peer.peerId, !peer.banned)}
-										>
-											{peer.banned ? "Unban" : "Ban"} Peer
-										</button>
-										<button
-											class="dropdown-item button is-white"
-											on:click={() => roomClient.updatePeerActorStatus(peer.peerId, !peer.actor)}
-										>
-											{peer.actor ? "Remove Actor" : "Make Actor"}
-										</button>
-										<button
-											class="dropdown-item button is-white"
-											on:click={() => roomClient.updatePeerManagerStatus(peer.peerId, !peer.manager)}
-										>
-											{peer.manager ? "Remove Manager" : "Make Manager"}
-										</button>
-									</div>
-								</div>
-							</div>
-						{/each}
 					</div>
 				</div>
 			</div>
@@ -798,7 +348,7 @@
 
 		<!-- Room Controls -->
 		<div class="field">
-			<label class="label is-small">Room Controls</label>
+			<span class="label is-small">Room Controls</span>
 			<div class="buttons are-small">
 				<button class="button is-primary" on:click={roomClient.joinRoom} disabled={joined}>Join Room</button>
 				<button class="button is-danger" on:click={roomClient.leaveRoom} disabled={!joined}>Leave Room</button>
@@ -807,7 +357,7 @@
 
 		<!-- Media Stream Controls -->
 		<div class="field">
-			<label class="label is-small">Media Stream Controls</label>
+			<span class="label is-small">Media Stream Controls</span>
 			<div class="buttons are-small">
 				<button class="button is-info" on:click={() => roomClient.startLocalMediaStream(false, true)} disabled={hasLocalCam}>Video Only</button>
 				<button class="button is-info" on:click={() => roomClient.startLocalMediaStream(true, false)} disabled={hasLocalCam}>Audio Only</button>
@@ -819,7 +369,7 @@
 
 		<!-- Producer Controls -->
 		<div class="field">
-			<label class="label is-small">Producer Controls</label>
+			<span class="label is-small">Producer Controls</span>
 			<div class="buttons are-small">
 				<button class="button is-warning" on:click={() => roomClient.toggleVideoPaused()} disabled={!hasCamVideo}>
 					{camVideoPaused ? "Resume Video Producer" : "Pause Video Producer"}
@@ -832,26 +382,12 @@
 
 		<!-- Consumer Controls -->
 		<div class="field">
-			<label class="label is-small">Consumer Controls</label>
+			<span class="label is-small">Consumer Controls</span>
 			<div class="buttons are-small">
 				<button class="button is-warning" on:click={roomClient.resumeAllConsumers} disabled={consumers.length === 0}>Resume All Consumers</button>
 				<button class="button is-warning" on:click={roomClient.pauseAllConsumers} disabled={consumers.length === 0}>Pause All Consumers</button>
 				<button class="button is-danger" on:click={roomClient.closeAllConsumers} disabled={consumers.length === 0}>Close All Consumers</button>
 			</div>
-		</div>
-
-		<!-- Track Statistics -->
-		<div class="field">
-			<label class="label is-small">Track Statistics</label>
-			<button
-				class="button is-small is-info"
-				on:click={() => {
-					const stats = roomClient.getTrackStats();
-					console.log("Track Statistics:", stats);
-				}}
-			>
-				Log Track Stats
-			</button>
 		</div>
 	</div>
 </div>
@@ -893,13 +429,5 @@
 
 	.label {
 		margin-bottom: 0.25rem !important;
-	}
-
-	.table td {
-		padding: 0.25em 0.5em;
-	}
-
-	.dropdown {
-		margin-right: 0.5rem;
 	}
 </style>

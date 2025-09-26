@@ -25,7 +25,7 @@
 <MediaInputSelector />
 
 <!-- Manager Contents -->
-{#if $peerStore.manager}
+{#if $peerStore.manager || CONFIG.runtime.debug}
 	{#if $focusedInstrument}
 		<div class="instrument-control">
 			<a on:click={() => focusedInstrument.set(undefined)}>
@@ -47,30 +47,39 @@
 		</div>
 	{:else}
 		<div class="select-view mb-4" in:blur={{ duration: 100 }}>
-			<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "debug")}
-				><span class="icon is-size-5"><IconActivity /></span>
-				<span>Avancerad information</span></button
-			>
-			<hr />
-			<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "scene-settings")}
-				><span class="icon is-size-5"><IconLayers /></span>
-				<span>Sceninställningar</span></button
-			>
-			<hr />
-			<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "access")}
-				><span class="icon is-size-5"><IconKey /></span>
-				<span>Tillgång</span></button
-			>
-			<hr />
-			<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "participants")}
-				><span class="icon is-size-5"><IconUsers /></span>
-				<span>Deltagare</span></button
-			>
-			<hr />
-			<a class="button is-fullwidth is-small" href="/backstage" target="_blank">
-				<span class="icon is-size-5"><IconExternalLink /></span>
-				<span>Öppna Backstage</span>
-			</a>
+			{#if CONFIG.runtime.debug}
+				<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "debug")}
+					><span class="icon is-size-5"><IconActivity /></span>
+					<span>Debug Tools</span></button
+				>
+				<hr />
+			{/if}
+			{#if $peerStore.manager}
+				<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "debug")}
+					><span class="icon is-size-5"><IconActivity /></span>
+					<span>Avancerad information</span></button
+				>
+				<hr />
+				<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "scene-settings")}
+					><span class="icon is-size-5"><IconLayers /></span>
+					<span>Sceninställningar</span></button
+				>
+				<hr />
+				<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "access")}
+					><span class="icon is-size-5"><IconKey /></span>
+					<span>Tillgång</span></button
+				>
+				<hr />
+				<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "participants")}
+					><span class="icon is-size-5"><IconUsers /></span>
+					<span>Deltagare</span></button
+				>
+				<hr />
+				<a class="button is-fullwidth is-small" href="/backstage" target="_blank">
+					<span class="icon is-size-5"><IconExternalLink /></span>
+					<span>Öppna Backstage</span>
+				</a>
+			{/if}
 		</div>
 	{/if}
 {/if}
