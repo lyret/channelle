@@ -36,7 +36,7 @@ export async function restify(): Promise<Restify.Server> {
 	}
 
 	// Serve static files
-	const staticPath = Path.resolve(process.cwd(), CONFIG.build.clientOutput);
+	const staticPath = Path.resolve(process.cwd(), CONFIG.build.stageInterfaceOutput);
 	_restify.get(
 		"/*",
 		Restify.plugins.serveStatic({
@@ -45,7 +45,7 @@ export async function restify(): Promise<Restify.Server> {
 		}),
 	);
 
-	// Serve all html files in the ui output folder as paths without file extensions
+	// Serve all html files in the stage-interface output folder as paths without file extensions
 	await Fs.readdir(staticPath).then((files) =>
 		files
 			.filter((file) => file.endsWith(".html"))

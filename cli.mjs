@@ -1,9 +1,9 @@
 import { BroadcastChannel } from "broadcast-channel";
 import { createConfiguration } from "./_createConfiguration.mjs";
-import { createClientBuildContext } from "./_createClientBuildContext.mjs";
-import { createServerBuildContext } from "./_createServerBuildContext.mjs";
+import { createStageInterfaceBuildContext } from "./_createStageInterfaceBuildContext.mjs";
+import { createStageServerBuildContext } from "./_createStageServerBuildContext.mjs";
 import { createTheaterBuildContext } from "./_createTheaterBuildContext.mjs";
-import { runServerCode } from "./_runServerCode.mjs";
+import { runStageServerCode } from "./_runStageServerCode.mjs";
 import { runTheaterCode } from "./_runTheaterCode.mjs";
 
 // Create the global runtime configuration
@@ -46,11 +46,11 @@ if (CONFIG.runtime.theater) {
 		await runTheaterCode(CONFIG);
 	}
 } else {
-	// Default mode - build and run server and client
-	// Client
+	// Default mode - build and run stage-server and stage-interface
+	// Stage Interface
 	if (CONFIG.runtime.watch) {
 		try {
-			const clientContext = await createClientBuildContext(CONFIG, (results) => {
+			const stageInterfaceContext = await createStageInterfaceBuildContext(CONFIG, (results) => {
 				if (CONFIG.runtime.start && CONFIG.runtime.debug && results.metafile) {
 					channel.postMessage({
 						type: "build-event",
@@ -58,49 +58,49 @@ if (CONFIG.runtime.theater) {
 					});
 				}
 			});
-			await clientContext.customWatch();
+			await stageInterfaceContext.customWatch();
 		} catch (err) {
 			console.error(err);
 			process.exit(1);
 		}
 	} else if (CONFIG.runtime.build) {
 		try {
-			const clientContext = await createClientBuildContext(CONFIG);
-			await clientContext.rebuild();
-			await clientContext.dispose();
+			const stageInterfaceContext = await createStageInterfaceBuildContext(CONFIG);
+			await stageInterfaceContext.rebuild();
+			await stageInterfaceContext.dispose();
 		} catch (err) {
 			console.error(err);
 			process.exit(1);
 		}
 	}
 
-	// Server
+	// Stage Server
 	if (CONFIG.runtime.watch) {
 		try {
-			const serverContext = await createServerBuildContext(CONFIG, () => {
+			const stageServerContext = await createStageServerBuildContext(CONFIG, () => {
 				if (CONFIG.runtime.start) {
-					runServerCode(CONFIG);
+					runStageServerCode(CONFIG);
 				}
 			});
-			await serverContext.watch();
+			await stageServerContext.watch();
 		} catch (err) {
 			console.error(err);
 			process.exit(1);
 		}
 	} else if (CONFIG.runtime.build) {
 		try {
-			const serverContext = await createServerBuildContext(CONFIG);
-			await serverContext.rebuild();
-			await serverContext.dispose();
+			const stageServerContext = await createStageServerBuildContext(CONFIG);
+			await stageServerContext.rebuild();
+			await stageServerContext.dispose();
 		} catch (err) {
 			console.error(err);
 			process.exit(1);
 		}
 	}
 
-	// Import and start the server directly
+	// Import and start the stage-server directly
 	if (CONFIG.runtime.start && !CONFIG.runtime.watch) {
-		await runServerCode(CONFIG);
+		await runStageServerCode(CONFIG);
 	}
 }
 

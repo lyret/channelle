@@ -10,14 +10,14 @@
 		"strict": true,
 		"skipLibCheck": true,
 		"sourceMap": true,
-		"baseUrl": "./ui",
-		"typeRoots": ["./node_modules/@types", "./shared/types", "./ui/types"],
+		"baseUrl": "./stage-interface",
+		"typeRoots": ["./node_modules/@types", "./shared/types", "./stage-interface/types"],
 		"types": ["node"],
 		"paths": {
 			"~/*": ["./*"]
 		},
 		"outDir": "./.dist"
 	},
-	"include": ["shared/**/*", "ui/types/**/*", "eslint.config.mjs"],
-	"exclude": ["node_modules/*", "server/*", ".dist/*", ".vscode/*"]
+	"include": ["shared/**/*", "stage-interface/types/**/*", "eslint.config.mjs"],
+	"exclude": ["node_modules/*", "stage-server/*", ".dist/*", ".vscode/*"]
 }

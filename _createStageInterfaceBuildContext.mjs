@@ -13,10 +13,10 @@ import fs from "node:fs/promises";
 /** @typedef {import('./shared/types/config.mjs').CONFIG} CONFIG */
 
 /**
- * Creates the build context for building the client code using the given config
+ * Creates the build context for building the stage-interface code using the given config
  * @param {CONFIG} CONFIG - The runtime context
  */
-export async function createClientBuildContext(CONFIG, callback) {
+export async function createStageInterfaceBuildContext(CONFIG, callback) {
 	const { default: EsbuildHtml } = await import("@chialab/esbuild-plugin-html");
 
 	const context = await Esbuild.context({
@@ -29,8 +29,8 @@ export async function createClientBuildContext(CONFIG, callback) {
 		platform: "browser",
 		external: ["url"],
 		logLevel: CONFIG.runtime.verbose ? "warning" : "error",
-		entryPoints: CONFIG.build.clientInputs.map((path) => `./ui/${path}`),
-		outdir: Path.resolve(process.cwd(), CONFIG.build.clientOutput),
+		entryPoints: CONFIG.build.stageInterfaceInputs.map((path) => `./stage-interface/${path}`),
+		outdir: Path.resolve(process.cwd(), CONFIG.build.stageInterfaceOutput),
 		define: {
 			CONFIG: JSON.stringify(CONFIG),
 		},
@@ -59,8 +59,8 @@ export async function createClientBuildContext(CONFIG, callback) {
 				verbose: CONFIG.runtime.verbose,
 				resolveFrom: "cwd",
 				assets: {
-					from: ["ui/static/**/*"],
-					to: [".dist/ui/static"],
+					from: ["stage-interface/static/**/*"],
+					to: [".dist/stage-interface/static"],
 				},
 				watch: false, // Disable esbuild-plugin-copy's watch since we handle it ourselves
 			}),
@@ -70,7 +70,7 @@ export async function createClientBuildContext(CONFIG, callback) {
 					build.onEnd((results) => {
 						const hasJSCode = Object.keys(results.metafile?.outputs || {}).findIndex((key) => key.endsWith(".js")) > 0;
 						if (hasJSCode) {
-							console.log("\n📦", Chalk.white.bgGreen("[BUILD]"), Chalk.bold("New client code available\n"));
+							console.log("\n📦", Chalk.white.bgGreen("[BUILD]"), Chalk.bold("New stage-interface code available\n"));
 
 							if (callback) {
 								callback(results);
@@ -87,8 +87,8 @@ export async function createClientBuildContext(CONFIG, callback) {
 		// Perform initial build
 		await context.rebuild();
 
-		// Set up chokidar watcher for the ui directory
-		const watcher = chokidar.watch("./ui", {
+		// Set up chokidar watcher for the stage-interface directory
+		const watcher = chokidar.watch("./stage-interface", {
 			ignored: [
 				/(^|[/\\])\../, // Ignore dotfiles
 				/node_modules/, // Ignore node_modules
@@ -107,9 +107,9 @@ export async function createClientBuildContext(CONFIG, callback) {
 
 		// Helper function to copy static files
 		const copyStaticFile = async (sourcePath) => {
-			if (sourcePath.startsWith("ui/static/")) {
-				const relativePath = sourcePath.replace("ui/static/", "");
-				const destPath = Path.resolve(process.cwd(), CONFIG.build.clientOutput, "static", relativePath);
+			if (sourcePath.startsWith("stage-interface/static/")) {
+				const relativePath = sourcePath.replace("stage-interface/static/", "");
+				const destPath = Path.resolve(process.cwd(), CONFIG.build.stageInterfaceOutput, "static", relativePath);
 
 				try {
 					// Ensure destination directory exists
@@ -146,13 +146,13 @@ export async function createClientBuildContext(CONFIG, callback) {
 
 				try {
 					// Handle static files separately
-					if (path.startsWith("ui/static/")) {
+					if (path.startsWith("stage-interface/static/")) {
 						if (event === "add" || event === "change") {
 							await copyStaticFile(path);
 						} else if (event === "unlink") {
 							// Remove deleted static file from output
-							const relativePath = path.replace("ui/static/", "");
-							const destPath = Path.resolve(process.cwd(), CONFIG.build.clientOutput, "static", relativePath);
+							const relativePath = path.replace("stage-interface/static/", "");
+							const destPath = Path.resolve(process.cwd(), CONFIG.build.stageInterfaceOutput, "static", relativePath);
 							try {
 								await fs.unlink(destPath);
 								if (CONFIG.runtime.verbose) {
@@ -183,7 +183,7 @@ export async function createClientBuildContext(CONFIG, callback) {
 			.on("unlinkDir", (path) => triggerRebuild("unlinkDir", path))
 			.on("error", (error) => console.error(Chalk.red("[WATCH ERROR]"), error))
 			.on("ready", () => {
-				console.log(Chalk.yellow("👁️  Watching for changes in ui directory..."));
+				console.log(Chalk.yellow("👁️  Watching for changes in stage-interface directory..."));
 			});
 
 		// Store watcher reference for cleanup

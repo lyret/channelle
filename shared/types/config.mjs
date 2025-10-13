@@ -18,10 +18,10 @@
 
 /**
  * @typedef {Object} BuildConfig
- * @property {string} serverOutput - The directory to use for server builds.
- * @property {string} clientOutput - The directory to use for client builds.
+ * @property {string} stageServerOutput - The directory to use for stage-server builds.
+ * @property {string} stageInterfaceOutput - The directory to use for stage-interface builds.
  * @property {string} theaterOutput - The directory to use for theater builds.
- * @property {Array<string>} clientInputs - The files to use as build inputs for the client, relative to the 'ui' folder.
+ * @property {Array<string>} stageInterfaceInputs - The files to use as build inputs for the stage-interface, relative to the 'stage-interface' folder.
  */
 
 /**

@@ -25,14 +25,14 @@ type PackageConfig = {
 };
 
 type BuildConfig = {
-	/** The directory to use for server builds. */
-	serverOutput: string;
-	/** The directory to use for client builds. */
-	clientOutput: string;
+	/** The directory to use for stage-server builds. */
+	stageServerOutput: string;
+	/** The directory to use for stage-interface builds. */
+	stageInterfaceOutput: string;
 	/** The directory to use for theater builds. */
 	theaterOutput: string;
-	/** The files to use as build inputs for the client, relative to the 'ui' folder. */
-	clientInputs: Array<string>;
+	/** The files to use as build inputs for the stage-interface, relative to the 'stage-interface' folder. */
+	stageInterfaceInputs: Array<string>;
 };
 
 type DebugConfig = {
