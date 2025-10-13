@@ -7,6 +7,7 @@
  * @property {boolean} build - Indicates if build mode is enabled.
  * @property {boolean} watch - Indicates if watch mode is enabled.
  * @property {boolean} start - Indicates if start mode is enabled.
+ * @property {boolean} theater - Indicates if theater mode is enabled.
  */
 
 /**
@@ -19,6 +20,7 @@
  * @typedef {Object} BuildConfig
  * @property {string} serverOutput - The directory to use for server builds.
  * @property {string} clientOutput - The directory to use for client builds.
+ * @property {string} theaterOutput - The directory to use for theater builds.
  * @property {Array<string>} clientInputs - The files to use as build inputs for the client, relative to the 'ui' folder.
  */
 

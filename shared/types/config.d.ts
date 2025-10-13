@@ -13,6 +13,8 @@ type RuntimeConfig = {
 	watch: boolean;
 	/** Indicates if start mode is enabled. */
 	start: boolean;
+	/** Indicates if theater mode is enabled. */
+	theater: boolean;
 };
 
 type PackageConfig = {
@@ -27,6 +29,8 @@ type BuildConfig = {
 	serverOutput: string;
 	/** The directory to use for client builds. */
 	clientOutput: string;
+	/** The directory to use for theater builds. */
+	theaterOutput: string;
 	/** The files to use as build inputs for the client, relative to the 'ui' folder. */
 	clientInputs: Array<string>;
 };

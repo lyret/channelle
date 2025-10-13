@@ -36,6 +36,7 @@ export async function createConfiguration() {
 			build: Boolean,
 			watch: Boolean,
 			start: Boolean,
+			theater: Boolean,
 		},
 		{
 			p: ["--port"],
@@ -43,6 +44,7 @@ export async function createConfiguration() {
 			b: ["--build"],
 			d: ["--debug"],
 			w: ["--watch"],
+			t: ["--theater"],
 		},
 	);
 
@@ -113,6 +115,10 @@ export async function createConfiguration() {
 	// The START option will make the CLI program launch the server with the current configuration
 	const start = cli.start !== undefined ? cli.start : env.START != "false" || false;
 	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Start", start);
+
+	// The THEATER option will make the CLI program build and run the theater component instead of server/client
+	const theater = cli.theater !== undefined ? cli.theater : env.THEATER != "false" || false;
+	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Theater", theater);
 	console.log();
 
 	// Create an array of transport listening info for webRTC, will be filled
@@ -192,6 +198,7 @@ export async function createConfiguration() {
 			build: build,
 			watch: watch,
 			start: start,
+			theater: theater,
 		},
 		/** Package Information */
 		package: {
@@ -206,6 +213,8 @@ export async function createConfiguration() {
 			serverOutput: ".dist/server",
 			/** The directory to use for client builds */
 			clientOutput: ".dist/ui",
+			/** The directory to use for theater builds */
+			theaterOutput: ".dist/theater",
 			/** The files to use as build inputs for the client, relative to the 'ui' folder. */
 			clientInputs: ["index.html", "debug.html", "stage.html", "backstage.html", "_home.ts", "_debug.ts", "_stage.ts", "_backstage.ts"],
 		},
