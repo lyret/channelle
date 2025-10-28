@@ -2,9 +2,10 @@ import { BroadcastChannel } from "broadcast-channel";
 import { createConfiguration } from "./_createConfiguration.mjs";
 import { createStageInterfaceBuildContext } from "./_createStageInterfaceBuildContext.mjs";
 import { createStageServerBuildContext } from "./_createStageServerBuildContext.mjs";
-import { createTheaterBuildContext } from "./_createTheaterBuildContext.mjs";
+import { createTheaterServerBuildContext } from "./_createTheaterServerBuildContext.mjs";
+import { createTheaterInterfaceBuildContext } from "./_createTheaterInterfaceBuildContext.mjs";
 import { runStageServerCode } from "./_runStageServerCode.mjs";
-import { runTheaterCode } from "./_runTheaterCode.mjs";
+import { runTheaterServerCode } from "./_runTheaterServerCode.mjs";
 
 // Create the global runtime configuration
 const CONFIG = await createConfiguration();
@@ -17,33 +18,61 @@ const channel = new BroadcastChannel("cli-channel");
 // ------------------------------------------
 
 if (CONFIG.runtime.theater) {
-	// Theater mode - only build and run theater
+	// Theater mode - build and run theater-server and theater-interface
+	// Theater Interface
 	if (CONFIG.runtime.watch) {
 		try {
-			const theaterContext = await createTheaterBuildContext(CONFIG, () => {
-				if (CONFIG.runtime.start) {
-					runTheaterCode(CONFIG);
+			const theaterInterfaceContext = await createTheaterInterfaceBuildContext(CONFIG, (results) => {
+				if (CONFIG.runtime.start && CONFIG.runtime.debug && results.metafile) {
+					channel.postMessage({
+						type: "build-event",
+						data: results.metafile.outputs,
+					});
 				}
 			});
-			await theaterContext.watch();
+			await theaterInterfaceContext.customWatch();
 		} catch (err) {
 			console.error(err);
 			process.exit(1);
 		}
 	} else if (CONFIG.runtime.build) {
 		try {
-			const theaterContext = await createTheaterBuildContext(CONFIG);
-			await theaterContext.rebuild();
-			await theaterContext.dispose();
+			const theaterInterfaceContext = await createTheaterInterfaceBuildContext(CONFIG);
+			await theaterInterfaceContext.rebuild();
+			await theaterInterfaceContext.dispose();
 		} catch (err) {
 			console.error(err);
 			process.exit(1);
 		}
 	}
 
-	// Import and start the theater directly
+	// Theater Server
+	if (CONFIG.runtime.watch) {
+		try {
+			const theaterServerContext = await createTheaterServerBuildContext(CONFIG, () => {
+				if (CONFIG.runtime.start) {
+					runTheaterServerCode(CONFIG);
+				}
+			});
+			await theaterServerContext.watch();
+		} catch (err) {
+			console.error(err);
+			process.exit(1);
+		}
+	} else if (CONFIG.runtime.build) {
+		try {
+			const theaterServerContext = await createTheaterServerBuildContext(CONFIG);
+			await theaterServerContext.rebuild();
+			await theaterServerContext.dispose();
+		} catch (err) {
+			console.error(err);
+			process.exit(1);
+		}
+	}
+
+	// Import and start the theater-server directly
 	if (CONFIG.runtime.start && !CONFIG.runtime.watch) {
-		await runTheaterCode(CONFIG);
+		await runTheaterServerCode(CONFIG);
 	}
 } else {
 	// Default mode - build and run stage-server and stage-interface

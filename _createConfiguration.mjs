@@ -213,10 +213,14 @@ export async function createConfiguration() {
 			stageServerOutput: ".dist/stage-server",
 			/** The directory to use for stage-interface builds */
 			stageInterfaceOutput: ".dist/stage-interface",
-			/** The directory to use for theater builds */
-			theaterOutput: ".dist/theater",
+			/** The directory to use for theater-server builds */
+			theaterServerOutput: ".dist/theater-server",
+			/** The directory to use for theater-interface builds */
+			theaterInterfaceOutput: ".dist/theater-interface",
 			/** The files to use as build inputs for the stage-interface, relative to the 'stage-interface' folder. */
-			stageInterfaceInputs: ["index.html", "debug.html", "stage.html", "backstage.html", "_home.ts", "_debug.ts", "_stage.ts", "_backstage.ts"],
+			stageInterfaceInputs: ["home.html", "debug.html", "stage.html", "backstage.html", "_home.ts", "_debug.ts", "_stage.ts", "_backstage.ts"],
+			/** The files to use as build inputs for the theater-interface, relative to the 'theater-interface' folder. */
+			theaterInterfaceInputs: ["theater.html", "_theater.ts"],
 		},
 		/** Debug Settings */
 		debug: {

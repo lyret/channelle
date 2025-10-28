@@ -5,10 +5,10 @@ import Path from "node:path";
 /** @typedef {import('./shared/types/config.mjs').CONFIG} CONFIG */
 
 /**
- * Creates the build context for building the theater code using the given config
+ * Creates the build context for building the theater-server code using the given config
  * @param {CONFIG} CONFIG - The runtime context
  */
-export async function createTheaterBuildContext(CONFIG, callback) {
+export async function createTheaterServerBuildContext(CONFIG, callback) {
 	return Esbuild.context({
 		bundle: true,
 		write: true,
@@ -19,8 +19,8 @@ export async function createTheaterBuildContext(CONFIG, callback) {
 		platform: "node",
 		packages: "external",
 		logLevel: CONFIG.runtime.verbose ? "warning" : "error",
-		entryPoints: ["./theater/index.ts"],
-		outfile: Path.resolve(process.cwd(), CONFIG.build.theaterOutput, "index.mjs"),
+		entryPoints: ["./theater-server/index.ts"],
+		outfile: Path.resolve(process.cwd(), CONFIG.build.theaterServerOutput, "index.mjs"),
 		define: {
 			CONFIG: JSON.stringify(CONFIG),
 		},
@@ -30,7 +30,7 @@ export async function createTheaterBuildContext(CONFIG, callback) {
 				setup(build) {
 					build.onEnd((results) => {
 						if (results.metafile?.outputs) {
-							console.log("\n📦", Chalk.white.bgMagenta("[BUILD]"), Chalk.bold("New theater code available\n"));
+							console.log("\n📦", Chalk.white.bgMagenta("[BUILD]"), Chalk.bold("New theater-server code available\n"));
 
 							if (callback) {
 								callback(results);

@@ -78,11 +78,10 @@ stage/
 - Watch mode for development with hot reloading
 - Separate contexts for client/server builds
 
-### Scripts
-- `npm run dev`: Development mode with watch, build, and start
-- `npm run production:build`: Production build
-- `npm run production:start`: Production start
-- `npm run lint`: ESLint + Svelte-check validation
+
+### Styles
+- Do not create inline styles
+- Use bulma class names for styling svelte code
 
 ### Environment
 - Supports local, LAN, and WAN deployment modes

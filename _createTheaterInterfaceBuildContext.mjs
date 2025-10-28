@@ -13,10 +13,10 @@ import fs from "node:fs/promises";
 /** @typedef {import('./shared/types/config.mjs').CONFIG} CONFIG */
 
 /**
- * Creates the build context for building the stage-interface code using the given config
+ * Creates the build context for building the theater-interface code using the given config
  * @param {CONFIG} CONFIG - The runtime context
  */
-export async function createStageInterfaceBuildContext(CONFIG, callback) {
+export async function createTheaterInterfaceBuildContext(CONFIG, callback) {
 	const { default: EsbuildHtml } = await import("@chialab/esbuild-plugin-html");
 
 	const context = await Esbuild.context({
@@ -29,8 +29,8 @@ export async function createStageInterfaceBuildContext(CONFIG, callback) {
 		platform: "browser",
 		external: ["url"],
 		logLevel: CONFIG.runtime.verbose ? "warning" : "error",
-		entryPoints: CONFIG.build.stageInterfaceInputs.map((path) => `./stage-interface/${path}`),
-		outdir: Path.resolve(process.cwd(), CONFIG.build.stageInterfaceOutput),
+		entryPoints: CONFIG.build.theaterInterfaceInputs.map((path) => `./ui/${path}`),
+		outdir: Path.resolve(process.cwd(), CONFIG.build.theaterInterfaceOutput),
 		define: {
 			CONFIG: JSON.stringify(CONFIG),
 		},
@@ -60,9 +60,14 @@ export async function createStageInterfaceBuildContext(CONFIG, callback) {
 				resolveFrom: "cwd",
 				assets: {
 					from: ["ui/static/**/*"],
-					to: [CONFIG.build.stageInterfaceOutput+"/static"],
+					to: [CONFIG.build.theaterInterfaceOutput + "/static"],
 				},
 				watch: false, // Disable esbuild-plugin-copy's watch since we handle it ourselves
+				keepStructure: true,
+				globbyOptions: {
+					onlyFiles: true,
+					dot: false,
+				},
 			}),
 			{
 				name: "EsbuildCallback",
@@ -70,7 +75,7 @@ export async function createStageInterfaceBuildContext(CONFIG, callback) {
 					build.onEnd((results) => {
 						const hasJSCode = Object.keys(results.metafile?.outputs || {}).findIndex((key) => key.endsWith(".js")) > 0;
 						if (hasJSCode) {
-							console.log("\n📦", Chalk.white.bgGreen("[BUILD]"), Chalk.bold("New stage-interface code available\n"));
+							console.log("\n📦", Chalk.white.bgCyan("[BUILD]"), Chalk.bold("New theater-interface code available\n"));
 
 							if (callback) {
 								callback(results);
@@ -87,7 +92,7 @@ export async function createStageInterfaceBuildContext(CONFIG, callback) {
 		// Perform initial build
 		await context.rebuild();
 
-		// Set up chokidar watcher for the stage-interface directory
+		// Set up chokidar watcher for the theater-interface directory
 		const watcher = chokidar.watch("./ui", {
 			ignored: [
 				/(^|[/\\])\../, // Ignore dotfiles
@@ -109,7 +114,7 @@ export async function createStageInterfaceBuildContext(CONFIG, callback) {
 		const copyStaticFile = async (sourcePath) => {
 			if (sourcePath.startsWith("ui/static/")) {
 				const relativePath = sourcePath.replace("ui/static/", "");
-				const destPath = Path.resolve(process.cwd(), CONFIG.build.stageInterfaceOutput, "static", relativePath);
+				const destPath = Path.resolve(process.cwd(), CONFIG.build.theaterInterfaceOutput, "static", relativePath);
 
 				try {
 					// Ensure destination directory exists
@@ -152,7 +157,7 @@ export async function createStageInterfaceBuildContext(CONFIG, callback) {
 						} else if (event === "unlink") {
 							// Remove deleted static file from output
 							const relativePath = path.replace("ui/static/", "");
-							const destPath = Path.resolve(process.cwd(), CONFIG.build.stageInterfaceOutput, "static", relativePath);
+							const destPath = Path.resolve(process.cwd(), CONFIG.build.theaterInterfaceOutput, "static", relativePath);
 							try {
 								await fs.unlink(destPath);
 								if (CONFIG.runtime.verbose) {
@@ -183,7 +188,7 @@ export async function createStageInterfaceBuildContext(CONFIG, callback) {
 			.on("unlinkDir", (path) => triggerRebuild("unlinkDir", path))
 			.on("error", (error) => console.error(Chalk.red("[WATCH ERROR]"), error))
 			.on("ready", () => {
-				console.log(Chalk.yellow("👁️  Watching for changes in stage-interface directory..."));
+				console.log(Chalk.yellow("👁️  Watching for changes in theater-interface directory..."));
 			});
 
 		// Store watcher reference for cleanup

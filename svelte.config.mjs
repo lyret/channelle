@@ -5,7 +5,7 @@ import preprocess from "svelte-preprocess";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 const filePath = dirname(fileURLToPath(import.meta.url));
-const sassPath = `${filePath}/stage-interface/styles/`;
+const sassPath = `${filePath}/ui/styles/`;
 
 export default {
 	compilerOptions: {

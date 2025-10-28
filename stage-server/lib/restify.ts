@@ -52,7 +52,7 @@ export async function restify(): Promise<Restify.Server> {
 			.map((file) => [file, `/${file.split(".")[0]}`])
 			.forEach(([file, url]) => {
 				_restify.get(
-					url == "/index" ? "/" : url,
+					url == "/home" ? "/" : url,
 					Restify.plugins.serveStatic({
 						file: file,
 						directory: staticPath,

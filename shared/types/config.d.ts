@@ -29,10 +29,14 @@ type BuildConfig = {
 	stageServerOutput: string;
 	/** The directory to use for stage-interface builds. */
 	stageInterfaceOutput: string;
-	/** The directory to use for theater builds. */
-	theaterOutput: string;
+	/** The directory to use for theater-server builds. */
+	theaterServerOutput: string;
+	/** The directory to use for theater-interface builds. */
+	theaterInterfaceOutput: string;
 	/** The files to use as build inputs for the stage-interface, relative to the 'stage-interface' folder. */
 	stageInterfaceInputs: Array<string>;
+	/** The files to use as build inputs for the theater-interface, relative to the 'theater-interface' folder. */
+	theaterInterfaceInputs: Array<string>;
 };
 
 type DebugConfig = {
