@@ -19,7 +19,7 @@ export async function createStageServerBuildContext(CONFIG, callback) {
 		platform: "node",
 		packages: "external",
 		logLevel: CONFIG.runtime.verbose ? "warning" : "error",
-		entryPoints: ["./stage-server/index.ts"],
+		entryPoints: ["./server/stageServer.ts"],
 		outfile: Path.resolve(process.cwd(), CONFIG.build.stageServerOutput, "index.mjs"),
 		define: {
 			CONFIG: JSON.stringify(CONFIG),

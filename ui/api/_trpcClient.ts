@@ -54,3 +54,6 @@ export const chatClient = appClient.chat;
 
 /** Client for the Effects API only */
 export const effectsClient = appClient.effects;
+
+/** Client for the Stage API only */
+export const stageClient = appClient.stage;

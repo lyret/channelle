@@ -3,6 +3,8 @@ import { Sequelize } from "sequelize";
 import { initPeer } from "../models/Peer";
 import { initMessage } from "../models/Message";
 import { initScene } from "../models/Scene";
+import { initStage } from "../models/Stage";
+import { seedStages } from "./seedStages";
 
 let _sequelize: Sequelize | undefined;
 
@@ -33,9 +35,13 @@ export async function sequelize(): Promise<Sequelize> {
 	initPeer(_sequelize);
 	initMessage(_sequelize);
 	initScene(_sequelize);
+	initStage(_sequelize);
 
 	// Sync all models with the database
 	await _sequelize.sync();
+
+	// Seed initial data
+	await seedStages();
 
 	console.log("[Database] Connection has been established successfully.");
 	return _sequelize;

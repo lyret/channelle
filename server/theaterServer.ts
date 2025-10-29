@@ -18,7 +18,7 @@ async function createWebServer(): Promise<http.Server> {
 	const server = http.createServer(async (req, res) => {
 		try {
 			// Get the requested path, default to index.html
-			let filePath = req.url === "/" ? "/index.html" : req.url || "/index.html";
+			let filePath = req.url === "/" ? "/theater.html" : req.url || "/theater.html";
 
 			// Remove query parameters
 			filePath = filePath.split("?")[0];
@@ -80,12 +80,12 @@ async function main(): Promise<void> {
 	const port = CONFIG.runtime.port;
 
 	server.listen(port, () => {
-		console.log(`[THEATER] Interface available at: http://localhost:${port}`);
+		console.log(`🎭 [THEATER] Interface available at: http://localhost:${port}`);
 	});
 
 	// Handle graceful shutdown
 	process.on("SIGTERM", () => {
-		console.log("[THEATER] Server shutting down...");
+		console.log("🎭[THEATER] Server shutting down...");
 		server.close(() => {
 			process.exit(0);
 		});

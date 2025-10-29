@@ -19,5 +19,5 @@
 		"outDir": "./.dist"
 	},
 	"include": ["shared/**/*", "ui/types/**/*", "eslint.config.mjs"],
-	"exclude": ["node_modules/*", "stage-server/*", ".dist/*", ".vscode/*"]
+	"exclude": ["node_modules/*", "server/*", ".dist/*", ".vscode/*"]
 }

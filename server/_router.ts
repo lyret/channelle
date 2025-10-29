@@ -5,6 +5,7 @@ import { closePeer, roomRouter } from "./routers/roomRouter";
 import { developmentRouter } from "./routers/development";
 import { chatRouter } from "./routers/chatRouter";
 import { effectsRouter } from "./routers/effectsRouter";
+import { stageRouter } from "./routers/stageRouter";
 
 /**
  * Creates and returns the application router
@@ -19,6 +20,7 @@ export async function createAppRouter() {
 		development: developmentRouter,
 		chat: chatRouter,
 		effects: effectsRouter,
+		stage: stageRouter,
 	};
 
 	// Remove handling of incomming development messages from the cli

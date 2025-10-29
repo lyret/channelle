@@ -19,7 +19,7 @@ export async function createTheaterServerBuildContext(CONFIG, callback) {
 		platform: "node",
 		packages: "external",
 		logLevel: CONFIG.runtime.verbose ? "warning" : "error",
-		entryPoints: ["./theater-server/index.ts"],
+		entryPoints: ["./server/theaterServer.ts"],
 		outfile: Path.resolve(process.cwd(), CONFIG.build.theaterServerOutput, "index.mjs"),
 		define: {
 			CONFIG: JSON.stringify(CONFIG),
@@ -30,7 +30,7 @@ export async function createTheaterServerBuildContext(CONFIG, callback) {
 				setup(build) {
 					build.onEnd((results) => {
 						if (results.metafile?.outputs) {
-							console.log("\n📦", Chalk.white.bgMagenta("[BUILD]"), Chalk.bold("New theater-server code available\n"));
+							console.log("\n📦", Chalk.white.bgMagenta("[BUILD]"), Chalk.bold("New theater server code available\n"));
 
 							if (callback) {
 								callback(results);

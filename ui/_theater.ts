@@ -1,7 +1,9 @@
-import TheaterHome from "~/components/pages/TheaterHome.svelte";
+import "@babel/polyfill";
+import Theater from "~/components/pages/Theater.svelte";
+
 
 // Mount the Svelte interface
-const theaterComponent = new TheaterHome({
+const theaterComponent = new Theater({
 	target: document.body,
 	props: {},
 });

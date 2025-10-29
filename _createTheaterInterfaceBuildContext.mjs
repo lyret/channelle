@@ -63,11 +63,6 @@ export async function createTheaterInterfaceBuildContext(CONFIG, callback) {
 					to: [CONFIG.build.theaterInterfaceOutput + "/static"],
 				},
 				watch: false, // Disable esbuild-plugin-copy's watch since we handle it ourselves
-				keepStructure: true,
-				globbyOptions: {
-					onlyFiles: true,
-					dot: false,
-				},
 			}),
 			{
 				name: "EsbuildCallback",

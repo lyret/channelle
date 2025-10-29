@@ -6,34 +6,29 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
 		<!-- Title -->
-		<title>Channelle</title>
+		<title>Channelle - Scener</title>
 
 		<!-- Theme color -->
-		<meta name="theme-color" content="#1a1a1a" />
+		<meta name="theme-color" content="#000000" media="(prefers-color-scheme: light)" />
+		<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
 
 		<!-- Stylesheet variables -->
 		<style>
-			:root {
-				--theater-bg-color: #1a1a1a;
-				--theater-text-color: #ffffff;
-				--theater-accent-color: #ff6b6b;
-				--theater-secondary-color: #4ecdc4;
-			}
+		:root {
+			--channelle-main-bg-color: black;
+			--channelle-main-text-color: white;
+
+			--channelle-menu-bg-color: black;
+			--channelle-menu-text-color: white;
+
+			--channelle-backstage-bg-color: var(--channelle-menu-bg-color);
+			--channelle-backstage-text-color: var(--channelle-menu-text-color);
+		}
 
 			html,
 			body {
-				background-color: var(--theater-bg-color);
-				color: var(--theater-text-color);
-				font-family: 'Arial', sans-serif;
-				margin: 0;
-				padding: 0;
-				height: 100%;
-			}
-
-			body {
-				display: flex;
-				justify-content: center;
-				align-items: center;
+				background-color: var(--channelle-main-bg-color);
+				color: var(--channelle-main-text-color);
 			}
 		</style>
 
