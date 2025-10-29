@@ -5,9 +5,9 @@
 	import stageLightsGif from "~/assets/gifs/stagelights_turning_orange_md_clr.gif";
 </script>
 
-<section class="has-text-centered"  in:blur={{ delay: 500, duration: 1000 }} >
+<section class="has-text-centered" in:blur={{ delay: 500, duration: 1000 }}>
 	<div class="hero-body has-text-centered">
-		<div class="container" in:blur={{ delay: 500, duration: 1000 }} 	>
+		<div class="container" in:blur={{ delay: 500, duration: 1000 }}>
 			<div class="decorations">
 				<img src={stageLightsGif} alt="Stage lights" class="stage-lights" />
 				<img src={stageLightsGif} alt="Stage lights" class="stage-lights" />
@@ -16,8 +16,8 @@
 				<img src={stageLightsGif} alt="Stage lights" class="stage-lights" />
 			</div>
 		</div>
-		<img src={logoGif} alt="Channelle" class="logo"/>
-		<h2 class="subtitle theater-title">Välkommen till din kvartersteater</h2>
+		<img src={logoGif} alt="Channelle" class="logo" />
+		<h2 class="subtitle theater-title">Välkommen till vår kvartersteater</h2>
 	</div>
 </section>
 

@@ -1,8 +1,8 @@
-import { TRPCError } from "@trpc/server";
-import { z } from "zod";
-import { trpc, sequelize } from "../lib";
+import type { CreateStageData, UpdateStageData, PublicStageData, StageListItem, StageAuthRequest, StageAuthResponse } from "../_types";
 import { Stage } from "../models/Stage";
-import type { CreateStageData, UpdateStageData, PublicStageData, StageListItem, StageAuthRequest, StageAuthResponse } from "../../../shared";
+import { TRPCError } from "@trpc/server";
+import { trpc, sequelize } from "../lib";
+import { z } from "zod";
 
 // Get the trpc router constructor and default procedure
 const { router: trcpRouter, procedure: trcpProcedure } = trpc();
@@ -14,38 +14,39 @@ export const stageRouter = trcpRouter({
 	/**
 	 * Get all stages (public information only)
 	 */
-	list: trcpProcedure
-		.query(async (): Promise<StageListItem[]> => {
-			try {
-				const stages = await Stage.findAll({
-					order: [['updatedAt', 'DESC']],
-				});
+	list: trcpProcedure.query(async (): Promise<StageListItem[]> => {
+		try {
+			const stages = await Stage.findAll({
+				order: [["updatedAt", "DESC"]],
+			});
 
-				return stages.map(stage => ({
-					id: stage.id,
-					name: stage.name,
-					description: stage.description,
-					isPasswordProtected: Boolean(stage.stagePassword && stage.stagePassword.trim() !== ''),
-					isOnline: false, // TODO: Implement online status detection
-					participantCount: 0, // TODO: Implement participant counting
-					url: `${CONFIG.server.protocol}://${CONFIG.server.host}:${CONFIG.server.port}/stage/${stage.id}`,
-				}));
-			} catch (error) {
-				console.error("[StageRouter] Error fetching stages:", error);
-				throw new TRPCError({
-					code: "INTERNAL_SERVER_ERROR",
-					message: "Failed to fetch stages",
-				});
-			}
-		}),
+			return stages.map((stage) => ({
+				id: stage.id,
+				name: stage.name,
+				description: stage.description,
+				isPasswordProtected: Boolean(stage.stagePassword && stage.stagePassword.trim() !== ""),
+				isOnline: false, // TODO: Implement online status detection
+				participantCount: 0, // TODO: Implement participant counting
+				url: `/stage/${stage.id}`,
+			}));
+		} catch (error) {
+			console.error("[StageRouter] Error fetching stages:", error);
+			throw new TRPCError({
+				code: "INTERNAL_SERVER_ERROR",
+				message: "Failed to fetch stages",
+			});
+		}
+	}),
 
 	/**
 	 * Get a single stage by ID (public information only)
 	 */
 	get: trcpProcedure
-		.input(z.object({
-			id: z.number().int().positive(),
-		}))
+		.input(
+			z.object({
+				id: z.number().int().positive(),
+			}),
+		)
 		.query(async ({ input }): Promise<PublicStageData | null> => {
 			try {
 				const stage = await Stage.findByPk(input.id);
@@ -58,7 +59,7 @@ export const stageRouter = trcpRouter({
 					id: stage.id,
 					name: stage.name,
 					description: stage.description,
-					isPasswordProtected: Boolean(stage.stagePassword && stage.stagePassword.trim() !== ''),
+					isPasswordProtected: Boolean(stage.stagePassword && stage.stagePassword.trim() !== ""),
 					createdAt: stage.createdAt,
 					updatedAt: stage.updatedAt,
 				};
@@ -75,16 +76,18 @@ export const stageRouter = trcpRouter({
 	 * Create a new stage
 	 */
 	create: trcpProcedure
-		.input(z.object({
-			name: z.string().min(1).max(255),
-			description: z.string().optional().default(""),
-			stagePassword: z.string().optional().default(""),
-		}))
+		.input(
+			z.object({
+				name: z.string().min(1).max(255),
+				description: z.string().optional().default(""),
+				stagePassword: z.string().optional().default(""),
+			}),
+		)
 		.mutation(async ({ input }): Promise<PublicStageData> => {
 			try {
 				// Check if stage name already exists
 				const existingStage = await Stage.findOne({
-					where: { name: input.name }
+					where: { name: input.name },
 				});
 
 				if (existingStage) {
@@ -106,7 +109,7 @@ export const stageRouter = trcpRouter({
 					id: stage.id,
 					name: stage.name,
 					description: stage.description,
-					isPasswordProtected: Boolean(stage.stagePassword && stage.stagePassword.trim() !== ''),
+					isPasswordProtected: Boolean(stage.stagePassword && stage.stagePassword.trim() !== ""),
 					createdAt: stage.createdAt,
 					updatedAt: stage.updatedAt,
 				};
@@ -126,12 +129,14 @@ export const stageRouter = trcpRouter({
 	 * Update an existing stage
 	 */
 	update: trcpProcedure
-		.input(z.object({
-			id: z.number().int().positive(),
-			name: z.string().min(1).max(255).optional(),
-			description: z.string().optional(),
-			stagePassword: z.string().optional(),
-		}))
+		.input(
+			z.object({
+				id: z.number().int().positive(),
+				name: z.string().min(1).max(255).optional(),
+				description: z.string().optional(),
+				stagePassword: z.string().optional(),
+			}),
+		)
 		.mutation(async ({ input }): Promise<PublicStageData> => {
 			try {
 				const stage = await Stage.findByPk(input.id);
@@ -146,7 +151,7 @@ export const stageRouter = trcpRouter({
 				// Check if new name conflicts with existing stages (if name is being changed)
 				if (input.name && input.name !== stage.name) {
 					const existingStage = await Stage.findOne({
-						where: { name: input.name }
+						where: { name: input.name },
 					});
 
 					if (existingStage) {
@@ -170,7 +175,7 @@ export const stageRouter = trcpRouter({
 					id: stage.id,
 					name: stage.name,
 					description: stage.description,
-					isPasswordProtected: Boolean(stage.stagePassword && stage.stagePassword.trim() !== ''),
+					isPasswordProtected: Boolean(stage.stagePassword && stage.stagePassword.trim() !== ""),
 					createdAt: stage.createdAt,
 					updatedAt: stage.updatedAt,
 				};
@@ -190,9 +195,11 @@ export const stageRouter = trcpRouter({
 	 * Delete a stage
 	 */
 	delete: trcpProcedure
-		.input(z.object({
-			id: z.number().int().positive(),
-		}))
+		.input(
+			z.object({
+				id: z.number().int().positive(),
+			}),
+		)
 		.mutation(async ({ input }): Promise<{ success: boolean }> => {
 			try {
 				const stage = await Stage.findByPk(input.id);
@@ -224,10 +231,12 @@ export const stageRouter = trcpRouter({
 	 * Authenticate access to a password-protected stage
 	 */
 	authenticate: trcpProcedure
-		.input(z.object({
-			stageId: z.number().int().positive(),
-			password: z.string(),
-		}))
+		.input(
+			z.object({
+				stageId: z.number().int().positive(),
+				password: z.string(),
+			}),
+		)
 		.mutation(async ({ input }): Promise<StageAuthResponse> => {
 			try {
 				const stage = await Stage.findByPk(input.stageId);
@@ -240,7 +249,7 @@ export const stageRouter = trcpRouter({
 				}
 
 				// Check if stage is password protected
-				const isPasswordProtected = Boolean(stage.stagePassword && stage.stagePassword.trim() !== '');
+				const isPasswordProtected = Boolean(stage.stagePassword && stage.stagePassword.trim() !== "");
 
 				if (!isPasswordProtected) {
 					// Stage is not password protected, allow access

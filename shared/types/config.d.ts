@@ -25,14 +25,12 @@ type PackageConfig = {
 };
 
 type BuildConfig = {
-	/** The directory to use for stage-server builds. */
-	stageServerOutput: string;
-	/** The directory to use for stage-interface builds. */
-	stageInterfaceOutput: string;
-	/** The directory to use for theater-server builds. */
-	theaterServerOutput: string;
-	/** The directory to use for theater-interface builds. */
-	theaterInterfaceOutput: string;
+	/** The directory to use for server builds. */
+	serverOutput: string;
+	/** The directory to use for interface builds. */
+	interfaceOutput: string;
+	/** The default interface entry point file (either "home.html" or "theater.html"). */
+	defaultInterfaceEntryPoint: string;
 	/** The files to use as build inputs for the stage-interface, relative to the 'stage-interface' folder. */
 	stageInterfaceInputs: Array<string>;
 	/** The files to use as build inputs for the theater-interface, relative to the 'theater-interface' folder. */

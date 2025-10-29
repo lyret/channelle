@@ -24,7 +24,7 @@ export async function enableHotReloadingOnRebuilds() {
 				// 	for (const outputPath of Object.keys(buildOutputs)) {
 				// 		if (
 				// 			url.host === location.host &&
-				// 			`${CONFIG.build.clientOutput}${url.pathname}` == outputPath
+				// 			`${CONFIG.build.interfaceOutput}${url.pathname}` == outputPath
 				// 		) {
 				// 			// Create a new link element for the css, load it and delete
 				// 			// the previous link element

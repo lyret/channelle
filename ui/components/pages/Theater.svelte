@@ -30,32 +30,28 @@
 	<!-- Main content area with columns -->
 	<section class="section">
 		<div class="container is-fluid">
-					<div class="container">
+			<div class="container">
+				<!-- Action Bar Controls -->
+				<TheaterActionBar />
 
-						<!-- Action Bar Controls -->
-						<TheaterActionBar />
-
-						<!-- Stages list section -->
-						{#if isLoadingStages}
-							<div class="box">
-								<div class="has-text-centered">
-									<div class="is-loading"></div>
-									<p class="is-family-secondary">Loading stages...</p>
-								</div>
-							</div>
-						{:else if stagesError}
-							<div class="box">
-								<div class="notification is-danger is-light">
-									<p class="is-family-secondary">Error: {stagesError}</p>
-									<button class="button is-small is-danger is-outlined mt-2" on:click={fetchStages}>
-										Retry
-									</button>
-								</div>
-							</div>
-						{:else}
-						{/if}
+				<!-- Stages list section -->
+				{#if isLoadingStages}
+					<div class="box">
+						<div class="has-text-centered">
+							<div class="is-loading"></div>
+							<p class="is-family-secondary">Hämtar scener & servrar...</p>
+						</div>
 					</div>
-				</div>
+				{:else if stagesError}
+					<div class="box">
+						<div class="notification is-danger is-light">
+							<p class="is-family-secondary">ojdå: {stagesError}</p>
+							<button class="button is-small is-danger is-outlined mt-2" on:click={fetchStages}> Försök igen </button>
+						</div>
+					</div>
+				{:else}{/if}
+			</div>
+		</div>
 	</section>
 
 	<!-- Create Stage Modal -->
@@ -71,47 +67,28 @@
 					<div class="field">
 						<label class="label is-family-secondary">Stage Name</label>
 						<div class="control">
-							<input
-								class="input"
-								type="text"
-								placeholder="Enter stage name"
-								bind:value={newStageName}
-								required
-							/>
+							<input class="input" type="text" placeholder="Enter stage name" bind:value={newStageName} required />
 						</div>
 					</div>
 
 					<div class="field">
 						<label class="label is-family-secondary">Description</label>
 						<div class="control">
-							<textarea
-								class="textarea"
-								placeholder="Enter stage description (optional)"
-								bind:value={newStageDescription}
-							></textarea>
+							<textarea class="textarea" placeholder="Enter stage description (optional)" bind:value={newStageDescription}></textarea>
 						</div>
 					</div>
 
 					<div class="field">
 						<label class="label is-family-secondary">Stage Password</label>
 						<div class="control">
-							<input
-								class="input"
-								type="password"
-								placeholder="Enter password (optional)"
-								bind:value={newStagePassword}
-							/>
+							<input class="input" type="password" placeholder="Enter password (optional)" bind:value={newStagePassword} />
 						</div>
 						<p class="help">Leave empty for a public stage</p>
 					</div>
 				</section>
 				<footer class="modal-card-foot">
-					<button class="button is-primary is-family-secondary" on:click={submitCreateStage}>
-						Create Stage
-					</button>
-					<button class="button is-family-secondary" on:click={cancelCreateStage}>
-						Cancel
-					</button>
+					<button class="button is-primary is-family-secondary" on:click={submitCreateStage}> Create Stage </button>
+					<button class="button is-family-secondary" on:click={cancelCreateStage}> Cancel </button>
 				</footer>
 			</div>
 		</div>

@@ -38,7 +38,7 @@ export async function runTheaterServerCode(CONFIG) {
 			console.log("\n🎭", Chalk.white.bgMagenta("[THEATER-SERVER]"), Chalk.bold("Launching\n"));
 
 			// Create subprocess arguments
-			const args = [Path.resolve(process.cwd(), CONFIG.build.theaterServerOutput + "/index.mjs")];
+			const args = [Path.resolve(process.cwd(), CONFIG.build.serverOutput + "/index.mjs")];
 
 			// Enable debugging arguments
 			if (CONFIG.runtime.debug) {

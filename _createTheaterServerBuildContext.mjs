@@ -20,7 +20,7 @@ export async function createTheaterServerBuildContext(CONFIG, callback) {
 		packages: "external",
 		logLevel: CONFIG.runtime.verbose ? "warning" : "error",
 		entryPoints: ["./server/theaterServer.ts"],
-		outfile: Path.resolve(process.cwd(), CONFIG.build.theaterServerOutput, "index.mjs"),
+		outfile: Path.resolve(process.cwd(), CONFIG.build.serverOutput, "index.mjs"),
 		define: {
 			CONFIG: JSON.stringify(CONFIG),
 		},

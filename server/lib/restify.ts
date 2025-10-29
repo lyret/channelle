@@ -36,7 +36,7 @@ export async function restify(): Promise<Restify.Server> {
 	}
 
 	// Serve static files
-	const staticPath = Path.resolve(process.cwd(), CONFIG.build.stageInterfaceOutput);
+	const staticPath = Path.resolve(process.cwd(), CONFIG.build.interfaceOutput);
 	_restify.get(
 		"/*",
 		Restify.plugins.serveStatic({
@@ -51,8 +51,10 @@ export async function restify(): Promise<Restify.Server> {
 			.filter((file) => file.endsWith(".html"))
 			.map((file) => [file, `/${file.split(".")[0]}`])
 			.forEach(([file, url]) => {
+				// Use the default entry point from config to determine root path mapping
+				const defaultEntryPoint = `/${CONFIG.build.defaultInterfaceEntryPoint.split(".")[0]}`;
 				_restify.get(
-					url == "/home" ? "/" : url,
+					url == defaultEntryPoint ? "/" : url,
 					Restify.plugins.serveStatic({
 						file: file,
 						directory: staticPath,

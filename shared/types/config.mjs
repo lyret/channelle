@@ -18,10 +18,9 @@
 
 /**
  * @typedef {Object} BuildConfig
- * @property {string} stageServerOutput - The directory to use for stage-server builds.
- * @property {string} stageInterfaceOutput - The directory to use for stage-interface builds.
- * @property {string} theaterServerOutput - The directory to use for theater-server builds.
- * @property {string} theaterInterfaceOutput - The directory to use for theater-interface builds.
+ * @property {string} serverOutput - The directory to use for server builds.
+ * @property {string} interfaceOutput - The directory to use for interface builds.
+ * @property {string} defaultInterfaceEntryPoint - The default interface entry point file (either "home.html" or "theater.html").
  * @property {Array<string>} stageInterfaceInputs - The files to use as build inputs for the stage-interface, relative to the 'stage-interface' folder.
  * @property {Array<string>} theaterInterfaceInputs - The files to use as build inputs for the theater-interface, relative to the 'theater-interface' folder.
  */

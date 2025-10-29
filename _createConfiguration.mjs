@@ -116,7 +116,7 @@ export async function createConfiguration() {
 	const start = cli.start !== undefined ? cli.start : env.START != "false" || false;
 	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Start", start);
 
-	// The THEATER option will make the CLI program build and run the theater component instead of server/client
+	// The THEATER option will make the CLI program build and run the orhestration theater instead of a stage
 	const theater = cli.theater !== undefined ? cli.theater : env.THEATER === "true" || false;
 	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Theater", theater);
 	console.log();
@@ -209,14 +209,12 @@ export async function createConfiguration() {
 		isProduction: production,
 		/** Build Settings */
 		build: {
-			/** The directory to use for stage-server builds */
-			stageServerOutput: ".dist/stage-server",
-			/** The directory to use for stage-interface builds */
-			stageInterfaceOutput: ".dist/stage-interface",
-			/** The directory to use for theater-server builds */
-			theaterServerOutput: ".dist/theater-server",
-			/** The directory to use for theater-interface builds */
-			theaterInterfaceOutput: ".dist/theater-interface",
+			/** The directory to use for server builds */
+			serverOutput: theater ? ".dist/theater-server" : ".dist/stage-server",
+			/** The directory to use for interface builds */
+			interfaceOutput: theater ? ".dist/theater-interface" : ".dist/stage-interface",
+			/** The default interface entry point file */
+			defaultInterfaceEntryPoint: theater ? "theater.html" : "home.html",
 			/** The files to use as build inputs for the stage-interface, relative to the 'stage-interface' folder. */
 			stageInterfaceInputs: ["home.html", "debug.html", "stage.html", "backstage.html", "_home.ts", "_debug.ts", "_stage.ts", "_backstage.ts"],
 			/** The files to use as build inputs for the theater-interface, relative to the 'theater-interface' folder. */

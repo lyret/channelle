@@ -29,8 +29,8 @@ export async function createStageInterfaceBuildContext(CONFIG, callback) {
 		platform: "browser",
 		external: ["url"],
 		logLevel: CONFIG.runtime.verbose ? "warning" : "error",
-		entryPoints: CONFIG.build.stageInterfaceInputs.map((path) => `./stage-interface/${path}`),
-		outdir: Path.resolve(process.cwd(), CONFIG.build.stageInterfaceOutput),
+		entryPoints: CONFIG.build.stageInterfaceInputs.map((path) => `./ui/${path}`),
+		outdir: Path.resolve(process.cwd(), CONFIG.build.interfaceOutput),
 		define: {
 			CONFIG: JSON.stringify(CONFIG),
 		},
@@ -58,10 +58,16 @@ export async function createStageInterfaceBuildContext(CONFIG, callback) {
 			EsbuildCopy({
 				verbose: CONFIG.runtime.verbose,
 				resolveFrom: "cwd",
-				assets: {
-					from: ["ui/static/**/*"],
-					to: [CONFIG.build.stageInterfaceOutput+"/static"],
-				},
+				assets: [
+					{
+						from: ["ui/static/**/*"],
+						to: [CONFIG.build.interfaceOutput + "/static"],
+					},
+					{
+						from: ["ui/assets/seo/**/*"],
+						to: [CONFIG.build.interfaceOutput],
+					},
+				],
 				watch: false, // Disable esbuild-plugin-copy's watch since we handle it ourselves
 			}),
 			{
@@ -107,9 +113,9 @@ export async function createStageInterfaceBuildContext(CONFIG, callback) {
 
 		// Helper function to copy static files
 		const copyStaticFile = async (sourcePath) => {
-			if (sourcePath.startsWith("ui/static/")) {
-				const relativePath = sourcePath.replace("ui/static/", "");
-				const destPath = Path.resolve(process.cwd(), CONFIG.build.stageInterfaceOutput, "static", relativePath);
+			if (sourcePath.startsWith("ui/assets/seo/")) {
+				const relativePath = sourcePath.replace("ui/assets/seo/", "");
+				const destPath = Path.resolve(process.cwd(), CONFIG.build.interfaceOutput, relativePath);
 
 				try {
 					// Ensure destination directory exists
@@ -118,10 +124,26 @@ export async function createStageInterfaceBuildContext(CONFIG, callback) {
 					await fs.copyFile(sourcePath, destPath);
 
 					if (CONFIG.runtime.verbose) {
-						console.log(Chalk.gray(`[STATIC] Copied ${sourcePath} -> ${destPath}`));
+						console.log(Chalk.gray(`[SEO] Copied ${sourcePath} to ${destPath}`));
 					}
 				} catch (error) {
-					console.error(Chalk.red(`[STATIC ERROR] Failed to copy ${sourcePath}:`), error);
+					console.error(Chalk.red(`[SEO] Failed to copy ${sourcePath}:`, error.message));
+				}
+			} else if (sourcePath.startsWith("ui/static/")) {
+				const relativePath = sourcePath.replace("ui/static/", "");
+				const destPath = Path.resolve(process.cwd(), CONFIG.build.interfaceOutput, "static", relativePath);
+
+				try {
+					// Ensure destination directory exists
+					await fs.mkdir(Path.dirname(destPath), { recursive: true });
+					// Copy the file
+					await fs.copyFile(sourcePath, destPath);
+
+					if (CONFIG.runtime.verbose) {
+						console.log(Chalk.gray(`[STATIC] Copied ${sourcePath} to ${destPath}`));
+					}
+				} catch (error) {
+					console.error(Chalk.red(`[STATIC] Failed to copy ${sourcePath}:`, error.message));
 				}
 			}
 		};
@@ -151,15 +173,28 @@ export async function createStageInterfaceBuildContext(CONFIG, callback) {
 							await copyStaticFile(path);
 						} else if (event === "unlink") {
 							// Remove deleted static file from output
-							const relativePath = path.replace("ui/static/", "");
-							const destPath = Path.resolve(process.cwd(), CONFIG.build.stageInterfaceOutput, "static", relativePath);
-							try {
-								await fs.unlink(destPath);
-								if (CONFIG.runtime.verbose) {
-									console.log(Chalk.gray(`[STATIC] Removed ${destPath}`));
+							if (path.startsWith("ui/assets/seo/")) {
+								const relativePath = path.replace("ui/assets/seo/", "");
+								const destPath = Path.resolve(process.cwd(), CONFIG.build.interfaceOutput, relativePath);
+								try {
+									await fs.unlink(destPath);
+									if (CONFIG.runtime.verbose) {
+										console.log(Chalk.gray(`[SEO] Removed ${destPath}`));
+									}
+								} catch {
+									// File might not exist, ignore error
 								}
-							} catch {
-								// File might not exist, ignore error
+							} else if (path.startsWith("ui/static/")) {
+								const relativePath = path.replace("ui/static/", "");
+								const destPath = Path.resolve(process.cwd(), CONFIG.build.interfaceOutput, "static", relativePath);
+								try {
+									await fs.unlink(destPath);
+									if (CONFIG.runtime.verbose) {
+										console.log(Chalk.gray(`[STATIC] Removed ${destPath}`));
+									}
+								} catch {
+									// File might not exist, ignore error
+								}
 							}
 						}
 					} else {

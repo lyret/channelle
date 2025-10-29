@@ -41,7 +41,7 @@ export async function runStageServerCode(CONFIG) {
 			}
 
 			// Create subprocess arguments
-			const args = [Path.resolve(process.cwd(), CONFIG.build.stageServerOutput + "/index.mjs")];
+			const args = [Path.resolve(process.cwd(), CONFIG.build.serverOutput + "/index.mjs")];
 
 			// Enable debugging arguments
 			if (CONFIG.runtime.debug) {
