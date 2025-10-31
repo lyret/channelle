@@ -1,12 +1,13 @@
 <script lang="ts">
+	import { onMount } from "svelte";
 	import { blur } from "svelte/transition";
 	import { openInstruments } from "~/stores/instruments";
+	import { getStage, currentStageStore } from "~/api/stage";
+	import type { PublicStageDataResponse } from "~/types/serverSideTypes";
 
-	import Wrapper from "./_Wrapper.svelte";
 	import AccessInstrument from "~/components/instruments/AccessInstrument.svelte";
 	import ChatInstrument from "~/components/instruments/ChatInstrument.svelte";
 	import MediaLibraryInstrument from "~/components/instruments/MediaLibraryInstrument.svelte";
-	import ParticipantsInstrument from "~/components/instruments/ParticipantsInstrument.svelte";
 	import SceneSelectorInstrument from "~/components/instruments/SceneSelectorInstrument.svelte";
 
 	import IconCheckCircle from "~/components/icons/Icon-check-circle.svelte";
@@ -14,21 +15,98 @@
 	import IconKey from "~/components/icons/Icon-key.svelte";
 	import IconLayers from "~/components/icons/Icon-layers.svelte";
 	import IconMessageCircle from "~/components/icons/Icon-message-circle.svelte";
-	import IconUsers from "~/components/icons/Icon-users.svelte";
 
 	import logoSrc from "~/assets/images/redrose.gif";
+
+	let currentStage: PublicStageDataResponse | null = null;
+	let loading = true;
+	let error: string | null = null;
+
+	onMount(async () => {
+		// Get show ID from URL parameters
+		const urlParams = new URLSearchParams(window.location.search);
+		const showId = urlParams.get("show");
+
+		if (showId) {
+			try {
+				const stageId = parseInt(showId, 10);
+				if (!isNaN(stageId)) {
+					// Store stage ID in session storage for persistence
+					sessionStorage.setItem("currentStageId", stageId.toString());
+
+					currentStage = await getStage(stageId);
+					if (!currentStage) {
+						error = `Stage with ID ${stageId} not found`;
+					} else {
+						// Update the global current stage store
+						currentStageStore.set(currentStage);
+					}
+				} else {
+					error = "Invalid stage ID format";
+				}
+			} catch (err) {
+				error = err instanceof Error ? err.message : "Failed to load stage data";
+				console.error("Error loading stage:", err);
+			}
+		} else {
+			// Check if we have a stage ID in session storage
+			const storedStageId = sessionStorage.getItem("currentStageId");
+			if (storedStageId) {
+				try {
+					const stageId = parseInt(storedStageId, 10);
+					if (!isNaN(stageId)) {
+						currentStage = await getStage(stageId);
+						if (!currentStage) {
+							error = `Stage with ID ${stageId} not found`;
+						} else {
+							currentStageStore.set(currentStage);
+						}
+					} else {
+						error = "Invalid stored stage ID format";
+					}
+				} catch (err) {
+					error = err instanceof Error ? err.message : "Failed to load stored stage data";
+					console.error("Error loading stored stage:", err);
+				}
+			} else {
+				error = "No stage ID specified in URL";
+			}
+		}
+
+		loading = false;
+	});
 </script>
 
-<Wrapper lockedToManager={true}>
-	<main in:blur={{ delay: 500, duration: 1000 }}>
-		<!-- Header -->
-		<div class="image-container has-text-centered header" style="height:100px" in:blur={{ duration: 5000, delay: 2000 }}>
-			<img src={logoSrc} alt="logotyp" class="mt-3 mb-0" style="height:80px" />
-		</div>
-		<div class="has-text-centered mb-4" in:blur={{ duration: 500, delay: 1000 }}>
-			<h1 class="title is-4 has-text-white">Förberedelser</h1>
+<main in:blur={{ delay: 500, duration: 1000 }}>
+	<!-- Header -->
+	<div class="image-container has-text-centered header" style="height:100px" in:blur={{ duration: 5000, delay: 2000 }}>
+		<img src={logoSrc} alt="logotyp" class="mt-3 mb-0" style="height:80px" />
+	</div>
+	<div class="has-text-centered mb-4" in:blur={{ duration: 500, delay: 1000 }}>
+		<h1 class="title is-4 has-text-white">Förberedelser</h1>
+		{#if loading}
+			<p class="subtitle is-6 has-text-grey">Laddar scendata...</p>
+		{:else if error}
+			<p class="subtitle is-6 has-text-danger">{error}</p>
+		{:else if currentStage}
+			<p class="subtitle is-6 has-text-grey">Konfigurera scenen "{currentStage.name}" innan lansering</p>
+		{:else}
 			<p class="subtitle is-6 has-text-grey">Konfigurera scenen innan lansering</p>
+		{/if}
+	</div>
+
+	{#if loading}
+		<div class="has-text-centered" style="margin-top: 2rem;">
+			<div class="is-loading"></div>
 		</div>
+	{:else if error}
+		<div class="notification is-danger is-light" style="margin: 2rem;">
+			<p class="has-text-centered">{error}</p>
+			<div class="has-text-centered" style="margin-top: 1rem;">
+				<a href="/" class="button is-secondary">Tillbaka till teatern</a>
+			</div>
+		</div>
+	{:else if currentStage}
 		<div class="tabs is-light is-boxed is-centered mb-0" in:blur={{ duration: 100 }}>
 			<ul>
 				<li class:is-active={$openInstruments["scene-settings"]}>
@@ -36,19 +114,6 @@
 						><span class="icon"><IconLayers /></span> Scenen
 						<span class="icon">
 							{#if $openInstruments["scene-settings"]}
-								<IconCheckCircle />
-							{:else}
-								<IconCircle />
-							{/if}
-						</span></a
-					>
-				</li>
-				<li class:is-active={$openInstruments["participants"]}>
-					<a on:click={() => openInstruments.toggle("participants")}
-						><span class="icon"><IconUsers /></span>
-						Deltagare
-						<span class="icon">
-							{#if $openInstruments["participants"]}
 								<IconCheckCircle />
 							{:else}
 								<IconCircle />
@@ -101,11 +166,6 @@
 					<SceneSelectorInstrument />
 				</div>
 			{/if}
-			{#if $openInstruments["participants"]}
-				<div class="instrument">
-					<ParticipantsInstrument />
-				</div>
-			{/if}
 			{#if $openInstruments["chat"]}
 				<div class="instrument">
 					<ChatInstrument />
@@ -122,8 +182,8 @@
 				</div>
 			{/if}
 		</div>
-	</main>
-</Wrapper>
+	{/if}
+</main>
 
 <style>
 	main {

@@ -38,7 +38,7 @@
 							</span>
 						</a>
 					{:else if $isTheaterAuthenticated}
-						<a class="button is-small is-secondary" href="/preperation/{show.id}"
+						<a class="button is-small is-secondary" href="/preparation?show={show.id}"
 							>Förbered&nbsp;&nbsp;
 							<span class="icon is-small">
 								<PicolEdit />
