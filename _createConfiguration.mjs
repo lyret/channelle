@@ -26,6 +26,7 @@ export async function createConfiguration() {
 			name: String,
 			inviteKey: String,
 			id: String,
+			theaterPassword: String,
 			production: Boolean,
 			port: Number,
 			verbose: Boolean,
@@ -119,6 +120,12 @@ export async function createConfiguration() {
 	// The THEATER option will make the CLI program build and run the orhestration theater instead of a stage
 	const theater = cli.theater !== undefined ? cli.theater : env.THEATER === "true" || false;
 	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Theater", theater);
+
+	// If THEATER_PASSWORD is set or 'theaterPassword' is given in the CLI it will be used for theater authentication
+	const theaterPassword = cli.theaterPassword !== undefined ? cli.theaterPassword : env.THEATER_PASSWORD || "admin";
+	if (theater) {
+		console.log("🏷️ ", Chalk.bgBlueBright("[CONFIG]"), "Theater Password", theaterPassword);
+	}
 	console.log();
 
 	// Create an array of transport listening info for webRTC, will be filled
@@ -230,6 +237,7 @@ export async function createConfiguration() {
 			name: stageName,
 			inviteKey: stageInviteLinkKey,
 			id: stageId,
+			theaterPassword: theaterPassword,
 		},
 		/** Web Server Settings */
 		web: {

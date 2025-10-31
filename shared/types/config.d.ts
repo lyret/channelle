@@ -49,6 +49,8 @@ type StageConfig = {
 	inviteKey: string;
 	/** The identifier for the stage. */
 	id: string;
+	/** The password for theater authentication. */
+	theaterPassword: string;
 };
 
 type WebConfig = {

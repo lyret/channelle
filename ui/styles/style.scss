@@ -39,6 +39,10 @@ $background: #000;
 	$radius-large: 28px,
 	$radius-rounded: 45px,
 
+	// Modals
+	$modal-card-head-radius: 0,
+	$modal-card-foot-radius: 0,
+
 	// Colors
 	$primary: $primary,
 	$info: $info,
@@ -47,14 +51,21 @@ $background: #000;
 	$warning: $warning,
 	$danger: $danger,
 	$background: black,
+	$body-background-color: black,
+
 	// Tabs
 	$tabs-link-active-color: $primary,
 	$tabs-link-active-border-bottom-color: $primary,
+
 	// Notification
 	$notification-code-background-color: $primary
 );
 /* Use the extension Bulma List */
 @use "./_bulmaList.scss";
+
+.modal-card-head {
+	box-shadow: none !important;
+}
 
 // Breakpoints:
 // mobile: up to 768px

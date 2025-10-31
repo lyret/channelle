@@ -2,23 +2,44 @@
 	import { onMount } from "svelte";
 	import TheaterHeader from "~/components/theater/TheaterHeader.svelte";
 	import TheaterActionBar from "~/components/theater/TheaterActionBar.svelte";
-	import StagesList from "~/components/theater/StagesList.svelte";
-	import { stagesStore, stagesLoadingStore, stagesErrorStore, fetchStages, createStage, initializeStageAPI } from "~/api/stage";
-	import type { CreateStageData } from "~/shared";
 
-	let isSignedIn = false;
-	let showCreateStageModal = false;
-	let newStageName = "";
-	let newStageDescription = "";
-	let newStagePassword = "";
+	import AuthenticationModal from "~/components/modals/TheaterAuthenticationModal.svelte";
+	import AboutModal from "~/components/modals/TheaterAboutModal.svelte";
+	import CreateStageModal from "~/components/modals/TheaterCreateStageModal.svelte";
+	import { stagesLoadingStore, stagesErrorStore, fetchStages, initializeStageAPI } from "~/api/stage";
+	import { showAuthModal, showAboutModal, showCreateStageModal, closeAuthModal, closeAboutModal, closeCreateStageModal } from "~/stores/theaterModals";
+	import StagesList from "../theater/StagesList.svelte";
 
 	onMount(async () => {
 		// Initialize the stage API and fetch stages
 		await initializeStageAPI();
 	});
 
+	// Modal event handlers
+	function handleAuthenticated() {
+		closeAuthModal();
+	}
+
+	function handleAuthCancel() {
+		closeAuthModal();
+	}
+
+	function handleAboutClose() {
+		closeAboutModal();
+	}
+
+	function handleStageCreated(event: CustomEvent<{ id: number; name: string }>) {
+		closeCreateStageModal();
+		console.log(`Stage created: ${event.detail.name} (ID: ${event.detail.id})`);
+		// Refresh the stages list
+		fetchStages();
+	}
+
+	function handleCreateStageCancel() {
+		closeCreateStageModal();
+	}
+
 	// Use reactive statement to get stages from store
-	$: stages = $stagesStore;
 	$: isLoadingStages = $stagesLoadingStore;
 	$: stagesError = $stagesErrorStore;
 </script>
@@ -28,9 +49,12 @@
 	<TheaterHeader />
 
 	<!-- Main content area with columns -->
-	<section class="section">
+	<section class="section theater-content">
+		<div class="column-background left-column"></div>
+		<div class="column-background right-column"></div>
+
 		<div class="container is-fluid">
-			<div class="container">
+			<div class="container content-container">
 				<!-- Action Bar Controls -->
 				<TheaterActionBar />
 
@@ -49,50 +73,20 @@
 							<button class="button is-small is-danger is-outlined mt-2" on:click={fetchStages}> Försök igen </button>
 						</div>
 					</div>
-				{:else}{/if}
+				{:else}
+					<!-- Stages content would go here -->
+					<StagesList></StagesList>
+				{/if}
 			</div>
 		</div>
 	</section>
 
-	<!-- Create Stage Modal -->
-	{#if showCreateStageModal}
-		<div class="modal is-active">
-			<div class="modal-background" on:click={cancelCreateStage}></div>
-			<div class="modal-card">
-				<header class="modal-card-head">
-					<p class="modal-card-title is-family-title">Create New Stage</p>
-					<button class="delete" aria-label="close" on:click={cancelCreateStage}></button>
-				</header>
-				<section class="modal-card-body">
-					<div class="field">
-						<label class="label is-family-secondary">Stage Name</label>
-						<div class="control">
-							<input class="input" type="text" placeholder="Enter stage name" bind:value={newStageName} required />
-						</div>
-					</div>
+	<!-- Modals managed centrally -->
+	<AuthenticationModal isVisible={$showAuthModal} on:authenticated={handleAuthenticated} on:cancel={handleAuthCancel} />
 
-					<div class="field">
-						<label class="label is-family-secondary">Description</label>
-						<div class="control">
-							<textarea class="textarea" placeholder="Enter stage description (optional)" bind:value={newStageDescription}></textarea>
-						</div>
-					</div>
+	<AboutModal isVisible={$showAboutModal} on:close={handleAboutClose} />
 
-					<div class="field">
-						<label class="label is-family-secondary">Stage Password</label>
-						<div class="control">
-							<input class="input" type="password" placeholder="Enter password (optional)" bind:value={newStagePassword} />
-						</div>
-						<p class="help">Leave empty for a public stage</p>
-					</div>
-				</section>
-				<footer class="modal-card-foot">
-					<button class="button is-primary is-family-secondary" on:click={submitCreateStage}> Create Stage </button>
-					<button class="button is-family-secondary" on:click={cancelCreateStage}> Cancel </button>
-				</footer>
-			</div>
-		</div>
-	{/if}
+	<CreateStageModal isVisible={$showCreateStageModal} on:created={handleStageCreated} on:cancel={handleCreateStageCancel} />
 </main>
 
 <style lang="scss">
@@ -104,20 +98,54 @@
 
 	.section {
 		flex: 1;
+		position: relative;
 	}
 
-	.columns.is-fullheight {
-		min-height: calc(100vh - 200px);
+	.theater-content {
+		position: relative;
+		overflow-x: hidden;
 	}
 
-	// Responsive adjustments
-	@include mobile {
-		.columns {
-			display: block;
+	.column-background {
+		position: fixed;
+		top: 0;
+		bottom: 0;
+		width: 80px;
+		background-image: url("~/assets/gifs/fiori.gif");
+		background-repeat: repeat-y;
+		background-size: contain;
+		background-position: center;
+		pointer-events: none;
+		z-index: 0;
+		opacity: 0.6;
+	}
+
+	.left-column {
+		left: 20px;
+	}
+
+	.right-column {
+		right: 20px;
+	}
+
+	.content-container {
+		position: relative;
+		z-index: 1;
+		border-radius: 8px;
+		padding: 1.5rem;
+		margin: 0 auto;
+		max-width: 1200px;
+	}
+
+	// Hide columns on smaller screens
+	@media screen and (max-width: 1024px) {
+		.column-background {
+			display: none;
 		}
 
-		.column.is-8 {
-			width: 100%;
+		.content-container {
+			background: transparent;
+			padding: 0;
 		}
 	}
 </style>

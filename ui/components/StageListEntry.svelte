@@ -1,11 +1,12 @@
 <script lang="ts">
-	import IconExternalLink from "~/components/icons/Icon-external-link.svelte";
-	import IconUsers from "~/components/icons/Icon-users.svelte";
+	import { isTheaterAuthenticated } from "~/stores/theaterAuth";
+	import PicolEdit from "./picol/icons/Picol-edit.svelte";
+	import PicolControlsPlay from "./picol/icons/Picol-controls-play.svelte";
+	import PicolArrowFullUpperright from "./picol/icons/Picol-arrow-full-upperright.svelte";
 
 	export let stageName: string;
 	export let stageUrl: string;
 	export let isOnline: boolean = true;
-	export let participantCount: number = 0;
 	export let description: string = "";
 
 	function handleViewStage() {
@@ -13,7 +14,7 @@
 	}
 </script>
 
-<div class="notification is-light">
+<div class="notification" class:online={isOnline}>
 	<div class="level is-mobile">
 		<div class="level-left">
 			<div class="level-item">
@@ -30,41 +31,52 @@
 		</div>
 		<div class="level-right">
 			<div class="level-item">
-				<div class="tags">
-					<span class="tag" class:is-success={isOnline} class:is-light={!isOnline}>
-						{isOnline ? "Online" : "Offline"}
-					</span>
-					{#if participantCount > 0}
-						<span class="tag is-info is-light">
+				<div class="buttons">
+					{#if isOnline}
+						<a href={stageUrl} target="_blank" class="button is-small is-secondary">
+							Öppna&nbsp;&nbsp;
 							<span class="icon is-small">
-								<IconUsers />
+								<PicolArrowFullUpperright />
 							</span>
-							{participantCount}
-						</span>
+						</a>
+					{:else if $isTheaterAuthenticated}
+						<button class="button is-small is-secondary" on:click={handleViewStage}
+							>Förbered&nbsp;&nbsp;
+							<span class="icon is-small">
+								<PicolEdit />
+							</span></button
+						>
+						<button class="button is-small is-secondary" on:click={handleViewStage}
+							>Lansera&nbsp;&nbsp;
+							<span class="icon is-small">
+								<PicolControlsPlay />
+							</span></button
+						>
 					{/if}
 				</div>
 			</div>
 			<div class="level-item">
-				<div class="buttons">
-					<button
-						class="button is-small is-primary"
-						disabled={!isOnline}
-						on:click={handleViewStage}
-					>
-						View
-					</button>
-					<a
-						href={stageUrl}
-						target="_blank"
-						class="button is-small is-light"
-						class:is-disabled={!isOnline}
-					>
-						<span class="icon is-small">
-							<IconExternalLink />
-						</span>
-					</a>
+				<div class="tags">
+					<span class="tag" class:is-success={isOnline} class:is-dark={!isOnline}>
+						{isOnline ? "Online" : "Offline"}
+					</span>
 				</div>
 			</div>
 		</div>
 	</div>
 </div>
+
+<style>
+	.notification {
+		border-top-left-radius: 28px;
+		border-top-right-radius: 28px;
+		border-bottom-left-radius: 28px;
+		border-bottom-right-radius: 0px;
+	}
+	.notification.online {
+		border-top-left-radius: 28px;
+		border-top-right-radius: 28px;
+		border-bottom-left-radius: 0px;
+		border-bottom-right-radius: 28px;
+	}
+</style>

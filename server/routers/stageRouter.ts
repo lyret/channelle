@@ -1,7 +1,7 @@
-import type { CreateStageData, UpdateStageData, PublicStageData, StageListItem, StageAuthRequest, StageAuthResponse } from "../_types";
+import type { PublicStageData, StageListItem, StageAuthResponse } from "../../shared/types/stage";
 import { Stage } from "../models/Stage";
 import { TRPCError } from "@trpc/server";
-import { trpc, sequelize } from "../lib";
+import { trpc } from "../lib";
 import { z } from "zod";
 
 // Get the trpc router constructor and default procedure
@@ -295,6 +295,42 @@ export const stageRouter = trcpRouter({
 				throw new TRPCError({
 					code: "INTERNAL_SERVER_ERROR",
 					message: "Failed to authenticate stage access",
+				});
+			}
+		}),
+
+	/**
+	 * Authenticate theater access with global password
+	 */
+	authenticateTheater: trcpProcedure
+		.input(
+			z.object({
+				password: z.string(),
+			}),
+		)
+		.mutation(async ({ input }): Promise<{ success: boolean; message?: string }> => {
+			try {
+				// Get theater password from config
+				const theaterPassword = CONFIG.stage.theaterPassword;
+
+				// Verify password
+				if (input.password !== theaterPassword) {
+					return {
+						success: false,
+						message: "Invalid theater password",
+					};
+				}
+
+				console.log("[StageRouter] Theater authentication successful");
+
+				return {
+					success: true,
+				};
+			} catch (error) {
+				console.error("[StageRouter] Error authenticating theater access:", error);
+				throw new TRPCError({
+					code: "INTERNAL_SERVER_ERROR",
+					message: "Failed to authenticate theater access",
 				});
 			}
 		}),

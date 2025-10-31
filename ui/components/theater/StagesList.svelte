@@ -1,18 +1,10 @@
 <script lang="ts">
 	import StageListEntry from "~/components/StageListEntry.svelte";
-
-	export let stages: Array<{
-		name: string;
-		url: string;
-		isOnline: boolean;
-		participantCount: number;
-		description: string;
-	}> = [];
+	import { stagesStore } from "~/api/stage";
 </script>
 
 <div class="box">
-	<h3 class="title is-4 is-family-title">Available Stages</h3>
-	{#each stages as stage}
+	{#each $stagesStore as stage (stage.url)}
 		<StageListEntry
 			stageName={stage.name}
 			stageUrl={stage.url}
@@ -21,9 +13,15 @@
 			description={stage.description}
 		/>
 	{/each}
-	{#if stages.length === 0}
+	{#if $stagesStore.length === 0}
 		<div class="notification is-light">
-			<p class="is-family-secondary has-text-grey">No stages available at the moment.</p>
+			<p class="is-family-secondary has-text-grey">Det finns inga föreställningar att visa just nu.</p>
 		</div>
 	{/if}
 </div>
+
+<style>
+	.box {
+		margin-top: 4rem;
+	}
+</style>

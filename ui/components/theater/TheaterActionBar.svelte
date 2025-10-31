@@ -1,72 +1,27 @@
 <script lang="ts">
-	import { createEventDispatcher } from "svelte";
 	import { blur } from "svelte/transition";
 	import IconUser from "~/components/picol/icons/Picol-user-close.svelte";
 	import IconPlus from "~/components/picol/icons/Picol-plus.svelte";
 	import IconInfo from "~/components/picol/icons/Picol-book-sans-information.svelte";
 
-	export let isSignedIn = false;
-
+	import { isTheaterAuthenticated, signOut } from "~/stores/theaterAuth";
+	import { openAuthModal, openAboutModal, openCreateStageModal } from "~/stores/theaterModals";
 
 	function handleSignIn() {
-		// TODO: Implement sign in functionality
-		isSignedIn = !isSignedIn;
-		console.log("Sign in clicked:", isSignedIn ? "signed in" : "signed out");
+		if ($isTheaterAuthenticated) {
+			signOut();
+		} else {
+			openAuthModal();
+		}
 	}
 
 	function handleCreateStage() {
-		showCreateStageModal = true;
-	}
-
-	async function submitCreateStage() {
-		if (!newStageName.trim()) {
-			alert("Stage name is required");
-			return;
-		}
-
-		const stageData: CreateStageData = {
-			name: newStageName.trim(),
-			description: newStageDescription.trim(),
-			stagePassword: newStagePassword.trim(),
-		};
-
-		const result = await createStage(stageData);
-
-		if (result) {
-			// Reset form and close modal
-			newStageName = "";
-			newStageDescription = "";
-			newStagePassword = "";
-			showCreateStageModal = false;
-			alert(`Stage "${result.name}" created successfully!`);
-		} else {
-			// Error is already handled by the store
-			alert("Failed to create stage. Please try again.");
-		}
-	}
-
-	function cancelCreateStage() {
-		newStageName = "";
-		newStageDescription = "";
-		newStagePassword = "";
-		showCreateStageModal = false;
-	}
-
-	function handleJoinStage() {
-		// TODO: Implement join stage functionality
-		alert("Join stage - functionality coming soon!");
-	}
-
-	function handleSettings() {
-		// TODO: Implement settings functionality
-		alert("Settings - functionality coming soon!");
+		openCreateStageModal();
 	}
 
 	function handleAbout() {
-		// TODO: Implement about/info functionality
-		alert("About Channelle Theater - functionality coming soon!");
+		openAboutModal();
 	}
-
 
 	// Action bar styling classes matching ActionBar component
 	const btnClassList = "button is-small";
@@ -76,16 +31,12 @@
 <div>
 	<div class="theater-action-bar">
 		<!-- Sign In / User Status -->
-		<button
-			class={btnClassList}
-			class:active={isSignedIn}
-			on:click={() => dispatch('signIn')}
-		>
+		<button class={btnClassList} class:active={$isTheaterAuthenticated} on:click={handleSignIn}>
 			<span class={iconClassList}>
 				<IconUser />
 			</span>
 			<span class="is-family-secondary">
-				{isSignedIn ? "Sign Out" : "Logga in"}
+				{$isTheaterAuthenticated ? "Logga ut" : "Logga in"}
 			</span>
 		</button>
 
@@ -93,27 +44,20 @@
 		<div class="spacer" />
 
 		<!-- Create New Stage -->
-		{#if isSignedIn}
-		<button
-			class={btnClassList}
-			on:click={() => dispatch('createStage')}
-		>
-			<span class={iconClassList}>
-				<IconPlus />
-			</span>
-			<span class="is-family-secondary">Skapa en ny server</span>
-		</button>
+		{#if $isTheaterAuthenticated}
+			<button class={btnClassList} on:click={handleCreateStage}>
+				<span class={iconClassList}>
+					<IconPlus />
+				</span>
+				<span class="is-family-secondary">Skapa en ny föreställning</span>
+			</button>
 		{/if}
 
 		<!-- Spacer -->
 		<div class="spacer" />
 
 		<!-- About -->
-		<button
-			class={btnClassList}
-			on:click={() => dispatch('about')}
-			transition:blur
-		>
+		<button class={btnClassList} on:click={handleAbout} transition:blur>
 			<span class={iconClassList}>
 				<IconInfo />
 			</span>
@@ -144,7 +88,6 @@
 			padding: 12px;
 			background-color: var(--channelle-menu-bg-color);
 			color: var(--channelle-menu-text-color);
-
 
 			&:hover {
 				background-color: rgba(255, 255, 255, 0.1);
