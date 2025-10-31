@@ -1,6 +1,6 @@
 import { writable, derived } from "svelte/store";
 import { stageClient } from "../_trpcClient";
-import type { StageListItem, CreateStageData, UpdateStageData, PublicStageData, StageAuthRequest } from "../../../shared";
+import type { StageListItem, CreateStageData, UpdateStageData, PublicStageDataResponse, StageAuthResponseClient } from "../../../shared/types/stage";
 
 /** Store for all available stages */
 export const stagesStore = writable<StageListItem[]>([]);
@@ -12,25 +12,16 @@ export const stagesLoadingStore = writable<boolean>(false);
 export const stagesErrorStore = writable<string | null>(null);
 
 /** Currently selected/active stage */
-export const currentStageStore = writable<PublicStageData | null>(null);
+export const currentStageStore = writable<PublicStageDataResponse | null>(null);
 
 /** Derived store for online stages only */
-export const onlineStagesStore = derived(
-	stagesStore,
-	$stages => $stages.filter(stage => stage.isOnline)
-);
+export const onlineStagesStore = derived(stagesStore, ($stages) => $stages.filter((stage) => stage.isOnline));
 
 /** Derived store for password-protected stages */
-export const protectedStagesStore = derived(
-	stagesStore,
-	$stages => $stages.filter(stage => stage.isPasswordProtected)
-);
+export const protectedStagesStore = derived(stagesStore, ($stages) => $stages.filter((stage) => stage.isPasswordProtected));
 
 /** Derived store for public stages */
-export const publicStagesStore = derived(
-	stagesStore,
-	$stages => $stages.filter(stage => !stage.isPasswordProtected)
-);
+export const publicStagesStore = derived(stagesStore, ($stages) => $stages.filter((stage) => !stage.isPasswordProtected));
 
 /**
  * Fetch all stages from the server
@@ -53,7 +44,7 @@ export async function fetchStages(): Promise<void> {
 /**
  * Get a specific stage by ID
  */
-export async function getStage(id: number): Promise<PublicStageData | null> {
+export async function getStage(id: number): Promise<PublicStageDataResponse | null> {
 	try {
 		stagesErrorStore.set(null);
 		const stage = await stageClient.get.query({ id });
@@ -68,7 +59,7 @@ export async function getStage(id: number): Promise<PublicStageData | null> {
 /**
  * Create a new stage
  */
-export async function createStage(data: CreateStageData): Promise<PublicStageData | null> {
+export async function createStage(data: CreateStageData): Promise<PublicStageDataResponse | null> {
 	try {
 		stagesLoadingStore.set(true);
 		stagesErrorStore.set(null);
@@ -91,7 +82,7 @@ export async function createStage(data: CreateStageData): Promise<PublicStageDat
 /**
  * Update an existing stage
  */
-export async function updateStage(data: UpdateStageData): Promise<PublicStageData | null> {
+export async function updateStage(data: UpdateStageData): Promise<PublicStageDataResponse | null> {
 	try {
 		stagesLoadingStore.set(true);
 		stagesErrorStore.set(null);
@@ -137,11 +128,14 @@ export async function deleteStage(id: number): Promise<boolean> {
 /**
  * Authenticate access to a password-protected stage
  */
-export async function authenticateStageAccess(stageId: number, password: string): Promise<{ success: boolean; stage?: PublicStageData; message?: string }> {
+export async function authenticateStageAccess(
+	stageId: number,
+	password: string,
+): Promise<{ success: boolean; stage?: PublicStageDataResponse; message?: string }> {
 	try {
 		stagesErrorStore.set(null);
 
-		const result = await stageClient.authenticate.mutate({ stageId, password });
+		const result = (await stageClient.authenticate.mutate({ stageId, password })) as StageAuthResponseClient;
 
 		if (result.success && result.stageData) {
 			currentStageStore.set(result.stageData);
@@ -150,7 +144,7 @@ export async function authenticateStageAccess(stageId: number, password: string)
 		return {
 			success: result.success,
 			stage: result.stageData,
-			message: result.message
+			message: result.message,
 		};
 	} catch (error) {
 		console.error("Failed to authenticate stage access:", error);
@@ -158,7 +152,7 @@ export async function authenticateStageAccess(stageId: number, password: string)
 		stagesErrorStore.set(errorMessage);
 		return {
 			success: false,
-			message: errorMessage
+			message: errorMessage,
 		};
 	}
 }

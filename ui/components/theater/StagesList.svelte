@@ -5,13 +5,7 @@
 
 <div class="box">
 	{#each $stagesStore as stage (stage.url)}
-		<StageListEntry
-			stageName={stage.name}
-			stageUrl={stage.url}
-			isOnline={stage.isOnline}
-			participantCount={stage.participantCount}
-			description={stage.description}
-		/>
+		<StageListEntry show={stage} />
 	{/each}
 	{#if $stagesStore.length === 0}
 		<div class="notification is-light">

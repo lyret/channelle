@@ -3,28 +3,26 @@
 	import PicolEdit from "./picol/icons/Picol-edit.svelte";
 	import PicolControlsPlay from "./picol/icons/Picol-controls-play.svelte";
 	import PicolArrowFullUpperright from "./picol/icons/Picol-arrow-full-upperright.svelte";
+	import type { StageListItem } from "~/types/serverSideTypes";
 
-	export let stageName: string;
-	export let stageUrl: string;
-	export let isOnline: boolean = true;
-	export let description: string = "";
+	export let show: StageListItem;
 
 	function handleViewStage() {
-		window.open(stageUrl, "_blank");
+		window.open(show.url, "_blank");
 	}
 </script>
 
-<div class="notification" class:online={isOnline}>
+<div class="notification" class:online={show.isOnline}>
 	<div class="level is-mobile">
 		<div class="level-left">
 			<div class="level-item">
 				<div>
-					<p class="title is-6 is-family-title">{stageName}</p>
-					{#if description}
-						<p class="subtitle is-7 is-family-secondary">{description}</p>
+					<p class="title is-6 is-family-title">{show.name}</p>
+					{#if show.description}
+						<p class="subtitle is-7 is-family-secondary">{show.description}</p>
 					{/if}
 					<p class="is-size-7 has-text-grey">
-						<code>{stageUrl}</code>
+						<code>{show.url}</code>
 					</p>
 				</div>
 			</div>
@@ -32,19 +30,19 @@
 		<div class="level-right">
 			<div class="level-item">
 				<div class="buttons">
-					{#if isOnline}
-						<a href={stageUrl} target="_blank" class="button is-small is-secondary">
+					{#if show.isOnline}
+						<a href={show.url} target="_blank" class="button is-small is-secondary">
 							Öppna&nbsp;&nbsp;
 							<span class="icon is-small">
 								<PicolArrowFullUpperright />
 							</span>
 						</a>
 					{:else if $isTheaterAuthenticated}
-						<button class="button is-small is-secondary" on:click={handleViewStage}
+						<a class="button is-small is-secondary" href="/preperation/{show.id}"
 							>Förbered&nbsp;&nbsp;
 							<span class="icon is-small">
 								<PicolEdit />
-							</span></button
+							</span></a
 						>
 						<button class="button is-small is-secondary" on:click={handleViewStage}
 							>Lansera&nbsp;&nbsp;
@@ -57,8 +55,8 @@
 			</div>
 			<div class="level-item">
 				<div class="tags">
-					<span class="tag" class:is-success={isOnline} class:is-dark={!isOnline}>
-						{isOnline ? "Online" : "Offline"}
+					<span class="tag" class:is-success={show.isOnline} class:is-dark={!show.isOnline}>
+						{show.isOnline ? "Online" : "Offline"}
 					</span>
 				</div>
 			</div>

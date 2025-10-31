@@ -1,4 +1,4 @@
-import type { PublicStageData, StageListItem, StageAuthResponse } from "../../shared/types/stage";
+import type { PublicStageData, StageListItem, StageAuthResponse } from "../../shared/types/stage.js";
 import { Stage } from "../models/Stage";
 import { TRPCError } from "@trpc/server";
 import { trpc } from "../lib";

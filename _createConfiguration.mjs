@@ -225,7 +225,7 @@ export async function createConfiguration() {
 			/** The files to use as build inputs for the stage-interface, relative to the 'stage-interface' folder. */
 			stageInterfaceInputs: ["home.html", "debug.html", "stage.html", "backstage.html", "_home.ts", "_debug.ts", "_stage.ts", "_backstage.ts"],
 			/** The files to use as build inputs for the theater-interface, relative to the 'theater-interface' folder. */
-			theaterInterfaceInputs: ["theater.html", "_theater.ts"],
+			theaterInterfaceInputs: ["theater.html", "_theater.ts", "preparation.html", "_preparation.ts"],
 		},
 		/** Debug Settings */
 		debug: {

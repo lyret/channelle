@@ -1,14 +1,4 @@
-/** Shared Stage types for client-server communication */
-
-/** Base stage information */
-export interface StageData {
-	id: number;
-	name: string;
-	description: string;
-	stagePassword: string;
-	createdAt: Date;
-	updatedAt: Date;
-}
+import type { StageAttributes } from "../../server/models";
 
 /** Stage data for creation (without auto-generated fields) */
 export interface CreateStageData {
@@ -35,6 +25,16 @@ export interface PublicStageData {
 	updatedAt: Date;
 }
 
+/** Public stage data as received from tRPC (dates are serialized as strings) */
+export interface PublicStageDataResponse {
+	id: number;
+	name: string;
+	description: string;
+	isPasswordProtected: boolean;
+	createdAt: string;
+	updatedAt: string;
+}
+
 /** Stage list item for displaying in UI */
 export interface StageListItem {
 	id: number;
@@ -58,3 +58,13 @@ export interface StageAuthResponse {
 	message?: string;
 	stageData?: PublicStageData;
 }
+
+/** Stage authentication response as received from tRPC */
+export interface StageAuthResponseClient {
+	success: boolean;
+	message?: string;
+	stageData?: PublicStageDataResponse;
+}
+
+/** Re-export StageAttributes from models for convenience */
+export type { StageAttributes };
