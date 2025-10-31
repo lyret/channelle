@@ -1,6 +1,7 @@
 import type * as Http from "http";
 import { http, sequelize } from "./lib";
 import { createAppRouter } from "./_router";
+import { initializeStageWithShow } from "./lib/showConfigLoader";
 
 /**
  * Creates and starts the application server
@@ -11,6 +12,16 @@ export async function createServer(): Promise<Http.Server> {
 
 	// Create the database connection
 	await sequelize();
+
+	// Initialize show configuration if showId is provided in stage mode
+	if (!CONFIG.runtime.theater && CONFIG.stage.showId) {
+		try {
+			await initializeStageWithShow(CONFIG.stage.showId);
+		} catch (error) {
+			console.error(`[Server] Failed to initialize with show ID ${CONFIG.stage.showId}:`, error);
+			// Don't fail server startup, but log the error
+		}
+	}
 
 	// Create the app router
 	await createAppRouter();

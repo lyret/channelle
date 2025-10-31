@@ -3,9 +3,9 @@
 	import PicolEdit from "./picol/icons/Picol-edit.svelte";
 	import PicolControlsPlay from "./picol/icons/Picol-controls-play.svelte";
 	import PicolArrowFullUpperright from "./picol/icons/Picol-arrow-full-upperright.svelte";
-	import type { StageListItem } from "~/types/serverSideTypes";
+	import type { ShowListItem } from "~/types/serverSideTypes";
 
-	export let show: StageListItem;
+	export let show: ShowListItem;
 
 	function handleViewStage() {
 		window.open(show.url, "_blank");

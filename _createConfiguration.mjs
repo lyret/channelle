@@ -27,6 +27,7 @@ export async function createConfiguration() {
 			inviteKey: String,
 			id: String,
 			theaterPassword: String,
+			showId: Number,
 			production: Boolean,
 			port: Number,
 			verbose: Boolean,
@@ -46,6 +47,7 @@ export async function createConfiguration() {
 			d: ["--debug"],
 			w: ["--watch"],
 			t: ["--theater"],
+			s: ["--showId"],
 		},
 	);
 
@@ -125,6 +127,12 @@ export async function createConfiguration() {
 	const theaterPassword = cli.theaterPassword !== undefined ? cli.theaterPassword : env.THEATER_PASSWORD || "admin";
 	if (theater) {
 		console.log("🏷️ ", Chalk.bgBlueBright("[CONFIG]"), "Theater Password", theaterPassword);
+	}
+
+	// If SHOW_ID is set or 'showId' is given in the CLI it will be used to load a specific show configuration in stage mode
+	const showId = cli.showId !== undefined ? cli.showId : env.SHOW_ID ? Number(env.SHOW_ID) : undefined;
+	if (!theater && showId) {
+		console.log("🏷️ ", Chalk.bgBlueBright("[CONFIG]"), "Show ID", showId);
 	}
 	console.log();
 
@@ -238,6 +246,7 @@ export async function createConfiguration() {
 			inviteKey: stageInviteLinkKey,
 			id: stageId,
 			theaterPassword: theaterPassword,
+			showId: showId,
 		},
 		/** Web Server Settings */
 		web: {

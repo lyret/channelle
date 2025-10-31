@@ -1,13 +1,13 @@
 <script lang="ts">
-	import StageListEntry from "~/components/StageListEntry.svelte";
-	import { stagesStore } from "~/api/stage";
+	import ShowListEntry from "~/components/ShowListEntry.svelte";
+	import { showsStore } from "~/api/show";
 </script>
 
 <div class="box">
-	{#each $stagesStore as stage (stage.url)}
-		<StageListEntry show={stage} />
+	{#each $showsStore as show (show.url)}
+		<ShowListEntry {show} />
 	{/each}
-	{#if $stagesStore.length === 0}
+	{#if $showsStore.length === 0}
 		<div class="notification is-light">
 			<p class="is-family-secondary has-text-grey">Det finns inga föreställningar att visa just nu.</p>
 		</div>

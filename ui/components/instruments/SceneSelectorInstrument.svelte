@@ -16,6 +16,7 @@
 		setStageVisitorAudioEnabledForced,
 		setStageVisitorVideoEnabledForced,
 	} from "~/api/room";
+	import { configManager, currentModeStore, AppMode } from "~/api/show/configManager";
 
 	$: peers = Object.values($peersStore || {}).filter((p) => (p.actor || p.manager) && !p.banned);
 
@@ -153,23 +154,35 @@
 	<!-- Scene curtains -->
 	<p class="has-text-centered pb-2 mt-2">Visa ridån 🎭</p>
 	<div class="buttons has-addons is-centered">
-		<button class="button is-danger" class:is-light={$stageSceneSettingsStore.curtains !== 2} on:click={() => setStageCurtainsForced(2)}> Dölj </button>
-		<button class="button is-info" class:is-light={$stageSceneSettingsStore.curtains !== 0} on:click={() => setStageCurtainsForced(0)}>
+		<button class="button is-danger" class:is-light={$stageSceneSettingsStore.curtains !== 2} on:click={() => configManager.updateCurtainsOverride(2)}>
+			Dölj
+		</button>
+		<button class="button is-info" class:is-light={$stageSceneSettingsStore.curtains !== 0} on:click={() => configManager.updateCurtainsOverride(0)}>
 			Automatiskt
 		</button>
-		<button class="button is-success" class:is-light={$stageSceneSettingsStore.curtains !== 1} on:click={() => setStageCurtainsForced(1)}> Visa </button>
+		<button class="button is-success" class:is-light={$stageSceneSettingsStore.curtains !== 1} on:click={() => configManager.updateCurtainsOverride(1)}>
+			Visa
+		</button>
 	</div>
 
 	<!-- Chat button -->
 	<p class="has-text-centered pb-2 mt-2">Visa chatt-panelen 💬</p>
 	<div class="buttons has-addons is-centered">
-		<button class="button is-danger" class:is-light={$stageSceneSettingsStore.chatEnabled !== 2} on:click={() => setStageChatEnabledForced(2)}>
+		<button
+			class="button is-danger"
+			class:is-light={$stageSceneSettingsStore.chatEnabled !== 2}
+			on:click={() => configManager.updateChatEnabledOverride(2)}
+		>
 			Dölj
 		</button>
-		<button class="button is-info" class:is-light={$stageSceneSettingsStore.chatEnabled !== 0} on:click={() => setStageChatEnabledForced(0)}>
+		<button class="button is-info" class:is-light={$stageSceneSettingsStore.chatEnabled !== 0} on:click={() => configManager.updateChatEnabledOverride(0)}>
 			Automatiskt
 		</button>
-		<button class="button is-success" class:is-light={$stageSceneSettingsStore.chatEnabled !== 1} on:click={() => setStageChatEnabledForced(1)}>
+		<button
+			class="button is-success"
+			class:is-light={$stageSceneSettingsStore.chatEnabled !== 1}
+			on:click={() => configManager.updateChatEnabledOverride(1)}
+		>
 			Visa
 		</button>
 	</div>
@@ -180,21 +193,21 @@
 		<button
 			class="button is-danger"
 			class:is-light={$stageSceneSettingsStore.visitorVideoEnabled !== 2}
-			on:click={() => setStageVisitorVideoEnabledForced(2)}
+			on:click={() => configManager.updateVisitorVideoEnabledOverride(2)}
 		>
 			Nej
 		</button>
 		<button
 			class="button is-info"
 			class:is-light={$stageSceneSettingsStore.visitorVideoEnabled !== 0}
-			on:click={() => setStageVisitorVideoEnabledForced(0)}
+			on:click={() => configManager.updateVisitorVideoEnabledOverride(0)}
 		>
 			Automatiskt
 		</button>
 		<button
 			class="button is-success"
 			class:is-light={$stageSceneSettingsStore.visitorVideoEnabled !== 1}
-			on:click={() => setStageVisitorVideoEnabledForced(1)}
+			on:click={() => configManager.updateVisitorVideoEnabledOverride(1)}
 		>
 			Ja
 		</button>
@@ -206,21 +219,21 @@
 		<button
 			class="button is-danger"
 			class:is-light={$stageSceneSettingsStore.visitorAudioEnabled !== 2}
-			on:click={() => setStageVisitorAudioEnabledForced(2)}
+			on:click={() => configManager.updateVisitorAudioEnabledOverride(2)}
 		>
 			Nej
 		</button>
 		<button
 			class="button is-info"
 			class:is-light={$stageSceneSettingsStore.visitorAudioEnabled !== 0}
-			on:click={() => setStageVisitorAudioEnabledForced(0)}
+			on:click={() => configManager.updateVisitorAudioEnabledOverride(0)}
 		>
 			Automatiskt
 		</button>
 		<button
 			class="button is-success"
 			class:is-light={$stageSceneSettingsStore.visitorAudioEnabled !== 1}
-			on:click={() => setStageVisitorAudioEnabledForced(1)}
+			on:click={() => configManager.updateVisitorAudioEnabledOverride(1)}
 		>
 			Ja
 		</button>
@@ -229,13 +242,25 @@
 	<!-- Visitor effects -->
 	<p class="has-text-centered pb-2 mt-2">Tillåt blommor och applåder 🌹👏</p>
 	<div class="buttons has-addons is-centered">
-		<button class="button is-danger" class:is-light={$stageSceneSettingsStore.effectsEnabled !== 2} on:click={() => setStageEffectsEnabledForced(2)}>
+		<button
+			class="button is-danger"
+			class:is-light={$stageSceneSettingsStore.effectsEnabled !== 2}
+			on:click={() => configManager.updateEffectsEnabledOverride(2)}
+		>
 			Nej
 		</button>
-		<button class="button is-info" class:is-light={$stageSceneSettingsStore.effectsEnabled !== 0} on:click={() => setStageEffectsEnabledForced(0)}>
+		<button
+			class="button is-info"
+			class:is-light={$stageSceneSettingsStore.effectsEnabled !== 0}
+			on:click={() => configManager.updateEffectsEnabledOverride(0)}
+		>
 			Automatiskt
 		</button>
-		<button class="button is-success" class:is-light={$stageSceneSettingsStore.effectsEnabled !== 1} on:click={() => setStageEffectsEnabledForced(1)}>
+		<button
+			class="button is-success"
+			class:is-light={$stageSceneSettingsStore.effectsEnabled !== 1}
+			on:click={() => configManager.updateEffectsEnabledOverride(1)}
+		>
 			Ja
 		</button>
 	</div>
@@ -243,9 +268,9 @@
 
 <h1 class="title">Välj aktiv scen</h1>
 
-<SceneSelectorControl layout={auto} {peers} selectedLayout={$sceneStore} on:select={(e) => setScene(e.detail)} />
-<SceneSelectorControl layout={empty} {peers} selectedLayout={$sceneStore} on:select={(e) => setScene(e.detail)} />
-<SceneSelectorControl layout={oneXOne} {peers} selectedLayout={$sceneStore} on:select={(e) => setScene(e.detail)} />
-<SceneSelectorControl layout={oneXTwo} {peers} selectedLayout={$sceneStore} on:select={(e) => setScene(e.detail)} />
-<SceneSelectorControl layout={chat} {peers} selectedLayout={$sceneStore} on:select={(e) => setScene(e.detail)} />
-<SceneSelectorControl layout={twoXTwo} {peers} selectedLayout={$sceneStore} on:select={(e) => setScene(e.detail)} />
+<SceneSelectorControl layout={auto} {peers} selectedLayout={$sceneStore} on:select={(e) => configManager.updateCurrentScene(e.detail)} />
+<SceneSelectorControl layout={empty} {peers} selectedLayout={$sceneStore} on:select={(e) => configManager.updateCurrentScene(e.detail)} />
+<SceneSelectorControl layout={oneXOne} {peers} selectedLayout={$sceneStore} on:select={(e) => configManager.updateCurrentScene(e.detail)} />
+<SceneSelectorControl layout={oneXTwo} {peers} selectedLayout={$sceneStore} on:select={(e) => configManager.updateCurrentScene(e.detail)} />
+<SceneSelectorControl layout={chat} {peers} selectedLayout={$sceneStore} on:select={(e) => configManager.updateCurrentScene(e.detail)} />
+<SceneSelectorControl layout={twoXTwo} {peers} selectedLayout={$sceneStore} on:select={(e) => configManager.updateCurrentScene(e.detail)} />

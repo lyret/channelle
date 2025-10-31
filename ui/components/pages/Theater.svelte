@@ -5,14 +5,14 @@
 
 	import AuthenticationModal from "~/components/modals/TheaterAuthenticationModal.svelte";
 	import AboutModal from "~/components/modals/TheaterAboutModal.svelte";
-	import CreateStageModal from "~/components/modals/TheaterCreateStageModal.svelte";
-	import { stagesLoadingStore, stagesErrorStore, fetchStages, initializeStageAPI } from "~/api/stage";
-	import { showAuthModal, showAboutModal, showCreateStageModal, closeAuthModal, closeAboutModal, closeCreateStageModal } from "~/stores/theaterModals";
-	import StagesList from "../theater/StagesList.svelte";
+	import CreateShowModal from "~/components/modals/TheaterCreateShowModal.svelte";
+	import { showsLoadingStore, showsErrorStore, fetchShows, initializeShowAPI } from "~/api/show";
+	import { showAuthModal, showAboutModal, showCreateShowModal, closeAuthModal, closeAboutModal, closeCreateShowModal } from "~/stores/theaterModals";
+	import ShowsList from "../theater/ShowsList.svelte";
 
 	onMount(async () => {
-		// Initialize the stage API and fetch stages
-		await initializeStageAPI();
+		// Initialize the show API and fetch shows
+		await initializeShowAPI();
 	});
 
 	// Modal event handlers
@@ -28,20 +28,20 @@
 		closeAboutModal();
 	}
 
-	function handleStageCreated(event: CustomEvent<{ id: number; name: string }>) {
-		closeCreateStageModal();
-		console.log(`Stage created: ${event.detail.name} (ID: ${event.detail.id})`);
-		// Refresh the stages list
-		fetchStages();
+	function handleShowCreated(event: CustomEvent<{ id: number; name: string }>) {
+		closeCreateShowModal();
+		console.log(`Show created: ${event.detail.name} (ID: ${event.detail.id})`);
+		// Refresh the shows list
+		fetchShows();
 	}
 
-	function handleCreateStageCancel() {
-		closeCreateStageModal();
+	function handleCreateShowCancel() {
+		closeCreateShowModal();
 	}
 
-	// Use reactive statement to get stages from store
-	$: isLoadingStages = $stagesLoadingStore;
-	$: stagesError = $stagesErrorStore;
+	// Use reactive statement to get shows from store
+	$: isLoadingShows = $showsLoadingStore;
+	$: showsError = $showsErrorStore;
 </script>
 
 <main>
@@ -58,24 +58,24 @@
 				<!-- Action Bar Controls -->
 				<TheaterActionBar />
 
-				<!-- Stages list section -->
-				{#if isLoadingStages}
+				<!-- Shows list section -->
+				{#if isLoadingShows}
 					<div class="box">
 						<div class="has-text-centered">
 							<div class="is-loading"></div>
-							<p class="is-family-secondary">Hämtar scener & servrar...</p>
+							<p class="is-family-secondary">Hämtar föreställningar...</p>
 						</div>
 					</div>
-				{:else if stagesError}
+				{:else if showsError}
 					<div class="box">
 						<div class="notification is-danger is-light">
-							<p class="is-family-secondary">ojdå: {stagesError}</p>
-							<button class="button is-small is-danger is-outlined mt-2" on:click={fetchStages}> Försök igen </button>
+							<p class="is-family-secondary">ojdå: {showsError}</p>
+							<button class="button is-small is-danger is-outlined mt-2" on:click={fetchShows}> Försök igen </button>
 						</div>
 					</div>
 				{:else}
-					<!-- Stages content would go here -->
-					<StagesList></StagesList>
+					<!-- Shows content would go here -->
+					<ShowsList></ShowsList>
 				{/if}
 			</div>
 		</div>
@@ -86,7 +86,7 @@
 
 	<AboutModal isVisible={$showAboutModal} on:close={handleAboutClose} />
 
-	<CreateStageModal isVisible={$showCreateStageModal} on:created={handleStageCreated} on:cancel={handleCreateStageCancel} />
+	<CreateShowModal isVisible={$showCreateShowModal} on:created={handleShowCreated} on:cancel={handleCreateShowCancel} />
 </main>
 
 <style lang="scss">

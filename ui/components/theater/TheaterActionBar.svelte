@@ -5,7 +5,7 @@
 	import IconInfo from "~/components/picol/icons/Picol-book-sans-information.svelte";
 
 	import { isTheaterAuthenticated, signOut } from "~/stores/theaterAuth";
-	import { openAuthModal, openAboutModal, openCreateStageModal } from "~/stores/theaterModals";
+	import { openAuthModal, openAboutModal, openCreateShowModal } from "~/stores/theaterModals";
 
 	function handleSignIn() {
 		if ($isTheaterAuthenticated) {
@@ -15,8 +15,8 @@
 		}
 	}
 
-	function handleCreateStage() {
-		openCreateStageModal();
+	function handleCreateShow() {
+		openCreateShowModal();
 	}
 
 	function handleAbout() {
@@ -43,9 +43,9 @@
 		<!-- Spacer -->
 		<div class="spacer" />
 
-		<!-- Create New Stage -->
+		<!-- Create New Show -->
 		{#if $isTheaterAuthenticated}
-			<button class={btnClassList} on:click={handleCreateStage}>
+			<button class={btnClassList} on:click={handleCreateShow}>
 				<span class={iconClassList}>
 					<IconPlus />
 				</span>

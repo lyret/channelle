@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher } from "svelte";
 	import Modal from "./_Modal.svelte";
-	import { createStage, stageCreationError, isCreatingStage, clearStageCreationError } from "~/stores/stageCreation";
+	import { createShow, showCreationError, isCreatingShow, clearShowCreationError } from "~/stores/showCreation";
 
 	const dispatch = createEventDispatcher<{
 		created: { id: number; name: string };
@@ -10,54 +10,54 @@
 
 	export let isVisible = false;
 
-	let stageName = "";
+	let showName = "";
 
-	async function submitCreateStage() {
-		const result = await createStage(stageName);
+	async function submitCreateShow() {
+		const result = await createShow(showName);
 		if (result) {
-			stageName = "";
+			showName = "";
 			dispatch("created", result);
 		}
 	}
 
 	function handleCancel() {
-		stageName = "";
-		clearStageCreationError();
+		showName = "";
+		clearShowCreationError();
 		dispatch("cancel");
 	}
 
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.key === "Enter") {
-			submitCreateStage();
+			submitCreateShow();
 		}
 	}
 </script>
 
 <Modal {isVisible} title="Skapa en ny föreställning" size="small" on:close={handleCancel}>
 	<div class="field">
-		<label class="label" for="stage-name">Namn på föreställningen</label>
+		<label class="label" for="show-name">Namn på föreställningen</label>
 		<div class="control">
 			<input
-				id="stage-name"
+				id="show-name"
 				class="input"
-				class:is-danger={$stageCreationError}
+				class:is-danger={$showCreationError}
 				type="text"
-				bind:value={stageName}
+				bind:value={showName}
 				on:keydown={handleKeydown}
 				placeholder="Ange ett namn"
-				disabled={$isCreatingStage}
+				disabled={$isCreatingShow}
 			/>
 		</div>
-		{#if $stageCreationError}
-			<p class="help is-danger">{$stageCreationError}</p>
+		{#if $showCreationError}
+			<p class="help is-danger">{$showCreationError}</p>
 		{/if}
 	</div>
 
 	<svelte:fragment slot="footer">
-		<button class="button is-success" class:is-loading={$isCreatingStage} on:click={submitCreateStage} disabled={$isCreatingStage || !stageName.trim()}>
+		<button class="button is-success" class:is-loading={$isCreatingShow} on:click={submitCreateShow} disabled={$isCreatingShow || !showName.trim()}>
 			Skapa
 		</button>
-		<button class="button" on:click={handleCancel} disabled={$isCreatingStage}> Avbryt </button>
+		<button class="button" on:click={handleCancel} disabled={$isCreatingShow}> Avbryt </button>
 	</svelte:fragment>
 </Modal>
 

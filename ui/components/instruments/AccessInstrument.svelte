@@ -2,7 +2,8 @@
 	import { onMount } from "svelte";
 	import IconLock from "../icons/Icon-lock.svelte";
 	import IconUnlock from "../icons/Icon-unlock.svelte";
-	import { stagePasswordStore, setStagePassword } from "~/api/room";
+	import { stagePasswordStore } from "~/api/room";
+	import { configManager, currentModeStore, AppMode } from "~/api/show/configManager";
 
 	let inputRef: HTMLInputElement;
 	let inputValue: string = "";
@@ -11,6 +12,7 @@
 	$: isLocked = $stagePasswordStore?.length;
 	$: isChanged = $stagePasswordStore != inputValue;
 	$: disabled = isLoading || !isChanged;
+	$: isTheaterMode = $currentModeStore === AppMode.THEATER;
 
 	const inviteLinks = ["", ""];
 
@@ -18,7 +20,8 @@
 		e.preventDefault();
 		isLoading = true;
 		try {
-			await setStagePassword(inputValue || undefined);
+			// Use configuration manager to handle both theater and stage modes
+			await configManager.updatePassword(inputValue || undefined);
 		} finally {
 			isLoading = false;
 		}
