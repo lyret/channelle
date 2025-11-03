@@ -1,7 +1,7 @@
 import { persisted } from "svelte-persisted-store";
 import { get } from "svelte/store";
 
-export type InstrumentName = "debug" | "chat" | "participants" | "scene-settings" | "media-library" | "access";
+export type InstrumentName = "debug" | "chat" | "participants" | "scene-settings" | "media-library" | "access" | "show-metadata";
 
 export const openInstruments = createOpenInstrumentsStore();
 

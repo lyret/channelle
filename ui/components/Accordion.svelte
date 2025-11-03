@@ -16,7 +16,7 @@
 <div class="accordion">
 	<button class="accordion-header button is-fullwidth is-justify-content-space-between" class:is-primary={isOpen} on:click={toggle}>
 		<div class="accordion-title-section">
-			<span class="title is-5">{title}</span>
+			<span class="subtitle is-5">{title}</span>
 			{#if subtitle}
 				<span class="subtitle is-6 has-text-left">{subtitle}</span>
 			{/if}
@@ -37,6 +37,7 @@
 	.accordion-header {
 		text-align: left;
 		border: 1px solid #dbdbdb;
+		margin-bottom: 24px;
 	}
 
 	.accordion-title-section {

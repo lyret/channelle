@@ -26,6 +26,9 @@
 <div class="tabs is-light is-boxed is-centered mb-0" in:blur={{ duration: 100 }}>
 	<ul>
 		<li class:is-active={$openInstruments["show-metadata"]}>
+			<!-- svelte-ignore a11y-missing-attribute -->
+			<!-- svelte-ignore a11y-no-static-element-interactions -->
+			<!-- svelte-ignore a11y-click-events-have-key-events -->
 			<a on:click={() => openInstruments.toggle("show-metadata")}>
 				<span class="icon"><IconInfo /></span> Info
 				<span class="icon">
@@ -38,6 +41,9 @@
 			</a>
 		</li>
 		<li class:is-active={$openInstruments["scene-settings"]}>
+			<!-- svelte-ignore a11y-missing-attribute -->
+			<!-- svelte-ignore a11y-no-static-element-interactions -->
+			<!-- svelte-ignore a11y-click-events-have-key-events -->
 			<a on:click={() => openInstruments.toggle("scene-settings")}>
 				<span class="icon"><IconLayers /></span> Scenen
 				<span class="icon">
@@ -51,6 +57,9 @@
 		</li>
 		{#if showParticipants}
 			<li class:is-active={$openInstruments["participants"]}>
+				<!-- svelte-ignore a11y-missing-attribute -->
+				<!-- svelte-ignore a11y-no-static-element-interactions -->
+				<!-- svelte-ignore a11y-click-events-have-key-events -->
 				<a on:click={() => openInstruments.toggle("participants")}>
 					<span class="icon"><IconUsers /></span>
 					Deltagare
@@ -65,9 +74,16 @@
 			</li>
 		{/if}
 		<li class:is-active={$openInstruments["chat"]}>
+			<!-- svelte-ignore a11y-missing-attribute -->
+			<!-- svelte-ignore a11y-no-static-element-interactions -->
+			<!-- svelte-ignore a11y-click-events-have-key-events -->
 			<a on:click={() => openInstruments.toggle("chat")}>
 				<span class="icon"><IconMessageCircle /></span>
-				Chatt
+				{#if CONFIG.runtime.theater}
+					Diskussion
+				{:else}
+					Chatt
+				{/if}
 				<span class="icon">
 					{#if $openInstruments["chat"]}
 						<IconCheckCircle />
@@ -78,6 +94,9 @@
 			</a>
 		</li>
 		<li class:is-active={$openInstruments["access"]}>
+			<!-- svelte-ignore a11y-missing-attribute -->
+			<!-- svelte-ignore a11y-no-static-element-interactions -->
+			<!-- svelte-ignore a11y-click-events-have-key-events -->
 			<a on:click={() => openInstruments.toggle("access")}>
 				<span class="icon"><IconKey /></span>
 				Tillgång
@@ -92,6 +111,9 @@
 		</li>
 		{#if showMediaLibrary}
 			<li class:is-active={$openInstruments["media-library"]}>
+				<!-- svelte-ignore a11y-missing-attribute -->
+				<!-- svelte-ignore a11y-no-static-element-interactions -->
+				<!-- svelte-ignore a11y-click-events-have-key-events -->
 				<a on:click={() => openInstruments.toggle("media-library")}>
 					<span class="icon"><IconImage /></span>
 					Mediabibliotek

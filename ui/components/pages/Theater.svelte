@@ -47,6 +47,7 @@
 <main>
 	<!-- Header -->
 	<TheaterHeader />
+	<h2 class="subtitle theater-title has-text-centered">Välkommen till vår kvartersteater</h2>
 
 	<!-- Main content area with columns -->
 	<section class="section theater-content">

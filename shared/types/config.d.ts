@@ -51,6 +51,8 @@ type StageConfig = {
 	id: string;
 	/** The password for theater authentication. */
 	theaterPassword: string;
+	/** The show ID to initialize the stage with (optional). */
+	showId?: number;
 };
 
 type WebConfig = {

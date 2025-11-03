@@ -17,7 +17,6 @@
 			</div>
 		</div>
 		<img src={logoGif} alt="Channelle" class="logo" />
-		<h2 class="subtitle theater-title">Välkommen till vår kvartersteater</h2>
 	</div>
 </section>
 

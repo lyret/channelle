@@ -4,24 +4,82 @@
 	import IconUnlock from "../icons/Icon-unlock.svelte";
 	import { stagePasswordStore } from "~/api/room";
 	import { configManager, currentModeStore, AppMode } from "~/api/show/configManager";
+	import { currentShowStore } from "~/api/show";
 
 	let inputRef: HTMLInputElement;
 	let inputValue: string = "";
 
 	let isLoading = false;
+	let errorMessage: string = "";
+	let successMessage: string = "";
+	let originalPassword = "";
+
 	$: isLocked = $stagePasswordStore?.length;
-	$: isChanged = $stagePasswordStore != inputValue;
-	$: disabled = isLoading || !isChanged;
+	$: isChanged = originalPassword !== inputValue;
 	$: isTheaterMode = $currentModeStore === AppMode.THEATER;
+	$: canSave = isChanged && !isLoading;
+	$: isChangingPassword = isChanged && inputValue.trim().length > 0;
+	$: isRemovingPassword = isChanged && inputValue.trim().length === 0 && isLocked;
 
 	const inviteLinks = ["", ""];
 
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.key === "Enter" && canSave) {
+			event.preventDefault();
+			submitPasswordChange();
+		}
+	}
+
 	async function onSubmit(e: SubmitEvent) {
 		e.preventDefault();
+		await submitPasswordChange();
+	}
+
+	async function onButtonClick() {
+		await submitPasswordChange();
+	}
+
+	async function submitPasswordChange() {
+		if (!canSave) return;
+
+		console.log("[AccessInstrument] Submitting password change:", {
+			inputValue,
+			originalPassword,
+			isTheaterMode,
+			isLocked,
+			isChanged,
+			canSave,
+		});
+
 		isLoading = true;
+		errorMessage = "";
+		successMessage = "";
+
 		try {
 			// Use configuration manager to handle both theater and stage modes
-			await configManager.updatePassword(inputValue || undefined);
+			const success = await configManager.updatePassword(inputValue || undefined);
+			console.log("[AccessInstrument] Update result:", success);
+
+			if (success) {
+				// Update original password to reflect new state
+				originalPassword = inputValue || "";
+				console.log("[AccessInstrument] Updated originalPassword to:", originalPassword);
+
+				if (inputValue) {
+					successMessage = isLocked ? "Lösenordet har ändrats" : "Lösenordet har aktiverats";
+				} else {
+					successMessage = "Lösenordet har tagits bort";
+				}
+				// Clear success message after 3 seconds
+				setTimeout(() => {
+					successMessage = "";
+				}, 3000);
+			} else {
+				errorMessage = "Kunde inte uppdatera lösenordet. Försök igen.";
+			}
+		} catch (error) {
+			console.error("Failed to update password:", error);
+			errorMessage = "Ett fel uppstod när lösenordet skulle uppdateras.";
 		} finally {
 			isLoading = false;
 		}
@@ -31,8 +89,14 @@
 		if (inputRef) {
 			inputRef.focus();
 		}
-		const stop = stagePasswordStore.subscribe((value) => {
-			inputValue = value || "";
+
+		// Subscribe to store changes - this will fire immediately with current value
+		const unsubscribe = stagePasswordStore.subscribe((storeValue) => {
+			// Handle both undefined (not loaded) and string (loaded) values
+			const newValue = storeValue !== undefined ? storeValue || "" : "";
+			console.log("[AccessInstrument] Store updated:", { storeValue, newValue, currentInput: inputValue, currentOriginal: originalPassword });
+			inputValue = newValue;
+			originalPassword = newValue;
 		});
 
 		const currentUrl = new URL(window.location.href);
@@ -41,56 +105,183 @@
 		inviteLinks[1] = `${currentUrl.origin}/backstage?${searchParams.toString()}`;
 
 		return () => {
-			stop();
+			unsubscribe();
 		};
 	});
 </script>
 
-<h1 class="title mb-0">Tillgång</h1>
-<p>Kontrollera vilka som har tillgång till scenen</p>
-<h3 class="title is-4 mt-1 mb-4">Länk för skådespelare</h3>
-<p>Du kan dela denna länk för att få dem som följer dem att omedelbart få tillgång som skådespelare.</p>
-<h4 class="title is-6 mt-0 mb-4">{inviteLinks[0]}</h4>
+<div class="access-instrument">
+	<h1 class="title">Tillgång</h1>
 
-<h3 class="title is-4 mt-4 mb-0">Scenlösenord</h3>
-<p>Ange ett lösenord som krävs för att komma in och se scenen.</p>
-<form on:submit={onSubmit} class="form my-2">
-	<div class="field has-addons">
-		<div class="control is-expanded">
-			<input
-				type="text"
-				autocomplete="off"
-				data-1p-ignore
-				bind:this={inputRef}
-				class="input is-fullwidth is-medium"
-				bind:value={inputValue}
-				placeholder={isLocked ? "Spara för att ta bort lösenordet" : "Ange ett lösenord"}
-			/>
+	{#if !isTheaterMode}
+		<div class="notification is-info is-light">
+			<p class="is-size-7">
+				<strong>Skrivskyddad vy</strong><br />
+				Tillgångsinställningar kan endast redigeras i förberedelsesläge (theater mode).
+			</p>
 		</div>
-		<div class="control">
-			<button
-				type="submit"
-				class="button is-dark is-medium"
-				{disabled}
-				class:is-loading={isLoading}
-				class:is-danger={isLocked && !isChanged && !isLoading}
-				class:is-warning={isChanged || isLoading}
-			>
-				{#if isLocked}
-					{#if isChanged && inputValue.length}
-						<span class="icon"><IconLock /></span><span>Byt lösenord</span>
-					{:else if isChanged}
-						<span class="icon"><IconUnlock /></span><span>Lås upp</span>
+	{/if}
+
+	<div class="access-content">
+		<div class="field">
+			<label class="label" for="actor-link">Länk för aktörer</label>
+			<div class="control">
+				<input id="actor-link" class="input" type="text" value={inviteLinks[0]} readonly />
+			</div>
+			<div class="help-section">
+				<p class="help">
+					Dela denna länk för att ge omedelbar tillgång till {$currentShowStore?.nomenclature || "föreställningen"} som aktör/skådespelare
+				</p>
+			</div>
+		</div>
+
+		<form on:submit={onSubmit}>
+			<div class="field">
+				<label class="label" for="stage-password">Scenlösenord</label>
+				<div class="control">
+					<input
+						id="stage-password"
+						type="text"
+						autocomplete="off"
+						data-1p-ignore
+						bind:this={inputRef}
+						class="input"
+						class:is-success={isLocked && !isChanged && !errorMessage}
+						class:is-warning={isChanged}
+						class:is-danger={errorMessage}
+						bind:value={inputValue}
+						on:keydown={handleKeydown}
+						placeholder={isLocked ? "Ange nytt lösenord eller lämna tomt för att ta bort" : "Ange ett lösenord för att låsa scenen"}
+						disabled={!isTheaterMode}
+					/>
+				</div>
+				<div class="help-section">
+					{#if errorMessage}
+						<p class="help is-danger">{errorMessage}</p>
+					{:else if successMessage}
+						<p class="help is-success">{successMessage}</p>
 					{:else}
-						<span class="icon"><IconLock /></span><span>Scenen är låst</span>
+						<p class="help">
+							{#if isRemovingPassword}
+								Tryck Enter för att ta bort lösenordet
+							{:else if isChangingPassword}
+								Tryck Enter för att {isLocked ? "byta" : "aktivera"} lösenord
+							{:else if isLocked}
+								Scenen är lösenordsskyddad
+							{:else}
+								Scenen är öppen för alla
+							{/if}
+						</p>
 					{/if}
-				{:else if isChanged}
-					<span class="icon"><IconLock /></span><span>Lås nu</span>
-				{:else}
-					<span class="icon"><IconUnlock /></span><span>Scenen är olåst</span>
-				{/if}
-			</button>
-		</div>
+				</div>
+			</div>
+		</form>
+
+		{#if isTheaterMode}
+			<div class="field">
+				<div class="control">
+					<button
+						type="button"
+						class="button"
+						class:is-success={!isLocked && !isChanged && !errorMessage}
+						class:is-warning={isChangingPassword && !errorMessage}
+						class:is-danger={isRemovingPassword || errorMessage}
+						class:is-loading={isLoading}
+						disabled={!canSave}
+						on:click={onButtonClick}
+					>
+						<span class="icon">
+							{#if isLocked}
+								{#if isChanged && inputValue.length}
+									<IconLock />
+								{:else if isChanged}
+									<IconUnlock />
+								{:else}
+									<IconLock />
+								{/if}
+							{:else if isChanged}
+								<IconLock />
+							{:else}
+								<IconUnlock />
+							{/if}
+						</span>
+						<span>
+							{#if isRemovingPassword}
+								Ta bort lösenord
+							{:else if isChangingPassword}
+								{isLocked ? "Uppdatera lösenord" : "Aktivera lösenord"}
+							{:else if isLocked}
+								Lösenord aktivt
+							{:else}
+								Inget lösenord
+							{/if}
+						</span>
+					</button>
+				</div>
+			</div>
+
+			{#if isChangingPassword}
+				<div class="notification is-info is-light">
+					<p class="is-size-7">Om du ändrar lösenordet måste alla deltagare ange det på nytt för att få tillgång.</p>
+				</div>
+			{/if}
+		{/if}
 	</div>
-</form>
-<p>Om du ändrar lösenordet måste alla ange det på nytt.</p>
+</div>
+
+<style lang="scss">
+	.access-instrument {
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.access-content {
+		flex: 1;
+		overflow-y: auto;
+	}
+
+	.field {
+		margin-bottom: 1.5rem;
+	}
+
+	.label {
+		font-weight: 600;
+		color: var(--bulma-text-strong);
+	}
+
+	.notification {
+		margin-bottom: 1rem;
+
+		p {
+			margin-bottom: 0;
+		}
+	}
+
+	.help {
+		margin-top: 0.25rem;
+		font-size: 0.75rem;
+	}
+
+	.help-section {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-top: 0.25rem;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+
+		.help {
+			margin-top: 0;
+		}
+	}
+
+	// Responsive adjustments
+	@media screen and (max-width: 768px) {
+		.control {
+			.button {
+				width: 100%;
+			}
+		}
+	}
+</style>

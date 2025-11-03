@@ -91,12 +91,36 @@ export class ShowConfigManager {
 	 * Update show password
 	 */
 	async updatePassword(password?: string): Promise<boolean> {
+		console.log("[ConfigManager] updatePassword called:", {
+			password,
+			mode: this.mode,
+			showId: this.showId,
+		});
+
 		if (this.mode === AppMode.THEATER && this.showId) {
-			return await showConfigApi.updateShowPassword(this.showId, password);
+			console.log("[ConfigManager] Using theater mode API");
+			const success = await showConfigApi.updateShowPassword(this.showId, password);
+			console.log("[ConfigManager] Theater API result:", success);
+			if (success) {
+				// Manually update the store in theater mode since we don't have room sync
+				console.log("[ConfigManager] Updating store manually with:", password);
+				roomApi.stagePasswordStore.set(password);
+			}
+			return success;
 		} else if (this.mode === AppMode.STAGE) {
-			// In stage mode, update through room API
-			return await roomApi.setStagePassword(password);
+			console.log("[ConfigManager] Using stage mode API");
+			// In stage mode, update through room API and sync to get updated state
+			const success = await roomApi.setStagePassword(password);
+			console.log("[ConfigManager] Stage API result:", success);
+			if (success) {
+				// Trigger room sync to get the updated password from server
+				console.log("[ConfigManager] Triggering room sync");
+				await roomApi.syncRoom();
+				console.log("[ConfigManager] Room sync completed");
+			}
+			return success;
 		}
+		console.log("[ConfigManager] No valid mode/showId, returning false");
 		return false;
 	}
 

@@ -12,7 +12,21 @@ export const showsLoadingStore = writable<boolean>(false);
 export const showsErrorStore = writable<string | null>(null);
 
 /** Currently selected/active show */
-export const currentShowStore = writable<PublicShowDataResponse | null>(null);
+export const currentShowStore = writable<PublicShowDataResponse>({
+	id: -1,
+	name: "(laddar)",
+	description: "(laddar)",
+	nomenclature: "föreställningen",
+	isPasswordProtected: false,
+	curtainsOverride: 0,
+	chatEnabledOverride: 0,
+	effectsEnabledOverride: 0,
+	visitorAudioEnabledOverride: 0,
+	visitorVideoEnabledOverride: 0,
+	currentScene: null,
+	createdAt: new Date().toString(),
+	updatedAt: new Date().toString(),
+});
 
 /** Derived store for online shows only */
 export const onlineShowsStore = derived(showsStore, ($shows) => $shows.filter((show) => show.isOnline));

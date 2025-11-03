@@ -140,7 +140,7 @@
 
 	<div class="metadata-content">
 		<div class="field">
-			<label class="label" for="show-name">Namn *</label>
+			<label class="label" for="show-name">Namn</label>
 			<div class="control">
 				<input
 					id="show-name"
@@ -189,7 +189,7 @@
 				</datalist>
 			</div>
 			<div class="help-section">
-				<p class="help">Hur din föreställning refereras till generiskt</p>
+				<p class="help">Exempelvis, klicka här för att ansluta till {nomenclatureInput} "{nameInput}"</p>
 				<p class="help character-count" class:is-warning={nomenclatureCharCount > nomenclatureMaxLength * 0.9}>
 					{nomenclatureCharCount}/{nomenclatureMaxLength} tecken
 				</p>

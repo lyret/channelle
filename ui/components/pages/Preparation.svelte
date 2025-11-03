@@ -8,6 +8,7 @@
 
 	import TheaterHeader from "~/components/theater/TheaterHeader.svelte";
 	import InstrumentContainer from "~/components/instruments/_InstrumentContainer.svelte";
+	import PicolArrowFullLeft from "../picol/icons/Picol-arrow-full-left.svelte";
 
 	let currentShow: PublicShowDataResponse | null = null;
 	let loading = true;
@@ -75,16 +76,16 @@
 	<!-- Header -->
 	<TheaterHeader />
 	<div class="has-text-centered mb-4" in:blur={{ duration: 500, delay: 1000 }}>
-		<h1 class="title is-4 has-text-white">Förberedelser</h1>
 		{#if loading}
-			<p class="subtitle is-6 has-text-grey">Laddar showdata...</p>
+			<p class="subtitle is-4 has-text-grey">Laddar showdata...</p>
 		{:else if error}
-			<p class="subtitle is-6 has-text-danger">{error}</p>
+			<p class="subtitle is-4 has-text-danger">{error}</p>
 		{:else if currentShow}
-			<p class="subtitle is-6 has-text-grey">Konfigurera showen "{currentShow.name}" innan lansering</p>
+			<p class="subtitle is-4 has-text-white">Konfigurera showen "{$currentShowStore.name}" innan lansering</p>
 		{:else}
-			<p class="subtitle is-6 has-text-grey">Konfigurera showen innan lansering</p>
+			<p class="subtitle is-4 has-text-white">Konfigurera showen innan lansering</p>
 		{/if}
+		<a class="button is-secondary is-inverted is-outlined" href="/"><span class="icon"><PicolArrowFullLeft /></span>&nbsp;&nbsp;Tillbaka</a>
 	</div>
 
 	{#if loading}

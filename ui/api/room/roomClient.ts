@@ -342,7 +342,7 @@ export async function leaveRoom() {
  * Updates peers, active speaker, and manages consumers
  * Called periodically via polling interval
  */
-async function syncRoom() {
+export async function syncRoom() {
 	const { peers, sessions, activeSpeaker, password, sceneSettings, currentLayout, currentScene } = await roomClient.sync.query();
 
 	// Update current layout
@@ -553,50 +553,92 @@ export async function updatePeerProperties(peerId: string, data: { actor?: boole
 /**
  * Sets the stage password
  */
-export async function setStagePassword(password?: string) {
-	await roomClient.setPassword.mutate({ password });
+export async function setStagePassword(password?: string): Promise<boolean> {
+	try {
+		await roomClient.setPassword.mutate({ password });
+		return true;
+	} catch (error) {
+		console.error("Failed to set stage password:", error);
+		return false;
+	}
 }
 
 /**
  * Sets the current scene
  */
-export async function setScene(scene: Scene) {
-	await roomClient.setScene.mutate(scene);
+export async function setScene(scene: Scene): Promise<boolean> {
+	try {
+		await roomClient.setScene.mutate(scene);
+		return true;
+	} catch (error) {
+		console.error("Failed to set scene:", error);
+		return false;
+	}
 }
 
 /**
  * Sets the stage curtains forced setting
  */
-export async function setStageCurtainsForced(value: SceneSetting) {
-	await roomClient.setForcedSceneSetting.mutate({ key: "curtains", value });
+export async function setStageCurtainsForced(value: SceneSetting): Promise<boolean> {
+	try {
+		await roomClient.setForcedSceneSetting.mutate({ key: "curtains", value });
+		return true;
+	} catch (error) {
+		console.error("Failed to set stage curtains forced:", error);
+		return false;
+	}
 }
 
 /**
  * Sets the stage chat enabled forced setting
  */
-export async function setStageChatEnabledForced(value: SceneSetting) {
-	await roomClient.setForcedSceneSetting.mutate({ key: "chatEnabled", value });
+export async function setStageChatEnabledForced(value: SceneSetting): Promise<boolean> {
+	try {
+		await roomClient.setForcedSceneSetting.mutate({ key: "chatEnabled", value });
+		return true;
+	} catch (error) {
+		console.error("Failed to set stage chat enabled forced:", error);
+		return false;
+	}
 }
 
 /**
  * Sets the stage effects enabled forced setting
  */
-export async function setStageEffectsEnabledForced(value: SceneSetting) {
-	await roomClient.setForcedSceneSetting.mutate({ key: "effectsEnabled", value });
+export async function setStageEffectsEnabledForced(value: SceneSetting): Promise<boolean> {
+	try {
+		await roomClient.setForcedSceneSetting.mutate({ key: "effectsEnabled", value });
+		return true;
+	} catch (error) {
+		console.error("Failed to set stage effects enabled forced:", error);
+		return false;
+	}
 }
 
 /**
  * Sets the stage visitor audio enabled forced setting
  */
-export async function setStageVisitorAudioEnabledForced(value: SceneSetting) {
-	await roomClient.setForcedSceneSetting.mutate({ key: "visitorAudioEnabled", value });
+export async function setStageVisitorAudioEnabledForced(value: SceneSetting): Promise<boolean> {
+	try {
+		await roomClient.setForcedSceneSetting.mutate({ key: "visitorAudioEnabled", value });
+		return true;
+	} catch (error) {
+		console.error("Failed to set stage visitor audio enabled forced:", error);
+		return false;
+	}
 }
 
 /**
  * Sets the stage visitor video enabled forced setting
  */
-export async function setStageVisitorVideoEnabledForced(value: SceneSetting) {
-	await roomClient.setForcedSceneSetting.mutate({ key: "visitorVideoEnabled", value });
+export async function setStageVisitorVideoEnabledForced(value: SceneSetting): Promise<boolean> {
+	try {
+		await roomClient.setForcedSceneSetting.mutate({ key: "visitorVideoEnabled", value });
+		return true;
+	} catch (error) {
+		console.error("Failed to set stage visitor video enabled forced:", error);
+		return false;
+	}
 }
 
 /**

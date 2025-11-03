@@ -149,128 +149,245 @@
 	//};
 </script>
 
-<Accordion title="Tvingade inställningar" isOpen={false}>
-	<p class="has-text-centered pb-2 mt-2">Dessa inställningar kommer gälla oavsett vilken scen som pågår.</p>
-	<!-- Scene curtains -->
-	<p class="has-text-centered pb-2 mt-2">Visa ridån 🎭</p>
-	<div class="buttons has-addons is-centered">
-		<button class="button is-danger" class:is-light={$stageSceneSettingsStore.curtains !== 2} on:click={() => configManager.updateCurtainsOverride(2)}>
-			Dölj
-		</button>
-		<button class="button is-info" class:is-light={$stageSceneSettingsStore.curtains !== 0} on:click={() => configManager.updateCurtainsOverride(0)}>
-			Automatiskt
-		</button>
-		<button class="button is-success" class:is-light={$stageSceneSettingsStore.curtains !== 1} on:click={() => configManager.updateCurtainsOverride(1)}>
-			Visa
-		</button>
+<div class="scene-selector-instrument">
+	<h1 class="title">Sceninställningar</h1>
+
+	<div class="scene-content">
+		<Accordion title="Ange tvingande inställningar" isOpen={false}>
+			<div class="field">
+				<label class="label">Visa ridån 🎭</label>
+				<div class="control">
+					<div class="buttons has-addons">
+						<button
+							class="button is-danger"
+							class:is-light={$stageSceneSettingsStore.curtains !== 2}
+							on:click={() => configManager.updateCurtainsOverride(2)}
+						>
+							Dölj
+						</button>
+						<button
+							class="button is-info"
+							class:is-light={$stageSceneSettingsStore.curtains !== 0}
+							on:click={() => configManager.updateCurtainsOverride(0)}
+						>
+							Automatiskt
+						</button>
+						<button
+							class="button is-success"
+							class:is-light={$stageSceneSettingsStore.curtains !== 1}
+							on:click={() => configManager.updateCurtainsOverride(1)}
+						>
+							Visa
+						</button>
+					</div>
+				</div>
+				<div class="help-section">
+					<p class="help">Dessa inställningar gäller oavsett vilken scen som är aktiv</p>
+				</div>
+			</div>
+
+			<div class="field">
+				<label class="label">Visa chatt-panelen 💬</label>
+				<div class="control">
+					<div class="buttons has-addons">
+						<button
+							class="button is-danger"
+							class:is-light={$stageSceneSettingsStore.chatEnabled !== 2}
+							on:click={() => configManager.updateChatEnabledOverride(2)}
+						>
+							Dölj
+						</button>
+						<button
+							class="button is-info"
+							class:is-light={$stageSceneSettingsStore.chatEnabled !== 0}
+							on:click={() => configManager.updateChatEnabledOverride(0)}
+						>
+							Automatiskt
+						</button>
+						<button
+							class="button is-success"
+							class:is-light={$stageSceneSettingsStore.chatEnabled !== 1}
+							on:click={() => configManager.updateChatEnabledOverride(1)}
+						>
+							Visa
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<div class="field">
+				<label class="label">Tillåt video från publiken 🤳</label>
+				<div class="control">
+					<div class="buttons has-addons">
+						<button
+							class="button is-danger"
+							class:is-light={$stageSceneSettingsStore.visitorVideoEnabled !== 2}
+							on:click={() => configManager.updateVisitorVideoEnabledOverride(2)}
+						>
+							Nej
+						</button>
+						<button
+							class="button is-info"
+							class:is-light={$stageSceneSettingsStore.visitorVideoEnabled !== 0}
+							on:click={() => configManager.updateVisitorVideoEnabledOverride(0)}
+						>
+							Automatiskt
+						</button>
+						<button
+							class="button is-success"
+							class:is-light={$stageSceneSettingsStore.visitorVideoEnabled !== 1}
+							on:click={() => configManager.updateVisitorVideoEnabledOverride(1)}
+						>
+							Ja
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<div class="field">
+				<label class="label">Tillåt ljud från publiken 🎤</label>
+				<div class="control">
+					<div class="buttons has-addons">
+						<button
+							class="button is-danger"
+							class:is-light={$stageSceneSettingsStore.visitorAudioEnabled !== 2}
+							on:click={() => configManager.updateVisitorAudioEnabledOverride(2)}
+						>
+							Nej
+						</button>
+						<button
+							class="button is-info"
+							class:is-light={$stageSceneSettingsStore.visitorAudioEnabled !== 0}
+							on:click={() => configManager.updateVisitorAudioEnabledOverride(0)}
+						>
+							Automatiskt
+						</button>
+						<button
+							class="button is-success"
+							class:is-light={$stageSceneSettingsStore.visitorAudioEnabled !== 1}
+							on:click={() => configManager.updateVisitorAudioEnabledOverride(1)}
+						>
+							Ja
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<div class="field">
+				<label class="label">Tillåt blommor och applåder 🌹👏</label>
+				<div class="control">
+					<div class="buttons has-addons">
+						<button
+							class="button is-danger"
+							class:is-light={$stageSceneSettingsStore.effectsEnabled !== 2}
+							on:click={() => configManager.updateEffectsEnabledOverride(2)}
+						>
+							Nej
+						</button>
+						<button
+							class="button is-info"
+							class:is-light={$stageSceneSettingsStore.effectsEnabled !== 0}
+							on:click={() => configManager.updateEffectsEnabledOverride(0)}
+						>
+							Automatiskt
+						</button>
+						<button
+							class="button is-success"
+							class:is-light={$stageSceneSettingsStore.effectsEnabled !== 1}
+							on:click={() => configManager.updateEffectsEnabledOverride(1)}
+						>
+							Ja
+						</button>
+					</div>
+				</div>
+			</div>
+		</Accordion>
+
+		<div class="field">
+			<label class="label">Välj aktiv scen</label>
+			<div class="scene-controls">
+				<SceneSelectorControl layout={auto} {peers} selectedLayout={$sceneStore} on:select={(e) => configManager.updateCurrentScene(e.detail)} />
+				<SceneSelectorControl layout={empty} {peers} selectedLayout={$sceneStore} on:select={(e) => configManager.updateCurrentScene(e.detail)} />
+				<SceneSelectorControl layout={oneXOne} {peers} selectedLayout={$sceneStore} on:select={(e) => configManager.updateCurrentScene(e.detail)} />
+				<SceneSelectorControl layout={oneXTwo} {peers} selectedLayout={$sceneStore} on:select={(e) => configManager.updateCurrentScene(e.detail)} />
+				<SceneSelectorControl layout={chat} {peers} selectedLayout={$sceneStore} on:select={(e) => configManager.updateCurrentScene(e.detail)} />
+				<SceneSelectorControl layout={twoXTwo} {peers} selectedLayout={$sceneStore} on:select={(e) => configManager.updateCurrentScene(e.detail)} />
+			</div>
+		</div>
 	</div>
+</div>
 
-	<!-- Chat button -->
-	<p class="has-text-centered pb-2 mt-2">Visa chatt-panelen 💬</p>
-	<div class="buttons has-addons is-centered">
-		<button
-			class="button is-danger"
-			class:is-light={$stageSceneSettingsStore.chatEnabled !== 2}
-			on:click={() => configManager.updateChatEnabledOverride(2)}
-		>
-			Dölj
-		</button>
-		<button class="button is-info" class:is-light={$stageSceneSettingsStore.chatEnabled !== 0} on:click={() => configManager.updateChatEnabledOverride(0)}>
-			Automatiskt
-		</button>
-		<button
-			class="button is-success"
-			class:is-light={$stageSceneSettingsStore.chatEnabled !== 1}
-			on:click={() => configManager.updateChatEnabledOverride(1)}
-		>
-			Visa
-		</button>
-	</div>
+<style lang="scss">
+	.scene-selector-instrument {
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+	}
 
-	<!-- Visitor video -->
-	<p class="has-text-centered pb-2 mt-2">Tillåt video från publiken 🤳</p>
-	<div class="buttons has-addons is-centered">
-		<button
-			class="button is-danger"
-			class:is-light={$stageSceneSettingsStore.visitorVideoEnabled !== 2}
-			on:click={() => configManager.updateVisitorVideoEnabledOverride(2)}
-		>
-			Nej
-		</button>
-		<button
-			class="button is-info"
-			class:is-light={$stageSceneSettingsStore.visitorVideoEnabled !== 0}
-			on:click={() => configManager.updateVisitorVideoEnabledOverride(0)}
-		>
-			Automatiskt
-		</button>
-		<button
-			class="button is-success"
-			class:is-light={$stageSceneSettingsStore.visitorVideoEnabled !== 1}
-			on:click={() => configManager.updateVisitorVideoEnabledOverride(1)}
-		>
-			Ja
-		</button>
-	</div>
+	.scene-content {
+		flex: 1;
+		overflow-y: auto;
+	}
 
-	<!-- Visitor audio -->
-	<p class="has-text-centered pb-2 mt-2">Tillåt ljud från publiken 🎤</p>
-	<div class="buttons has-addons is-centered">
-		<button
-			class="button is-danger"
-			class:is-light={$stageSceneSettingsStore.visitorAudioEnabled !== 2}
-			on:click={() => configManager.updateVisitorAudioEnabledOverride(2)}
-		>
-			Nej
-		</button>
-		<button
-			class="button is-info"
-			class:is-light={$stageSceneSettingsStore.visitorAudioEnabled !== 0}
-			on:click={() => configManager.updateVisitorAudioEnabledOverride(0)}
-		>
-			Automatiskt
-		</button>
-		<button
-			class="button is-success"
-			class:is-light={$stageSceneSettingsStore.visitorAudioEnabled !== 1}
-			on:click={() => configManager.updateVisitorAudioEnabledOverride(1)}
-		>
-			Ja
-		</button>
-	</div>
+	.field {
+		margin-bottom: 1.5rem;
+	}
 
-	<!-- Visitor effects -->
-	<p class="has-text-centered pb-2 mt-2">Tillåt blommor och applåder 🌹👏</p>
-	<div class="buttons has-addons is-centered">
-		<button
-			class="button is-danger"
-			class:is-light={$stageSceneSettingsStore.effectsEnabled !== 2}
-			on:click={() => configManager.updateEffectsEnabledOverride(2)}
-		>
-			Nej
-		</button>
-		<button
-			class="button is-info"
-			class:is-light={$stageSceneSettingsStore.effectsEnabled !== 0}
-			on:click={() => configManager.updateEffectsEnabledOverride(0)}
-		>
-			Automatiskt
-		</button>
-		<button
-			class="button is-success"
-			class:is-light={$stageSceneSettingsStore.effectsEnabled !== 1}
-			on:click={() => configManager.updateEffectsEnabledOverride(1)}
-		>
-			Ja
-		</button>
-	</div>
-</Accordion>
+	.label {
+		font-weight: 600;
+		color: var(--bulma-text-strong);
+		margin-bottom: 0.5rem;
+	}
 
-<h1 class="title">Välj aktiv scen</h1>
+	.notification {
+		margin-bottom: 1rem;
 
-<SceneSelectorControl layout={auto} {peers} selectedLayout={$sceneStore} on:select={(e) => configManager.updateCurrentScene(e.detail)} />
-<SceneSelectorControl layout={empty} {peers} selectedLayout={$sceneStore} on:select={(e) => configManager.updateCurrentScene(e.detail)} />
-<SceneSelectorControl layout={oneXOne} {peers} selectedLayout={$sceneStore} on:select={(e) => configManager.updateCurrentScene(e.detail)} />
-<SceneSelectorControl layout={oneXTwo} {peers} selectedLayout={$sceneStore} on:select={(e) => configManager.updateCurrentScene(e.detail)} />
-<SceneSelectorControl layout={chat} {peers} selectedLayout={$sceneStore} on:select={(e) => configManager.updateCurrentScene(e.detail)} />
-<SceneSelectorControl layout={twoXTwo} {peers} selectedLayout={$sceneStore} on:select={(e) => configManager.updateCurrentScene(e.detail)} />
+		p {
+			margin-bottom: 0;
+		}
+	}
+
+	.help {
+		margin-top: 0.25rem;
+		font-size: 0.75rem;
+	}
+
+	.help-section {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-top: 0.25rem;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+
+		.help {
+			margin-top: 0;
+		}
+	}
+
+	.buttons {
+		&.has-addons {
+			justify-content: flex-start;
+		}
+	}
+
+	.scene-controls {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	// Responsive adjustments
+	@media screen and (max-width: 768px) {
+		.buttons {
+			&.has-addons {
+				flex-direction: column;
+
+				.button {
+					border-radius: var(--bulma-radius) !important;
+					margin-bottom: 0.25rem;
+				}
+			}
+		}
+	}
+</style>
