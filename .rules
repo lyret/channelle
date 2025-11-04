@@ -3,30 +3,29 @@
 ## Overview
 Channelle is a multimedia communication application for online theater performances. This is the "Stage" component - a server/client web application responsible for a single performance/meeting. It replaces traditional video conferencing tools with theater-focused features.
 
-## Languages & Core Technologies
+## Technology Stack
+
+### Core Technologies
 - **TypeScript/JavaScript**: Primary languages (ES2021+ with Node.js 21+)
 - **Svelte 4**: Frontend framework with TypeScript support
 - **Node.js**: Server runtime (>21.0.0 required)
 - **SQLite**: Database via Sequelize ORM
 - **SASS/SCSS**: Styling with Bulma CSS framework
 
-## Key Libraries & Frameworks
-
-### Server-side
+### Server Libraries
 - **MediaSoup**: Core WebRTC media streaming (one-to-many broadcasting)
 - **tRPC**: Type-safe API layer with WebSocket support
 - **Restify**: HTTP server framework
 - **Sequelize**: Database ORM
 - **WebSocket (ws)**: Real-time communication
 
-### Client-side
+### Client Libraries
 - **MediaSoup Client**: WebRTC client-side media handling
-- **Svelte**: Component framework
 - **Bulma + Bulma-list**: CSS framework and extensions
 - **Universal Router**: Client-side routing
 - **Broadcast Channel**: Cross-tab communication
 
-### Build & Development
+### Build Tools
 - **ESBuild**: Fast bundler for both client and server
 - **ESLint**: Linting with TypeScript and Svelte support
 - **PostCSS + Autoprefixer**: CSS processing
@@ -52,12 +51,6 @@ stage/
 └── .dist/           # Build output directory
 ```
 
-### Module Responsibilities
-- **server/**: MediaSoup workers, tRPC API, database models, WebSocket handling
-- **ui/**: Svelte frontend with theater-specific UI (curtains, stage, backstage views)
-- **shared/**: Common types and configuration interfaces
-- **Build system**: Custom CLI with ESBuild contexts for client/server
-
 ## Data Models
 - **Peer**: User/participant (id, name, actor, manager, banned, audio/video muted states)
 - **Message**: Chat messages
@@ -69,31 +62,6 @@ stage/
 - **Real-time communication**: Chat, video/audio streaming
 - **MediaSoup integration**: Professional-grade WebRTC streaming
 - **Multi-view support**: Different interfaces for different user roles
-
-## Development & Deployment
-
-### Build System
-- Custom CLI (`cli.mjs`) orchestrates builds
-- ESBuild for both client and server compilation
-- Watch mode for development with hot reloading
-- Separate contexts for client/server builds
-
-
-### Styles
-- Do not create inline styles
-- Use bulma class names for styling svelte code
-
-### Environment
-- Supports local, LAN, and WAN deployment modes
-- SQLite database stored in `.dist/database/`
-- Configuration via CLI args, env vars, and defaults
-- Debug modes available for development
-
-### Infrastructure
-- No containerization currently configured
-- No CI/CD pipelines detected
-- Manual deployment via npm scripts
-- MediaSoup requires Python 3.7+ and pip3 for native dependencies
 
 ## Code Style & Guidelines
 
@@ -108,9 +76,9 @@ stage/
 ### Documentation Standards
 - **JSDocs required** for all exported entities and top-level variables
 - Single-line comments (`//`) for inline function documentation
-- **Avoid** unnecessary error handling wrappers
-- **Avoid** excessive console.log statements
 - Keep code simple and direct
+- Avoid unnecessary error handling wrappers
+- Avoid excessive console.log statements
 
 ### File Naming
 - TypeScript files use `.ts` extension
@@ -118,13 +86,49 @@ stage/
 - Build scripts use `.mjs` extension
 - Private/internal files prefixed with `_`
 
-## Architecture Notes
+### Styling
+- Do not create inline styles
+- Use Bulma class names for styling Svelte components
+
+## Build & Development
+
+### Build System
+- Custom CLI (`cli.mjs`) orchestrates builds
+- ESBuild for both client and server compilation
+- Watch mode for development with hot reloading
+- Separate contexts for client/server builds
+
+### Environment
+- Supports local, LAN, and WAN deployment modes
+- SQLite database stored in `.dist/database/`
+- Configuration via CLI args, env vars, and defaults
+- Debug modes available for development
+
+### Dependencies
+- MediaSoup requires Python 3.7+ and pip3 for native dependencies
+- Manual deployment via npm scripts
+
+## Architecture
 - **Type-safe API**: tRPC provides end-to-end type safety
 - **Real-time communication**: WebSocket-based with heartbeat/keepalive
 - **Media streaming**: MediaSoup handles WebRTC complexity
 - **State management**: Svelte stores + persisted store for client state
 - **Database**: Sequelize with SQLite for simplicity
 - **Build optimization**: Separate client/server builds with shared types
+
+## AI Assistant Behavior Rules
+
+### Prohibited Actions
+- **NEVER create documentation files** (README.md, example files, implementation guides, etc.)
+- **NEVER create demonstration files** or example code files
+- **NEVER run linting commands** (npm run lint, eslint, etc.)
+- **NEVER create markdown files** for examples, documentation, or summaries
+
+### Required Behavior
+- Focus solely on implementing requested functionality
+- Provide brief explanations in responses, not separate documentation files
+- Test builds only when necessary for verification
+- Work directly with the codebase without creating auxiliary files
 
 ## License
 Creative Commons BY-NC 4.0 (non-commercial use)
