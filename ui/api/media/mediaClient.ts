@@ -1,126 +1,144 @@
 import * as MediaSoup from "mediasoup-client";
 import DeepEqual from "deep-equal";
 import { writable, derived, get } from "svelte/store";
-import { roomClient, wsPeerIdStore } from "../_trpcClient";
-import type { Peer, TransportDirection, CustomAppData, MediaTag, StageLayout, Scene, SceneSetting } from "~/types/serverSideTypes";
+import { mediaClient, wsPeerIdStore } from "../_trpcClient";
+import type { Peer, TransportDirection, CustomAppData, MediaTag } from "~/types/serverSideTypes";
+
+/**
+ * MediaRoom API - WebRTC media streaming and peer management
+ *
+ * This API handles all WebRTC/MediaSoup functionality for real-time
+ * audio/video communication between participants in a show.
+ *
+ * Key responsibilities:
+ * - WebRTC media streaming (audio/video)
+ * - Peer connection management
+ * - MediaSoup transport handling
+ * - Real-time synchronization of media state
+ * - Stage UI state for immediate visual feedback
+ *
+ * Architecture:
+ * - Uses MediaSoup for professional-grade WebRTC
+ * - Automatic peer-to-peer media routing
+ * - Scalable one-to-many broadcasting
+ * - Real-time synchronization via polling
+ *
+ * Usage:
+ * 1. Join media room: await joinMediaRoom()
+ * 2. Start media: await startLocalMediaStream(true, true)
+ * 3. Send streams: await sendMediaStreams()
+ * 4. Subscribe to peers: automatic via polling
+ */
 
 type Transport = MediaSoup.types.Transport<CustomAppData>;
 type Consumer = MediaSoup.types.Consumer<CustomAppData>;
 type Producer = MediaSoup.types.Producer<CustomAppData>;
 
 // ============================================================================
-// SVELTE STORES
+// MEDIA STORES
 // ============================================================================
 
 /**
- * MediaSoup device instance for WebRTC capabilities
- * Initialized when joining a room with router RTP capabilities
+ * MediaSoup device - initialized when joining media room with router RTP capabilities
+ * Contains codec information and WebRTC capabilities
  */
 export const deviceStore = writable<MediaSoup.types.Device | null>(null);
 
-/**
- * The known remotely set password for accessing the stage
- */
-export const stagePasswordStore = writable<string | undefined>(undefined);
+// ============================================================================
+// STAGE UI STORES (Real-time display state)
+// ============================================================================
 
 /**
- * The known remotely set settings for the stage
- */
-export const stageSceneSettingsStore = writable<{
-	curtains: SceneSetting;
-	chatEnabled: SceneSetting;
-	effectsEnabled: SceneSetting;
-	visitorAudioEnabled: SceneSetting;
-	visitorVideoEnabled: SceneSetting;
-}>({
-	curtains: 0,
-	chatEnabled: 0,
-	effectsEnabled: 0,
-	visitorAudioEnabled: 0,
-	visitorVideoEnabled: 0,
-});
-
-/**
- * The known remotely set layout to use on the stage
- */
-export const stageLayoutStore = writable<StageLayout>([]);
-
-/**
- * The known remotely set scene to use on the stage
- */
-export const sceneStore = writable<Scene | undefined>(undefined);
-
-/**
- * The known remotely set status of the curtain that can cover the stage
+ * Real-time curtains display state
+ * Updated immediately when scene curtains setting changes
+ * Used by stage UI to show/hide curtains instantly
  */
 export const stageCurtainsStore = writable<boolean>(true);
 
 /**
- * The known remotely set status of the whenever the chat is enabled on the stage
+ * Real-time chat panel visibility state
+ * Updated immediately when chat enabled setting changes
+ * Used by stage UI to show/hide chat panel
  */
 export const stageChatEnabledStore = writable<boolean>(true);
 
 /**
- * The known remotely set status of the whenever the effects are enabled on the stage
+ * Real-time effects availability state
+ * Updated immediately when effects enabled setting changes
+ * Used by stage UI to enable/disable effect buttons
  */
 export const stageEffectsEnabledStore = writable<boolean>(true);
 
 /**
- * The known remotely set status of the whenever the visitors are allowed to send audio
+ * Real-time visitor audio permission state
+ * Updated immediately when visitor audio setting changes
+ * Used by stage UI to enable/disable visitor microphones
  */
 export const stageHaveVisitorAudioEnabledStore = writable<boolean>(true);
 
 /**
- * The known remotely set status of the whenever the visitors are allowed to send video
+ * Real-time visitor video permission state
+ * Updated immediately when visitor video setting changes
+ * Used by stage UI to enable/disable visitor cameras
  */
 export const stageHaveVisitorVideoEnabledStore = writable<boolean>(true);
 
+// ============================================================================
+// MEDIA STATE STORES
+// ============================================================================
+
 /**
  * General paused state for media streaming
- * @deprecated Consider using camPausedStore and micPausedStore instead
+ * @deprecated Use camPausedStore and micPausedStore for specific control
  */
 export const paused = writable(false);
 
 /**
- * Camera paused state
- * When true, video track is paused
+ * Video track pause state - when true, video is paused/muted locally
+ * Controls whether local video is being sent to other participants
  */
 export const camPausedStore = writable(false);
 
 /**
- * Microphone paused state
- * When true, audio track is paused
+ * Audio track pause state - when true, audio is paused/muted locally
+ * Controls whether local audio is being sent to other participants
  */
 export const micPausedStore = writable(false);
 
 /**
- * Local media stream containing audio/video tracks from user's devices
- * Set when accessing user media through getUserMedia
+ * Local media stream from browser getUserMedia
+ * Contains user's camera and/or microphone streams
+ * Set when startLocalMediaStream() is called successfully
  */
 export const localMediaStream = writable<MediaStream | null>(null);
 
+// ============================================================================
+// WEBRTC TRANSPORT STORES
+// ============================================================================
+
 /**
- * Map of transports for receiving media from other peers
- * Each peer gets its own transport, keyed by peerId
- * Created on-demand when subscribing to remote tracks
+ * Dictionary of receiving transports, indexed by peer ID
+ * Each transport handles incoming media streams from one peer
+ * Created automatically when subscribing to remote tracks
  */
 export const recvTransports = writable<Record<string, Transport>>({});
 
 /**
- * Transport for sending media to other peers
- * Created when starting to send media streams
+ * Single sending transport for outgoing media streams
+ * Handles sending local audio/video to all other participants
+ * Created when sendMediaStreams() is called
  */
 export const sendTransport = writable<Transport | null>(null);
 
 /**
- * Producer for sending video track to server
- * Created when producing video media
+ * Local video producer - sends video to other participants
+ * Created when local video stream is being produced
  */
 export const videoProducer = writable<Producer | null>(null);
 
 /**
- * Producer for sending audio track to server
- * Created when producing audio media
+ * Local audio producer - sends audio to other participants
+ * Created when local audio stream is being produced
  */
 export const audioProducer = writable<Producer | null>(null);
 
@@ -171,28 +189,36 @@ export const isBannedFromTheRoom = derived([peerStore], ([$peer]) => {
 // INTERNAL STATE (NOT EXPOSED AS STORES)
 // ============================================================================
 
-// These are truly internal and don't need to be reactive
-let _pollingInterval: ReturnType<typeof setInterval> | undefined;
-let _previousSyncedPeers: Record<string, any> = {};
-
 // ============================================================================
-// DERIVED STORES
+// MEDIA CAPABILITY STORES
 // ============================================================================
 
 /**
- * Indicates whether local camera/media stream is available
+ * Whether local camera/media stream is available
+ * True when getUserMedia has successfully provided a media stream
  */
 export const hasLocalCamStore = derived(localMediaStream, ($localCam) => !!$localCam);
 
 /**
- * Indicates whether send transport is available for outgoing media
+ * Whether send transport is available for outgoing media
+ * True when WebRTC transport is ready to send local streams
  */
 export const hasSendTransportStore = derived(sendTransport, ($transport) => !!$transport);
 
 /**
- * Indicates whether any receive transports are available for incoming media
+ * Whether any receive transports are available for incoming media
+ * True when at least one peer connection is established for receiving
  */
 export const hasRecvTransportStore = derived(recvTransports, ($transports) => Object.keys($transports).length > 0);
+
+// ============================================================================
+// INTERNAL STATE (Not reactive)
+// ============================================================================
+
+// Polling interval for room state synchronization (1 second intervals)
+let _pollingInterval: ReturnType<typeof setInterval> | undefined;
+// Previous peer state for detecting changes during synchronization
+let _previousSyncedPeers: Record<string, any> = {};
 
 // ============================================================================
 // DEBUG UTILITIES
@@ -261,15 +287,34 @@ export function logDebugState(context = "DEBUG") {
 // PUBLIC API FUNCTIONS
 // ============================================================================
 
+// ============================================================================
+// PUBLIC API FUNCTIONS
+// ============================================================================
+
 /**
- * Join the room and initialize MediaSoup device
- * Sets up polling interval for room state synchronization
+ * Join the media room and initialize WebRTC capabilities
+ *
+ * This is the primary entry point for establishing media connectivity.
+ * It initializes the MediaSoup device, establishes server connection,
+ * and begins automatic room state synchronization.
+ *
+ * @throws {Error} If device initialization fails or connection is rejected
+ *
+ * @example
+ * ```typescript
+ * try {
+ *   await joinMediaRoom();
+ *   console.log('Successfully joined media room');
+ * } catch (error) {
+ *   console.error('Failed to join:', error);
+ * }
+ * ```
  */
-export async function joinRoom() {
+export async function joinMediaRoom() {
 	// Signal that we're a new peer and initialize our
 	// mediasoup-client device, if this is our first time connecting
-	const { peerId, routerRtpCapabilities } = await roomClient.join.mutate();
-	console.log("[Room] Joined with peer id", peerId);
+	const { peerId, routerRtpCapabilities } = await mediaClient.join.mutate();
+	console.log("[MediaRoom] Joined with peer id", peerId);
 
 	// Initialize the MediaSoup device
 	try {
@@ -292,20 +337,29 @@ export async function joinRoom() {
 	// Let's poll at 1-second intervals when joined
 	_pollingInterval = setInterval(async () => {
 		try {
-			await syncRoom();
+			await syncMediaRoom();
 		} catch (err) {
-			console.error("[Room] Poll stopped:", err);
+			console.error("[MediaRoom] Poll stopped:", err);
 			clearInterval(_pollingInterval);
 		}
 	}, 1000);
 }
 
 /**
- * Leave the room and clean up all resources
- * Stops polling, closes transports, and resets all state
+ * Leave the media room and clean up all WebRTC resources
+ *
+ * Properly closes all media connections, stops synchronization,
+ * and releases browser media resources. Should be called when
+ * the user navigates away or closes the application.
+ *
+ * @example
+ * ```typescript
+ * await leaveMediaRoom();
+ * console.log('Left media room and cleaned up resources');
+ * ```
  */
-export async function leaveRoom() {
-	console.log("[Room] leaving the room");
+export async function leaveMediaRoom() {
+	console.log("[MediaRoom] leaving the room");
 
 	// Stop polling
 	if (_pollingInterval) {
@@ -314,7 +368,7 @@ export async function leaveRoom() {
 	}
 
 	// Close everything on the server-side (transports, producers, consumers)
-	await roomClient.leave.mutate();
+	await mediaClient.leave.mutate();
 
 	// Closing the transports closes all producers and consumers. we
 	// don't need to do anything beyond closing the transports, except
@@ -338,39 +392,28 @@ export async function leaveRoom() {
 }
 
 /**
- * Synchronize room state with server
- * Updates peers, active speaker, and manages consumers
- * Called periodically via polling interval
+ * Synchronize media room state with server
+ *
+ * Fetches current peer list, session information, and stage UI state
+ * from the server. Automatically manages consumer connections for new
+ * peers and cleans up resources for departed peers.
+ *
+ * Called automatically every second when connected to the room.
+ * Can also be called manually for immediate synchronization.
+ *
+ * @private Generally called automatically, but can be used for manual sync
  */
-export async function syncRoom() {
-	const { peers, sessions, activeSpeaker, password, sceneSettings, currentLayout, currentScene } = await roomClient.sync.query();
+export async function syncMediaRoom() {
+	const { peers, sessions, activeSpeaker, currentScene } = await mediaClient.sync.query();
 
-	// Update current layout
-	stageLayoutStore.set(currentLayout);
-
-	// Update current predefined layout
-	sceneStore.set(currentScene);
-
-	// Update the known stage password
-	stagePasswordStore.set(password);
-
-	// Update the known stage scene settings
-	stageSceneSettingsStore.set(sceneSettings);
-
-	// Update the known curtain status
-	stageCurtainsStore.set(currentScene.curtains);
-
-	// Update the known chat status
-	stageChatEnabledStore.set(currentScene.chatEnabled);
-
-	// Update the known effects status
-	stageEffectsEnabledStore.set(currentScene.effectsEnabled);
-
-	// Update the known visitor audio status
-	stageHaveVisitorAudioEnabledStore.set(currentScene.visitorAudioEnabled);
-
-	// Update the known visitor video status
-	stageHaveVisitorVideoEnabledStore.set(currentScene.visitorVideoEnabled);
+	// Update the known stage UI states (needed for real-time stage display)
+	if (currentScene) {
+		stageCurtainsStore.set(currentScene.curtains);
+		stageChatEnabledStore.set(currentScene.chatEnabled);
+		stageEffectsEnabledStore.set(currentScene.effectsEnabled);
+		stageHaveVisitorAudioEnabledStore.set(currentScene.visitorAudioEnabled);
+		stageHaveVisitorVideoEnabledStore.set(currentScene.visitorVideoEnabled);
+	}
 
 	// Update the active speaker
 	currentActiveSpeakerStore.set(activeSpeaker);
@@ -485,7 +528,7 @@ export async function syncRoom() {
 			try {
 				await closeConsumer(consumer);
 			} catch (error) {
-				console.error(`[Room] Error closing invalid consumer:`, error);
+				console.error("[Room] Error closing invalid consumer:", error);
 			}
 		}
 	}
@@ -504,7 +547,7 @@ export async function syncRoom() {
  * Updates the name of a peer in the room
  */
 export async function updatePeerName(peerId: string, name: string) {
-	await roomClient.updatePeer.mutate({
+	await mediaClient.updatePeer.mutate({
 		id: peerId,
 		name,
 	});
@@ -514,7 +557,7 @@ export async function updatePeerName(peerId: string, name: string) {
  * Updates the banned status of a peer in the room
  */
 export async function updatePeerBannedStatus(peerId: string, banned: boolean) {
-	await roomClient.updatePeer.mutate({
+	await mediaClient.updatePeer.mutate({
 		id: peerId,
 		banned,
 	});
@@ -524,7 +567,7 @@ export async function updatePeerBannedStatus(peerId: string, banned: boolean) {
  * Updates the actor status of a peer in the room
  */
 export async function updatePeerActorStatus(peerId: string, actor: boolean) {
-	await roomClient.updatePeer.mutate({
+	await mediaClient.updatePeer.mutate({
 		id: peerId,
 		actor,
 	});
@@ -534,7 +577,7 @@ export async function updatePeerActorStatus(peerId: string, actor: boolean) {
  * Updates the manager status of a peer in the room
  */
 export async function updatePeerManagerStatus(peerId: string, manager: boolean) {
-	await roomClient.updatePeer.mutate({
+	await mediaClient.updatePeer.mutate({
 		id: peerId,
 		manager,
 	});
@@ -544,101 +587,10 @@ export async function updatePeerManagerStatus(peerId: string, manager: boolean) 
  * Updates multiple peer properties at once
  */
 export async function updatePeerProperties(peerId: string, data: { actor?: boolean; manager?: boolean; banned?: boolean }) {
-	await roomClient.updatePeer.mutate({
+	await mediaClient.updatePeer.mutate({
 		id: peerId,
 		...data,
 	});
-}
-
-/**
- * Sets the stage password
- */
-export async function setStagePassword(password?: string): Promise<boolean> {
-	try {
-		await roomClient.setPassword.mutate({ password });
-		return true;
-	} catch (error) {
-		console.error("Failed to set stage password:", error);
-		return false;
-	}
-}
-
-/**
- * Sets the current scene
- */
-export async function setScene(scene: Scene): Promise<boolean> {
-	try {
-		await roomClient.setScene.mutate(scene);
-		return true;
-	} catch (error) {
-		console.error("Failed to set scene:", error);
-		return false;
-	}
-}
-
-/**
- * Sets the stage curtains forced setting
- */
-export async function setStageCurtainsForced(value: SceneSetting): Promise<boolean> {
-	try {
-		await roomClient.setForcedSceneSetting.mutate({ key: "curtains", value });
-		return true;
-	} catch (error) {
-		console.error("Failed to set stage curtains forced:", error);
-		return false;
-	}
-}
-
-/**
- * Sets the stage chat enabled forced setting
- */
-export async function setStageChatEnabledForced(value: SceneSetting): Promise<boolean> {
-	try {
-		await roomClient.setForcedSceneSetting.mutate({ key: "chatEnabled", value });
-		return true;
-	} catch (error) {
-		console.error("Failed to set stage chat enabled forced:", error);
-		return false;
-	}
-}
-
-/**
- * Sets the stage effects enabled forced setting
- */
-export async function setStageEffectsEnabledForced(value: SceneSetting): Promise<boolean> {
-	try {
-		await roomClient.setForcedSceneSetting.mutate({ key: "effectsEnabled", value });
-		return true;
-	} catch (error) {
-		console.error("Failed to set stage effects enabled forced:", error);
-		return false;
-	}
-}
-
-/**
- * Sets the stage visitor audio enabled forced setting
- */
-export async function setStageVisitorAudioEnabledForced(value: SceneSetting): Promise<boolean> {
-	try {
-		await roomClient.setForcedSceneSetting.mutate({ key: "visitorAudioEnabled", value });
-		return true;
-	} catch (error) {
-		console.error("Failed to set stage visitor audio enabled forced:", error);
-		return false;
-	}
-}
-
-/**
- * Sets the stage visitor video enabled forced setting
- */
-export async function setStageVisitorVideoEnabledForced(value: SceneSetting): Promise<boolean> {
-	try {
-		await roomClient.setForcedSceneSetting.mutate({ key: "visitorVideoEnabled", value });
-		return true;
-	} catch (error) {
-		console.error("Failed to set stage visitor video enabled forced:", error);
-		return false;
-	}
 }
 
 /**
@@ -973,7 +925,7 @@ export async function closeMediaStreams() {
 	}
 
 	console.log("[MS] Stopping sending of media streams");
-	await roomClient.closeTransport.mutate({ transportId: transport.id });
+	await mediaClient.closeTransport.mutate({ transportId: transport.id });
 
 	// Closing the sendTransport closes all associated producers. when
 	// the Video Producer and Audio Producer are closed,
@@ -1032,7 +984,7 @@ export async function subscribeToTrack(peerId: string, mediaTag: MediaTag) {
 		throw new Error("Device not initialized");
 	}
 
-	const consumerParameters = await roomClient.recvTrack.mutate({
+	const consumerParameters = await mediaClient.recvTrack.mutate({
 		mediaTag,
 		mediaPeerId: peerId,
 		rtpCapabilities: device.rtpCapabilities,
@@ -1079,7 +1031,7 @@ export async function subscribeToTrack(peerId: string, mediaTag: MediaTag) {
 
 	// Keep track of all our consumers
 	consumersStore.update((consumers) => [...consumers, consumer]);
-	console.log(`[MS] Added consumer to store, total consumers:`, get(consumersStore).length);
+	console.log("[MS] Added consumer to store, total consumers:", get(consumersStore).length);
 }
 
 /**
@@ -1125,7 +1077,7 @@ export function getTrackStats() {
  */
 export async function pauseConsumer(consumer: Consumer) {
 	console.log("[MS] Pausing consumer for track", consumer.appData.peerId, consumer.appData.mediaTag);
-	await roomClient.pauseConsumer.mutate({ consumerId: consumer.id });
+	await mediaClient.pauseConsumer.mutate({ consumerId: consumer.id });
 	consumer.pause();
 }
 
@@ -1135,7 +1087,7 @@ export async function pauseConsumer(consumer: Consumer) {
  */
 export async function resumeConsumer(consumer: Consumer) {
 	console.log("[MS] Resuming the consumer for track", consumer.appData.peerId, consumer.appData.mediaTag);
-	await roomClient.resumeConsumer.mutate({ consumerId: consumer.id });
+	await mediaClient.resumeConsumer.mutate({ consumerId: consumer.id });
 	consumer.resume();
 }
 
@@ -1150,7 +1102,7 @@ export async function closeConsumer(consumer: Consumer) {
 		// Tell the server we're closing this consumer. (the server-side
 		// consumer may have been closed already, but that's okay.)
 		if (!consumer.closed) {
-			await roomClient.closeConsumer.mutate({ consumerId: consumer.id });
+			await mediaClient.closeConsumer.mutate({ consumerId: consumer.id });
 		}
 	} catch (error) {
 		console.warn("[MS] Error notifying server about consumer closure:", error);
@@ -1210,7 +1162,7 @@ export async function closeAllConsumers() {
 export async function pauseProducer(producer: Producer) {
 	if (!producer.paused) {
 		console.log("[MS] Pausing producer for", producer.appData.mediaTag);
-		await roomClient.pauseProducer.mutate({ producerId: producer.id });
+		await mediaClient.pauseProducer.mutate({ producerId: producer.id });
 		producer.pause();
 	}
 }
@@ -1223,7 +1175,7 @@ export async function resumeProducer(producer: Producer) {
 	if (producer.paused) {
 		try {
 			console.log("[MS]Resuming producer for", producer.appData.mediaTag);
-			await roomClient.resumeProducer.mutate({ producerId: producer.id });
+			await mediaClient.resumeProducer.mutate({ producerId: producer.id });
 			producer.resume();
 		} catch (e) {
 			console.error(e);
@@ -1252,7 +1204,7 @@ async function _createTransport(direction: TransportDirection, peerId: string): 
 	// Ask the server to create a server-side transport object and send
 	// us back the info we need to create a client-side transport
 	let transport: MediaSoup.types.Transport<CustomAppData>;
-	const { transportOptions } = await roomClient.createTransport.mutate({ direction });
+	const { transportOptions } = await mediaClient.createTransport.mutate({ direction });
 
 	if (direction === "recv") {
 		transport = device.createRecvTransport(transportOptions);
@@ -1270,7 +1222,7 @@ async function _createTransport(direction: TransportDirection, peerId: string): 
 		const dtlsParameters = params.dtlsParameters;
 		console.log("[MS] transport connect event", direction);
 
-		roomClient.connectTransport
+		mediaClient.connectTransport
 			.mutate({
 				transportId: transportOptions.id,
 				dtlsParameters,
@@ -1303,7 +1255,7 @@ async function _createTransport(direction: TransportDirection, peerId: string): 
 			// Tell the server what it needs to know from us in order to set
 			// up a server-side producer object, and get back a
 			// producer.id.
-			roomClient.sendTrack
+			mediaClient.sendTrack
 				.mutate({
 					transportId: transportOptions.id,
 					kind,
@@ -1349,7 +1301,7 @@ async function _createTransport(direction: TransportDirection, peerId: string): 
 			} else if (direction === "send") {
 				// For send transport, leave the room entirely
 				console.log("[MS] Send transport closed... leaving the room and resetting");
-				leaveRoom();
+				leaveMediaRoom();
 			}
 		}
 	});

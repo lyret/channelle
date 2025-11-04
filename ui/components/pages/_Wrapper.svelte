@@ -2,7 +2,7 @@
 	import { blur } from "svelte/transition";
 	import { onMount } from "svelte";
 
-	import { hasJoinedRoomStore, isBannedFromTheRoom, joinRoom, peerStore, stageCurtainsStore } from "~/api/room";
+	import { hasJoinedRoomStore, isBannedFromTheRoom, joinMediaRoom, peerStore, stageCurtainsStore } from "~/api/media";
 
 	import AuthenticateCurtainMessage from "~/components/curtains/AuthenticateCurtainMessage.svelte";
 	import BlockedCurtainMessage from "~/components/curtains/BlockedCurtainMessage.svelte";
@@ -20,8 +20,8 @@
 	// on initial rendering due to initial determination of state
 	let determiningState = true;
 	onMount(() => {
-		// Joins the room
-		joinRoom();
+		// Joins the media room
+		joinMediaRoom();
 
 		setTimeout(() => {
 			determiningState = false;

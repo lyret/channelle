@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { clickOutside } from "~/directives";
-	import { updatePeerName, updatePeerProperties } from "~/api/room";
+	import { updatePeerName, updatePeerProperties } from "~/api/media";
 	import IconAward from "../icons/Icon-award.svelte";
 	import IconBriefcase from "../icons/Icon-briefcase.svelte";
 	import IconCircle from "../icons/Icon-circle.svelte";

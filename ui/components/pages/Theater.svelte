@@ -6,13 +6,13 @@
 	import AuthenticationModal from "~/components/modals/TheaterAuthenticationModal.svelte";
 	import AboutModal from "~/components/modals/TheaterAboutModal.svelte";
 	import CreateShowModal from "~/components/modals/TheaterCreateShowModal.svelte";
-	import { showsLoadingStore, showsErrorStore, fetchShows, initializeShowAPI } from "~/api/show";
+	import { showsLoadingStore, showsErrorStore, fetchShows, initializeConfigAPI } from "~/api/config";
 	import { showAuthModal, showAboutModal, showCreateShowModal, closeAuthModal, closeAboutModal, closeCreateShowModal } from "~/stores/theaterModals";
 	import ShowsList from "../theater/ShowsList.svelte";
 
 	onMount(async () => {
 		// Initialize the show API and fetch shows
-		await initializeShowAPI();
+		await initializeConfigAPI();
 	});
 
 	// Modal event handlers

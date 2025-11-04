@@ -1,10 +1,16 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { blur } from "svelte/transition";
-	import { openInstruments } from "~/stores/instruments";
-	import { getShow, currentShowStore } from "~/api/show";
-	import { initializeConfigManager } from "~/api/show/configManager";
-	import type { PublicShowDataResponse } from "~/types/serverSideTypes";
+
+	import { getShow, currentShowStore, selectShow } from "~/api/config";
+	import { initializeConfigManager } from "~/api/config";
+	import type { PublicShowData } from "~/types/serverSideTypes";
+
+	// Type alias for client-side data (dates serialized as strings)
+	type PublicShowDataResponse = Omit<PublicShowData, "createdAt" | "updatedAt"> & {
+		createdAt: string;
+		updatedAt: string;
+	};
 
 	import TheaterHeader from "~/components/theater/TheaterHeader.svelte";
 	import InstrumentContainer from "~/components/instruments/_InstrumentContainer.svelte";
@@ -30,8 +36,8 @@
 					if (!currentShow) {
 						error = `Show with ID ${showIdNum} not found`;
 					} else {
-						// Update the global current show store
-						currentShowStore.set(currentShow);
+						// Select the show in the config system
+						await selectShow(showIdNum, true);
 					}
 				} else {
 					error = "Invalid show ID format";
@@ -51,7 +57,8 @@
 						if (!currentShow) {
 							error = `Show with ID ${showIdNum} not found`;
 						} else {
-							currentShowStore.set(currentShow);
+							// Select the show in the config system
+							await selectShow(showIdNum, true);
 						}
 					} else {
 						error = "Invalid stored show ID format";
@@ -65,7 +72,7 @@
 			}
 		}
 
-		// Initialize the configuration manager after loading show data
+		// Initialize the config manager after loading show data
 		await initializeConfigManager();
 
 		loading = false;
@@ -81,7 +88,7 @@
 		{:else if error}
 			<p class="subtitle is-4 has-text-danger">{error}</p>
 		{:else if currentShow}
-			<p class="subtitle is-4 has-text-white">Konfigurera showen "{$currentShowStore.name}" innan lansering</p>
+			<p class="subtitle is-4 has-text-white">Konfigurera showen "{$currentShowStore?.name || currentShow.name}" innan lansering</p>
 		{:else}
 			<p class="subtitle is-4 has-text-white">Konfigurera showen innan lansering</p>
 		{/if}

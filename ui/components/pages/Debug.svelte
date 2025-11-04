@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { onMount, onDestroy } from "svelte";
 	import { blur } from "svelte/transition";
-	import * as roomClient from "~/api/room/roomClient";
+	import * as mediaClient from "~/api/media/mediaClient";
 	import { wsPeerIdStore } from "~/api/_trpcClient";
+	import { configManager } from "~/api/config";
 	import { SessionStats, PeerMediaStatus, ConnectionStatus } from "~/components/debug";
 
 	// Import all the stores from roomClient
@@ -21,7 +22,7 @@
 		currentActiveSpeakerStore,
 		camPausedStore,
 		micPausedStore,
-	} from "~/api/room/roomClient";
+	} from "~/api/media";
 
 	// Local state for UI
 	let newPasswordInput = "";
@@ -84,12 +85,12 @@
 		});
 	}
 
-	onMount(() => {
-		roomClient.joinRoom();
+	onMount(async () => {
+		await mediaClient.joinMediaRoom();
 	});
 
 	onDestroy(() => {
-		roomClient.leaveRoom();
+		mediaClient.leaveMediaRoom();
 	});
 
 	function getConsumerKey(consumer: any): string {
@@ -106,16 +107,16 @@
 
 	async function setStagePassword() {
 		if (newPasswordInput.trim()) {
-			await roomClient.setStagePassword(newPasswordInput.trim());
+			await configManager.updatePassword(newPasswordInput.trim());
 			newPasswordInput = "";
 		} else {
-			await roomClient.setStagePassword(undefined);
+			await configManager.updatePassword(undefined);
 		}
 	}
 
 	async function updatePeerName() {
 		if (targetPeerId && peerNameInput.trim()) {
-			await roomClient.updatePeerName(targetPeerId, peerNameInput.trim());
+			await mediaClient.updatePeerName(targetPeerId, peerNameInput.trim());
 			peerNameInput = "";
 			targetPeerId = "";
 		}
@@ -213,9 +214,9 @@
 									class="button is-small is-warning"
 									on:click={async () => {
 										if (consumer.paused) {
-											await roomClient.resumeConsumer(consumer);
+											await mediaClient.resumeConsumer(consumer);
 										} else {
-											await roomClient.pauseConsumer(consumer);
+											await mediaClient.pauseConsumer(consumer);
 										}
 									}}
 								>
@@ -223,7 +224,7 @@
 								</button>
 								<button
 									class="button is-small is-danger"
-									on:click={() => roomClient.unsubscribeFromTrack(consumer.appData.peerId, consumer.appData.mediaTag)}
+									on:click={() => mediaClient.unsubscribeFromTrack(consumer.appData.peerId, consumer.appData.mediaTag)}
 								>
 									Close
 								</button>
@@ -260,9 +261,9 @@
 										class="button is-small is-warning"
 										on:click={async () => {
 											if (consumer.paused) {
-												await roomClient.resumeConsumer(consumer);
+												await mediaClient.resumeConsumer(consumer);
 											} else {
-												await roomClient.pauseConsumer(consumer);
+												await mediaClient.pauseConsumer(consumer);
 											}
 										}}
 									>
@@ -270,7 +271,7 @@
 									</button>
 									<button
 										class="button is-small is-danger"
-										on:click={() => roomClient.unsubscribeFromTrack(consumer.appData.peerId, consumer.appData.mediaTag)}
+										on:click={() => mediaClient.unsubscribeFromTrack(consumer.appData.peerId, consumer.appData.mediaTag)}
 									>
 										Close
 									</button>
@@ -348,10 +349,10 @@
 
 		<!-- Room Controls -->
 		<div class="field">
-			<span class="label is-small">Room Controls</span>
+			<label class="label is-small">Room Connection:</label>
 			<div class="buttons are-small">
-				<button class="button is-primary" on:click={roomClient.joinRoom} disabled={joined}>Join Room</button>
-				<button class="button is-danger" on:click={roomClient.leaveRoom} disabled={!joined}>Leave Room</button>
+				<button class="button is-primary" on:click={mediaClient.joinMediaRoom} disabled={joined}>Join Room</button>
+				<button class="button is-danger" on:click={mediaClient.leaveMediaRoom} disabled={!joined}>Leave Room</button>
 			</div>
 		</div>
 
@@ -359,11 +360,11 @@
 		<div class="field">
 			<span class="label is-small">Media Stream Controls</span>
 			<div class="buttons are-small">
-				<button class="button is-info" on:click={() => roomClient.startLocalMediaStream(false, true)} disabled={hasLocalCam}>Video Only</button>
-				<button class="button is-info" on:click={() => roomClient.startLocalMediaStream(true, false)} disabled={hasLocalCam}>Audio Only</button>
-				<button class="button is-info" on:click={() => roomClient.startLocalMediaStream(true, true)} disabled={hasLocalCam}>Audio + Video</button>
-				<button class="button is-success" on:click={roomClient.sendMediaStreams} disabled={!hasLocalCam || !joined}>Send Streams</button>
-				<button class="button is-danger" on:click={roomClient.closeMediaStreams} disabled={!hasSendTransport}>Stop Sending</button>
+				<button class="button is-info" on:click={() => mediaClient.startLocalMediaStream(false, true)} disabled={hasLocalCam}>Video Only</button>
+				<button class="button is-info" on:click={() => mediaClient.startLocalMediaStream(true, false)} disabled={hasLocalCam}>Audio Only</button>
+				<button class="button is-info" on:click={() => mediaClient.startLocalMediaStream(true, true)} disabled={hasLocalCam}>Audio + Video</button>
+				<button class="button is-success" on:click={mediaClient.sendMediaStreams} disabled={!hasLocalCam || !joined}>Send Streams</button>
+				<button class="button is-danger" on:click={mediaClient.closeMediaStreams} disabled={!hasSendTransport}>Stop Sending</button>
 			</div>
 		</div>
 
@@ -371,10 +372,10 @@
 		<div class="field">
 			<span class="label is-small">Producer Controls</span>
 			<div class="buttons are-small">
-				<button class="button is-warning" on:click={() => roomClient.toggleVideoPaused()} disabled={!hasCamVideo}>
+				<button class="button is-warning" on:click={() => mediaClient.toggleVideoPaused()} disabled={!hasCamVideo}>
 					{camVideoPaused ? "Resume Video Producer" : "Pause Video Producer"}
 				</button>
-				<button class="button is-warning" on:click={() => roomClient.toggleAudioPaused()} disabled={!hasCamAudio}>
+				<button class="button is-warning" on:click={() => mediaClient.toggleAudioPaused()} disabled={!hasCamAudio}>
 					{camAudioPaused ? "Resume Audio Producer" : "Pause Audio Producer"}
 				</button>
 			</div>
@@ -384,9 +385,9 @@
 		<div class="field">
 			<span class="label is-small">Consumer Controls</span>
 			<div class="buttons are-small">
-				<button class="button is-warning" on:click={roomClient.resumeAllConsumers} disabled={consumers.length === 0}>Resume All Consumers</button>
-				<button class="button is-warning" on:click={roomClient.pauseAllConsumers} disabled={consumers.length === 0}>Pause All Consumers</button>
-				<button class="button is-danger" on:click={roomClient.closeAllConsumers} disabled={consumers.length === 0}>Close All Consumers</button>
+				<button class="button is-warning" on:click={mediaClient.resumeAllConsumers} disabled={consumers.length === 0}>Resume All Consumers</button>
+				<button class="button is-warning" on:click={mediaClient.pauseAllConsumers} disabled={consumers.length === 0}>Pause All Consumers</button>
+				<button class="button is-danger" on:click={mediaClient.closeAllConsumers} disabled={consumers.length === 0}>Close All Consumers</button>
 			</div>
 		</div>
 	</div>

@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { blur } from "svelte/transition";
-	import { openInstruments } from "~/stores/instruments";
-	import { initializeConfigManager } from "~/api/show/configManager";
+	import { initializeConfigManager } from "~/api/config";
 
 	import Wrapper from "./_Wrapper.svelte";
 	import InstrumentContainer from "~/components/instruments/_InstrumentContainer.svelte";
@@ -10,7 +9,7 @@
 	import logoSrc from "~/assets/images/redrose.gif";
 
 	onMount(async () => {
-		// Initialize the configuration manager for backstage mode
+		// Initialize the config manager for backstage mode
 		await initializeConfigManager();
 	});
 </script>

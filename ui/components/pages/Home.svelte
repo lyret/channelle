@@ -11,7 +11,7 @@
 	import FloatingImage from "~/components/home/FloatingImage.svelte";
 	import IconArrowRight from "~/components/icons/Icon-arrow-right.svelte";
 	import PicolCancel from "~/components/picol/icons/Picol-cancel.svelte";
-	import { hasJoinedRoomStore, isBannedFromTheRoom, peerStore } from "~/api/room";
+	import { hasJoinedRoomStore, isBannedFromTheRoom, peerStore } from "~/api/media";
 
 	onMount(() => {
 		document.querySelectorAll("a, .button").forEach((element) =>

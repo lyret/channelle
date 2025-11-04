@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { peersStore, sessionsStore, consumersStore, currentActiveSpeakerStore, localMediaStream, videoProducer, audioProducer } from "~/api/room";
+	import { peersStore, sessionsStore, consumersStore, currentActiveSpeakerStore, localMediaStream, videoProducer, audioProducer } from "~/api/media";
 	import { wsPeerIdStore } from "~/api/_trpcClient";
 	import PeerMediaStatus from "./PeerMediaStatus.svelte";
 	import ConnectionStatus from "./ConnectionStatus.svelte";

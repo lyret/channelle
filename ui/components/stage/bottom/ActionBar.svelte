@@ -3,7 +3,7 @@
 	import { onMount } from "svelte";
 	import { blur } from "svelte/transition";
 	import { createEffectsStore } from "~/stores/effects";
-	import { stageChatEnabledStore, stageEffectsEnabledStore } from "~/api/room";
+	import { stageChatEnabledStore, stageEffectsEnabledStore } from "~/api/media";
 	import { showStageChatStore, showStageStettingsStore } from "~/stores/stage";
 	import { windowFullscreenStore } from "~/stores/device";
 	import IconMaximize from "../../icons/Icon-maximize.svelte";

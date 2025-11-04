@@ -1,6 +1,6 @@
 <script lang="ts">
 	import ShowListEntry from "~/components/ShowListEntry.svelte";
-	import { showsStore } from "~/api/show";
+	import { showsStore } from "~/api/config";
 </script>
 
 <div class="box">

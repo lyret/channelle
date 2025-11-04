@@ -1,17 +1,16 @@
 <script lang="ts">
+	// DebugView - Comprehensive debugging interface for media room functionality
+	// Provides real-time inspection and manual control of WebRTC connections,
+	// peer states, and media streaming for development and troubleshooting
+
 	import { blur } from "svelte/transition";
-	import * as roomClient from "~/api/room/roomClient";
+	import * as mediaClient from "~/api/media/mediaClient";
 	import { wsPeerIdStore } from "~/api/_trpcClient";
+
+	// MediaRoom API imports
 	import {
 		deviceStore,
-		stagePasswordStore,
-		stageLayoutStore,
-		sceneStore,
 		stageCurtainsStore,
-		stageChatEnabledStore,
-		stageEffectsEnabledStore,
-		stageHaveVisitorAudioEnabledStore,
-		stageHaveVisitorVideoEnabledStore,
 		camPausedStore,
 		micPausedStore,
 		localMediaStream,
@@ -28,7 +27,10 @@
 		hasLocalCamStore,
 		hasSendTransportStore,
 		hasRecvTransportStore,
-	} from "~/api/room/roomClient";
+	} from "~/api/media";
+
+	// Configuration API imports
+	import { passwordStore, currentSceneStore, sceneSettingsStore } from "~/api/config";
 
 	import SessionStats from "./SessionStats.svelte";
 	import PeerMediaStatus from "./PeerMediaStatus.svelte";
@@ -68,17 +70,16 @@
 		session: sessions[peerId],
 	}));
 
-	// Stage-related reactive statements
-	$: stagePassword = $stagePasswordStore;
-	$: stageLayout = $stageLayoutStore;
-	$: stagePredefinedLayout = $sceneStore;
-	$: stageCurtains = $stageCurtainsStore;
-	$: stageChatEnabled = $stageChatEnabledStore;
-	$: stageEffectsEnabled = $stageEffectsEnabledStore;
-	$: stageVisitorAudioEnabled = $stageHaveVisitorAudioEnabledStore;
-	$: stageVisitorVideoEnabled = $stageHaveVisitorVideoEnabledStore;
+	// Show configuration reactive statements
+	$: stagePassword = $passwordStore;
+	$: stagePredefinedLayout = $currentSceneStore;
+	$: stageChatEnabled = $sceneSettingsStore?.chatEnabled;
+	$: stageEffectsEnabled = $sceneSettingsStore?.effectsEnabled;
+	$: stageVisitorAudioEnabled = $sceneSettingsStore?.visitorAudioEnabled;
+	$: stageVisitorVideoEnabled = $sceneSettingsStore?.visitorVideoEnabled;
 
-	// Paused states
+	// MediaRoom state reactive statements
+	$: stageCurtains = $stageCurtainsStore;
 	$: camVideoPaused = $camPausedStore;
 	$: camAudioPaused = $micPausedStore;
 
@@ -131,18 +132,11 @@
 		};
 	}
 
-	async function setStagePassword() {
-		if (newPasswordInput.trim()) {
-			await roomClient.setStagePassword(newPasswordInput.trim());
-			newPasswordInput = "";
-		} else {
-			await roomClient.setStagePassword(undefined);
-		}
-	}
+	// Password management is handled by show API - removed legacy debug function
 
 	async function updatePeerName() {
 		if (targetPeerId && peerNameInput.trim()) {
-			await roomClient.updatePeerName(targetPeerId, peerNameInput.trim());
+			await mediaClient.updatePeerName(targetPeerId, peerNameInput.trim());
 			peerNameInput = "";
 			targetPeerId = "";
 		}
@@ -377,17 +371,7 @@
 				</div>
 
 				<!-- Stage Password Setting -->
-				<div class="field">
-					<label class="label is-small">Change Stage Password:</label>
-					<div class="field has-addons">
-						<div class="control is-expanded">
-							<input class="input is-small" type="text" placeholder="New password (empty to remove)" bind:value={newPasswordInput} />
-						</div>
-						<div class="control">
-							<button class="button is-small is-primary" on:click={setStagePassword}>Update</button>
-						</div>
-					</div>
-				</div>
+				<!-- Password management moved to show API - use AccessInstrument for password changes -->
 			</div>
 
 			<!-- Video Previews -->
@@ -509,33 +493,35 @@
 				<h2 class="subtitle">Connection Controls</h2>
 
 				<div class="field">
-					<label class="label is-small">Room Connection:</label>
+					<label class="label is-small">Media Room Connection:</label>
 					<div class="buttons are-small">
-						<button class="button is-primary" on:click={roomClient.joinRoom} disabled={joined}>Join Room</button>
-						<button class="button is-danger" on:click={roomClient.leaveRoom} disabled={!joined}>Leave Room</button>
+						<button class="button is-primary" on:click={mediaClient.joinMediaRoom} disabled={joined}>Join Media Room</button>
+						<button class="button is-danger" on:click={mediaClient.leaveMediaRoom} disabled={!joined}>Leave Media Room</button>
 					</div>
 				</div>
 
 				<div class="field">
 					<label class="label is-small">Local Media:</label>
 					<div class="buttons are-small">
-						<button class="button is-info" on:click={() => roomClient.startLocalMediaStream(false, true)} disabled={hasLocalCam}>Start Video</button
+						<button class="button is-info" on:click={() => mediaClient.startLocalMediaStream(false, true)} disabled={hasLocalCam}
+							>Start Video</button
 						>
-						<button class="button is-info" on:click={() => roomClient.startLocalMediaStream(true, false)} disabled={hasLocalCam}>Start Audio</button
+						<button class="button is-info" on:click={() => mediaClient.startLocalMediaStream(true, false)} disabled={hasLocalCam}
+							>Start Audio</button
 						>
-						<button class="button is-info" on:click={() => roomClient.startLocalMediaStream(true, true)} disabled={hasLocalCam}>Start Both</button>
-						<button class="button is-success" on:click={roomClient.sendMediaStreams} disabled={!hasLocalCam || !joined}>Send Streams</button>
-						<button class="button is-danger" on:click={roomClient.closeMediaStreams} disabled={!hasSendTransport}>Close Streams</button>
+						<button class="button is-info" on:click={() => mediaClient.startLocalMediaStream(true, true)} disabled={hasLocalCam}>Start Both</button>
+						<button class="button is-success" on:click={mediaClient.sendMediaStreams} disabled={!hasLocalCam || !joined}>Send Streams</button>
+						<button class="button is-danger" on:click={mediaClient.closeMediaStreams} disabled={!hasSendTransport}>Close Streams</button>
 					</div>
 				</div>
 
 				<div class="field">
 					<label class="label is-small">Media Control:</label>
 					<div class="buttons are-small">
-						<button class="button is-warning" on:click={() => roomClient.toggleVideoPaused()} disabled={!hasCamVideo}>
+						<button class="button is-warning" on:click={() => mediaClient.toggleVideoPaused()} disabled={!hasCamVideo}>
 							{camVideoPaused ? "Resume" : "Pause"} Video
 						</button>
-						<button class="button is-warning" on:click={() => roomClient.toggleAudioPaused()} disabled={!hasCamAudio}>
+						<button class="button is-warning" on:click={() => mediaClient.toggleAudioPaused()} disabled={!hasCamAudio}>
 							{camAudioPaused ? "Resume" : "Pause"} Audio
 						</button>
 					</div>
@@ -544,9 +530,9 @@
 				<div class="field">
 					<label class="label is-small">Consumer Control:</label>
 					<div class="buttons are-small">
-						<button class="button is-warning" on:click={roomClient.resumeAllConsumers} disabled={consumers.length === 0}>Resume All</button>
-						<button class="button is-warning" on:click={roomClient.pauseAllConsumers} disabled={consumers.length === 0}>Pause All</button>
-						<button class="button is-danger" on:click={roomClient.closeAllConsumers} disabled={consumers.length === 0}>Close All</button>
+						<button class="button is-warning" on:click={mediaClient.resumeAllConsumers} disabled={consumers.length === 0}>Resume All</button>
+						<button class="button is-warning" on:click={mediaClient.pauseAllConsumers} disabled={consumers.length === 0}>Pause All</button>
+						<button class="button is-danger" on:click={mediaClient.closeAllConsumers} disabled={consumers.length === 0}>Close All</button>
 					</div>
 				</div>
 			</div>

@@ -1,6 +1,6 @@
 import { writable, get } from "svelte/store";
 import { persisted } from "svelte-persisted-store";
-import { showClient } from "~/api/_trpcClient";
+import { authenticateTheaterAccess } from "~/api/config";
 
 // 8 hours in milliseconds
 const AUTH_EXPIRATION_TIME = 8 * 60 * 60 * 1000;
@@ -66,9 +66,7 @@ export async function authenticateTheater(password: string): Promise<boolean> {
 	authError.set("");
 
 	try {
-		const result = await showClient.authenticateTheater.mutate({
-			password: password.trim(),
-		});
+		const result = await authenticateTheaterAccess(password.trim());
 
 		if (result.success) {
 			const now = Date.now();

@@ -2,9 +2,8 @@
 	import { onMount } from "svelte";
 	import IconLock from "../icons/Icon-lock.svelte";
 	import IconUnlock from "../icons/Icon-unlock.svelte";
-	import { stagePasswordStore } from "~/api/room";
-	import { configManager, currentModeStore, AppMode } from "~/api/show/configManager";
-	import { currentShowStore } from "~/api/show";
+	import { configManager, passwordStore, currentShowStore } from "~/api/config";
+	import { currentModeStore, AppMode } from "~/api/config";
 
 	let inputRef: HTMLInputElement;
 	let inputValue: string = "";
@@ -14,7 +13,7 @@
 	let successMessage: string = "";
 	let originalPassword = "";
 
-	$: isLocked = $stagePasswordStore?.length;
+	$: isLocked = $passwordStore?.length;
 	$: isChanged = originalPassword !== inputValue;
 	$: isTheaterMode = $currentModeStore === AppMode.THEATER;
 	$: canSave = isChanged && !isLoading;
@@ -42,28 +41,17 @@
 	async function submitPasswordChange() {
 		if (!canSave) return;
 
-		console.log("[AccessInstrument] Submitting password change:", {
-			inputValue,
-			originalPassword,
-			isTheaterMode,
-			isLocked,
-			isChanged,
-			canSave,
-		});
-
 		isLoading = true;
 		errorMessage = "";
 		successMessage = "";
 
 		try {
-			// Use configuration manager to handle both theater and stage modes
+			// Use config manager to handle both theater and stage modes
 			const success = await configManager.updatePassword(inputValue || undefined);
-			console.log("[AccessInstrument] Update result:", success);
 
 			if (success) {
 				// Update original password to reflect new state
 				originalPassword = inputValue || "";
-				console.log("[AccessInstrument] Updated originalPassword to:", originalPassword);
 
 				if (inputValue) {
 					successMessage = isLocked ? "Lösenordet har ändrats" : "Lösenordet har aktiverats";
@@ -90,11 +78,10 @@
 			inputRef.focus();
 		}
 
-		// Subscribe to store changes - this will fire immediately with current value
-		const unsubscribe = stagePasswordStore.subscribe((storeValue) => {
+		// Subscribe to password store - this will fire immediately with current value
+		const unsubscribe = passwordStore.subscribe((storeValue) => {
 			// Handle both undefined (not loaded) and string (loaded) values
 			const newValue = storeValue !== undefined ? storeValue || "" : "";
-			console.log("[AccessInstrument] Store updated:", { storeValue, newValue, currentInput: inputValue, currentOriginal: originalPassword });
 			inputValue = newValue;
 			originalPassword = newValue;
 		});

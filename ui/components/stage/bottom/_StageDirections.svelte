@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { slide } from "svelte/transition";
 	import IconAlertTriangle from "~/components/icons/Icon-alert-triangle.svelte";
-	import { videoProducer, audioProducer, camPausedStore, micPausedStore, stageCurtainsStore, peerStore } from "~/api/room";
+	import { videoProducer, audioProducer, camPausedStore, micPausedStore, stageCurtainsStore, peerStore } from "~/api/media";
 
 	$: isCameraOn = !!$videoProducer && !$camPausedStore;
 	$: isMicOn = !!$audioProducer && !$micPausedStore;

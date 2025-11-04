@@ -1,2 +1,12 @@
-export { roomClient, chatClient, stageClient } from "./_trpcClient";
-export * from "./stage";
+export { mediaClient, configClient, showsClient, chatClient, effectsClient, developmentClient } from "./_trpcClient";
+
+// Export unified configuration API
+export * from "./config";
+
+// Export media API
+export * from "./media";
+
+// Export other APIs
+export * from "./chat";
+export * from "./effects";
+export * from "./development";

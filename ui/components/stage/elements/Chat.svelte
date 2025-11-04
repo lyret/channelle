@@ -2,7 +2,7 @@
 	import { blur } from "svelte/transition";
 	import ChatInput from "../../chat/ChatInput.svelte";
 	import ChatList from "../../chat/ChatList.svelte";
-	import { stageChatEnabledStore } from "~/api/room";
+	import { stageChatEnabledStore } from "~/api/media";
 </script>
 
 <div class="chat-window" in:blur={{ duration: 500 }}>

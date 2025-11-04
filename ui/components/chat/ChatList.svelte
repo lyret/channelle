@@ -2,7 +2,7 @@
 	import { onMount, onDestroy } from "svelte";
 	import { blur } from "svelte/transition";
 	import { messagesStore, canDeleteMessagesStore, deleteMessage } from "~/api/chat";
-	import { peerStore } from "~/api/room/roomClient";
+	import { peerStore } from "~/api/media";
 	import PicoBadgeMinus from "../picol/icons/Picol-badge-minus.svelte";
 
 	export let backstageOnly: boolean = false;

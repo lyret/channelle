@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { peersStore } from "~/api/room";
+	import { peersStore } from "~/api/media";
 	import PeerControl from "./_PeerControl.svelte";
 
 	$: peers = Object.values($peersStore).filter((p) => p.name && !p.banned);

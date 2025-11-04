@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { peersStore, consumersStore, sessionsStore, subscribeToTrack } from "~/api/room";
-	import { localMediaStream } from "~/api/room/roomClient";
+	import { peersStore, consumersStore, sessionsStore, subscribeToTrack } from "~/api/media";
+	import { localMediaStream } from "~/api/media";
 	import { wsPeerIdStore } from "~/api/_trpcClient";
 	import { DebugPanel } from "~/components/debug";
 	import { debugModeStore } from "~/stores/debugMode";

@@ -1,2 +1,2 @@
 export type * from "../../server/_types";
-export type * from "../../shared/types/show";
+export type { PublicShowData, ShowListItem, ShowAuthResponse } from "../../server/routers/showsRouter";

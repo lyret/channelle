@@ -1,6 +1,6 @@
 import { writable, derived } from "svelte/store";
 import { chatClient } from "../_trpcClient";
-import { peerStore } from "../room/roomClient";
+import { peerStore } from "../media";
 import type { MessageAttributes } from "../../types/serverSideTypes";
 
 // ============================================================================

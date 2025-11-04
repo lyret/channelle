@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { consumersStore, peersStore, sessionsStore, currentActiveSpeakerStore, hasJoinedRoomStore, deviceStore } from "~/api/room";
+	import { consumersStore, peersStore, sessionsStore, currentActiveSpeakerStore, hasJoinedRoomStore, deviceStore } from "~/api/media";
 
 	$: consumers = $consumersStore;
 	$: peers = $peersStore;

@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { get } from "svelte/store";
-	import { configManager, currentModeStore, AppMode } from "~/api/show/configManager";
-	import { currentShowStore } from "~/api/show";
+	import { configManager, currentShowStore } from "~/api/config";
+	import { currentModeStore, AppMode } from "~/api/config";
 	import IconSave from "../icons/Icon-save.svelte";
 	import IconX from "../icons/Icon-x.svelte";
 
@@ -19,9 +18,9 @@
 	$: nameCharCount = nameInput.length;
 	$: descriptionCharCount = descriptionInput.length;
 	$: nomenclatureCharCount = nomenclatureInput.length;
-	$: nameMaxLength = 255;
-	$: descriptionMaxLength = 1000;
-	$: nomenclatureMaxLength = 100;
+	const nameMaxLength = 255;
+	const descriptionMaxLength = 1000;
+	const nomenclatureMaxLength = 100;
 
 	$: isTheaterMode = $currentModeStore === AppMode.THEATER;
 	$: canEdit = isTheaterMode && configManager.canUpdateConfig();

@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import { showClient } from "~/api/_trpcClient";
+import { createShow } from "~/api/config";
 
 /** Store for show creation loading state */
 export const isCreatingShow = writable<boolean>(false);
@@ -8,7 +8,7 @@ export const isCreatingShow = writable<boolean>(false);
 export const showCreationError = writable<string>("");
 
 /** Create a new show */
-export async function createShow(name: string): Promise<{ id: number; name: string } | null> {
+export async function createShowLocal(name: string): Promise<{ id: number; name: string } | null> {
 	if (!name.trim()) {
 		showCreationError.set("Show name is required");
 		return null;
@@ -18,7 +18,7 @@ export async function createShow(name: string): Promise<{ id: number; name: stri
 	showCreationError.set("");
 
 	try {
-		const result = await showClient.create.mutate({
+		const result = await createShow({
 			name: name.trim(),
 		});
 

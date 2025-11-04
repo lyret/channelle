@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher } from "svelte";
 	import Modal from "./_Modal.svelte";
-	import { createShow, showCreationError, isCreatingShow, clearShowCreationError } from "~/stores/showCreation";
+	import { createShowLocal, showCreationError, isCreatingShow, clearShowCreationError } from "~/stores/showCreation";
 
 	const dispatch = createEventDispatcher<{
 		created: { id: number; name: string };
@@ -13,7 +13,7 @@
 	let showName = "";
 
 	async function submitCreateShow() {
-		const result = await createShow(showName);
+		const result = await createShowLocal(showName);
 		if (result) {
 			showName = "";
 			dispatch("created", result);

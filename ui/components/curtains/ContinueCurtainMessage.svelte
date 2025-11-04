@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from "svelte";
-	import { peerStore } from "~/api/room";
+	import { peerStore } from "~/api/media";
 
 	const dispatch = createEventDispatcher<{ submit: void }>();
 

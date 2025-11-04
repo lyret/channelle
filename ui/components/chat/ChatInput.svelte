@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { sendPublicMessage, sendBackstageMessage, canSendBackstageStore } from "~/api/chat";
-	import { peerStore } from "~/api/room/roomClient";
+	import { peerStore } from "~/api/media";
 	import PicolArrowFullLeft from "../picol/icons/Picol-arrow-full-left.svelte";
 	import PicolArrowFullUp from "../picol/icons/Picol-arrow-full-up.svelte";
 
