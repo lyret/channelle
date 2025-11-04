@@ -1,8 +1,8 @@
 import type * as MediaSoup from "mediasoup";
-import type { Transport, Peer, Session, CustomAppData, MediaTag, Producer, Consumer, Scene, StageLayout } from "../_types";
-import { SceneSetting } from "../_types";
+import type { Transport, Peer, Session, CustomAppData, MediaTag, Producer, Consumer } from "../_types";
 import { TRPCError } from "@trpc/server";
 import { trpc, mediaSoupRouter } from "../lib";
+import { getStageConfig, getCurrentSceneWithSettings } from "./configRouter";
 import { z } from "zod";
 
 // Get the trcp router constructor and default procedure
@@ -16,16 +16,6 @@ const { router: trcpRouter, procedure: trcpProcedure } = trpc();
  * correlate tracks.
  */
 type Room = {
-	password: string | undefined;
-	sceneSettings: {
-		curtains: SceneSetting;
-		chatEnabled: SceneSetting;
-		effectsEnabled: SceneSetting;
-		visitorAudioEnabled: SceneSetting;
-		visitorVideoEnabled: SceneSetting;
-	};
-	currentSceneLayout: StageLayout;
-	currentScene: Scene | undefined;
 	peers: Record<string, Peer>;
 	activeSpeaker: {
 		producerId: string | null;
@@ -41,17 +31,6 @@ type Room = {
 
 /** Internal state */
 const _room: Room = {
-	// Settings
-	password: undefined,
-	sceneSettings: {
-		curtains: SceneSetting.AUTOMATIC,
-		chatEnabled: SceneSetting.AUTOMATIC,
-		effectsEnabled: SceneSetting.AUTOMATIC,
-		visitorAudioEnabled: SceneSetting.AUTOMATIC,
-		visitorVideoEnabled: SceneSetting.AUTOMATIC,
-	},
-	currentScene: undefined,
-	currentSceneLayout: [],
 	peers: {},
 	activeSpeaker: {
 		producerId: null,
@@ -100,28 +79,34 @@ const roomProcedure = trcpProcedure.use(async ({ ctx, next }) => {
  * Room Router
  * Handles server and client communication for orchastrating peer to peer media transmission
  */
-export const roomRouter = trcpRouter({
-	// Sync
-	// Client polling endpoint. send back our 'peers' data structure and
-	// 'activeSpeaker' info
+export const mediaRouter = trcpRouter({
+	/**
+	 * Sync - Real-time room state synchronization
+	 *
+	 * Primary polling endpoint called by clients every second to synchronize
+	 * room state. Returns complete peer information, media session data,
+	 * active speaker detection, and current scene configuration.
+	 *
+	 * This enables real-time updates of:
+	 * - Peer connections and status changes
+	 * - Media session availability
+	 * - Scene settings and visual state
+	 * - Active speaker detection
+	 *
+	 * @returns Complete room state for client synchronization
+	 */
 	sync: roomProcedure.query(async () => {
+		const sceneConfig = getStageConfig();
+		const currentScene = getCurrentSceneWithSettings();
+
 		return {
 			peers: _room.peers,
 			sessions: _room.sessions,
 			activeSpeaker: _room.activeSpeaker,
-			password: _room.password,
-			sceneSettings: _room.sceneSettings,
-			currentLayout: _room.currentSceneLayout,
-			currentScene: {
-				name: "",
-				layout: _room.currentSceneLayout,
-				...(_room.currentScene || {}),
-				curtains: _determineStateOfSetting("curtains"),
-				chatEnabled: _determineStateOfSetting("chatEnabled"),
-				effectsEnabled: _determineStateOfSetting("effectsEnabled"),
-				visitorAudioEnabled: _determineStateOfSetting("visitorAudioEnabled"),
-				visitorVideoEnabled: _determineStateOfSetting("visitorVideoEnabled"),
-			},
+			password: sceneConfig.password,
+			sceneSettings: sceneConfig.sceneSettings,
+			currentLayout: currentScene?.layout || [],
+			currentScene: currentScene,
 		};
 	}),
 	// Join
@@ -173,45 +158,41 @@ export const roomRouter = trcpRouter({
 	// all associated mediasoup objects
 	leave: roomProcedure.mutation(async ({ ctx }) => {
 		const peerId = ctx.peer.id;
-		closePeer(peerId);
+		closeMediaPeer(peerId);
 		console.log("[Room] Peer", peerId, "left");
 		return;
 	}),
-	// Set Password
-	// Updates the room password
-	setPassword: roomProcedure.input(z.object({ password: z.string().optional() })).mutation(async ({ ctx, input: { password } }) => {
-		// Only managers can set the password
-		if (!ctx.peer.manager) {
-			throw new TRPCError({ code: "UNAUTHORIZED", message: "Only managers can set the password" });
-		}
+	/**
+	 * Set Password - Update room access password
+	 *
+	 * Updates the room password for access control. Only managers can
+	 * modify the password. Used for temporary session-level password changes.
+	 *
+	 * Note: For persistent show passwords, use the Show API instead.
+	 *
+	 * @param password - New password string, or undefined to remove password
+	 * @requires Manager role
+	 */
 
-		_room.password = password;
-	}),
-	// Set Forced Scene Value
-	// Updates the forced value of a specific scene setting
-	setForcedSceneSetting: roomProcedure
-		.input(z.object({ key: z.literal(Object.keys(_room.sceneSettings)), value: z.enum(SceneSetting) }))
-		.mutation(async ({ ctx, input: { key, value } }) => {
-			// Only managers can set forced settings
-			if (!ctx.peer.manager) {
-				throw new TRPCError({ code: "UNAUTHORIZED", message: "Only managers can set forced settings" });
-			}
-
-			_room.sceneSettings[key] = value;
-		}),
-	// Set Scene
-	// Updates the current scene
-	setScene: roomProcedure.input(z.custom<Scene>()).mutation(async ({ ctx, input: scene }) => {
-		// Only managers can set the scene
-		if (!ctx.peer.manager) {
-			throw new TRPCError({ code: "UNAUTHORIZED", message: "Only managers can set the scene" });
-		}
-
-		_room.currentScene = scene;
-		_room.currentSceneLayout = scene.layout;
-	}),
-	// Update Peer
-	// Updates the information about a given peer
+	/**
+	 * Update Peer - Modify peer information and roles
+	 *
+	 * Updates peer metadata including name, role assignments (actor, manager),
+	 * and access control (banned status). Provides comprehensive peer management
+	 * for room administrators.
+	 *
+	 * Roles:
+	 * - Actor: Can appear on stage, has media privileges
+	 * - Manager: Can control room settings and other peers
+	 * - Visitor: Basic participant without special privileges
+	 *
+	 * @param id - Peer ID to update
+	 * @param name - Display name (optional)
+	 * @param actor - Actor role flag (optional)
+	 * @param manager - Manager role flag (optional)
+	 * @param banned - Banned status flag (optional)
+	 * @requires Manager role (except for updating own name)
+	 */
 	updatePeer: roomProcedure
 		.input(
 			z.object({
@@ -543,7 +524,7 @@ export const roomRouter = trcpRouter({
 });
 
 /** Room Router Definition */
-export type RoomRouter = typeof roomRouter;
+export type RoomRouter = typeof mediaRouter;
 
 /** Intervalled function run to periodically clean up peers that disconnected without sending us a leaving message */
 async function removeStalePeers() {
@@ -551,7 +532,7 @@ async function removeStalePeers() {
 	for (const [id, peer] of Object.entries(_room.sessions)) {
 		if (now - peer.lastSeenTs > 4200) {
 			console.log(`[Room] Removing stale peer ${id}`);
-			closePeer(id);
+			closeMediaPeer(id);
 		}
 	}
 }
@@ -623,7 +604,7 @@ async function observeActiveSpeakers() {
 observeActiveSpeakers();
 
 /** Utility function for closing the session and transports related to a given peer */
-export async function closePeer(peerId: string) {
+export async function closeMediaPeer(peerId: string) {
 	console.log("[MS] closing peer", peerId);
 	if (_room.peers[peerId]) {
 		_room.peers[peerId].online = false;
@@ -701,19 +682,4 @@ async function _createWebRtcTransport({ peerId, direction }): Promise<Transport>
 	});
 
 	return transport;
-}
-
-/** Utility function to determine the state of a given setting for the current scene */
-function _determineStateOfSetting(key: keyof Room["sceneSettings"]) {
-	if (_room.sceneSettings[key] === SceneSetting.FORCED_ON) {
-		return true;
-	}
-
-	if (_room.sceneSettings[key] === SceneSetting.FORCED_OFF) {
-		return false;
-	}
-	if (_room.currentScene) {
-		return _room.currentScene[key];
-	}
-	return false;
 }

@@ -1,5 +1,6 @@
-import type { PublicShowData, ShowListItem, ShowAuthResponse } from "../../shared/types/show.js";
 import { Show } from "../models/Show";
+
+import type { Scene, SceneSetting } from "../_types";
 import { TRPCError } from "@trpc/server";
 import { trpc } from "../lib";
 import { z } from "zod";
@@ -7,10 +8,45 @@ import { z } from "zod";
 // Get the trpc router constructor and default procedure
 const { router: trcpRouter, procedure: trcpProcedure } = trpc();
 
+/** Public show information (without sensitive data like password) */
+export interface PublicShowData {
+	id: number;
+	name: string;
+	description: string;
+	nomenclature: string;
+	isPasswordProtected: boolean;
+	curtainsOverride: SceneSetting;
+	chatEnabledOverride: SceneSetting;
+	effectsEnabledOverride: SceneSetting;
+	visitorAudioEnabledOverride: SceneSetting;
+	visitorVideoEnabledOverride: SceneSetting;
+	currentScene: Scene | null;
+	createdAt: Date;
+	updatedAt: Date;
+}
+
+/** Show list item for displaying in UI */
+export interface ShowListItem {
+	id: number;
+	name: string;
+	description: string;
+	isPasswordProtected: boolean;
+	isOnline: boolean;
+	participantCount: number;
+	url: string;
+}
+
+/** Show authentication response */
+export interface ShowAuthResponse {
+	success: boolean;
+	message?: string;
+	showData?: PublicShowData;
+}
+
 /**
- * Show Router - Handles show CRUD operations
+ * Shows Router - Handles show CRUD operations
  */
-export const showRouter = trcpRouter({
+export const showsRouter = trcpRouter({
 	/**
 	 * Get all shows (public information only)
 	 */
@@ -439,4 +475,4 @@ export const showRouter = trcpRouter({
 });
 
 /** Show Router Type */
-export type ShowRouter = typeof showRouter;
+export type ShowRouter = typeof showsRouter;

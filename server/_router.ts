@@ -1,12 +1,12 @@
 import { applyWSSHandler } from "@trpc/server/adapters/ws";
 import type { Peer } from "./lib";
 import { trpc, ws } from "./lib";
-import { closePeer, roomRouter } from "./routers/roomRouter";
-import { developmentRouter } from "./routers/development";
+import { closeMediaPeer, mediaRouter } from "./routers/mediaRouter";
+import { developmentRouter } from "./routers/developmentRouter";
 import { chatRouter } from "./routers/chatRouter";
 import { effectsRouter } from "./routers/effectsRouter";
-import { showRouter } from "./routers/showRouter";
-import { showConfigRouter } from "./routers/config/showConfigRouter";
+import { showsRouter } from "./routers/showsRouter";
+import { configRouter } from "./routers/configRouter";
 
 /**
  * Creates and returns the application router
@@ -17,12 +17,12 @@ export async function createAppRouter() {
 
 	// Create the sub-route configuration
 	const routerConfig = {
-		room: roomRouter,
+		room: mediaRouter,
 		development: developmentRouter,
 		chat: chatRouter,
 		effects: effectsRouter,
-		show: showRouter,
-		showConfig: showConfigRouter,
+		shows: showsRouter,
+		config: configRouter,
 	};
 
 	// Remove handling of incomming development messages from the cli
@@ -44,7 +44,7 @@ export async function createAppRouter() {
 			console.log("[TRPC] Peer Connected:", peerId);
 			res.once("close", () => {
 				console.log("[TRPC] Peer Disconnected:", peerId);
-				closePeer(peerId);
+				closeMediaPeer(peerId);
 			});
 			//consooptions.info
 
