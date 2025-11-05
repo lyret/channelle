@@ -74,10 +74,6 @@
 	}
 
 	onMount(() => {
-		if (inputRef) {
-			inputRef.focus();
-		}
-
 		// Subscribe to password store - this will fire immediately with current value
 		const unsubscribe = passwordStore.subscribe((storeValue) => {
 			// Handle both undefined (not loaded) and string (loaded) values
@@ -133,7 +129,7 @@
 						data-1p-ignore
 						bind:this={inputRef}
 						class="input"
-						class:is-success={isLocked && !isChanged && !errorMessage}
+						class:is-secondary={isLocked && !isChanged && !errorMessage}
 						class:is-warning={isChanged}
 						class:is-danger={errorMessage}
 						bind:value={inputValue}

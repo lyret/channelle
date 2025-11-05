@@ -2,6 +2,7 @@
 	import { createEventDispatcher } from "svelte";
 	import IconMessageCircle from "../icons/Icon-message-circle.svelte";
 	import IconUser from "../icons/Icon-user.svelte";
+	import SceneLayoutPreview from "./_SceneLayoutPreview.svelte";
 	import type { Peer, Scene } from "~/types/serverSideTypes";
 
 	const dispatch = createEventDispatcher<{ update: Scene; select: Scene }>();
@@ -40,25 +41,27 @@
 	<!-- Header - always clickable -->
 	<div class="scene-header" on:click={toggleExpanded}>
 		<div class="scene-info">
-			<h3 class="scene-title">{layout.name}</h3>
-			<div class="scene-tags">
-				{#if layout.chatEnabled}
-					<span class="tag is-small is-info">💬</span>
-				{/if}
-				{#if layout.visitorAudioEnabled}
-					<span class="tag is-small is-success">🎤</span>
-				{/if}
-				{#if layout.visitorVideoEnabled}
-					<span class="tag is-small is-success">📹</span>
-				{/if}
-				{#if layout.effectsEnabled}
-					<span class="tag is-small is-primary">✨</span>
-				{/if}
+			<div class="layout-preview-container">
+				<SceneLayoutPreview {layout} size="small" />
+			</div>
+			<div class="scene-text-info">
+				<h3 class="scene-title">{layout.name}</h3>
+				<div class="scene-tags">
+					{#if layout.chatEnabled}
+						<span class="property-tag enabled">💬</span>
+					{/if}
+					{#if layout.visitorAudioEnabled}
+						<span class="property-tag enabled">🎤</span>
+					{/if}
+					{#if layout.visitorVideoEnabled}
+						<span class="property-tag enabled">📹</span>
+					{/if}
+					{#if layout.effectsEnabled}
+						<span class="property-tag enabled">✨</span>
+					{/if}
+				</div>
 			</div>
 		</div>
-		<button class="expand-toggle" class:is-rotated={expanded}>
-			<span class="expand-icon">▼</span>
-		</button>
 	</div>
 
 	<!-- Expanded content -->
@@ -75,8 +78,7 @@
 									<div class="video-cell" data-position="{rowIndex + 1}-{cellIndex + 1}">
 										{#if cell.type == "empty"}
 											<div class="cell-content empty-cell">
-												<span class="cell-icon"><IconUser /></span>
-												<span class="cell-label">Tom</span>
+												<span class="cell-label">Tomhet</span>
 											</div>
 										{:else if cell.type == "chat"}
 											<div class="cell-content chat-cell">
@@ -85,16 +87,14 @@
 											</div>
 										{:else if cell.type == "actor"}
 											<div class="cell-content actor-cell">
-												<div class="actor-selector">
-													<select on:change={(e) => onChange(e, cell)} on:click={(e) => e.stopPropagation()}>
-														<option value={-1}>- Ingen aktör -</option>
-														{#each peers as peer (peer.id)}
-															<option value={peer.id} selected={cell.peerId == peer.id.toString()}>
-																{peer.name}
-															</option>
-														{/each}
-													</select>
-												</div>
+												<select class="actor-select" on:change={(e) => onChange(e, cell)} on:click={(e) => e.stopPropagation()}>
+													<option value={-1}>Välj en aktör</option>
+													{#each peers as peer (peer.id)}
+														<option value={peer.id} selected={cell.peerId == peer.id.toString()}>
+															{peer.name}
+														</option>
+													{/each}
+												</select>
 											</div>
 										{/if}
 									</div>
@@ -103,40 +103,29 @@
 						</div>
 					</div>
 				{:else}
-					<div class="auto-layout-notice">
-						<span class="auto-icon">🤖</span>
-						<span>Automatisk layout - anpassas efter antal aktörer</span>
-					</div>
+					<p>Automatisk layout där alla aktiverade videokameror visas.</p>
 				{/if}
 			</div>
 
 			<!-- Scene Properties -->
 			<div class="field">
 				<label class="label">Sceninställningar</label>
-				<div class="property-list">
+				<div class="property-summary">
 					<div class="property-item">
-						<span class="property-label">Chat</span>
-						<span class="property-value" class:enabled={layout.chatEnabled}>
-							{layout.chatEnabled ? "Aktiverad" : "Inaktiverad"}
-						</span>
+						<span class="property-tag" class:enabled={layout.chatEnabled}>💬</span>
+						<span class="property-desc">Chat {layout.chatEnabled ? "på" : "av"}</span>
 					</div>
 					<div class="property-item">
-						<span class="property-label">Publikens ljud</span>
-						<span class="property-value" class:enabled={layout.visitorAudioEnabled}>
-							{layout.visitorAudioEnabled ? "Tillåtet" : "Ej tillåtet"}
-						</span>
+						<span class="property-tag" class:enabled={layout.visitorAudioEnabled}>🎤</span>
+						<span class="property-desc">Publikljud {layout.visitorAudioEnabled ? "på" : "av"}</span>
 					</div>
 					<div class="property-item">
-						<span class="property-label">Publikens video</span>
-						<span class="property-value" class:enabled={layout.visitorVideoEnabled}>
-							{layout.visitorVideoEnabled ? "Tillåtet" : "Ej tillåtet"}
-						</span>
+						<span class="property-tag" class:enabled={layout.visitorVideoEnabled}>📹</span>
+						<span class="property-desc">Publikvideo {layout.visitorVideoEnabled ? "på" : "av"}</span>
 					</div>
 					<div class="property-item">
-						<span class="property-label">Effekter</span>
-						<span class="property-value" class:enabled={layout.effectsEnabled}>
-							{layout.effectsEnabled ? "Aktiverade" : "Inaktiverade"}
-						</span>
+						<span class="property-tag" class:enabled={layout.effectsEnabled}>👏</span>
+						<span class="property-desc">Effekter {layout.effectsEnabled ? "på" : "av"}</span>
 					</div>
 				</div>
 			</div>
@@ -144,7 +133,7 @@
 			<!-- Activation Controls -->
 			<div class="field is-grouped">
 				<div class="control is-expanded">
-					<button class="button is-primary is-fullwidth" class:is-outlined={!selected} on:click={activateScene} disabled={selected}>
+					<button class="button is-fullwidth" class:is-success={selected} on:click={activateScene} disabled={selected}>
 						{selected ? "✓ Aktiv scen" : "Aktivera scen"}
 					</button>
 				</div>
@@ -163,13 +152,12 @@
 		transition: all 0.2s ease;
 
 		&:hover {
-			border-color: var(--bulma-primary);
+			border-color: var(--bulma-info);
 			box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 		}
 
 		&.is-selected {
-			border-color: var(--bulma-primary);
-			background: var(--bulma-primary-light);
+			border-color: var(--bulma-success);
 		}
 
 		&.is-expanded {
@@ -197,6 +185,17 @@
 		gap: 0.75rem;
 	}
 
+	.layout-preview-container {
+		flex-shrink: 0;
+	}
+
+	.scene-text-info {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
 	.scene-title {
 		font-size: 1.1rem;
 		font-weight: 600;
@@ -208,31 +207,6 @@
 		display: flex;
 		align-items: center;
 		gap: 0.25rem;
-	}
-
-	.expand-toggle {
-		background: none;
-		border: none;
-		padding: 0.5rem;
-		cursor: pointer;
-		border-radius: var(--bulma-radius-small);
-		transition: all 0.2s ease;
-		color: var(--bulma-text);
-
-		&:hover {
-			background: var(--bulma-background);
-			color: var(--bulma-primary);
-		}
-
-		&.is-rotated .expand-icon {
-			transform: rotate(180deg);
-		}
-	}
-
-	.expand-icon {
-		display: inline-block;
-		transition: transform 0.2s ease;
-		font-size: 0.75rem;
 	}
 
 	.scene-details {
@@ -343,80 +317,69 @@
 		text-align: center;
 	}
 
-	.actor-selector {
+	.actor-select {
 		width: 100%;
+		height: 100%;
 		padding: 0.25rem;
+		font-size: 0.7rem;
+		border: none;
+		border-radius: var(--bulma-radius-small);
+		background: transparent;
+		color: var(--bulma-primary-dark);
+		cursor: pointer;
+		font-weight: 500;
+		text-align: center;
+		appearance: none;
+		-webkit-appearance: none;
+		-moz-appearance: none;
 
-		select {
-			width: 100%;
-			padding: 0.25rem;
-			font-size: 0.7rem;
-			border: none;
-			border-radius: var(--bulma-radius-small);
-			background: var(--bulma-scheme-main);
-			color: var(--bulma-text);
-			cursor: pointer;
-
-			&:focus {
-				outline: 2px solid var(--bulma-primary);
-				outline-offset: 1px;
-			}
+		&:focus {
+			outline: 2px solid var(--bulma-primary);
+			outline-offset: -2px;
+			background: rgba(255, 255, 255, 0.1);
 		}
-	}
 
-	.auto-layout-notice {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 1rem;
-		background: var(--bulma-info-light);
-		border-radius: var(--bulma-radius);
-		color: var(--bulma-info-dark);
-		font-size: 0.875rem;
-
-		.auto-icon {
-			font-size: 1.25rem;
+		&:hover {
+			background: rgba(255, 255, 255, 0.05);
 		}
 	}
 
 	// Properties Section
-	.property-list {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
+	.property-summary {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 0.75rem;
 	}
 
 	.property-item {
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
-		padding: 0.5rem;
-		background: var(--bulma-background);
-		border-radius: var(--bulma-radius-small);
-		border: 1px solid var(--bulma-border-light);
+		gap: 0.5rem;
 	}
 
-	.property-label {
+	.property-tag {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 1.5rem;
+		height: 1.5rem;
+		border-radius: var(--bulma-radius);
 		font-size: 0.875rem;
-		color: var(--bulma-text);
-		font-weight: 500;
-	}
-
-	.property-value {
-		font-size: 0.8rem;
-		padding: 0.25rem 0.5rem;
-		border-radius: var(--bulma-radius-small);
-		font-weight: 600;
+		background: var(--bulma-grey-lighter);
+		opacity: 0.5;
+		transition: all 0.2s ease;
+		flex-shrink: 0;
 
 		&.enabled {
 			background: var(--bulma-success-light);
-			color: var(--bulma-success-dark);
+			opacity: 1;
 		}
+	}
 
-		&:not(.enabled) {
-			background: var(--bulma-grey-lighter);
-			color: var(--bulma-grey-dark);
-		}
+	.property-desc {
+		font-size: 0.8rem;
+		color: var(--bulma-text);
+		font-weight: 500;
 	}
 
 	// Responsive design
@@ -426,6 +389,10 @@
 		}
 
 		.scene-info {
+			gap: 0.5rem;
+		}
+
+		.scene-text-info {
 			flex-direction: column;
 			align-items: flex-start;
 			gap: 0.5rem;
@@ -444,8 +411,13 @@
 			gap: 0.125rem;
 		}
 
-		.actor-selector select {
+		.actor-select {
 			font-size: 0.6rem;
+		}
+
+		.property-summary {
+			grid-template-columns: 1fr;
+			gap: 0.5rem;
 		}
 	}
 </style>
