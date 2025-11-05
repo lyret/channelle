@@ -1,20 +1,19 @@
 import { writable, get } from "svelte/store";
 import { persisted } from "svelte-persisted-store";
-import { authenticateTheaterAccess } from "~/api/config";
-
-// 8 hours in milliseconds
-const AUTH_EXPIRATION_TIME = 8 * 60 * 60 * 1000;
+import { theaterClient } from "~/api";
 
 interface TheaterAuthData {
 	isAuthenticated: boolean;
-	token: string;
+	sessionId: string;
+	peerId: string;
 	expiresAt: number;
 }
 
 /** Store for theater authentication state with 8-hour expiration - persisted across sessions */
 const theaterAuthData = persisted<TheaterAuthData>(`${CONFIG.stage.id}-theater-auth-data`, {
 	isAuthenticated: false,
-	token: "",
+	sessionId: "",
+	peerId: "",
 	expiresAt: 0,
 });
 
@@ -24,35 +23,99 @@ export const isTheaterAuthenticated = writable<boolean>(false);
 /** Store for authentication loading state */
 export const isAuthenticating = writable<boolean>(false);
 
+/** Store for session validation loading state */
+export const isValidatingSession = writable<boolean>(false);
+
 /** Store for authentication error messages */
 export const authError = writable<string>("");
 
-/** Initialize authentication state on app startup */
-function initializeAuth() {
-	theaterAuthData.subscribe((data) => {
-		const now = Date.now();
+/** Generate a unique peer ID for this browser session */
+function generatePeerId(): string {
+	const timestamp = Date.now().toString(36);
+	const randomBytes = Array.from({ length: 8 }, () => Math.floor(Math.random() * 256));
+	const randomString = randomBytes.map((b) => b.toString(36)).join("");
+	return `peer_${timestamp}_${randomString}`;
+}
 
-		// Check if authentication is still valid
-		if (data.isAuthenticated && data.token && data.expiresAt > now) {
-			isTheaterAuthenticated.set(true);
-		} else if (data.expiresAt > 0 && data.expiresAt <= now) {
-			// Authentication expired, clear it
-			console.log("Theater authentication expired, clearing stored data");
-			clearAuthData();
-		} else {
-			isTheaterAuthenticated.set(false);
-		}
-	});
+/** Get or create peer ID */
+function getPeerId(): string {
+	const stored = localStorage.getItem(`${CONFIG.stage.id}-peer-id`);
+	if (stored) {
+		return stored;
+	}
+
+	const newPeerId = generatePeerId();
+	localStorage.setItem(`${CONFIG.stage.id}-peer-id`, newPeerId);
+	return newPeerId;
 }
 
 /** Clear authentication data */
 function clearAuthData() {
 	theaterAuthData.set({
 		isAuthenticated: false,
-		token: "",
+		sessionId: "",
+		peerId: "",
 		expiresAt: 0,
 	});
 	isTheaterAuthenticated.set(false);
+}
+
+/** Validate session with server */
+async function validateSessionWithServer(sessionId: string, peerId: string): Promise<boolean> {
+	try {
+		isValidatingSession.set(true);
+
+		const result = await theaterClient.validateSession.query({
+			sessionId,
+			peerId,
+		});
+
+		if (result.valid && "expiresAt" in result) {
+			theaterAuthData.update((data) => ({
+				...data,
+				expiresAt: result.expiresAt,
+			}));
+			return true;
+		} else {
+			clearAuthData();
+			return false;
+		}
+	} catch (error) {
+		console.error("[TheaterAuth] Error validating session with server:", error);
+		return false;
+	} finally {
+		isValidatingSession.set(false);
+	}
+}
+
+/** Check if we need to validate with server */
+function needsServerValidation(): boolean {
+	return Math.random() < 0.1; // 10% chance to validate
+}
+
+/** Initialize authentication state on app startup */
+function initializeAuth() {
+	// Check initial state synchronously
+	const initialData = get(theaterAuthData);
+	const now = Date.now();
+
+	if (!initialData.sessionId || !initialData.peerId || initialData.expiresAt <= now) {
+		clearAuthData();
+	} else {
+		isTheaterAuthenticated.set(true);
+	}
+
+	// Subscribe to future changes
+	theaterAuthData.subscribe((data) => {
+		const currentTime = Date.now();
+
+		if (!data.sessionId || !data.peerId || data.expiresAt <= currentTime) {
+			isTheaterAuthenticated.set(false);
+			return;
+		}
+
+		isTheaterAuthenticated.set(true);
+	});
 }
 
 /** Authenticate with theater password */
@@ -66,24 +129,25 @@ export async function authenticateTheater(password: string): Promise<boolean> {
 	authError.set("");
 
 	try {
-		const result = await authenticateTheaterAccess(password.trim());
+		const peerId = getPeerId();
 
-		if (result.success) {
-			const now = Date.now();
-			const expiresAt = now + AUTH_EXPIRATION_TIME;
+		const result = await theaterClient.authenticate.mutate({
+			password: password.trim(),
+			peerId,
+		});
 
-			// Store authentication data with expiration
+		if (result.success && "sessionId" in result && "expiresAt" in result) {
 			theaterAuthData.set({
 				isAuthenticated: true,
-				token: `theater-authenticated-${now}`,
-				expiresAt: expiresAt,
+				sessionId: result.sessionId,
+				peerId,
+				expiresAt: result.expiresAt,
 			});
 
 			isTheaterAuthenticated.set(true);
-			console.log("Theater authentication successful, expires at:", new Date(expiresAt).toLocaleString());
 			return true;
 		} else {
-			authError.set(result.message || "Authentication failed");
+			authError.set("message" in result ? result.message : "Authentication failed");
 			return false;
 		}
 	} catch (error) {
@@ -96,10 +160,51 @@ export async function authenticateTheater(password: string): Promise<boolean> {
 }
 
 /** Sign out from theater */
-export function signOut() {
+export async function signOut(): Promise<void> {
+	const data = get(theaterAuthData);
+
+	if (data.sessionId && data.peerId) {
+		try {
+			await theaterClient.logout.mutate({
+				sessionId: data.sessionId,
+				peerId: data.peerId,
+			});
+		} catch {
+			// Continue with local cleanup even if server logout fails
+		}
+	}
+
 	clearAuthData();
 	authError.set("");
-	console.log("Signed out from theater");
+}
+
+/** Ensure user is authenticated (validate with server if needed) */
+export async function ensureAuthenticated(): Promise<boolean> {
+	const data = get(theaterAuthData);
+	const now = Date.now();
+
+	if (!data.sessionId || !data.peerId || data.expiresAt <= now) {
+		clearAuthData();
+		return false;
+	}
+
+	if (needsServerValidation()) {
+		return await validateSessionWithServer(data.sessionId, data.peerId);
+	}
+
+	return true;
+}
+
+/** Force validate session with server */
+export async function validateSession(): Promise<boolean> {
+	const data = get(theaterAuthData);
+
+	if (!data.sessionId || !data.peerId) {
+		clearAuthData();
+		return false;
+	}
+
+	return await validateSessionWithServer(data.sessionId, data.peerId);
 }
 
 /** Check if user has valid authentication token on app startup */
@@ -107,18 +212,10 @@ export function validateStoredAuth(): boolean {
 	const data = get(theaterAuthData);
 	const now = Date.now();
 
-	// Check if we have valid authentication data that hasn't expired
-	if (data.isAuthenticated && data.token && data.expiresAt > now) {
-		console.log("Valid theater authentication found in storage, expires at:", new Date(data.expiresAt).toLocaleString());
+	if (data.isAuthenticated && data.sessionId && data.peerId && data.expiresAt > now) {
 		isTheaterAuthenticated.set(true);
 		return true;
-	} else if (data.expiresAt > 0 && data.expiresAt <= now) {
-		// Authentication expired
-		console.log("Theater authentication expired, clearing stored data");
-		clearAuthData();
-		return false;
 	} else {
-		// No valid authentication found
 		clearAuthData();
 		return false;
 	}
@@ -141,37 +238,33 @@ export function clearAuthError() {
 	authError.set("");
 }
 
+/** Get current peer ID */
+export function getCurrentPeerId(): string {
+	const data = get(theaterAuthData);
+	return data.peerId || getPeerId();
+}
+
 // Initialize authentication state
 initializeAuth();
 
-/** Test function to verify authentication persistence (for development) */
-export function testAuthPersistence() {
-	console.log("🧪 Testing theater authentication persistence...");
-
+/** Test function to verify authentication persistence and server validation (for development) */
+export async function testAuthPersistence() {
 	const data = get(theaterAuthData);
-	const now = Date.now();
 
 	console.log("Current auth data:", {
 		isAuthenticated: data.isAuthenticated,
-		hasToken: !!data.token,
+		hasSessionId: !!data.sessionId,
+		peerId: data.peerId,
 		expiresAt: data.expiresAt ? new Date(data.expiresAt).toLocaleString() : "Never",
 		remainingMinutes: getRemainingAuthTime(),
-		isExpired: data.expiresAt > 0 && data.expiresAt <= now,
 	});
 
-	console.log("Store state:", {
-		isTheaterAuthenticated: get(isTheaterAuthenticated),
-		authError: get(authError),
-		isAuthenticating: get(isAuthenticating),
-	});
-
-	// Test validation
 	const isValid = validateStoredAuth();
-	console.log("Validation result:", isValid);
 
-	return {
-		data,
-		isValid,
-		remainingMinutes: getRemainingAuthTime(),
-	};
+	if (data.sessionId && data.peerId) {
+		const serverValid = await validateSessionWithServer(data.sessionId, data.peerId);
+		return { data, isValid, serverValid, remainingMinutes: getRemainingAuthTime() };
+	}
+
+	return { data, isValid, remainingMinutes: getRemainingAuthTime() };
 }

@@ -1,4 +1,4 @@
-export { mediaClient, configClient, showsClient, chatClient, effectsClient, developmentClient } from "./_trpcClient";
+export { mediaClient, configClient, showsClient, chatClient, effectsClient, developmentClient, theaterClient } from "./_trpcClient";
 
 // Export unified configuration API
 export * from "./config";

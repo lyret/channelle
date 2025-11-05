@@ -7,6 +7,7 @@ import { chatRouter } from "./routers/chatRouter";
 import { effectsRouter } from "./routers/effectsRouter";
 import { showsRouter } from "./routers/showsRouter";
 import { configRouter } from "./routers/configRouter";
+import { theaterRouter } from "./routers/theaterRouter";
 
 /**
  * Creates and returns the application router
@@ -23,6 +24,7 @@ export async function createAppRouter() {
 		effects: effectsRouter,
 		shows: showsRouter,
 		config: configRouter,
+		theater: theaterRouter,
 	};
 
 	// Remove handling of incomming development messages from the cli
@@ -50,7 +52,10 @@ export async function createAppRouter() {
 
 			return {
 				peer: {
-					id: peerId, // Use the given id as the peer id in the initial context, it will be updated in the authentication middleware when applied
+					// Use the given id as the peer id in the initial context, it will be updated in the authentication middleware when applied
+					id: peerId,
+					// Default the inital partial peer to being a manager if we are running in theather mode
+					manager: CONFIG.runtime.theater,
 				} as Peer,
 			};
 		},
