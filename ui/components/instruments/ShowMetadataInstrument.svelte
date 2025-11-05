@@ -211,7 +211,7 @@
 				/>
 			</div>
 			<div class="help-section">
-				<p class="help">{canEdit ? "Tryck Enter för att spara, Escape för att återställa" : "Skrivskyddad i sceneläge"}</p>
+				<p class="help">{canEdit ? "" : "Skrivskyddad i sceneläge"}</p>
 				<p class="help character-count" class:is-warning={descriptionCharCount > descriptionMaxLength * 0.9}>
 					{descriptionCharCount}/{descriptionMaxLength} tecken
 				</p>
