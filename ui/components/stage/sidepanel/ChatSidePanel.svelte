@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { persisted } from "svelte-persisted-store";
-	import { stageChatEnabledStore, peerStore } from "~/api/room";
+	import { stageChatEnabledStore, peerStore } from "~/api/media";
 	import { showStageChatStore } from "~/stores/stage";
 	import ChatInput from "../../chat/ChatInput.svelte";
 	import ChatList from "../../chat/ChatList.svelte";

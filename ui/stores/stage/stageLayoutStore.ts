@@ -1,5 +1,6 @@
 import { derived, type Readable } from "svelte/store";
-import { consumersStore, stageLayoutStore } from "~/api/room";
+import { consumersStore } from "~/api/media";
+import { currentSceneStore } from "~/api/config";
 import type { StageLayout } from "~/types/serverSideTypes";
 
 /** The stage layout with additional information calculated from the values of several other stores */
@@ -11,7 +12,8 @@ type CalculatedStageLayoutStoreValue = {
 };
 
 /** Gives the stage layout with additional information calculated from the values of several other stores */
-export const calculatedStageLayoutStore = derived([stageLayoutStore, consumersStore], ([$stageLayout, $consumers], _set) => {
+export const calculatedStageLayoutStore = derived([currentSceneStore, consumersStore], ([$currentScene, $consumers], _set) => {
+	const $stageLayout = $currentScene?.layout || [];
 	// Find all peerIds from cells in the stage layout matrix
 	const peerIdsOnStage = new Set<string>();
 	$stageLayout.forEach((row) =>

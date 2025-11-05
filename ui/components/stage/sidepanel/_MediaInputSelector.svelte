@@ -2,7 +2,7 @@
 	import IconMeh from "~/components/icons/Icon-meh.svelte";
 	import IconMic from "~/components/icons/Icon-mic.svelte";
 	import IconVideo from "~/components/icons/Icon-video.svelte";
-	import { peerStore, updatePeerName } from "~/api/room";
+	import { peerStore, updatePeerName } from "~/api/media";
 
 	let isLoading = false;
 	let audioDevices: MediaDeviceInfo[] = [];

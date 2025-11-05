@@ -16,7 +16,7 @@
 	import IconUsers from "../../icons/Icon-users.svelte";
 	import IconXCircle from "../../icons/Icon-x-circle.svelte";
 
-	import { peerStore } from "~/api/room";
+	import { peerStore } from "~/api/media";
 	import { focusedInstrument } from "~/stores/instruments";
 </script>
 
