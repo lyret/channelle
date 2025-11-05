@@ -44,6 +44,10 @@ export async function seedShows(): Promise<void> {
 		// Check if we already have shows in the database
 		const existingShowCount = await Show.count();
 
+		if (CONFIG.runtime.production) {
+			console.log("[SeedShows] Database in production. Aborting data seeding.");
+			return;
+		}
 		if (existingShowCount > 0) {
 			console.log(`[SeedShows] Database already contains ${existingShowCount} shows, skipping seed.`);
 			return;
