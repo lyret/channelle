@@ -1,11 +1,10 @@
 <script lang="ts">
 	import { blur } from "svelte/transition";
 	import IconUser from "~/components/picol/icons/Picol-user-close.svelte";
-	import IconPlus from "~/components/picol/icons/Picol-plus.svelte";
 	import IconInfo from "~/components/picol/icons/Picol-book-sans-information.svelte";
 
 	import { isTheaterAuthenticated, signOut } from "~/stores/theaterAuth";
-	import { openAuthModal, openAboutModal, openCreateShowModal } from "~/stores/theaterModals";
+	import { openAuthModal, openAboutModal } from "~/stores/theaterModals";
 
 	function handleSignIn() {
 		if ($isTheaterAuthenticated) {
@@ -13,10 +12,6 @@
 		} else {
 			openAuthModal();
 		}
-	}
-
-	function handleCreateShow() {
-		openCreateShowModal();
 	}
 
 	function handleAbout() {
@@ -28,47 +23,39 @@
 	const iconClassList = "icon is-size-4";
 </script>
 
-<div>
-	<div class="theater-action-bar">
-		<!-- Sign In / User Status -->
-		<button class={btnClassList} class:active={$isTheaterAuthenticated} on:click={handleSignIn}>
-			<span class={iconClassList}>
-				<IconUser />
-			</span>
-			<span class="is-family-secondary">
-				{$isTheaterAuthenticated ? "Logga ut" : "Logga in"}
-			</span>
-		</button>
+<div class="theater-action-bar">
+	<!-- Sign In / User Status -->
+	<button class={btnClassList} class:active={$isTheaterAuthenticated} on:click={handleSignIn}>
+		<span class={iconClassList}>
+			<IconUser />
+		</span>
+		<span class="is-family-secondary">
+			{$isTheaterAuthenticated ? "Logga ut" : "Logga in"}
+		</span>
+	</button>
 
-		<!-- Spacer -->
-		<div class="spacer" />
+	<!-- Buttons Slot -->
+	<slot default />
 
-		<!-- Create New Show -->
-		{#if $isTheaterAuthenticated}
-			<button class={btnClassList} on:click={handleCreateShow}>
-				<span class={iconClassList}>
-					<IconPlus />
-				</span>
-				<span class="is-family-secondary">Skapa en ny föreställning</span>
-			</button>
-		{/if}
+	<!-- Spacer -->
+	<div class="spacer" />
 
-		<!-- Spacer -->
-		<div class="spacer" />
-
-		<!-- About -->
-		<button class={btnClassList} on:click={handleAbout} transition:blur>
-			<span class={iconClassList}>
-				<IconInfo />
-			</span>
-			<span class="is-family-secondary is-hidden-mobile">Om den här sidan</span>
-		</button>
-	</div>
+	<!-- About -->
+	<button class={btnClassList} on:click={handleAbout} transition:blur>
+		<span class={iconClassList}>
+			<IconInfo />
+		</span>
+		<span class="is-family-secondary is-hidden-mobile">Om den här sidan</span>
+	</button>
 </div>
 
 <style lang="scss">
 	.theater-action-bar {
-		padding: 0;
+		z-index: 2;
+		border-radius: 8px;
+		padding: 1.5rem;
+		margin: 0 auto;
+		max-width: 1200px;
 		width: 100%;
 		display: flex;
 		flex-direction: row;
@@ -82,7 +69,7 @@
 			flex-grow: 0.2;
 		}
 
-		.button {
+		:global(.button) {
 			border-radius: 0;
 			border: none;
 			padding: 12px;

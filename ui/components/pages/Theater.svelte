@@ -1,52 +1,32 @@
 <script lang="ts">
-	import { onMount } from "svelte";
+	import TheaterWrapper from "~/components/theater/_TheaterWrapper.svelte";
 	import TheaterHeader from "~/components/theater/TheaterHeader.svelte";
-	import TheaterActionBar from "~/components/theater/TheaterActionBar.svelte";
-
-	import AuthenticationModal from "~/components/modals/TheaterAuthenticationModal.svelte";
-	import AboutModal from "~/components/modals/TheaterAboutModal.svelte";
-	import CreateShowModal from "~/components/modals/TheaterCreateShowModal.svelte";
-	import { showsLoadingStore, showsErrorStore, fetchShows, initializeConfigAPI } from "~/api/config";
-	import { showAuthModal, showAboutModal, showCreateShowModal, closeAuthModal, closeAboutModal, closeCreateShowModal } from "~/stores/theaterModals";
+	import TheaterActionBar from "../theater/TheaterActionBar.svelte";
+	import IconPlus from "~/components/picol/icons/Picol-plus.svelte";
 	import ShowsList from "../theater/ShowsList.svelte";
-
-	onMount(async () => {
-		// Initialize the show API and fetch shows
-		await initializeConfigAPI();
-	});
-
-	// Modal event handlers
-	function handleAuthenticated() {
-		closeAuthModal();
-	}
-
-	function handleAuthCancel() {
-		closeAuthModal();
-	}
-
-	function handleAboutClose() {
-		closeAboutModal();
-	}
-
-	function handleShowCreated(event: CustomEvent<{ id: number; name: string }>) {
-		closeCreateShowModal();
-		console.log(`Show created: ${event.detail.name} (ID: ${event.detail.id})`);
-		// Refresh the shows list
-		fetchShows();
-	}
-
-	function handleCreateShowCancel() {
-		closeCreateShowModal();
-	}
+	import { showsLoadingStore, showsErrorStore, fetchShows } from "~/api/config";
+	import { openCreateShowModal } from "~/stores/theaterModals";
+	import { isTheaterAuthenticated } from "~/stores/theaterAuth";
 
 	// Use reactive statement to get shows from store
 	$: isLoadingShows = $showsLoadingStore;
 	$: showsError = $showsErrorStore;
 </script>
 
-<main>
+<TheaterWrapper>
 	<!-- Header -->
 	<TheaterHeader />
+	<TheaterActionBar>
+		{#if $isTheaterAuthenticated}
+			<button class="button is-small" on:click={openCreateShowModal}>
+				<span class="icon is-size-4">
+					<IconPlus />
+				</span>
+				<span class="is-family-secondary">Skapa en ny föreställning</span>
+			</button>
+		{/if}
+	</TheaterActionBar>
+
 	<h2 class="subtitle theater-title has-text-centered">Välkommen till vår kvartersteater</h2>
 
 	<!-- Main content area with columns -->
@@ -56,9 +36,6 @@
 
 		<div class="container is-fluid">
 			<div class="container content-container">
-				<!-- Action Bar Controls -->
-				<TheaterActionBar />
-
 				<!-- Shows list section -->
 				{#if isLoadingShows}
 					<div class="box">
@@ -81,22 +58,9 @@
 			</div>
 		</div>
 	</section>
-
-	<!-- Modals managed centrally -->
-	<AuthenticationModal isVisible={$showAuthModal} on:authenticated={handleAuthenticated} on:cancel={handleAuthCancel} />
-
-	<AboutModal isVisible={$showAboutModal} on:close={handleAboutClose} />
-
-	<CreateShowModal isVisible={$showCreateShowModal} on:created={handleShowCreated} on:cancel={handleCreateShowCancel} />
-</main>
+</TheaterWrapper>
 
 <style lang="scss">
-	main {
-		min-height: 100vh;
-		display: flex;
-		flex-direction: column;
-	}
-
 	.section {
 		flex: 1;
 		position: relative;

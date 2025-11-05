@@ -12,9 +12,11 @@
 		updatedAt: string;
 	};
 
+	import TheaterWrapper from "~/components/theater/_TheaterWrapper.svelte";
 	import TheaterHeader from "~/components/theater/TheaterHeader.svelte";
+	import TheaterActionBar from "~/components/theater/TheaterActionBar.svelte";
 	import InstrumentContainer from "~/components/instruments/_InstrumentContainer.svelte";
-	import PicolArrowFullLeft from "../picol/icons/Picol-arrow-full-left.svelte";
+	import IconArrowLeft from "~/components/picol/icons/Picol-arrow-full-left.svelte";
 
 	let currentShow: PublicShowDataResponse | null = null;
 	let loading = true;
@@ -79,44 +81,51 @@
 	});
 </script>
 
-<main in:blur={{ delay: 500, duration: 1000 }}>
-	<!-- Header -->
-	<TheaterHeader />
-	<div class="has-text-centered mb-4" in:blur={{ duration: 500, delay: 1000 }}>
-		{#if loading}
-			<p class="subtitle is-4 has-text-grey">Laddar showdata...</p>
-		{:else if error}
-			<p class="subtitle is-4 has-text-danger">{error}</p>
-		{:else if currentShow}
-			<p class="subtitle is-4 has-text-white">Konfigurera showen "{$currentShowStore?.name || currentShow.name}" innan lansering</p>
-		{:else}
-			<p class="subtitle is-4 has-text-white">Konfigurera showen innan lansering</p>
-		{/if}
-		<a class="button is-secondary is-inverted is-outlined" href="/"><span class="icon"><PicolArrowFullLeft /></span>&nbsp;&nbsp;Tillbaka</a>
-	</div>
+<TheaterWrapper>
+	<div in:blur={{ delay: 500, duration: 1000 }}>
+		<!-- Header with Action Bar -->
+		<TheaterHeader />
+		<TheaterActionBar>
+			<a class="button is-small is-inverted" href="/theater">
+				<span class="icon is-size-4">
+					<IconArrowLeft />
+				</span>
+				<span class="is-family-secondary">Alla föreställningar</span>
+			</a>
+		</TheaterActionBar>
 
-	{#if loading}
-		<div class="has-text-centered" style="margin-top: 2rem;">
-			<div class="is-loading"></div>
+		<div class="has-text-centered mb-4" in:blur={{ duration: 500, delay: 1000 }}>
+			{#if loading}
+				<p class="subtitle is-4 has-text-grey">Laddar showdata...</p>
+			{:else if error}
+				<p class="subtitle is-4 has-text-danger">{error}</p>
+			{:else if currentShow}
+				<p class="subtitle is-4 has-text-white">Förbereder "{$currentShowStore?.name || currentShow.name}" innan lansering</p>
+			{:else}
+				<p class="subtitle is-4 has-text-white">Förbereder innan lansering</p>
+			{/if}
 		</div>
-	{:else if error}
-		<div class="notification is-danger is-light" style="margin: 2rem;">
-			<p class="has-text-centered">{error}</p>
-			<div class="has-text-centered" style="margin-top: 1rem;">
-				<a href="/" class="button is-secondary">Tillbaka till teatern</a>
+
+		{#if loading}
+			<div class="has-text-centered" style="margin-top: 2rem;">
+				<div class="is-loading"></div>
 			</div>
-		</div>
-	{:else if currentShow}
-		<InstrumentContainer showParticipants={false} showMediaLibrary={false} />
-	{/if}
-</main>
+		{:else if error}
+			<div class="notification is-danger is-light" style="margin: 2rem;">
+				<p class="has-text-centered">{error}</p>
+				<div class="has-text-centered" style="margin-top: 1rem;">
+					<a href="/theater" class="button is-secondary">Tillbaka till teatern</a>
+				</div>
+			</div>
+		{:else if currentShow}
+			<InstrumentContainer showParticipants={false} showMediaLibrary={false} />
+		{/if}
+	</div>
+</TheaterWrapper>
 
 <style>
-	main {
-		background-color: var(--channelle-main-bg-color);
+	:global(main) {
 		height: 100%;
-		display: flex;
-		flex-direction: column;
 	}
 
 	.instruments,
@@ -155,7 +164,6 @@
 
 	.tabs {
 		z-index: 10;
-		/* box-shadow: 0px 20px 10px rgb(20, 22, 26); */
 	}
 
 	.instruments {
@@ -179,11 +187,11 @@
 	}
 
 	.instrument {
-		flex: 1; /* Ensure they shrink/grow evenly */
+		flex: 1;
 		margin: 10px;
 		padding: 10px;
 		padding-top: 20px;
 		padding-bottom: 20px;
-		overflow-y: auto; /* Makes each pane scrollable */
+		overflow-y: auto;
 	}
 </style>

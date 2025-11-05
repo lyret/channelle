@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { blur } from "svelte/transition";
-	import rosesGif from "~/assets/images/roses.gif";
 	import logoGif from "~/assets/images/logo-free.gif";
 	import stageLightsGif from "~/assets/gifs/stagelights_turning_orange_md_clr.gif";
 </script>
@@ -19,6 +18,7 @@
 		<img src={logoGif} alt="Channelle" class="logo" />
 	</div>
 </section>
+<h2 class="subtitle theater-title has-text-centered">Välkommen till vår kvartersteater</h2>
 
 <style lang="scss">
 	.logo {

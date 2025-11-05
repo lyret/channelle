@@ -23,48 +23,18 @@
 	export let showMediaLibrary = false;
 </script>
 
-<div class="tabs is-light is-boxed is-centered mb-0" in:blur={{ duration: 100 }}>
-	<ul>
-		<li class:is-active={$openInstruments["show-metadata"]}>
-			<!-- svelte-ignore a11y-missing-attribute -->
-			<!-- svelte-ignore a11y-no-static-element-interactions -->
-			<!-- svelte-ignore a11y-click-events-have-key-events -->
-			<a on:click={() => openInstruments.toggle("show-metadata")}>
-				<span class="icon"><IconInfo /></span> Info
-				<span class="icon">
-					{#if $openInstruments["show-metadata"]}
-						<IconCheckCircle />
-					{:else}
-						<IconCircle />
-					{/if}
-				</span>
-			</a>
-		</li>
-		<li class:is-active={$openInstruments["scene-settings"]}>
-			<!-- svelte-ignore a11y-missing-attribute -->
-			<!-- svelte-ignore a11y-no-static-element-interactions -->
-			<!-- svelte-ignore a11y-click-events-have-key-events -->
-			<a on:click={() => openInstruments.toggle("scene-settings")}>
-				<span class="icon"><IconLayers /></span> Scenen
-				<span class="icon">
-					{#if $openInstruments["scene-settings"]}
-						<IconCheckCircle />
-					{:else}
-						<IconCircle />
-					{/if}
-				</span>
-			</a>
-		</li>
-		{#if showParticipants}
-			<li class:is-active={$openInstruments["participants"]}>
+<div class="tabs-container" in:blur={{ duration: 100 }}>
+	<div class="tab-line left-line"></div>
+	<div class="tabs is-light is-boxed is-centered mb-0">
+		<ul>
+			<li class:is-active={$openInstruments["show-metadata"]}>
 				<!-- svelte-ignore a11y-missing-attribute -->
 				<!-- svelte-ignore a11y-no-static-element-interactions -->
 				<!-- svelte-ignore a11y-click-events-have-key-events -->
-				<a on:click={() => openInstruments.toggle("participants")}>
-					<span class="icon"><IconUsers /></span>
-					Deltagare
+				<a on:click={() => openInstruments.toggle("show-metadata")}>
+					<span class="icon"><IconInfo /></span> Info
 					<span class="icon">
-						{#if $openInstruments["participants"]}
+						{#if $openInstruments["show-metadata"]}
 							<IconCheckCircle />
 						{:else}
 							<IconCircle />
@@ -72,53 +42,14 @@
 					</span>
 				</a>
 			</li>
-		{/if}
-		<li class:is-active={$openInstruments["chat"]}>
-			<!-- svelte-ignore a11y-missing-attribute -->
-			<!-- svelte-ignore a11y-no-static-element-interactions -->
-			<!-- svelte-ignore a11y-click-events-have-key-events -->
-			<a on:click={() => openInstruments.toggle("chat")}>
-				<span class="icon"><IconMessageCircle /></span>
-				{#if CONFIG.runtime.theater}
-					Diskussion
-				{:else}
-					Chatt
-				{/if}
-				<span class="icon">
-					{#if $openInstruments["chat"]}
-						<IconCheckCircle />
-					{:else}
-						<IconCircle />
-					{/if}
-				</span>
-			</a>
-		</li>
-		<li class:is-active={$openInstruments["access"]}>
-			<!-- svelte-ignore a11y-missing-attribute -->
-			<!-- svelte-ignore a11y-no-static-element-interactions -->
-			<!-- svelte-ignore a11y-click-events-have-key-events -->
-			<a on:click={() => openInstruments.toggle("access")}>
-				<span class="icon"><IconKey /></span>
-				Tillgång
-				<span class="icon">
-					{#if $openInstruments["access"]}
-						<IconCheckCircle />
-					{:else}
-						<IconCircle />
-					{/if}
-				</span>
-			</a>
-		</li>
-		{#if showMediaLibrary}
-			<li class:is-active={$openInstruments["media-library"]}>
+			<li class:is-active={$openInstruments["scene-settings"]}>
 				<!-- svelte-ignore a11y-missing-attribute -->
 				<!-- svelte-ignore a11y-no-static-element-interactions -->
 				<!-- svelte-ignore a11y-click-events-have-key-events -->
-				<a on:click={() => openInstruments.toggle("media-library")}>
-					<span class="icon"><IconImage /></span>
-					Mediabibliotek
+				<a on:click={() => openInstruments.toggle("scene-settings")}>
+					<span class="icon"><IconLayers /></span> Scenen
 					<span class="icon">
-						{#if $openInstruments["media-library"]}
+						{#if $openInstruments["scene-settings"]}
 							<IconCheckCircle />
 						{:else}
 							<IconCircle />
@@ -126,8 +57,81 @@
 					</span>
 				</a>
 			</li>
-		{/if}
-	</ul>
+			{#if showParticipants}
+				<li class:is-active={$openInstruments["participants"]}>
+					<!-- svelte-ignore a11y-missing-attribute -->
+					<!-- svelte-ignore a11y-no-static-element-interactions -->
+					<!-- svelte-ignore a11y-click-events-have-key-events -->
+					<a on:click={() => openInstruments.toggle("participants")}>
+						<span class="icon"><IconUsers /></span>
+						Deltagare
+						<span class="icon">
+							{#if $openInstruments["participants"]}
+								<IconCheckCircle />
+							{:else}
+								<IconCircle />
+							{/if}
+						</span>
+					</a>
+				</li>
+			{/if}
+			<li class:is-active={$openInstruments["chat"]}>
+				<!-- svelte-ignore a11y-missing-attribute -->
+				<!-- svelte-ignore a11y-no-static-element-interactions -->
+				<!-- svelte-ignore a11y-click-events-have-key-events -->
+				<a on:click={() => openInstruments.toggle("chat")}>
+					<span class="icon"><IconMessageCircle /></span>
+					{#if CONFIG.runtime.theater}
+						Diskussion
+					{:else}
+						Chatt
+					{/if}
+					<span class="icon">
+						{#if $openInstruments["chat"]}
+							<IconCheckCircle />
+						{:else}
+							<IconCircle />
+						{/if}
+					</span>
+				</a>
+			</li>
+			<li class:is-active={$openInstruments["access"]}>
+				<!-- svelte-ignore a11y-missing-attribute -->
+				<!-- svelte-ignore a11y-no-static-element-interactions -->
+				<!-- svelte-ignore a11y-click-events-have-key-events -->
+				<a on:click={() => openInstruments.toggle("access")}>
+					<span class="icon"><IconKey /></span>
+					Tillgång
+					<span class="icon">
+						{#if $openInstruments["access"]}
+							<IconCheckCircle />
+						{:else}
+							<IconCircle />
+						{/if}
+					</span>
+				</a>
+			</li>
+			{#if showMediaLibrary}
+				<li class:is-active={$openInstruments["media-library"]}>
+					<!-- svelte-ignore a11y-missing-attribute -->
+					<!-- svelte-ignore a11y-no-static-element-interactions -->
+					<!-- svelte-ignore a11y-click-events-have-key-events -->
+					<a on:click={() => openInstruments.toggle("media-library")}>
+						<span class="icon"><IconImage /></span>
+						Mediabibliotek
+						<span class="icon">
+							{#if $openInstruments["media-library"]}
+								<IconCheckCircle />
+							{:else}
+								<IconCircle />
+							{/if}
+						</span>
+					</a>
+				</li>
+			{/if}
+		</ul>
+	</div>
+	<div class="tab-line right-line"></div>
 </div>
 
 <!-- Instrument Content -->
@@ -175,18 +179,44 @@
 		flex-grow: 0;
 	}
 
+	li {
+	}
+
 	li a {
-		color: var(--channelle-main-text-color);
+		border-bottom: 2px solid white;
+		z-index: 3;
 	}
 	li:hover a,
 	li.is-active a {
-		border-color: var(--channelle-backstage-text-color);
 		color: var(--channelle-backstage-text-color);
 		background-color: var(--channelle-backstage-bg-color);
+		border-color: var(--channelle-backstage-text-color);
+		color: var(--channelle-main-text-color);
+		border-bottom: none;
 	}
 	.tabs ul {
 		border-color: var(--channelle-backstage-text-color);
 		border-bottom: none;
+	}
+
+	.tabs-container {
+		display: flex;
+		align-items: flex-end;
+		background-color: var(--channelle-main-bg-color);
+	}
+
+	.tab-line {
+		height: 1px;
+		background-color: white;
+		flex: 1;
+	}
+
+	.left-line {
+		margin-right: 0px;
+	}
+
+	.right-line {
+		margin-left: 0px;
 	}
 
 	.tabs {
@@ -195,7 +225,7 @@
 		display: block;
 		flex-grow: 0;
 		flex-shrink: 0;
-		flex-basis: 1;
+		flex-basis: auto;
 		z-index: 10;
 	}
 

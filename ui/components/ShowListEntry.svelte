@@ -17,7 +17,12 @@
 		<div class="level-left">
 			<div class="level-item">
 				<div>
-					<p class="title is-6 is-family-title">{show.name}</p>
+					<p class="title is-6 is-family-title">
+						{show.name}
+						<span class="tag" class:is-success={show.isOnline} class:is-dark={!show.isOnline}>
+							{show.isOnline ? "Online" : "Offline"}
+						</span>
+					</p>
 					{#if show.description}
 						<p class="subtitle is-7 is-family-secondary">{show.description}</p>
 					{/if}
@@ -38,26 +43,17 @@
 							</span>
 						</a>
 					{:else if $isTheaterAuthenticated}
-						<a class="button is-small is-secondary" href="/preparation?show={show.id}"
-							>Förbered&nbsp;&nbsp;
-							<span class="icon is-small">
+						<a class="button is-small is-secondary" href="/preparation?show={show.id}">
+							<span class="icon is-size-8">
 								<PicolEdit />
-							</span></a
+							</span><span>Förbered</span></a
 						>
-						<button class="button is-small is-secondary" on:click={handleViewStage}
-							>Lansera&nbsp;&nbsp;
-							<span class="icon is-small">
+						<button class="button is-small is-secondary is-disabled" disabled on:click={handleViewStage}>
+							<span class="icon is-size-8">
 								<PicolControlsPlay />
-							</span></button
+							</span><span>Lansera</span></button
 						>
 					{/if}
-				</div>
-			</div>
-			<div class="level-item">
-				<div class="tags">
-					<span class="tag" class:is-success={show.isOnline} class:is-dark={!show.isOnline}>
-						{show.isOnline ? "Online" : "Offline"}
-					</span>
 				</div>
 			</div>
 		</div>
@@ -65,6 +61,9 @@
 </div>
 
 <style>
+	.tag {
+		border-radius: 28px;
+	}
 	.notification {
 		border-top-left-radius: 28px;
 		border-top-right-radius: 28px;
