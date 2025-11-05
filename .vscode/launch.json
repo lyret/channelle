@@ -8,9 +8,9 @@
 	],
 	"configurations": [
 		{
-			"name": "Server",
+			"name": "Theather",
 			"request": "launch",
-			"runtimeArgs": ["run-script", "dev"],
+			"runtimeArgs": ["run-script", "theater:dev"],
 			"runtimeExecutable": "npm",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node"
