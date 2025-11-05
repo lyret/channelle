@@ -1,5 +1,6 @@
 import "@babel/polyfill";
 import { enableMediaSoupDebugging, enableHotReloadingOnRebuilds } from "./api/development";
+import { enableConfigSynchronization } from "./api/config";
 
 import Preparation from "~/components/pages/Preparation.svelte";
 
@@ -8,6 +9,9 @@ enableMediaSoupDebugging();
 
 // Enables hot reloading of the debug app when developing
 enableHotReloadingOnRebuilds();
+
+// Enable global config synchronization for real-time updates
+enableConfigSynchronization();
 
 // Mount the Svelte interface
 const preparationComponent = new Preparation({

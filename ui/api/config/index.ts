@@ -23,6 +23,7 @@ export {
 	resetSettings,
 	updateShowMetadata,
 	syncToShow,
+	enableConfigSynchronization,
 
 	// Show CRUD operations
 	fetchShows,

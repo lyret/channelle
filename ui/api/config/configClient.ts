@@ -730,8 +730,24 @@ export class ConfigManager {
 }
 
 /**
+ * Enable global config synchronization
+ *
+ * Sets up periodic config refresh to detect external changes from other users/tabs.
+ * This ensures all config-dependent components stay in sync with server state.
+ */
+export function enableConfigSynchronization(): void {
+	setInterval(async () => {
+		try {
+			await getConfig();
+		} catch (error) {
+			console.error("Failed to sync config:", error);
+		}
+	}, 2000); // Check every 2 seconds
+}
+
+/**
  * Global configuration manager instance
- * Provides object-oriented interface for backward compatibility
+ * Provides high-level configuration management with proper error handling and validation
  */
 export const configManager = new ConfigManager();
 
