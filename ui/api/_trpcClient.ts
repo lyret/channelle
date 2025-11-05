@@ -11,7 +11,7 @@ export const wsIsConnectedStore = writable<boolean>(false);
 
 /** Create persistent WebSocket connection */
 const wsClient = createWSClient({
-	url: "ws://localhost:3001", // FIXME: Make the websocket connection use the most appropiate url and make sure the port is mapped when deployed
+	url: `ws://${window.location.host}`,
 	connectionParams: async () => {
 		// Get peer id from storage, or generate a new random UUIDv4 token
 		const peerId = get(wsPeerIdStore) || "111-111-1111".replace(/[018]/g, () => (crypto.getRandomValues(new Uint8Array(1))[0] & 15).toString(16));
