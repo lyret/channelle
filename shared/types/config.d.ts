@@ -64,15 +64,6 @@ type WebConfig = {
 	port: number;
 };
 
-type SocketConfig = {
-	/** The port for the websocket server. */
-	port: number;
-	/** The path for the socket. */
-	path: string;
-	/** The transports for the socket. */
-	transports: string[];
-};
-
 type WorkerConfig = {
 	/** The minimum RTC port. */
 	rtcMinPort: number;
@@ -123,8 +114,6 @@ type CONFIG = {
 	stage: StageConfig;
 	/** Web Server Settings */
 	web: WebConfig;
-	/** Socket IO Settings */
-	socket: SocketConfig;
 	/** MediaSoup Settings */
 	mediasoup: MediasoupConfig;
 };

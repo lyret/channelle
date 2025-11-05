@@ -46,13 +46,6 @@
  */
 
 /**
- * @typedef {Object} Socket
- * @property {number} port - The port for the websocket server.
- * @property {string} path - The path for the socket.
- * @property {string[]} transports - The transports for the socket.
- */
-
-/**
  * @typedef {Object} WorkerConfig
  * @property {number} rtcMinPort - The minimum RTC port.
  * @property {number} rtcMaxPort - The maximum RTC port.
@@ -88,7 +81,6 @@
  * @property {DebugConfig} debug - Debug Settings.
  * @property {StageConfig} stage - Stage Settings.
  * @property {WebConfig} web - Web Server Settings.
- * @property {Socket} socket - Socket IO Settings.
  * @property {MediasoupConfig} mediasoup - MediaSoup Settings.
  */
 

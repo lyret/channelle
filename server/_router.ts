@@ -36,9 +36,12 @@ export async function createAppRouter() {
 	// Create the application router
 	const appRouter = trcpRouter(routerConfig);
 
+	// Get the websocket server instance
+	const wsServer = await ws();
+
 	// Create the websocket handler for the trpc server
 	applyWSSHandler({
-		wss: ws(),
+		wss: wsServer,
 		router: appRouter,
 		createContext: ({ info, res }) => {
 			// Get the peer id from the connection parameters

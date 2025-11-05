@@ -1,17 +1,21 @@
 import { WebSocketServer } from "ws";
+import { http } from "./http";
 
 let _ws: WebSocketServer | undefined;
 
 /** Returns the global web socket server  */
-export function ws(): WebSocketServer {
+export async function ws(): Promise<WebSocketServer> {
 	// Return already initialized singelton instance
 	if (_ws) {
 		return _ws;
 	}
 
+	// Get the http server
+	const httpServer = await http();
+
 	// Create and return the socket server
 	_ws = new WebSocketServer({
-		port: CONFIG.socket.port,
+		server: httpServer,
 	});
 
 	if (CONFIG.runtime.debug) {
@@ -22,7 +26,7 @@ export function ws(): WebSocketServer {
 			});
 		});
 	}
-	console.log("[WS] Listening on ws://localhost:3001");
+	console.log(`[WS] Listening on port ${CONFIG.runtime.port}`);
 
 	return _ws;
 }

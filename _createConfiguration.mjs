@@ -257,12 +257,6 @@ export async function createConfiguration() {
 			/** Exposed listening port */
 			port: port,
 		},
-		/** Websockets Settings */
-		socket: {
-			port: port + 1,
-			path: "/ws", // TODO: no longer used?
-			transports: ["websocket"],
-		},
 		/** MediaSoup Settings */
 		mediasoup: {
 			/** Worker Settings */
