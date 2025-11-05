@@ -4,10 +4,21 @@
 	import Accordion from "../Accordion.svelte";
 	import { onMount } from "svelte";
 	import { peersStore } from "~/api/media";
-	import { configManager, currentSceneStore } from "~/api/config";
+	import { configManager, currentSceneStore, sceneSettingsStore, resetSettings } from "~/api/config";
 	import { stageChatEnabledStore } from "~/api/media";
 
 	$: peers = Object.values($peersStore || {}).filter((p) => (p.actor || p.manager) && !p.banned);
+
+	// Track expanded states for each scene
+	let expandedScenes: Record<string, boolean> = {};
+
+	// Check if any override settings are not automatic
+	$: hasActiveOverrides =
+		$sceneSettingsStore.curtains !== 0 ||
+		$sceneSettingsStore.chatEnabled !== 0 ||
+		$sceneSettingsStore.visitorVideoEnabled !== 0 ||
+		$sceneSettingsStore.visitorAudioEnabled !== 0 ||
+		$sceneSettingsStore.effectsEnabled !== 0;
 
 	const auto: Scene = {
 		name: "Automatisk",
@@ -91,6 +102,27 @@
 		};
 	});
 
+	function handleSceneSelect(event: CustomEvent<Scene>) {
+		// Persist the scene selection to the server
+		configManager.updateCurrentScene(event.detail);
+		// Collapse all expanded scenes after selection
+		expandedScenes = {};
+	}
+
+	function handleSceneUpdate() {
+		// Handle scene layout updates (peer assignments)
+		// This already triggers persistence if the scene is currently selected
+	}
+
+	// Reset all override settings to automatic
+	async function resetOverrides() {
+		try {
+			await resetSettings(true); // persist to show
+		} catch (error) {
+			console.error("Failed to reset settings:", error);
+		}
+	}
+
 	// const doDesignTest = (style: "simple" | "ukraine") => {
 	// 	if (style == "simple") {
 	// 		document.documentElement.style.setProperty("--channelle-main-bg-color", "black");
@@ -142,17 +174,46 @@
 
 	<div class="scene-content">
 		<Accordion title="Ange tvingande inställningar" isOpen={false}>
-			<div class="field">
+			<p>Dessa inställningar åsidosätter alltid de inställningar som finns i den aktiva scenen.</p>
+			<p>Använd "Automatiskt" för att låta varje scen bestämma sina egna inställningar.</p>
+
+			<div class="field mt-2">
 				<label class="label">Visa ridån 🎭</label>
 				<div class="control">
 					<div class="buttons has-addons">
-						<button class="button is-danger" on:click={() => configManager.updateCurtainsOverride(2)}> Dölj </button>
-						<button class="button is-info" on:click={() => configManager.updateCurtainsOverride(0)}> Automatiskt </button>
-						<button class="button is-success" on:click={() => configManager.updateCurtainsOverride(1)}> Visa </button>
+						<button
+							class="button is-danger"
+							class:is-light={$sceneSettingsStore.curtains !== 2}
+							on:click={() => configManager.updateCurtainsOverride(2)}
+						>
+							Dölj
+						</button>
+						<button
+							class="button is-info"
+							class:is-light={$sceneSettingsStore.curtains !== 0}
+							on:click={() => configManager.updateCurtainsOverride(0)}
+						>
+							Automatiskt
+						</button>
+						<button
+							class="button is-success"
+							class:is-light={$sceneSettingsStore.curtains !== 1}
+							on:click={() => configManager.updateCurtainsOverride(1)}
+						>
+							Visa
+						</button>
 					</div>
 				</div>
 				<div class="help-section">
-					<p class="help">Dessa inställningar gäller oavsett vilken scen som är aktiv</p>
+					<p class="help">
+						{#if $sceneSettingsStore.curtains === 0}
+							Visas automatiskt enligt vald scen
+						{:else if $sceneSettingsStore.curtains === 1}
+							<b>Ridån är dold</b>
+						{:else}
+							<b>Ridån visas</b>
+						{/if}
+					</p>
 				</div>
 			</div>
 
@@ -160,10 +221,39 @@
 				<label class="label">Visa chatt-panelen 💬</label>
 				<div class="control">
 					<div class="buttons has-addons">
-						<button class="button is-danger" on:click={() => configManager.updateChatEnabledOverride(2)}> Dölj </button>
-						<button class="button is-info" on:click={() => configManager.updateChatEnabledOverride(0)}> Automatiskt </button>
-						<button class="button is-success" on:click={() => configManager.updateChatEnabledOverride(1)}> Visa </button>
+						<button
+							class="button is-danger"
+							class:is-light={$sceneSettingsStore.chatEnabled !== 2}
+							on:click={() => configManager.updateChatEnabledOverride(2)}
+						>
+							Dölj
+						</button>
+						<button
+							class="button is-info"
+							class:is-light={$sceneSettingsStore.chatEnabled !== 0}
+							on:click={() => configManager.updateChatEnabledOverride(0)}
+						>
+							Automatiskt
+						</button>
+						<button
+							class="button is-success"
+							class:is-light={$sceneSettingsStore.chatEnabled !== 1}
+							on:click={() => configManager.updateChatEnabledOverride(1)}
+						>
+							Visa
+						</button>
 					</div>
+				</div>
+				<div class="help-section">
+					<p class="help">
+						{#if $sceneSettingsStore.chatEnabled === 0}
+							Chatten visas beroende på vald scen
+						{:else if $sceneSettingsStore.chatEnabled === 1}
+							<b>Chatten är aktiverad</b>
+						{:else}
+							<b>Chatten är av-aktiverad</b>
+						{/if}
+					</p>
 				</div>
 			</div>
 
@@ -171,10 +261,39 @@
 				<label class="label">Tillåt video från publiken 🤳</label>
 				<div class="control">
 					<div class="buttons has-addons">
-						<button class="button is-danger" on:click={() => configManager.updateVisitorVideoEnabledOverride(2)}> Nej </button>
-						<button class="button is-info" on:click={() => configManager.updateVisitorVideoEnabledOverride(0)}> Automatiskt </button>
-						<button class="button is-success" on:click={() => configManager.updateVisitorVideoEnabledOverride(1)}> Ja </button>
+						<button
+							class="button is-danger"
+							class:is-light={$sceneSettingsStore.visitorVideoEnabled !== 2}
+							on:click={() => configManager.updateVisitorVideoEnabledOverride(2)}
+						>
+							Nej
+						</button>
+						<button
+							class="button is-info"
+							class:is-light={$sceneSettingsStore.visitorVideoEnabled !== 0}
+							on:click={() => configManager.updateVisitorVideoEnabledOverride(0)}
+						>
+							Automatiskt
+						</button>
+						<button
+							class="button is-success"
+							class:is-light={$sceneSettingsStore.visitorVideoEnabled !== 1}
+							on:click={() => configManager.updateVisitorVideoEnabledOverride(1)}
+						>
+							Ja
+						</button>
 					</div>
+				</div>
+				<div class="help-section">
+					<p class="help">
+						{#if $sceneSettingsStore.visitorVideoEnabled === 0}
+							Publikens video är tillåten beroende på scen
+						{:else if $sceneSettingsStore.visitorVideoEnabled === 1}
+							<b>Video från publiken är alltid tillåtet</b>
+						{:else}
+							<b>Video från publiken tillåts inte</b>
+						{/if}
+					</p>
 				</div>
 			</div>
 
@@ -182,10 +301,39 @@
 				<label class="label">Tillåt ljud från publiken 🎤</label>
 				<div class="control">
 					<div class="buttons has-addons">
-						<button class="button is-danger" on:click={() => configManager.updateVisitorAudioEnabledOverride(2)}> Nej </button>
-						<button class="button is-info" on:click={() => configManager.updateVisitorAudioEnabledOverride(0)}> Automatiskt </button>
-						<button class="button is-success" on:click={() => configManager.updateVisitorAudioEnabledOverride(1)}> Ja </button>
+						<button
+							class="button is-danger"
+							class:is-light={$sceneSettingsStore.visitorAudioEnabled !== 2}
+							on:click={() => configManager.updateVisitorAudioEnabledOverride(2)}
+						>
+							Nej
+						</button>
+						<button
+							class="button is-info"
+							class:is-light={$sceneSettingsStore.visitorAudioEnabled !== 0}
+							on:click={() => configManager.updateVisitorAudioEnabledOverride(0)}
+						>
+							Automatiskt
+						</button>
+						<button
+							class="button is-success"
+							class:is-light={$sceneSettingsStore.visitorAudioEnabled !== 1}
+							on:click={() => configManager.updateVisitorAudioEnabledOverride(1)}
+						>
+							Ja
+						</button>
 					</div>
+				</div>
+				<div class="help-section">
+					<p class="help">
+						{#if $sceneSettingsStore.visitorAudioEnabled === 0}
+							Publikens ljud är tillåten beroende på scen
+						{:else if $sceneSettingsStore.visitorAudioEnabled === 1}
+							<b>Ljud från publiken är alltid tillåtet</b>
+						{:else}
+							<b>Ljud från publiken tillåts inte</b>
+						{/if}
+					</p>
 				</div>
 			</div>
 
@@ -193,42 +341,104 @@
 				<label class="label">Tillåt blommor och applåder 🌹👏</label>
 				<div class="control">
 					<div class="buttons has-addons">
-						<button class="button is-danger" on:click={() => configManager.updateEffectsEnabledOverride(2)}> Nej </button>
-						<button class="button is-info" on:click={() => configManager.updateEffectsEnabledOverride(0)}> Automatiskt </button>
-						<button class="button is-success" on:click={() => configManager.updateEffectsEnabledOverride(1)}> Ja </button>
+						<button
+							class="button is-danger"
+							class:is-light={$sceneSettingsStore.effectsEnabled !== 2}
+							on:click={() => configManager.updateEffectsEnabledOverride(2)}
+						>
+							Nej
+						</button>
+						<button
+							class="button is-info"
+							class:is-light={$sceneSettingsStore.effectsEnabled !== 0}
+							on:click={() => configManager.updateEffectsEnabledOverride(0)}
+						>
+							Automatiskt
+						</button>
+						<button
+							class="button is-success"
+							class:is-light={$sceneSettingsStore.effectsEnabled !== 1}
+							on:click={() => configManager.updateEffectsEnabledOverride(1)}
+						>
+							Ja
+						</button>
 					</div>
 				</div>
+				<div class="help-section">
+					<p class="help">
+						{#if $sceneSettingsStore.effectsEnabled === 0}
+							Beroende på scen kan publiken ibland 🌹 och 👏
+						{:else if $sceneSettingsStore.effectsEnabled === 1}
+							<b>Hyllningar från publiken är alltid tillåtet</b>
+						{:else}
+							<b>Hyllningar från publiken tillåts inte</b>
+						{/if}
+					</p>
+				</div>
 			</div>
+
+			{#if hasActiveOverrides}
+				<div class="field">
+					<div class="control">
+						<button class="button is-warning" on:click={resetOverrides}> Återställ till automatiskt </button>
+					</div>
+					<div class="help-section">
+						<p class="help">Återställer alla tvingande inställningar till "Automatiskt" - låter scenerna bestämma</p>
+					</div>
+				</div>
+			{/if}
 		</Accordion>
 
 		<div class="field">
 			<label class="label">Välj aktiv scen</label>
 			<div class="scene-controls">
-				<SceneSelectorControl layout={auto} {peers} selectedLayout={$currentSceneStore} on:select={(e) => configManager.updateCurrentScene(e.detail)} />
+				<SceneSelectorControl
+					layout={auto}
+					{peers}
+					selectedLayout={$currentSceneStore}
+					bind:expanded={expandedScenes[auto.name]}
+					on:select={handleSceneSelect}
+					on:update={handleSceneUpdate}
+				/>
 				<SceneSelectorControl
 					layout={empty}
 					{peers}
 					selectedLayout={$currentSceneStore}
-					on:select={(e) => configManager.updateCurrentScene(e.detail)}
+					bind:expanded={expandedScenes[empty.name]}
+					on:select={handleSceneSelect}
+					on:update={handleSceneUpdate}
 				/>
 				<SceneSelectorControl
 					layout={oneXOne}
 					{peers}
 					selectedLayout={$currentSceneStore}
-					on:select={(e) => configManager.updateCurrentScene(e.detail)}
+					bind:expanded={expandedScenes[oneXOne.name]}
+					on:select={handleSceneSelect}
+					on:update={handleSceneUpdate}
 				/>
 				<SceneSelectorControl
 					layout={oneXTwo}
 					{peers}
 					selectedLayout={$currentSceneStore}
-					on:select={(e) => configManager.updateCurrentScene(e.detail)}
+					bind:expanded={expandedScenes[oneXTwo.name]}
+					on:select={handleSceneSelect}
+					on:update={handleSceneUpdate}
 				/>
-				<SceneSelectorControl layout={chat} {peers} selectedLayout={$currentSceneStore} on:select={(e) => configManager.updateCurrentScene(e.detail)} />
+				<SceneSelectorControl
+					layout={chat}
+					{peers}
+					selectedLayout={$currentSceneStore}
+					bind:expanded={expandedScenes[chat.name]}
+					on:select={handleSceneSelect}
+					on:update={handleSceneUpdate}
+				/>
 				<SceneSelectorControl
 					layout={twoXTwo}
 					{peers}
 					selectedLayout={$currentSceneStore}
-					on:select={(e) => configManager.updateCurrentScene(e.detail)}
+					bind:expanded={expandedScenes[twoXTwo.name]}
+					on:select={handleSceneSelect}
+					on:update={handleSceneUpdate}
 				/>
 			</div>
 		</div>
