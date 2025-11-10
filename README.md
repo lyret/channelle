@@ -41,6 +41,19 @@ npm run theater:dev
 
 ## Configuration & Deployment
 
+Channelle provides flexible configuration through environment variables and CLI arguments. **For a complete reference of all available options, see [`.env.example`](.env.example)** which contains detailed documentation for every configuration option.
+
+All configuration options can be set either via CLI or environment variables. See [`.env.example`](.env.example) for complete documentation with CLI flag equivalents and usage examples.
+
+### Quick Configuration
+
+Copy the example environment file and customize it for your deployment:
+
+```bash
+cp .env.example .env
+# Edit .env with your preferred settings
+```
+
 ### Operational Modes
 
 Channelle operates in two distinct modes:
@@ -53,60 +66,31 @@ Channelle operates in two distinct modes:
 
 **Theater Mode (Advanced Usage)**
 - Management interface for creating and organizing multiple shows
-- Configure shows, scenes, and performance settings
-- Requires authentication (`THEATER_PASSWORD`)
+- Configure show info, scenes, and performance settings
+- Launcher seperate Channelle instances in stage mode, possibly on seperate servers through different adapters
 - For organizations running multiple events or complex productions
 
 ### CLI Configuration
 
+CLI arguments override environment variables, which override defaults.
+
 ```bash
+# Example CLI options
+node cli.mjs --theater --port 8080 --debug --local --lan --wan
+node cli.mjs --showId 123 --theaterPassword mypass --production
+
+# Preconfigured launch configurations
+
 # Stage mode (default) - quick start a single performance
 npm run stage:dev                    # Development with hot reload
 npm run stage:build                  # Build for production
 npm run stage:start                  # Start production server
 
 # Theater mode - manage multiple shows
-npm run theater:dev                  # Development mode
-npm run theater:build               # Build for production  
+npm run theater:dev                 # Development mode
+npm run theater:build               # Build for production
 npm run theater:start               # Start production server
-
-# Advanced CLI options
-node cli.mjs --theater --port 8080 --debug --local --lan --wan
-node cli.mjs --showId 123 --theaterPassword mypass --production
 ```
-
-### Environment Variables
-
-Create a `.env` file for persistent configuration:
-
-```env
-# Basic Configuration
-NODE_ENV=production
-PORT=3000
-DEBUG=false
-VERBOSE=false
-
-# Stage Configuration  
-STAGE_NAME="My Performance"
-STAGE_ID="my-stage-2024"
-STAGE_INVITE_LINK_KEY="secret123"
-
-# Theater Mode
-THEATER=true
-THEATER_PASSWORD="admin123"
-SHOW_ID=42
-
-# Network Access
-LOCAL=true
-LAN=true
-WAN=false
-```
-
-### Network Configuration
-
-- `--local`: Access from localhost (127.0.0.1) - always enabled in development
-- `--lan`: Access from local network (192.168.x.x, 10.x.x.x) - great for private events
-- `--wan`: Access from internet - requires port forwarding/public IP for production
 
 ## Technical Foundation
 
