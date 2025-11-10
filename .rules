@@ -1,7 +1,31 @@
-# Channelle Stage - Project Rules
+# Channelle - AI Development Guidelines
 
 ## Overview
-Channelle is a multimedia communication application for online theater performances. This is the "Stage" component - a server/client web application responsible for a single performance/meeting. It replaces traditional video conferencing tools with theater-focused features.
+Channelle is an open-source multimedia communication platform designed for the free culture sector, enabling artists, cultural workers, and activists to host autonomous online performances and events without corporate control or censorship.
+
+## Architecture
+
+### Operational Modes
+Channelle is a unified Node.js application that operates in two distinct modes within a single codebase:
+
+- **Theater Mode** (`--theater`): Management interface for creating and configuring shows, scenes, and performance settings
+- **Stage Mode** (default): Live performance execution with WebRTC streaming, real-time chat, and audience interaction
+
+### Core Architecture
+- **Unified Server**: Single Node.js application serving both modes via mode-specific routing
+- **Database Models**: SQLite with Sequelize ORM (Show, Scene, Peer, Message models)
+- **WebRTC Streaming**: MediaSoup SFU (Selective Forwarding Unit) for professional one-to-many broadcasting
+- **Type-safe API**: tRPC with WebSocket support for real-time communication
+- **Frontend**: Multiple Svelte interfaces (theater, stage, backstage, debug) served as separate HTML entry points
+- **Build System**: Custom CLI with ESBuild for both client and server compilation
+
+### Key Concepts
+- **Shows**: Configured performances with settings and scene definitions
+- **Scenes**: Predefined layouts and behavior settings for different parts of a performance
+- **Peers**: Participants with roles (actor, manager, visitor) and associated permissions
+- **Stage Layout**: Grid-based arrangement of video feeds, chat, and empty spaces
+
+The application can run standalone as a stage server or be initialized with a specific show configuration via `--showId` parameter.
 
 ## Technology Stack
 
@@ -33,35 +57,25 @@ Channelle is a multimedia communication application for online theater performan
 ## Project Structure
 
 ```
-stage/
+channelle/
 ├── server/           # Backend Node.js application
 │   ├── lib/         # Core server libraries (http, mediasoup, trpc, sequelize, ws)
-│   ├── models/      # Database models (Peer, Message, Scene)
-│   ├── routers/     # tRPC route handlers (room, chat, effects, development)
-│   └── index.ts     # Server entry point
+│   ├── models/      # Database models (Peer, Message, Scene, Show)
+│   ├── routers/     # tRPC route handlers (media, chat, effects, shows, theater, config)
+│   ├── _router.ts   # Main router configuration
+│   ├── _server.ts   # Server initialization
+│   └── _types.ts    # Server-side type definitions
 ├── ui/              # Frontend Svelte application
-│   ├── components/  # Svelte components (pages, chat, curtains, debug, icons)
+│   ├── components/  # Svelte components (pages, stage, theater, chat, etc.)
 │   ├── api/         # Client-side API utilities
 │   ├── stores/      # Svelte stores for state management
 │   ├── styles/      # SCSS stylesheets
 │   ├── assets/      # Static assets
-│   └── *.html       # Entry HTML files (index, stage, backstage, debug)
+│   └── *.html       # Entry HTML files (stage, theater, backstage, debug, etc.)
 ├── shared/          # Code shared between server and client
 │   └── types/       # TypeScript type definitions
 └── .dist/           # Build output directory
 ```
-
-## Data Models
-- **Peer**: User/participant (id, name, actor, manager, banned, audio/video muted states)
-- **Message**: Chat messages
-- **Scene**: Theater scene/room configuration
-
-## Key Features
-- **Theater-focused UI**: Stage, backstage, and curtains metaphors
-- **Role-based permissions**: Actors, managers, regular participants
-- **Real-time communication**: Chat, video/audio streaming
-- **MediaSoup integration**: Professional-grade WebRTC streaming
-- **Multi-view support**: Different interfaces for different user roles
 
 ## Code Style & Guidelines
 
@@ -107,14 +121,6 @@ stage/
 ### Dependencies
 - MediaSoup requires Python 3.7+ and pip3 for native dependencies
 - Manual deployment via npm scripts
-
-## Architecture
-- **Type-safe API**: tRPC provides end-to-end type safety
-- **Real-time communication**: WebSocket-based with heartbeat/keepalive
-- **Media streaming**: MediaSoup handles WebRTC complexity
-- **State management**: Svelte stores + persisted store for client state
-- **Database**: Sequelize with SQLite for simplicity
-- **Build optimization**: Separate client/server builds with shared types
 
 ## AI Assistant Behavior Rules
 
