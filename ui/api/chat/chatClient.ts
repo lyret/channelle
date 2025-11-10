@@ -13,7 +13,7 @@ export type SubscriptionMode = "all" | "public" | "backstage";
 // CUSTOM MESSAGE STORE
 // ============================================================================
 
-//FIXME: Check how this actually works..
+// TODO: Check and verify how this actually works..
 function createMessageStore(mode: SubscriptionMode = "public") {
 	const { subscribe, set, update } = writable<MessageAttributes[]>([]);
 
