@@ -89,6 +89,23 @@ type WebRTCTransportConfig = {
 	initialAvailableOutgoingBitrate: number;
 };
 
+type LauncherConfig = {
+	/** Active adapter name (none, local, digitalocean). */
+	activeAdapter: string;
+	/** Local adapter settings. */
+	local: {
+		/** Maximum number of active local stage instances. */
+		maxActiveStages: number;
+	};
+	/** DigitalOcean adapter settings. */
+	digitalocean: {
+		/** DigitalOcean API key. */
+		apiKey: string;
+		/** Maximum number of VPN servers. */
+		maxVpnServers: number;
+	};
+};
+
 type MediasoupConfig = {
 	/** The worker settings. */
 	worker: WorkerConfig;
@@ -114,6 +131,8 @@ type CONFIG = {
 	stage: StageConfig;
 	/** Web Server Settings */
 	web: WebConfig;
+	/** Launcher Settings */
+	launcher: LauncherConfig;
 	/** MediaSoup Settings */
 	mediasoup: MediasoupConfig;
 };

@@ -36,6 +36,7 @@
  * @property {string} inviteKey - The invite key for the stage.
  * @property {string} id - The identifier for the stage.
  * @property {string} theaterPassword - The password for theater authentication.
+ * @property {number|undefined} showId - The show ID to initialize the stage with (optional).
  */
 
 /**
@@ -73,6 +74,16 @@
  */
 
 /**
+ * @typedef {Object} LauncherConfig
+ * @property {string} activeAdapter - Active adapter name (none, local, digitalocean).
+ * @property {Object} local - Local adapter settings.
+ * @property {number} local.maxActiveStages - Maximum number of active local stage instances.
+ * @property {Object} digitalocean - DigitalOcean adapter settings.
+ * @property {string} digitalocean.apiKey - DigitalOcean API key.
+ * @property {number} digitalocean.maxVpnServers - Maximum number of VPN servers.
+ */
+
+/**
  * @typedef {Object} CONFIG - The global runtime context for the application
  * @property {RuntimeConfig} runtime - Runtime Options.
  * @property {PackageConfig} package - Package Information.
@@ -81,6 +92,7 @@
  * @property {DebugConfig} debug - Debug Settings.
  * @property {StageConfig} stage - Stage Settings.
  * @property {WebConfig} web - Web Server Settings.
+ * @property {LauncherConfig} launcher - Launcher Settings.
  * @property {MediasoupConfig} mediasoup - MediaSoup Settings.
  */
 

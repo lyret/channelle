@@ -39,6 +39,10 @@ export async function createConfiguration() {
 			watch: Boolean,
 			start: Boolean,
 			theater: Boolean,
+			theaterAdapter: String,
+			theaterAdapterLocalMaxStages: Number,
+			theaterAdapterDigitaloceanApiKey: String,
+			theaterAdapterDigitaloceanMaxVpns: Number,
 		},
 		{
 			p: ["--port"],
@@ -48,6 +52,10 @@ export async function createConfiguration() {
 			w: ["--watch"],
 			t: ["--theater"],
 			s: ["--showId"],
+			"theater-adapter": ["--theaterAdapter"],
+			"theater-adapter-local-max-stages": ["--theaterAdapterLocalMaxStages"],
+			"theater-adapter-digitalocean-api-key": ["--theaterAdapterDigitaloceanApiKey"],
+			"theater-adapter-digitalocean-max-vpns": ["--theaterAdapterDigitaloceanMaxVpns"],
 		},
 	);
 
@@ -134,6 +142,45 @@ export async function createConfiguration() {
 	if (!theater && showId) {
 		console.log("🏷️ ", Chalk.bgBlueBright("[CONFIG]"), "Show ID", showId);
 	}
+
+	// Launcher configuration
+	console.log();
+
+	// The THEATER_ADAPTER option sets which adapter is active for launching stages
+	const theaterAdapter = cli.theaterAdapter !== undefined ? cli.theaterAdapter : env.THEATER_ADAPTER || "none";
+	if (theater) {
+		console.log("🚀", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter", theaterAdapter);
+	}
+
+	// The THEATER_ADAPTER_LOCAL_MAX_STAGES option sets the maximum number of local stage instances that can be launched simultaneously
+	const maxLocalStages =
+		cli.theaterAdapterLocalMaxStages !== undefined
+			? cli.theaterAdapterLocalMaxStages
+			: env.THEATER_ADAPTER_LOCAL_MAX_STAGES
+				? Number(env.THEATER_ADAPTER_LOCAL_MAX_STAGES)
+				: 1;
+	if (theater && theaterAdapter === "local") {
+		console.log("🚀", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter Local Max Stages", maxLocalStages);
+	}
+
+	// The THEATER_ADAPTER_DIGITALOCEAN_API_KEY option sets the API key for DigitalOcean launcher adapter
+	const digitaloceanApiKey =
+		cli.theaterAdapterDigitaloceanApiKey !== undefined ? cli.theaterAdapterDigitaloceanApiKey : env.THEATER_ADAPTER_DIGITALOCEAN_API_KEY || "";
+	if (theater && theaterAdapter === "digitalocean" && digitaloceanApiKey) {
+		console.log("🚀", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter DigitalOcean API Key", "***" + digitaloceanApiKey.slice(-4));
+	}
+
+	// The THEATER_ADAPTER_DIGITALOCEAN_MAX_VPNS option sets the maximum number of DigitalOcean VPN servers that can be launched
+	const maxDigitaloceanVpns =
+		cli.theaterAdapterDigitaloceanMaxVpns !== undefined
+			? cli.theaterAdapterDigitaloceanMaxVpns
+			: env.THEATER_ADAPTER_DIGITALOCEAN_MAX_VPNS
+				? Number(env.THEATER_ADAPTER_DIGITALOCEAN_MAX_VPNS)
+				: 5;
+	if (theater && theaterAdapter === "digitalocean") {
+		console.log("🚀", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter DigitalOcean Max VPNs", maxDigitaloceanVpns);
+	}
+
 	console.log();
 
 	// Create an array of transport listening info for webRTC, will be filled
@@ -256,6 +303,23 @@ export async function createConfiguration() {
 			host: production ? "0.0.0.0" : "localhost",
 			/** Exposed listening port */
 			port: port,
+		},
+		/** Launcher Settings */
+		launcher: {
+			/** Active adapter name (none, local, digitalocean) */
+			activeAdapter: theaterAdapter,
+			/** Local adapter settings */
+			local: {
+				/** Maximum number of active local stage instances */
+				maxActiveStages: maxLocalStages,
+			},
+			/** DigitalOcean adapter settings */
+			digitalocean: {
+				/** DigitalOcean API key */
+				apiKey: digitaloceanApiKey,
+				/** Maximum number of VPN servers */
+				maxVpnServers: maxDigitaloceanVpns,
+			},
 		},
 		/** MediaSoup Settings */
 		mediasoup: {
