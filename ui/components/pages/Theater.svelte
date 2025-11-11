@@ -4,6 +4,8 @@
 	import TheaterActionBar from "../theater/TheaterActionBar.svelte";
 	import IconPlus from "~/components/picol/icons/Picol-plus.svelte";
 	import ShowsList from "../theater/ShowsList.svelte";
+	import LaunchersControl from "../launchers/LaunchersControl.svelte";
+
 	import { showsLoadingStore, showsErrorStore, fetchShows } from "~/api/config";
 	import { openCreateShowModal } from "~/stores/theaterModals";
 	import { isTheaterAuthenticated } from "~/stores/theaterAuth";
@@ -27,8 +29,6 @@
 		{/if}
 	</TheaterActionBar>
 
-	<h2 class="subtitle theater-title has-text-centered">Välkommen till vår kvartersteater</h2>
-
 	<!-- Main content area with columns -->
 	<section class="section theater-content">
 		<div class="column-background left-column"></div>
@@ -36,6 +36,11 @@
 
 		<div class="container is-fluid">
 			<div class="container content-container">
+				<!-- Launcher status - only show in theater mode -->
+				{#if $isTheaterAuthenticated}
+					<LaunchersControl />
+				{/if}
+
 				<!-- Shows list section -->
 				{#if isLoadingShows}
 					<div class="box">

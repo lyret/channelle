@@ -10,8 +10,7 @@ export abstract class LaunchAdapter {
 	/** Unique name of this adapter (used for identification) */
 	abstract readonly name: string;
 
-	/** Human-readable display name for UI */
-	abstract readonly displayName: string;
+
 
 	/**
 	 * Check if this adapter can currently launch instances

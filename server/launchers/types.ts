@@ -56,8 +56,56 @@ export type InstanceStatus = "starting" | "running" | "stopping" | "stopped" | "
  */
 export interface AdapterStatus {
 	name: string;
-	displayName: string;
 	canLaunch: boolean;
 	reason?: string;
 	isActive: boolean;
+}
+
+/**
+ * Launcher sync data from server
+ */
+export interface LauncherSyncData {
+	/** Whether the launcher system is ready */
+	isReady: boolean;
+	/** Name of the active adapter */
+	activeAdapter: string | null;
+	/** Status of the active adapter */
+	adapterStatus: AdapterStatus;
+	/** List of all instances */
+	instances: InstanceInfo[];
+}
+
+/**
+ * Serialized version of InstanceInfo for client use
+ * (Date objects become strings when serialized through tRPC)
+ */
+export interface InstanceInfoSerialized {
+	/** Unique identifier for the instance */
+	instanceId: string;
+	/** Show ID that this instance is running */
+	showId: number;
+	/** URL where the instance can be accessed */
+	url: string;
+	/** Port number if applicable */
+	port?: number;
+	/** Current status of the instance */
+	status: InstanceStatus;
+	/** When the instance was created (serialized as string) */
+	createdAt: string;
+	/** Additional metadata */
+	metadata?: Record<string, any>;
+}
+
+/**
+ * Serialized launcher sync data for client use
+ */
+export interface LauncherSyncDataSerialized {
+	/** Whether the launcher system is ready */
+	isReady: boolean;
+	/** Name of the active adapter */
+	activeAdapter: string | null;
+	/** Status of the active adapter */
+	adapterStatus: AdapterStatus;
+	/** List of all instances (with serialized dates) */
+	instances: InstanceInfoSerialized[];
 }

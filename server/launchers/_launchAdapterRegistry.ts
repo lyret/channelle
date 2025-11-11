@@ -32,7 +32,6 @@ export async function getAdapterStatus(): Promise<AdapterStatus> {
 	if (!_activeAdapter || !_isInitialized) {
 		return {
 			name: "none",
-			displayName: "No Launcher",
 			canLaunch: false,
 			reason: "Launcher system not initialized",
 			isActive: true,
@@ -43,7 +42,6 @@ export async function getAdapterStatus(): Promise<AdapterStatus> {
 		const canLaunchResult = await _activeAdapter.canLaunch();
 		return {
 			name: _activeAdapter.name,
-			displayName: _activeAdapter.displayName,
 			canLaunch: canLaunchResult.canLaunch,
 			reason: canLaunchResult.reason,
 			isActive: true,
@@ -51,7 +49,6 @@ export async function getAdapterStatus(): Promise<AdapterStatus> {
 	} catch (error) {
 		return {
 			name: _activeAdapter.name,
-			displayName: _activeAdapter.displayName,
 			canLaunch: false,
 			reason: `Error checking launch capability: ${error.message}`,
 			isActive: true,
@@ -126,7 +123,7 @@ export async function initializeAllLaunchers(): Promise<void> {
 		_activeAdapter = adapter;
 		_isInitialized = true;
 
-		console.log(`[Launchers] Successfully initialized with ${adapter.displayName} adapter`);
+		console.log(`[Launchers] Successfully initialized with ${adapter.name} adapter`);
 	} catch (error) {
 		console.error("[Launchers] Failed to initialize:", error);
 		// Fall back to none adapter on error

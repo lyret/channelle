@@ -63,3 +63,6 @@ export const effectsClient = appClient.effects;
 
 /** Client for the Theater API only */
 export const theaterClient = appClient.theater;
+
+/** Client for the Launcher API only */
+export const launcherClient = appClient.launcher;

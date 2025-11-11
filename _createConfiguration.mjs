@@ -106,7 +106,7 @@ export async function createConfiguration() {
 	// The PORT option sets the network interface port for the server to bind to.
 	// Defaults to 3000.
 	const port = cli.port !== undefined ? cli.port : env.PORT ? Number(env.PORT) : 3000;
-	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "HTTP Port", Chalk.bold(port), `WS Port: ${port + 1}`);
+	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "HTTP Port", port);
 
 	// The LOCAL options enables the stage server to be reached from the loopback interface of the machine running the server
 	const local = cli.local !== undefined ? cli.local : env.LOCAL != "false" || true;
@@ -151,7 +151,7 @@ export async function createConfiguration() {
 	// The THEATER_ADAPTER option sets which adapter is active for launching stages
 	const theaterAdapter = cli.theaterAdapter !== undefined ? cli.theaterAdapter : env.THEATER_ADAPTER || "none";
 	if (theater) {
-		console.log("🚀", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter", theaterAdapter);
+		console.log("🚀", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter", theaterAdapter.toUpperCase());
 	}
 
 	// The THEATER_ADAPTER_LOCAL_MAX_STAGES option sets the maximum number of local stage instances that can be launched simultaneously

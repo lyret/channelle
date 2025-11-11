@@ -23,7 +23,6 @@ interface LocalInstanceInfo extends InstanceInfo {
  */
 export class LocalAdapter extends LaunchAdapter {
 	readonly name = "local";
-	readonly displayName = "Samma server";
 
 	private instances = new Map<string, LocalInstanceInfo>();
 	private nextPort = 3001; // Start from port 3001 (main theater typically runs on 3000)
@@ -63,6 +62,14 @@ export class LocalAdapter extends LaunchAdapter {
 	 * Launch a new local stage instance
 	 */
 	async launch(show: Show): Promise<LaunchResult> {
+		// Check if there's already an instance for this show
+		const existingInstance = Array.from(this.instances.values()).find(
+			(instance) => instance.showId === show.id && (instance.status === "running" || instance.status === "starting")
+		);
+		if (existingInstance) {
+			throw new Error(`An instance for show "${show.name}" is already running (ID: ${existingInstance.instanceId})`);
+		}
+
 		const canLaunchResult = await this.canLaunch();
 		if (!canLaunchResult.canLaunch) {
 			throw new Error(canLaunchResult.reason || "Cannot launch instance");

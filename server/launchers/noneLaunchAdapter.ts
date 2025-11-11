@@ -10,7 +10,6 @@ import type { Show } from "../models/Show";
  */
 export class NoneAdapter extends LaunchAdapter {
 	readonly name = "none";
-	readonly displayName = "Ingen";
 
 	/**
 	 * Always returns false - this adapter cannot launch anything
