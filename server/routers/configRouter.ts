@@ -300,7 +300,7 @@ export const configRouter = trcpRouter({
 	/**
 	 * Update Show Metadata - Update name, description, nomenclature
 	 */
-	updateShowMetadata: trcpProcedure
+	updateShowMetadata: managerProcedure
 		.input(
 			z.object({
 				showId: z.number().int().positive().optional(),
@@ -358,6 +358,9 @@ export const configRouter = trcpRouter({
 				return { success: true };
 			} catch (error) {
 				if (error instanceof TRPCError) {
+					throw error;
+				}
+				if (error instanceof TRPCClientError) {
 					throw error;
 				}
 				console.error("[Config] Error updating show metadata:", error);

@@ -27,16 +27,31 @@
 	$: hasChanges = nameInput !== originalName || descriptionInput !== originalDescription || nomenclatureInput !== originalNomenclature;
 	$: canSave = hasChanges && nameInput.trim().length > 0 && !isLoading;
 
+	let isInitialized = false;
+
 	onMount(() => {
 		// Subscribe to current show changes
 		const unsubscribe = currentShowStore.subscribe((show) => {
 			if (show) {
-				originalName = show.name || "";
-				originalDescription = show.description || "";
-				originalNomenclature = show.nomenclature || "föreställningen";
-				nameInput = originalName;
-				descriptionInput = originalDescription;
-				nomenclatureInput = originalNomenclature;
+				const newOriginalName = show.name || "";
+				const newOriginalDescription = show.description || "";
+				const newOriginalNomenclature = show.nomenclature || "föreställningen";
+
+				// Only update if this is the initial load or if the values actually changed from outside
+				if (
+					!isInitialized ||
+					(originalName !== newOriginalName && nameInput === originalName) ||
+					(originalDescription !== newOriginalDescription && descriptionInput === originalDescription) ||
+					(originalNomenclature !== newOriginalNomenclature && nomenclatureInput === originalNomenclature)
+				) {
+					originalName = newOriginalName;
+					originalDescription = newOriginalDescription;
+					originalNomenclature = newOriginalNomenclature;
+					nameInput = originalName;
+					descriptionInput = originalDescription;
+					nomenclatureInput = originalNomenclature;
+					isInitialized = true;
+				}
 			}
 		});
 
@@ -60,32 +75,38 @@
 		success = false;
 
 		try {
-			const metadata = {
-				name: nameInput.trim(),
-				description: descriptionInput.trim(),
-				nomenclature: nomenclatureInput.trim(),
-			};
+			// Only include fields that have actually changed
+			const metadata: { name?: string; description?: string; nomenclature?: string } = {};
+
+			if (nameInput.trim() !== originalName) {
+				metadata.name = nameInput.trim();
+			}
+			if (descriptionInput.trim() !== originalDescription) {
+				metadata.description = descriptionInput.trim();
+			}
+			if (nomenclatureInput.trim() !== originalNomenclature) {
+				metadata.nomenclature = nomenclatureInput.trim();
+			}
+
+			// Check if we actually have changes to send
+			if (Object.keys(metadata).length === 0) {
+				error = "No changes detected";
+				return;
+			}
 
 			const result = await configManager.updateMetadata(metadata);
 
 			if (result) {
-				// Update the stored values
-				originalName = metadata.name;
-				originalDescription = metadata.description;
-				originalNomenclature = metadata.nomenclature;
-
-				// Update the current show store
-				currentShowStore.update((show) => {
-					if (show) {
-						return {
-							...show,
-							name: metadata.name,
-							description: metadata.description,
-							nomenclature: metadata.nomenclature,
-						};
-					}
-					return show;
-				});
+				// Update only the original values for fields that were actually sent
+				if (metadata.name !== undefined) {
+					originalName = metadata.name;
+				}
+				if (metadata.description !== undefined) {
+					originalDescription = metadata.description;
+				}
+				if (metadata.nomenclature !== undefined) {
+					originalNomenclature = metadata.nomenclature;
+				}
 
 				success = true;
 
@@ -94,10 +115,19 @@
 					success = false;
 				}, 3000);
 			} else {
-				error = "Failed to update show metadata. Please try again.";
+				error = "Kunde inte uppdatera metadata informationen.";
 			}
 		} catch (err) {
-			error = err instanceof Error ? err.message : "An unexpected error occurred";
+			console.error("Error saving show metadata:", err);
+
+			// Handle tRPC errors specifically
+			if (err && typeof err === "object" && "message" in err) {
+				error = err.message as string;
+			} else if (err instanceof Error) {
+				error = err.message;
+			} else {
+				error = "An unexpected error occurred while saving";
+			}
 		} finally {
 			isLoading = false;
 		}
@@ -126,8 +156,8 @@
 	{/if}
 
 	{#if success}
-		<div class="notification is-success is-light">
-			<p class="has-text-success">✓ Föreställningsinfo har uppdaterats</p>
+		<div class="notification is-success">
+			<p>✓ Föreställningsinfo har uppdaterats</p>
 		</div>
 	{/if}
 

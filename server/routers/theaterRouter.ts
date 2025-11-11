@@ -1,4 +1,3 @@
-import { TRPCError } from "@trpc/server";
 import { trpc } from "../lib";
 import { Peer } from "../models/Peer";
 import { z } from "zod";
@@ -8,35 +7,25 @@ const { router: trcpRouter, procedure: trcpProcedure } = trpc();
 
 /** Theater session data */
 interface TheaterSession {
-	sessionId: string;
 	peerId: string;
 	expiresAt: number;
+	authenticatedAt: number;
 }
 
 /** In-memory session storage */
-const activeSessions = new Map<string, TheaterSession>();
+export const activeSessions = new Map<string, TheaterSession>();
 
 /** Session expiration time: 8 hours in milliseconds */
 const SESSION_EXPIRATION_TIME = 8 * 60 * 60 * 1000;
-
-/**
- * Generates a secure session ID
- */
-function generateSessionId(): string {
-	const timestamp = Date.now().toString(36);
-	const randomBytes = Array.from({ length: 16 }, () => Math.floor(Math.random() * 256));
-	const randomString = randomBytes.map((b) => b.toString(36)).join("");
-	return `theater_${timestamp}_${randomString}`;
-}
 
 /**
  * Cleans up expired sessions
  */
 function cleanupExpiredSessions(): void {
 	const now = Date.now();
-	for (const [sessionId, session] of activeSessions.entries()) {
+	for (const [peerId, session] of activeSessions.entries()) {
 		if (session.expiresAt <= now) {
-			activeSessions.delete(sessionId);
+			activeSessions.delete(peerId);
 		}
 	}
 }
@@ -75,12 +64,12 @@ export const theaterRouter = trcpRouter({
 		.input(
 			z.object({
 				password: z.string().min(1, "Password is required"),
-				peerId: z.string().min(1, "Peer ID is required"),
 			}),
 		)
-		.mutation(async ({ input }) => {
+		.mutation(async ({ input, ctx }) => {
 			// Verify password
 			if (input.password !== CONFIG.stage.theaterPassword) {
+				console.log(`[TheaterRouter] Authentication failed for peer ${ctx.peer.id}: Invalid password`);
 				return {
 					success: false,
 					message: "Invalid theater password",
@@ -88,22 +77,23 @@ export const theaterRouter = trcpRouter({
 			}
 
 			// Generate new session
-			const sessionId = generateSessionId();
-			const expiresAt = Date.now() + SESSION_EXPIRATION_TIME;
+			const now = Date.now();
+			const expiresAt = now + SESSION_EXPIRATION_TIME;
 
-			// Store session
-			activeSessions.set(sessionId, {
-				sessionId,
-				peerId: input.peerId,
+			// Store session using peerId as key
+			activeSessions.set(ctx.peer.id, {
+				peerId: ctx.peer.id,
 				expiresAt,
+				authenticatedAt: now,
 			});
 
 			// Set peer as manager
-			await setPeerAsManager(input.peerId);
+			await setPeerAsManager(ctx.peer.id);
+
+			console.log(`[TheaterRouter] Authentication successful for peer ${ctx.peer.id}. Active sessions: ${activeSessions.size}`);
 
 			return {
 				success: true,
-				sessionId,
 				expiresAt,
 			};
 		}),
@@ -111,61 +101,76 @@ export const theaterRouter = trcpRouter({
 	/**
 	 * Validate existing session
 	 */
-	validateSession: trcpProcedure
-		.input(
-			z.object({
-				sessionId: z.string().min(1, "Session ID is required"),
-				peerId: z.string().min(1, "Peer ID is required"),
-			}),
-		)
-		.query(async ({ input }) => {
-			cleanupExpiredSessions();
+	validateSession: trcpProcedure.query(async ({ input, ctx }) => {
+		cleanupExpiredSessions();
 
-			const session = activeSessions.get(input.sessionId);
+		const session = activeSessions.get(ctx.peer.id);
 
-			if (!session || session.peerId !== input.peerId || session.expiresAt <= Date.now()) {
-				return {
-					valid: false,
-					message: "Invalid or expired session",
-				};
-			}
-
-			// Ensure peer still has manager status
-			await setPeerAsManager(input.peerId);
-
+		if (!session || session.expiresAt <= Date.now()) {
+			console.log(`[TheaterRouter] Session validation failed for peer ${ctx.peer.id}: Invalid or expired session`);
 			return {
-				valid: true,
-				expiresAt: session.expiresAt,
-				remainingTime: session.expiresAt - Date.now(),
+				valid: false,
+				message: "Invalid or expired session",
 			};
-		}),
+		}
+
+		// Ensure peer still has manager status
+		await setPeerAsManager(ctx.peer.id);
+
+		return {
+			valid: true,
+			expiresAt: session.expiresAt,
+			remainingTime: session.expiresAt - Date.now(),
+		};
+	}),
 
 	/**
 	 * Invalidate (logout) session
 	 */
-	logout: trcpProcedure
-		.input(
-			z.object({
-				sessionId: z.string().min(1, "Session ID is required"),
-				peerId: z.string().min(1, "Peer ID is required"),
-			}),
-		)
-		.mutation(async ({ input }) => {
-			const session = activeSessions.get(input.sessionId);
+	logout: trcpProcedure.mutation(async ({ ctx }) => {
+		const session = activeSessions.get(ctx.peer.id);
 
-			if (!session || session.peerId !== input.peerId) {
-				return {
-					success: false,
-					message: "Session not found or unauthorized",
-				};
-			}
-
-			activeSessions.delete(input.sessionId);
-
+		if (!session) {
 			return {
-				success: true,
+				success: false,
+				message: "Session not found or unauthorized",
 			};
-		}),
+		}
+
+		activeSessions.delete(ctx.peer.id);
+		console.log(`[TheaterRouter] Logout successful for peer ${ctx.peer.id}. Active sessions: ${activeSessions.size}`);
+
+		return {
+			success: true,
+		};
+	}),
+
+	/**
+	 * Fresh authentication check - validates current session without storing credentials
+	 */
+	refreshAuth: trcpProcedure.query(async ({ ctx }) => {
+		cleanupExpiredSessions();
+
+		const session = activeSessions.get(ctx.peer.id);
+		const now = Date.now();
+
+		if (!session || session.expiresAt <= now) {
+			// Session is invalid or expired, remove it
+			if (session) {
+				activeSessions.delete(ctx.peer.id);
+			}
+			return {
+				authenticated: false,
+				message: "Session expired or invalid",
+			};
+		}
+
+		return {
+			authenticated: true,
+			expiresAt: session.expiresAt,
+			remainingTime: session.expiresAt - now,
+		};
+	}),
 });
 
 // Clean up expired sessions every 30 minutes
