@@ -136,5 +136,26 @@ channelle/
 - Test builds only when necessary for verification
 - Work directly with the codebase without creating auxiliary files
 
+## Code Architecture Guidelines
+
+### Functional Programming Approach
+- **AVOID classes** - Use functional programming patterns instead
+- Prefer pure functions, modules, and data structures over class-based OOP
+- Use factory functions or plain objects instead of class instances
+- Export functions and data directly from modules rather than class methods
+- Exception: Only use classes when extending from required base classes (e.g., EventEmitter)
+
+### File Naming Conventions
+- **Use lowercase filenames** - Never start filenames with uppercase letters
+- Use camelCase for multi-word filenames (e.g., `adapterRegistry.ts`, not `AdapterRegistry.ts`)
+- Name files after their primary exported function or purpose
+- Avoid generic names like "Manager" - be specific about what the file does
+
+### Index File Guidelines
+- **Index files are export-only** - Use `index.ts` files solely for organizing imports and exports
+- Move all implementation logic to separate, descriptively named files
+- Index files should contain only `export` statements and type re-exports
+- Keep index files minimal and focused on providing a clean public API
+
 ## License
 Creative Commons BY-NC 4.0 (non-commercial use)
