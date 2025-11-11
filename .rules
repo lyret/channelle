@@ -24,8 +24,22 @@ Channelle is a unified Node.js application that operates in two distinct modes w
 - **Scenes**: Predefined layouts and behavior settings for different parts of a performance
 - **Peers**: Participants with roles (actor, manager, visitor) and associated permissions
 - **Stage Layout**: Grid-based arrangement of video feeds, chat, and empty spaces
+- **Launch Adapters**: Pluggable adapters for deploying stage instances (none, local, digitalocean)
 
-The application can run standalone as a stage server or be initialized with a specific show configuration via `--showId` parameter.
+The application can run standalone as a stage server or be initialized with a specific show configuration via `--showId` parameter. Theater mode includes launcher capabilities for spawning stage instances on different infrastructure.
+
+### Launcher System Architecture
+- **Single Active Adapter**: Only one launcher adapter active at a time (configured via `THEATER_ADAPTER`)
+- **Functional Registry**: Module-based adapter registration without class hierarchies
+- **Real-time Status**: tRPC sync endpoints for live adapter status and instance monitoring
+- **Configurable Constraints**: Each adapter defines launch limitations (e.g., max instances, API requirements)
+
+### tRPC Router Patterns
+- **Custom Procedures**: Use middleware procedures for common validation (e.g., `roomProcedure`, `launcherProcedure`)
+- **Sync Endpoints**: Primary polling endpoints for real-time state synchronization (inspired by `mediaRouter.sync`)
+- **Consistent Error Handling**: Centralized error handling functions to reduce duplication
+- **Safe Fallbacks**: Query endpoints should gracefully handle uninitialized states
+- **Helper Functions**: Extract common logic to pure functions in appropriate modules
 
 ## Technology Stack
 
@@ -156,6 +170,21 @@ channelle/
 - Move all implementation logic to separate, descriptively named files
 - Index files should contain only `export` statements and type re-exports
 - Keep index files minimal and focused on providing a clean public API
+
+### Module Organization Guidelines
+- **Single Responsibility** - Each file should have one clear purpose reflected in its name
+- **Function-Based Organization** - Organize files by their primary exported function or feature
+- **Registry Pattern** - Use module-level functions and state instead of class-based registries
+- **Helper Functions** - Extract common logic to pure functions in appropriate modules
+- **Type Centralization** - Keep related type definitions together in dedicated `types.ts` files
+
+### tRPC Router Architecture
+- **Custom Procedures** - Create middleware procedures for common validation (e.g., `launcherProcedure`)
+- **Sync-Based Real-time** - Use polling endpoints like `sync` for real-time state instead of WebSocket events
+- **Consistent Error Handling** - Centralize error handling in helper functions to reduce duplication
+- **Safe Query Fallbacks** - Query endpoints should gracefully handle uninitialized or error states
+- **Validation Middleware** - Move repetitive validation logic into custom procedures
+- **Context Enhancement** - Use middleware to provide validated context to endpoint handlers
 
 ## License
 Creative Commons BY-NC 4.0 (non-commercial use)
