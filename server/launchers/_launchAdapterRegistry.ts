@@ -1,4 +1,5 @@
 import type { LaunchAdapter } from "./_abstractlaunchAdapter";
+import type { AdapterStatus } from "./types";
 import { NoneAdapter } from "./noneLaunchAdapter";
 import { LocalAdapter } from "./localLaunchAdapter";
 
@@ -24,6 +25,38 @@ export function getActiveAdapter(): LaunchAdapter | null {
 /** Returns whenever any launcher adapter is ready to use */
 export function isLauncherReady(): boolean {
 	return _isInitialized && _activeAdapter !== null;
+}
+
+/** Returns the current adapter status for UI display */
+export async function getAdapterStatus(): Promise<AdapterStatus> {
+	if (!_activeAdapter || !_isInitialized) {
+		return {
+			name: "none",
+			displayName: "No Launcher",
+			canLaunch: false,
+			reason: "Launcher system not initialized",
+			isActive: true,
+		};
+	}
+
+	try {
+		const canLaunchResult = await _activeAdapter.canLaunch();
+		return {
+			name: _activeAdapter.name,
+			displayName: _activeAdapter.displayName,
+			canLaunch: canLaunchResult.canLaunch,
+			reason: canLaunchResult.reason,
+			isActive: true,
+		};
+	} catch (error) {
+		return {
+			name: _activeAdapter.name,
+			displayName: _activeAdapter.displayName,
+			canLaunch: false,
+			reason: `Error checking launch capability: ${error.message}`,
+			isActive: true,
+		};
+	}
 }
 
 /** Change to a different adapter at runtime */

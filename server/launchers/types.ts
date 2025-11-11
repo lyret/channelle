@@ -50,3 +50,14 @@ export interface InstanceInfo {
  * Status of a launched instance
  */
 export type InstanceStatus = "starting" | "running" | "stopping" | "stopped" | "error";
+
+/**
+ * Adapter status information for UI
+ */
+export interface AdapterStatus {
+	name: string;
+	displayName: string;
+	canLaunch: boolean;
+	reason?: string;
+	isActive: boolean;
+}

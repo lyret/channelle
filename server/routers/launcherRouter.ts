@@ -2,21 +2,11 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { trpc } from "../lib";
 import { Show } from "../models/Show";
-import { getActiveAdapter, isLauncherReady } from "../lib/launcher";
+import { getActiveAdapter, isLauncherReady, getAdapterStatus } from "../launchers";
+import type { AdapterStatus } from "../launchers/types";
 
 // Get the trpc router constructor and default procedure
 const { router: trcpRouter, procedure: trcpProcedure } = trpc();
-
-/**
- * Adapter status information for UI
- */
-export interface AdapterStatus {
-	name: string;
-	displayName: string;
-	canLaunch: boolean;
-	reason?: string;
-	isActive: boolean;
-}
 
 /**
  * Launch request input validation
@@ -41,6 +31,50 @@ const InstanceStatusSchema = z.object({
 });
 
 /**
+ * Launcher procedure - Common validation for launcher operations
+ *
+ * Ensures the launcher system is ready and has an active adapter
+ * before proceeding with launcher operations.
+ */
+const launcherProcedure = trcpProcedure.use(async ({ next }) => {
+	if (!isLauncherReady()) {
+		throw new TRPCError({
+			code: "PRECONDITION_FAILED",
+			message: "Launcher system is not initialized",
+		});
+	}
+
+	const activeAdapter = getActiveAdapter();
+	if (!activeAdapter) {
+		throw new TRPCError({
+			code: "PRECONDITION_FAILED",
+			message: "No active launcher adapter",
+		});
+	}
+
+	return next({
+		ctx: {
+			activeAdapter,
+		},
+	});
+});
+
+/**
+ * Helper function to handle tRPC errors consistently
+ */
+function handleTRPCError(error: any, defaultMessage: string, operation: string) {
+	if (error instanceof TRPCError) {
+		throw error;
+	}
+
+	console.error(`[LauncherRouter] Error ${operation}:`, error);
+	throw new TRPCError({
+		code: "INTERNAL_SERVER_ERROR",
+		message: `${defaultMessage}: ${error.message}`,
+	});
+}
+
+/**
  * Launcher Router - Handles theater mode launcher operations
  */
 export const launcherRouter = trcpRouter({
@@ -51,35 +85,18 @@ export const launcherRouter = trcpRouter({
 		try {
 			const isReady = isLauncherReady();
 			const activeAdapter = getActiveAdapter();
-
-			// Get current adapter status
-			let adapterStatus: AdapterStatus | null = null;
 			let instances = [];
 
-			if (isReady && activeAdapter) {
-				const canLaunchResult = await activeAdapter.canLaunch();
-				adapterStatus = {
-					name: activeAdapter.name,
-					displayName: activeAdapter.displayName,
-					canLaunch: canLaunchResult.canLaunch,
-					reason: canLaunchResult.reason,
-					isActive: true,
-				};
+			// Get current adapter status
+			const adapterStatus = await getAdapterStatus();
 
-				// Get current instances
+			// Get current instances if adapter is available
+			if (isReady && activeAdapter) {
 				try {
 					instances = await activeAdapter.getInstances();
 				} catch (error) {
 					console.error("[LauncherRouter] Error getting instances for sync:", error);
 				}
-			} else {
-				adapterStatus = {
-					name: "none",
-					displayName: "No Launcher",
-					canLaunch: false,
-					reason: "Launcher system not initialized",
-					isActive: true,
-				};
 			}
 
 			return {
@@ -94,13 +111,7 @@ export const launcherRouter = trcpRouter({
 			return {
 				isReady: false,
 				activeAdapter: null,
-				adapterStatus: {
-					name: "none",
-					displayName: "No Launcher",
-					canLaunch: false,
-					reason: "Error getting launcher status",
-					isActive: true,
-				},
+				adapterStatus: await getAdapterStatus(),
 				instances: [],
 			};
 		}
@@ -118,42 +129,15 @@ export const launcherRouter = trcpRouter({
 			try {
 				const isReady = isLauncherReady();
 				const activeAdapter = getActiveAdapter();
-
-				// Get status of all available adapters
-				const adapters: AdapterStatus[] = [];
-
-				if (isReady && activeAdapter) {
-					// Only check the active adapter since we use single-adapter approach
-					const canLaunchResult = await activeAdapter.canLaunch();
-					adapters.push({
-						name: activeAdapter.name,
-						displayName: activeAdapter.displayName,
-						canLaunch: canLaunchResult.canLaunch,
-						reason: canLaunchResult.reason,
-						isActive: true,
-					});
-				} else {
-					// System not ready, show none adapter
-					adapters.push({
-						name: "none",
-						displayName: "No Launcher",
-						canLaunch: false,
-						reason: "Launcher system not initialized",
-						isActive: true,
-					});
-				}
+				const adapterStatus = await getAdapterStatus();
 
 				return {
 					isReady,
 					activeAdapter: activeAdapter?.name || null,
-					adapters,
+					adapters: [adapterStatus],
 				};
 			} catch (error) {
-				console.error("[LauncherRouter] Error getting launcher status:", error);
-				throw new TRPCError({
-					code: "INTERNAL_SERVER_ERROR",
-					message: "Failed to get launcher status",
-				});
+				handleTRPCError(error, "Failed to get launcher status", "getting launcher status");
 			}
 		},
 	),
@@ -161,22 +145,9 @@ export const launcherRouter = trcpRouter({
 	/**
 	 * Stop all running instances managed by the active adapter
 	 */
-	stopAll: trcpProcedure.mutation(async () => {
+	stopAll: launcherProcedure.mutation(async ({ ctx }) => {
 		try {
-			if (!isLauncherReady()) {
-				throw new TRPCError({
-					code: "PRECONDITION_FAILED",
-					message: "Launcher system is not initialized",
-				});
-			}
-
-			const activeAdapter = getActiveAdapter();
-			if (!activeAdapter) {
-				throw new TRPCError({
-					code: "PRECONDITION_FAILED",
-					message: "No active launcher adapter",
-				});
-			}
+			const { activeAdapter } = ctx;
 
 			const instances = await activeAdapter.getInstances();
 			const runningInstances = instances.filter((instance) => instance.status === "running" || instance.status === "starting");
@@ -207,38 +178,16 @@ export const launcherRouter = trcpRouter({
 				stoppedCount: runningInstances.length,
 			};
 		} catch (error) {
-			if (error instanceof TRPCError) {
-				throw error;
-			}
-
-			console.error("[LauncherRouter] Error stopping all instances:", error);
-			throw new TRPCError({
-				code: "INTERNAL_SERVER_ERROR",
-				message: `Failed to stop instances: ${error.message}`,
-			});
+			handleTRPCError(error, "Failed to stop instances", "stopping all instances");
 		}
 	}),
 
 	/**
 	 * Launch a new stage instance for a show
 	 */
-	launch: trcpProcedure.input(LaunchRequestSchema).mutation(async ({ input }) => {
+	launch: launcherProcedure.input(LaunchRequestSchema).mutation(async ({ input, ctx }) => {
 		try {
-			// Check if launcher system is ready
-			if (!isLauncherReady()) {
-				throw new TRPCError({
-					code: "PRECONDITION_FAILED",
-					message: "Launcher system is not initialized",
-				});
-			}
-
-			const activeAdapter = getActiveAdapter();
-			if (!activeAdapter) {
-				throw new TRPCError({
-					code: "PRECONDITION_FAILED",
-					message: "No active launcher adapter",
-				});
-			}
+			const { activeAdapter } = ctx;
 
 			// If adapter name is specified, verify it matches active adapter
 			if (input.adapterName && input.adapterName !== activeAdapter.name) {
@@ -284,37 +233,16 @@ export const launcherRouter = trcpRouter({
 				adapterName: activeAdapter.name,
 			};
 		} catch (error) {
-			if (error instanceof TRPCError) {
-				throw error;
-			}
-
-			console.error("[LauncherRouter] Error launching instance:", error);
-			throw new TRPCError({
-				code: "INTERNAL_SERVER_ERROR",
-				message: `Failed to launch instance: ${error.message}`,
-			});
+			handleTRPCError(error, "Failed to launch instance", "launching instance");
 		}
 	}),
 
 	/**
 	 * Stop a running instance
 	 */
-	stop: trcpProcedure.input(StopInstanceSchema).mutation(async ({ input }) => {
+	stop: launcherProcedure.input(StopInstanceSchema).mutation(async ({ input, ctx }) => {
 		try {
-			if (!isLauncherReady()) {
-				throw new TRPCError({
-					code: "PRECONDITION_FAILED",
-					message: "Launcher system is not initialized",
-				});
-			}
-
-			const activeAdapter = getActiveAdapter();
-			if (!activeAdapter) {
-				throw new TRPCError({
-					code: "PRECONDITION_FAILED",
-					message: "No active launcher adapter",
-				});
-			}
+			const { activeAdapter } = ctx;
 
 			// Stop the instance
 			await activeAdapter.stop(input.instanceId);
@@ -326,37 +254,16 @@ export const launcherRouter = trcpRouter({
 				message: `Instance '${input.instanceId}' stopped successfully`,
 			};
 		} catch (error) {
-			if (error instanceof TRPCError) {
-				throw error;
-			}
-
-			console.error("[LauncherRouter] Error stopping instance:", error);
-			throw new TRPCError({
-				code: "INTERNAL_SERVER_ERROR",
-				message: `Failed to stop instance: ${error.message}`,
-			});
+			handleTRPCError(error, "Failed to stop instance", "stopping instance");
 		}
 	}),
 
 	/**
 	 * Get status of a specific instance
 	 */
-	getInstanceStatus: trcpProcedure.input(InstanceStatusSchema).query(async ({ input }) => {
+	getInstanceStatus: launcherProcedure.input(InstanceStatusSchema).query(async ({ input, ctx }) => {
 		try {
-			if (!isLauncherReady()) {
-				throw new TRPCError({
-					code: "PRECONDITION_FAILED",
-					message: "Launcher system is not initialized",
-				});
-			}
-
-			const activeAdapter = getActiveAdapter();
-			if (!activeAdapter) {
-				throw new TRPCError({
-					code: "PRECONDITION_FAILED",
-					message: "No active launcher adapter",
-				});
-			}
+			const { activeAdapter } = ctx;
 
 			const status = await activeAdapter.getStatus(input.instanceId);
 
@@ -366,15 +273,7 @@ export const launcherRouter = trcpRouter({
 				adapterName: activeAdapter.name,
 			};
 		} catch (error) {
-			if (error instanceof TRPCError) {
-				throw error;
-			}
-
-			console.error("[LauncherRouter] Error getting instance status:", error);
-			throw new TRPCError({
-				code: "INTERNAL_SERVER_ERROR",
-				message: `Failed to get instance status: ${error.message}`,
-			});
+			handleTRPCError(error, "Failed to get instance status", "getting instance status");
 		}
 	}),
 
@@ -405,11 +304,7 @@ export const launcherRouter = trcpRouter({
 				adapterName: activeAdapter.name,
 			};
 		} catch (error) {
-			console.error("[LauncherRouter] Error getting instances:", error);
-			throw new TRPCError({
-				code: "INTERNAL_SERVER_ERROR",
-				message: "Failed to get instances",
-			});
+			handleTRPCError(error, "Failed to get instances", "getting instances");
 		}
 	}),
 
@@ -444,11 +339,7 @@ export const launcherRouter = trcpRouter({
 				adapterName: activeAdapter.name,
 			};
 		} catch (error) {
-			console.error("[LauncherRouter] Error checking launch capability:", error);
-			throw new TRPCError({
-				code: "INTERNAL_SERVER_ERROR",
-				message: "Failed to check launch capability",
-			});
+			handleTRPCError(error, "Failed to check launch capability", "checking launch capability");
 		}
 	}),
 });
