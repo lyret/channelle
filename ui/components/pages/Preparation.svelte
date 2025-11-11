@@ -86,7 +86,7 @@
 		<!-- Header with Action Bar -->
 		<TheaterHeader />
 		<TheaterActionBar>
-			<a class="button is-small is-inverted" href="/theater">
+			<a slot="right" class="button is-small is-inverted" href="/">
 				<span class="icon is-size-4">
 					<IconArrowLeft />
 				</span>

@@ -4,10 +4,10 @@
 	import TheaterActionBar from "../theater/TheaterActionBar.svelte";
 	import IconPlus from "~/components/picol/icons/Picol-plus.svelte";
 	import ShowsList from "../theater/ShowsList.svelte";
-	import LaunchersControl from "../launchers/LaunchersControl.svelte";
+	import IconSettings from "~/components/picol/icons/Picol-settings.svelte";
 
 	import { showsLoadingStore, showsErrorStore, fetchShows } from "~/api/config";
-	import { openCreateShowModal } from "~/stores/theaterModals";
+	import { openCreateShowModal, openLauncherModal } from "~/stores/theaterModals";
 	import { isTheaterAuthenticated } from "~/stores/theaterAuth";
 
 	// Use reactive statement to get shows from store
@@ -26,6 +26,12 @@
 				</span>
 				<span class="is-family-secondary">Skapa en ny föreställning</span>
 			</button>
+			<button class="button is-small is-outlined" on:click={openLauncherModal}>
+				<span class="icon is-size-4">
+					<IconSettings />
+				</span>
+				<span class="is-family-secondary">Serverhantering</span>
+			</button>
 		{/if}
 	</TheaterActionBar>
 
@@ -36,11 +42,6 @@
 
 		<div class="container is-fluid">
 			<div class="container content-container">
-				<!-- Launcher status - only show in theater mode -->
-				{#if $isTheaterAuthenticated}
-					<LaunchersControl />
-				{/if}
-
 				<!-- Shows list section -->
 				{#if isLoadingShows}
 					<div class="box">
@@ -51,9 +52,9 @@
 					</div>
 				{:else if showsError}
 					<div class="box">
-						<div class="notification is-danger is-light">
-							<p class="is-family-secondary">ojdå: {showsError}</p>
-							<button class="button is-small is-danger is-outlined mt-2" on:click={fetchShows}> Försök igen </button>
+						<div class="notification is-danger">
+							<p class="is-family-secondary">Ojdå, ett tekniskt fel: {showsError}</p>
+							<button class="button is-small is-light is-outlined mt-2" on:click={fetchShows}> Försök igen </button>
 						</div>
 					</div>
 				{:else}
@@ -74,6 +75,10 @@
 	.theater-content {
 		position: relative;
 		overflow-x: hidden;
+	}
+
+	.notification {
+		border-radius: 8px;
 	}
 
 	.column-background {

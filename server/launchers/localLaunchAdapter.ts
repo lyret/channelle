@@ -3,7 +3,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import type { CanLaunchResult, LaunchResult, InstanceInfo, InstanceStatus } from "./types";
 import { LaunchAdapter } from "./_abstractlaunchAdapter";
-import type { Show } from "../models/Show";
+import { Show } from "../models/Show";
 
 /**
  * Information about a local instance process
@@ -301,7 +301,7 @@ export class LocalAdapter extends LaunchAdapter {
 			console.log(`[LocalAdapter] Process spawned for instance '${instanceId}' (PID: ${childProcess.pid})`);
 
 			// Give the process a moment to start up, then mark as running
-			setTimeout(() => {
+			setTimeout(async () => {
 				if (instance.status === "starting") {
 					instance.status = "running";
 					console.log(`[LocalAdapter] Instance '${instanceId}' is now running`);
@@ -313,6 +313,14 @@ export class LocalAdapter extends LaunchAdapter {
 			console.log(`[LocalAdapter] Process exited for instance '${instanceId}' (code: ${code}, signal: ${signal})`);
 
 			instance.status = "stopped";
+
+			// Mark show as having been online with current timestamp
+				Show.update(
+					{ lastOnlineAt: new Date() },
+					{ where: { id: instance.showId } }
+				).catch(error => {
+					console.error(`[LocalAdapter] Error updating show lastOnlineAt timestamp:`, error);
+				});
 		});
 
 		childProcess.on("error", (error) => {

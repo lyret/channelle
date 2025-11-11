@@ -47,6 +47,8 @@
 		</span>
 		<span class="is-family-secondary is-hidden-mobile">Om den här sidan</span>
 	</button>
+
+	<slot name="right" />
 </div>
 
 <style lang="scss">
@@ -65,7 +67,7 @@
 		background-color: var(--channelle-menu-bg-color);
 		overflow: hidden;
 
-		.spacer {
+		:global(.spacer) {
 			flex-grow: 0.2;
 		}
 

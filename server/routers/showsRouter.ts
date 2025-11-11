@@ -1,4 +1,5 @@
 import { Show } from "../models/Show";
+import { getActiveAdapter, isLauncherReady } from "../launchers";
 
 import type { Scene, SceneSetting } from "../_types";
 import { TRPCError } from "@trpc/server";
@@ -21,6 +22,7 @@ export interface PublicShowData {
 	visitorAudioEnabledOverride: SceneSetting;
 	visitorVideoEnabledOverride: SceneSetting;
 	currentScene: Scene | null;
+	lastOnlineAt: Date | null;
 	createdAt: Date;
 	updatedAt: Date;
 }
@@ -32,6 +34,7 @@ export interface ShowListItem {
 	description: string;
 	isPasswordProtected: boolean;
 	isOnline: boolean;
+	lastOnlineAt: Date | null;
 	participantCount: number;
 	url: string;
 }
@@ -56,15 +59,37 @@ export const showsRouter = trcpRouter({
 				order: [["updatedAt", "DESC"]],
 			});
 
-			return shows.map((show) => ({
-				id: show.id,
-				name: show.name,
-				description: show.description,
-				isPasswordProtected: Boolean(show.showPassword && show.showPassword.trim() !== ""),
-				isOnline: false, // TODO: Implement online status detection
-				participantCount: 0, // TODO: Implement participant counting
-				url: `/stage/${show.id}`,
-			}));
+			// Check for running instances
+			let runningInstances: Array<{ showId: number; url: string }> = [];
+			if (isLauncherReady()) {
+				const activeAdapter = getActiveAdapter();
+				if (activeAdapter) {
+					try {
+						const instances = await activeAdapter.getInstances();
+						runningInstances = instances
+							.filter((instance) => instance.status === "running" || instance.status === "starting")
+							.map((instance) => ({ showId: instance.showId, url: instance.url }));
+					} catch (error) {
+						console.error("[ShowRouter] Error getting instances:", error);
+					}
+				}
+			}
+
+			return shows.map((show) => {
+				const runningInstance = runningInstances.find((instance) => instance.showId === show.id);
+				const isCurrentlyOnline = Boolean(runningInstance);
+
+				return {
+					id: show.id,
+					name: show.name,
+					description: show.description,
+					isPasswordProtected: Boolean(show.showPassword && show.showPassword.trim() !== ""),
+					isOnline: isCurrentlyOnline,
+					lastOnlineAt: show.lastOnlineAt,
+					participantCount: 0, // TODO: Implement participant counting
+					url: runningInstance ? runningInstance.url : `/stage/${show.id}`,
+				};
+			});
 		} catch (error) {
 			console.error("[ShowRouter] Error fetching shows:", error);
 			throw new TRPCError({
@@ -97,6 +122,7 @@ export const showsRouter = trcpRouter({
 					description: show.description,
 					nomenclature: show.nomenclature,
 					isPasswordProtected: Boolean(show.showPassword && show.showPassword.trim() !== ""),
+					lastOnlineAt: show.lastOnlineAt,
 					curtainsOverride: show.curtainsOverride,
 					chatEnabledOverride: show.chatEnabledOverride,
 					effectsEnabledOverride: show.effectsEnabledOverride,

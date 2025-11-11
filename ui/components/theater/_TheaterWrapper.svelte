@@ -1,21 +1,38 @@
 <script lang="ts">
-	import { onMount } from "svelte";
+	import { onMount, onDestroy } from "svelte";
 	import AuthenticationModal from "~/components/modals/TheaterAuthenticationModal.svelte";
 	import AboutModal from "~/components/modals/TheaterAboutModal.svelte";
 	import CreateShowModal from "~/components/modals/TheaterCreateShowModal.svelte";
+	import LaunchersModal from "~/components/modals/LaunchersModal.svelte";
 	import { fetchShows, initializeConfigAPI } from "~/api/config";
 	import {
 		showAuthModal,
 		showAboutModal,
 		showCreateShowModal,
+		showLauncherModal,
 		closeAuthModal,
 		closeAboutModal,
 		closeCreateShowModal,
+		closeLauncherModal,
 	} from "~/stores/theaterModals";
+
+	let refreshInterval: number;
 
 	onMount(async () => {
 		// Initialize the show API
 		await initializeConfigAPI();
+
+		// Set up periodic refresh for real-time status updates (every 5 seconds)
+		refreshInterval = setInterval(() => {
+			fetchShows();
+		}, 5000);
+	});
+
+	onDestroy(() => {
+		// Clean up interval on component destroy
+		if (refreshInterval) {
+			clearInterval(refreshInterval);
+		}
 	});
 
 	// Modal event handlers
@@ -41,6 +58,10 @@
 	function handleCreateShowCancel() {
 		closeCreateShowModal();
 	}
+
+	function handleLauncherClose() {
+		closeLauncherModal();
+	}
 </script>
 
 <main>
@@ -53,6 +74,8 @@
 	<AboutModal isVisible={$showAboutModal} on:close={handleAboutClose} />
 
 	<CreateShowModal isVisible={$showCreateShowModal} on:created={handleShowCreated} on:cancel={handleCreateShowCancel} />
+
+	<LaunchersModal isVisible={$showLauncherModal} on:close={handleLauncherClose} />
 </main>
 
 <style lang="scss">

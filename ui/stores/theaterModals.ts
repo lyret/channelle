@@ -9,6 +9,9 @@ export const showAboutModal = writable<boolean>(false);
 /** Store for create show modal visibility */
 export const showCreateShowModal = writable<boolean>(false);
 
+/** Store for launcher modal visibility */
+export const showLauncherModal = writable<boolean>(false);
+
 /** Open authentication modal */
 export function openAuthModal() {
 	showAuthModal.set(true);
@@ -39,9 +42,20 @@ export function closeCreateShowModal() {
 	showCreateShowModal.set(false);
 }
 
+/** Open launcher modal */
+export function openLauncherModal() {
+	showLauncherModal.set(true);
+}
+
+/** Close launcher modal */
+export function closeLauncherModal() {
+	showLauncherModal.set(false);
+}
+
 /** Close all modals */
 export function closeAllModals() {
 	showAuthModal.set(false);
 	showAboutModal.set(false);
 	showCreateShowModal.set(false);
+	showLauncherModal.set(false);
 }

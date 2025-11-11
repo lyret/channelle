@@ -15,6 +15,7 @@ export class Show extends Model {
 	declare visitorAudioEnabledOverride: SceneSetting;
 	declare visitorVideoEnabledOverride: SceneSetting;
 	declare currentScene: Scene | null;
+	declare lastOnlineAt: Date | null;
 	declare createdAt: Date;
 	declare updatedAt: Date;
 }
@@ -82,6 +83,11 @@ export function initShow(sequelize: Sequelize) {
 			},
 			currentScene: {
 				type: DataTypes.JSON,
+				allowNull: true,
+				defaultValue: null,
+			},
+			lastOnlineAt: {
+				type: DataTypes.DATE,
 				allowNull: true,
 				defaultValue: null,
 			},

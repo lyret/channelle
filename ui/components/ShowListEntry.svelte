@@ -5,6 +5,7 @@
 	import PicolControlsPlay from "./picol/icons/Picol-controls-play.svelte";
 	import PicolArrowFullUpperright from "./picol/icons/Picol-arrow-full-upperright.svelte";
 	import PicolStop from "./picol/icons/Picol-controls-stop.svelte";
+	import PicolCopy from "./picol/icons/Picol-copy.svelte";
 
 	import type { ShowListItem } from "~/types/serverSideTypes";
 
@@ -12,10 +13,23 @@
 
 	let isLaunching = false;
 	let isStopping = false;
+	let copyButtonText = "";
 
 	// Check if this show has any running instances (should only be one per show)
 	$: showInstances = $instancesStore.filter((instance) => instance.showId === show.id);
 	$: runningInstance = showInstances.find((instance) => instance.status === "running" || instance.status === "starting");
+
+	// Determine show status - use server isOnline for all users, fallback to client-side for authenticated users
+	$: showStatus = show.isOnline ? "online" : (show.lastOnlineAt !== null ? "tidigare" : "kommande");
+	$: statusLabel = showStatus === "online" ? "Online nu!" :
+	                 showStatus === "tidigare" ? "Tidigare" :
+	                 "Kommande";
+	$: statusClass = showStatus === "online" ? "is-success" :
+	                 showStatus === "tidigare" ? "is-warning" :
+	                 "is-dark";
+
+	// Use the correct URL - show.url already contains the correct URL (instance URL when online)
+	$: currentUrl = show.url;
 
 	// Helper functions for display
 	function formatDate(dateString: string): string {
@@ -25,6 +39,16 @@
 			day: "2-digit",
 			hour: "2-digit",
 			minute: "2-digit",
+		});
+	}
+
+	function formatLastOnlineDate(lastOnlineAt: string | Date | null): string {
+		if (!lastOnlineAt) return "";
+		const date = typeof lastOnlineAt === 'string' ? new Date(lastOnlineAt) : lastOnlineAt;
+		return date.toLocaleDateString("sv-SE", {
+			year: "numeric",
+			month: "long",
+			day: "numeric",
 		});
 	}
 
@@ -42,16 +66,10 @@
 		return adapterNames[method as keyof typeof adapterNames] || method || "Okänd";
 	}
 
-	function handleViewStage() {
-		if (runningInstance) {
-			window.open(runningInstance.url, "_blank");
-		} else {
-			window.open(show.url, "_blank");
-		}
-	}
-
 	async function handleLaunch() {
-		if (isLaunching || !$canLaunchStore) return;
+		if (isLaunching || !$canLaunchStore || !confirm("Är du säker på att du vill starta en ny server?")) {
+			return;
+		}
 
 		isLaunching = true;
 		try {
@@ -68,7 +86,9 @@
 	}
 
 	async function handleStop() {
-		if (isStopping || !runningInstance) return;
+		if (isStopping || !runningInstance || !confirm("Är du säker på att du vill stoppa den här servern?")) {
+			return;
+		}
 
 		isStopping = true;
 		try {
@@ -80,28 +100,70 @@
 			isStopping = false;
 		}
 	}
+
+	async function handleCopyUrl() {
+		try {
+			await navigator.clipboard.writeText(currentUrl);
+			copyButtonText = "Kopierad!";
+			setTimeout(() => {
+				copyButtonText = "";
+			}, 2000);
+		} catch (error) {
+			console.error("Failed to copy URL:", error);
+			copyButtonText = "Misslyckades";
+			setTimeout(() => {
+				copyButtonText = "";
+			}, 2000);
+		}
+	}
 </script>
 
-<div class="notification" class:online={show.isOnline}>
+<div class="notification" class:online={showStatus === "online"}>
 	<div class="level is-mobile">
 		<div class="level-left">
 			<div class="level-item">
 				<div>
 					<p class="title is-6 is-family-title">
 						{show.name}
-						<span class="tag" class:is-success={show.isOnline} class:is-dark={!show.isOnline}>
-							{show.isOnline ? "Online!" : "Kommmande"}
+						<span class="tag {statusClass} ml-4">
+							{statusLabel}
 						</span>
 					</p>
 					{#if show.description}
-						<p class="subtitle is-7 is-family-secondary">{show.description}</p>
+						<p class="subtitle is-7 is-family-secondary mt-2">{show.description}</p>
 					{/if}
-					<p class="is-size-7 has-text-grey">
-						<code>{show.url}</code>
-					</p>
+					<!-- Only show URL for authenticated users or when show is online/tidigare -->
+					{#if showStatus === "online"}
+						<div class="url-display mt-4">
+							<code class="show-url">{currentUrl}</code>
+							<button
+								class="button is-small is-outlined copy-url-button"
+								on:click={handleCopyUrl}
+								title="Kopiera URL"
+							>
+								<span class="icon is-small">
+									<PicolCopy />
+								</span>
+								{#if copyButtonText}
+									<span class="copy-feedback">{copyButtonText}</span>
+								{/if}
+							</button>
+						</div>
+					{:else}
+						<p class="is-size-7 has-text-grey-light mt-4">
+							<em>Föreställningen har inte startats ännu</em>
+						</p>
+					{/if}
 
-					<!-- Instance details - only show if authenticated and instance is running -->
-					{#if $isTheaterAuthenticated && runningInstance}
+					<!-- Show last online date for "tidigare" shows -->
+					{#if showStatus === "tidigare" && show.lastOnlineAt !== null}
+						<p class="is-size-7 has-text-grey-light">
+							<strong>Senast online:</strong> {formatLastOnlineDate(show.lastOnlineAt)}
+						</p>
+					{/if}
+
+					<!-- Instance details - only show if authenticated and show is online -->
+					{#if $isTheaterAuthenticated && showStatus === "online" && runningInstance}
 						<div class="instance-details">
 							<div class="instance-meta">
 								<span class="instance-status-detail is-size-7">
@@ -138,42 +200,26 @@
 		<div class="level-right">
 			<div class="level-item">
 				<div class="buttons">
-					{#if show.isOnline}
-						<a href={show.url} target="_blank" class="button is-small is-secondary">
-							Öppna&nbsp;&nbsp;
+					{#if showStatus === "online"}
+						<a href={currentUrl} target="_blank" class="button is-small is-secondary">
+							Besök&nbsp;&nbsp;
 							<span class="icon is-small">
 								<PicolArrowFullUpperright />
 							</span>
 						</a>
-					{:else if $isTheaterAuthenticated}
-						<a class="button is-small is-secondary" href="/preparation?show={show.id}">
-							<span class="icon is-size-8">
-								<PicolEdit />
-							</span><span>Förbered</span></a
-						>
-
-						{#if runningInstance}
-							<!-- Show has running instance - show view and stop buttons -->
-							<button class="button is-small is-success" on:click={handleViewStage}>
-								<span class="icon is-size-8">
-									<PicolArrowFullUpperright />
-								</span><span>Visa</span>
-							</button>
+					{#if $isTheaterAuthenticated && runningInstance}
 							<button
 								class="button is-small is-danger is-outlined"
 								class:is-loading={isStopping}
 								disabled={isStopping}
 								on:click={handleStop}
-								title="Stoppa instans"
+								title="Stoppa server"
 							>
-								<span class="icon is-size-8">
+								<span class="icon is-small">
 									<PicolStop />
 								</span><span>Stoppa</span>
 							</button>
-							<span class="tag is-success is-small running-tag">
-								{runningInstance.status === "starting" ? "Startar..." : "Körs"}
-							</span>
-						{:else}
+						{:else if showStatus === "kommande"}
 							<!-- No running instance - show launch button -->
 							<button
 								class="button is-small is-secondary"
@@ -252,6 +298,56 @@
 		word-break: break-all;
 	}
 
+	.url-display {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-top: 0.25rem;
+	}
+
+	.show-url {
+		background-color: rgba(255, 255, 255, 0.08);
+		color: var(--channelle-menu-text-color);
+		padding: 0.25rem 0.5rem;
+		border-radius: 4px;
+		font-size: 0.8rem;
+		flex: 1;
+		word-break: break-all;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.copy-url-button {
+		background-color: transparent;
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		color: var(--channelle-menu-text-color);
+		padding: 0.25rem 0.5rem;
+		border-radius: 4px;
+		transition: all 0.2s ease;
+		position: relative;
+		min-width: 2rem;
+		height: 2rem;
+	}
+
+	.copy-url-button:hover {
+		background-color: rgba(255, 255, 255, 0.1);
+		border-color: rgba(255, 255, 255, 0.3);
+		transform: translateY(-1px);
+	}
+
+	.copy-feedback {
+		position: absolute;
+		top: -1.5rem;
+		left: 50%;
+		transform: translateX(-50%);
+		background-color: rgba(0, 0, 0, 0.8);
+		color: white;
+		padding: 0.2rem 0.4rem;
+		border-radius: 3px;
+		font-size: 0.7rem;
+		white-space: nowrap;
+		z-index: 10;
+	}
+
 	@media screen and (max-width: 768px) {
 		.instance-meta {
 			gap: 0.75rem;
@@ -259,6 +355,17 @@
 
 		.instance-meta span {
 			font-size: 0.75rem;
+		}
+
+		.url-display {
+			flex-direction: column;
+			align-items: stretch;
+			gap: 0.25rem;
+		}
+
+		.copy-url-button {
+			align-self: flex-end;
+			min-width: 2.5rem;
 		}
 	}
 </style>
