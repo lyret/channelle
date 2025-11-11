@@ -68,7 +68,12 @@
 <style lang="scss">
 	.modal-card {
 		max-width: 500px;
+		width: 90vw;
 		margin: 0 auto;
+		max-height: 90vh;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
 
 		&.modal-card-small {
 			max-width: 400px;
@@ -76,6 +81,26 @@
 
 		&.modal-card-large {
 			max-width: 700px;
+		}
+
+		.modal-card-body {
+			overflow-y: auto;
+			overflow-x: hidden;
+			flex: 1;
+			min-height: 0;
+		}
+	}
+
+	@media screen and (max-width: 768px) {
+		.modal-card {
+			width: 95vw;
+			max-height: 95vh;
+			margin: 0;
+
+			&.modal-card-small,
+			&.modal-card-large {
+				max-width: none;
+			}
 		}
 	}
 </style>

@@ -274,6 +274,9 @@
 
 <style lang="scss">
 	.launcher-modal-content {
+		max-width: 100%;
+		overflow: hidden;
+
 		.status-header {
 			margin-bottom: 1.5rem;
 			padding-bottom: 1rem;
@@ -284,14 +287,18 @@
 				align-items: center;
 				gap: 0.75rem;
 				margin-bottom: 0.25rem;
+				flex-wrap: wrap;
 
 				.launcher-status-tag {
 					font-size: 0.7rem;
 					border-radius: 12px;
+					flex-shrink: 0;
 				}
 
 				.adapter-name {
 					font-size: 0.9rem;
+					word-break: break-word;
+					min-width: 0;
 				}
 			}
 		}
@@ -299,13 +306,16 @@
 		.notification {
 			margin-bottom: 1.5rem;
 			border-radius: 8px;
+			word-wrap: break-word;
+			overflow-wrap: break-word;
 		}
 
 		.instances-section {
 			.instances-grid {
 				display: grid;
-				grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+				grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
 				gap: 1rem;
+				max-width: 100%;
 			}
 
 			.instance-card {
@@ -313,19 +323,26 @@
 				border: 1px solid rgba(0, 0, 0, 0.1);
 				border-radius: 8px;
 				padding: 1rem;
+				min-width: 0;
+				max-width: 100%;
+				box-sizing: border-box;
 
 				.instance-header {
 					display: flex;
 					align-items: center;
 					gap: 0.75rem;
 					margin-bottom: 0.75rem;
+					flex-wrap: wrap;
 
 					.instance-status {
 						margin: 0;
+						flex-shrink: 0;
 					}
 
 					.instance-id {
 						font-size: 0.9rem;
+						word-break: break-all;
+						min-width: 0;
 					}
 				}
 
@@ -337,6 +354,14 @@
 						justify-content: space-between;
 						margin-bottom: 0.25rem;
 						font-size: 0.85rem;
+						gap: 0.5rem;
+						min-width: 0;
+
+						span:last-child {
+							word-break: break-all;
+							text-align: right;
+							min-width: 0;
+						}
 
 						&:last-child {
 							margin-bottom: 0;
@@ -359,10 +384,23 @@
 		.level {
 			margin-bottom: 0;
 		}
+
+		.buttons {
+			flex-wrap: wrap;
+			gap: 0.5rem;
+		}
 	}
 
-	@include mobile {
+	@media screen and (max-width: 768px) {
 		.launcher-modal-content {
+			.status-header {
+				.status-info {
+					flex-direction: column;
+					align-items: flex-start;
+					gap: 0.5rem;
+				}
+			}
+
 			.instances-section .instances-grid {
 				grid-template-columns: 1fr;
 				gap: 0.75rem;
@@ -371,8 +409,30 @@
 			.instance-card {
 				padding: 0.75rem;
 
+				.instance-header {
+					flex-direction: column;
+					align-items: flex-start;
+					gap: 0.5rem;
+				}
+
 				.instance-details .detail-item {
 					font-size: 0.8rem;
+					flex-direction: column;
+					align-items: flex-start;
+					gap: 0.25rem;
+
+					span:last-child {
+						text-align: left;
+					}
+				}
+			}
+
+			.buttons {
+				flex-direction: column;
+				width: 100%;
+
+				.button {
+					width: 100%;
 				}
 			}
 		}

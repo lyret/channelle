@@ -4,7 +4,7 @@
 	import AboutModal from "~/components/modals/TheaterAboutModal.svelte";
 	import CreateShowModal from "~/components/modals/TheaterCreateShowModal.svelte";
 	import LaunchersModal from "~/components/modals/LaunchersModal.svelte";
-	import { fetchShows, initializeConfigAPI } from "~/api/config";
+	import { fetchShows, initializeConfigAPI, onlineShowsStore } from "~/api/config";
 	import {
 		showAuthModal,
 		showAboutModal,
@@ -22,10 +22,33 @@
 		// Initialize the show API
 		await initializeConfigAPI();
 
-		// Set up periodic refresh for real-time status updates (every 5 seconds)
-		refreshInterval = setInterval(() => {
-			fetchShows();
-		}, 5000);
+		// Set up smart refresh interval based on online shows
+		const updateRefreshInterval = () => {
+			if (refreshInterval) {
+				clearInterval(refreshInterval);
+			}
+
+			// If there are online shows, refresh more frequently (15 seconds)
+			// Otherwise, refresh less frequently (60 seconds)
+			const interval = $onlineShowsStore.length > 0 ? 15000 : 60000;
+
+			refreshInterval = setInterval(() => {
+				fetchShows();
+			}, interval);
+		};
+
+		// Initial setup
+		updateRefreshInterval();
+
+		// Update interval when online shows change
+		const unsubscribe = onlineShowsStore.subscribe(() => {
+			updateRefreshInterval();
+		});
+
+		// Store unsubscribe function for cleanup
+		return () => {
+			unsubscribe();
+		};
 	});
 
 	onDestroy(() => {

@@ -25,8 +25,8 @@
 	                 showStatus === "tidigare" ? "Tidigare" :
 	                 "Kommande";
 	$: statusClass = showStatus === "online" ? "is-success" :
-	                 showStatus === "tidigare" ? "is-warning" :
-	                 "is-dark";
+	                 showStatus === "tidigare" ? "is-dark" :
+	                 "is-warning";
 
 	// Use the correct URL - show.url already contains the correct URL (instance URL when online)
 	$: currentUrl = show.url;
@@ -149,7 +149,7 @@
 								{/if}
 							</button>
 						</div>
-					{:else}
+					{:else if showStatus === "kommande"}
 						<p class="is-size-7 has-text-grey-light mt-4">
 							<em>Föreställningen har inte startats ännu</em>
 						</p>
@@ -157,8 +157,8 @@
 
 					<!-- Show last online date for "tidigare" shows -->
 					{#if showStatus === "tidigare" && show.lastOnlineAt !== null}
-						<p class="is-size-7 has-text-grey-light">
-							<strong>Senast online:</strong> {formatLastOnlineDate(show.lastOnlineAt)}
+						<p class="is-size-7 has-text-grey-light mt-4">
+							<strong>Senast visad:</strong> {formatLastOnlineDate(show.lastOnlineAt)}
 						</p>
 					{/if}
 
@@ -207,7 +207,7 @@
 								<PicolArrowFullUpperright />
 							</span>
 						</a>
-					{#if $isTheaterAuthenticated && runningInstance}
+						{#if $isTheaterAuthenticated && runningInstance}
 							<button
 								class="button is-small is-danger is-outlined"
 								class:is-loading={isStopping}
@@ -219,20 +219,28 @@
 									<PicolStop />
 								</span><span>Stoppa</span>
 							</button>
-						{:else if showStatus === "kommande"}
-							<!-- No running instance - show launch button -->
-							<button
-								class="button is-small is-secondary"
-								class:is-loading={isLaunching || $launcherLoadingStore}
-								disabled={!$canLaunchStore || isLaunching || $launcherLoadingStore}
-								on:click={handleLaunch}
-								title={$canLaunchStore ? "Launch new stage instance" : "Launcher not ready"}
-							>
-								<span class="icon is-size-8">
-									<PicolControlsPlay />
-								</span><span>Lansera</span>
-							</button>
 						{/if}
+					{:else if showStatus === "kommande" && $isTheaterAuthenticated}
+						<!-- No running instance - show launch button -->
+						<button
+							class="button is-small is-secondary"
+							class:is-loading={isLaunching || $launcherLoadingStore}
+							disabled={!$canLaunchStore || isLaunching || $launcherLoadingStore}
+							on:click={handleLaunch}
+							title={$canLaunchStore ? "Launch new stage instance" : "Launcher not ready"}
+						>
+							<span class="icon is-size-8">
+								<PicolControlsPlay />
+							</span><span>Lansera</span>
+						</button>
+					{/if}
+
+					{#if $isTheaterAuthenticated}
+						<a href={`/preparation?show=${show.id}`} class="button is-small is-secondary">
+							<span class="icon is-small">
+								<PicolEdit />
+							</span><span>Förbered</span>
+						</a>
 					{/if}
 				</div>
 			</div>
@@ -241,20 +249,64 @@
 </div>
 
 <style>
-	.tag {
-		border-radius: 28px;
-	}
 	.notification {
 		border-top-left-radius: 28px;
 		border-top-right-radius: 28px;
 		border-bottom-left-radius: 28px;
 		border-bottom-right-radius: 0px;
+		max-width: 100%;
+		overflow: hidden;
 	}
 	.notification.online {
 		border-top-left-radius: 28px;
 		border-top-right-radius: 28px;
 		border-bottom-left-radius: 0px;
 		border-bottom-right-radius: 28px;
+	}
+
+	.tag {
+		border-radius: 14px;
+		flex-shrink: 0;
+	}
+
+	.title {
+		word-wrap: break-word;
+		overflow-wrap: break-word;
+		min-width: 0;
+	}
+
+	.subtitle {
+		word-wrap: break-word;
+		overflow-wrap: break-word;
+		min-width: 0;
+	}
+
+	.level {
+		align-items: flex-start;
+		margin-bottom: 0;
+	}
+
+	.level-left,
+	.level-right {
+		min-width: 0;
+	}
+
+	.level-left {
+		align-items: flex-start;
+		flex: 1;
+		margin-right: 1rem;
+	}
+
+	.level-right {
+		flex-shrink: 0;
+		margin-left: 0;
+	}
+
+	.level-item {
+		justify-content: flex-start;
+		min-width: 0;
+		flex-grow: 0;
+		flex-shrink: 1;
 	}
 
 	.running-tag {
@@ -264,12 +316,16 @@
 
 	.buttons {
 		align-items: center;
+		flex-wrap: wrap;
+		gap: 0.5rem;
 	}
 
 	.instance-details {
 		margin-top: 0.75rem;
 		padding-top: 0.75rem;
 		border-top: 1px solid rgba(255, 255, 255, 0.1);
+		max-width: 100%;
+		overflow: hidden;
 	}
 
 	.instance-meta {
@@ -277,18 +333,24 @@
 		flex-wrap: wrap;
 		gap: 1rem;
 		margin-bottom: 0.5rem;
+		max-width: 100%;
 	}
 
 	.instance-meta span {
 		color: var(--channelle-menu-text-color);
 		opacity: 0.8;
 		white-space: nowrap;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	.instance-url {
 		display: flex;
 		flex-direction: column;
 		gap: 0.25rem;
+		max-width: 100%;
+		overflow: hidden;
 	}
 
 	.instance-url code {
@@ -296,6 +358,9 @@
 		padding: 0.2rem 0.4rem;
 		border-radius: 3px;
 		word-break: break-all;
+		overflow-wrap: break-word;
+		max-width: 100%;
+		overflow: hidden;
 	}
 
 	.url-display {
@@ -303,6 +368,8 @@
 		align-items: center;
 		gap: 0.5rem;
 		margin-top: 0.25rem;
+		max-width: 100%;
+		overflow: hidden;
 	}
 
 	.show-url {
@@ -314,6 +381,9 @@
 		flex: 1;
 		word-break: break-all;
 		border: 1px solid rgba(255, 255, 255, 0.1);
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	.copy-url-button {
@@ -326,6 +396,7 @@
 		position: relative;
 		min-width: 2rem;
 		height: 2rem;
+		flex-shrink: 0;
 	}
 
 	.copy-url-button:hover {
@@ -348,24 +419,72 @@
 		z-index: 10;
 	}
 
+	@media screen and (max-width: 1024px) {
+		.level {
+			flex-direction: column;
+			align-items: stretch;
+		}
+
+		.level-left {
+			margin-right: 0;
+			margin-bottom: 1rem;
+		}
+
+		.level-right {
+			width: 100%;
+		}
+
+		.buttons {
+			justify-content: flex-start;
+			width: 100%;
+		}
+	}
+
 	@media screen and (max-width: 768px) {
 		.instance-meta {
-			gap: 0.75rem;
+			gap: 0.5rem;
+			flex-direction: column;
 		}
 
 		.instance-meta span {
 			font-size: 0.75rem;
+			white-space: normal;
+			word-break: break-word;
 		}
 
 		.url-display {
 			flex-direction: column;
 			align-items: stretch;
-			gap: 0.25rem;
+			gap: 0.5rem;
+		}
+
+		.show-url {
+			text-overflow: unset;
+			white-space: normal;
+			word-break: break-all;
 		}
 
 		.copy-url-button {
 			align-self: flex-end;
 			min-width: 2.5rem;
+		}
+
+		.buttons {
+			flex-direction: column;
+			width: 100%;
+		}
+
+		.button {
+			width: 100%;
+			justify-content: center;
+		}
+
+		.title {
+			font-size: 1.1rem !important;
+		}
+
+		.subtitle {
+			font-size: 0.8rem !important;
 		}
 	}
 </style>
