@@ -8,6 +8,7 @@ import { effectsRouter } from "./routers/effectsRouter";
 import { showsRouter } from "./routers/showsRouter";
 import { configRouter } from "./routers/configRouter";
 import { theaterRouter } from "./routers/theaterRouter";
+import { launcherRouter } from "./routers/launcherRouter";
 
 /**
  * Creates and returns the application router
@@ -25,6 +26,7 @@ export async function createAppRouter() {
 		shows: showsRouter,
 		config: configRouter,
 		theater: theaterRouter,
+		launcher: launcherRouter,
 	};
 
 	// Remove handling of incomming development messages from the cli
