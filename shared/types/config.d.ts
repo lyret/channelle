@@ -101,6 +101,8 @@ type LauncherConfig = {
 	digitalocean: {
 		/** DigitalOcean API key. */
 		apiKey: string;
+		/** DigitalOcean region for droplet deployment. */
+		region: string;
 		/** Maximum number of VPN servers. */
 		maxVpnServers: number;
 	};

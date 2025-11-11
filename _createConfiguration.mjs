@@ -42,6 +42,7 @@ export async function createConfiguration() {
 			theaterAdapter: String,
 			theaterAdapterLocalMaxStages: Number,
 			theaterAdapterDigitaloceanApiKey: String,
+			theaterAdapterDigitaloceanRegion: String,
 			theaterAdapterDigitaloceanMaxVpns: Number,
 		},
 		{
@@ -55,6 +56,7 @@ export async function createConfiguration() {
 			"theater-adapter": ["--theaterAdapter"],
 			"theater-adapter-local-max-stages": ["--theaterAdapterLocalMaxStages"],
 			"theater-adapter-digitalocean-api-key": ["--theaterAdapterDigitaloceanApiKey"],
+			"theater-adapter-digitalocean-region": ["--theaterAdapterDigitaloceanRegion"],
 			"theater-adapter-digitalocean-max-vpns": ["--theaterAdapterDigitaloceanMaxVpns"],
 		},
 	);
@@ -179,6 +181,13 @@ export async function createConfiguration() {
 				: 5;
 	if (theater && theaterAdapter === "digitalocean") {
 		console.log("🚀", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter DigitalOcean Max VPNs", maxDigitaloceanVpns);
+	}
+
+	// The THEATER_ADAPTER_DIGITALOCEAN_REGION option sets the DigitalOcean region for droplet deployment
+	const digitaloceanRegion =
+		cli.theaterAdapterDigitaloceanRegion !== undefined ? cli.theaterAdapterDigitaloceanRegion : env.THEATER_ADAPTER_DIGITALOCEAN_REGION || "ams3";
+	if (theater && theaterAdapter === "digitalocean") {
+		console.log("🚀", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter DigitalOcean Region", digitaloceanRegion);
 	}
 
 	console.log();
@@ -317,6 +326,8 @@ export async function createConfiguration() {
 			digitalocean: {
 				/** DigitalOcean API key */
 				apiKey: digitaloceanApiKey,
+				/** DigitalOcean region for droplet deployment */
+				region: digitaloceanRegion,
 				/** Maximum number of VPN servers */
 				maxVpnServers: maxDigitaloceanVpns,
 			},

@@ -80,6 +80,7 @@
  * @property {number} local.maxActiveStages - Maximum number of active local stage instances.
  * @property {Object} digitalocean - DigitalOcean adapter settings.
  * @property {string} digitalocean.apiKey - DigitalOcean API key.
+ * @property {string} digitalocean.region - DigitalOcean region for droplet deployment.
  * @property {number} digitalocean.maxVpnServers - Maximum number of VPN servers.
  */
 
