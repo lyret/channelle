@@ -84,7 +84,7 @@
 <TheaterWrapper>
 	<div in:blur={{ delay: 500, duration: 1000 }}>
 		<!-- Header with Action Bar -->
-		<TheaterHeader />
+		<TheaterHeader withoutSubtitle={true} />
 		<TheaterActionBar>
 			<a slot="right" class="button is-small is-inverted" href="/">
 				<span class="icon is-size-4">
@@ -98,7 +98,7 @@
 			{#if loading}
 				<p class="subtitle is-4 has-text-grey">Laddar showdata...</p>
 			{:else if error}
-				<p class="subtitle is-4 has-text-danger">{error}</p>
+				<p class="subtitle is-4 has-text-danger has-text-weight-semibold mt-6">{error}</p>
 			{:else if currentShow && currentShow.lastOnlineAt !== null}
 				<p class="subtitle is-4 has-text-warning has-text-weight-semibold">
 					"{$currentShowStore?.name || currentShow.name}" har redan visats och kan inte längre redigeras här
@@ -116,11 +116,8 @@
 				<div class="is-loading"></div>
 			</div>
 		{:else if error}
-			<div class="notification is-danger is-light" style="margin: 2rem;">
-				<p class="has-text-centered">{error}</p>
-				<div class="has-text-centered" style="margin-top: 1rem;">
-					<a href="/theater" class="button is-secondary">Tillbaka till teatern</a>
-				</div>
+			<div class="has-text-centered" style="margin-top: 1rem;">
+				<a href="/" class="button is-danger">Tillbaka till teatern</a>
 			</div>
 		{:else if currentShow}
 			<ConfigurationInstruments showParticipants={false} showMediaLibrary={false} />
