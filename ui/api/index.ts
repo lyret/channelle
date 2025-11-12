@@ -15,5 +15,5 @@ export * from "./development";
 // Export launchers API
 export * from "./launchers";
 
-// Export theater authentication API
-export * from "../stores/theaterAuth";
+// Export authentication API
+export * from "./auth";

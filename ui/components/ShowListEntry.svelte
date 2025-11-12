@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { isTheaterAuthenticated } from "~/stores/theaterAuth";
+	import { isTheaterAuthenticated } from "~/api/auth";
 	import { canLaunchStore, launcherLoadingStore, launchInstance, instancesStore, stopInstance } from "~/api/launchers";
 	import PicolEdit from "./picol/icons/Picol-edit.svelte";
 	import PicolControlsPlay from "./picol/icons/Picol-controls-play.svelte";
@@ -20,13 +20,9 @@
 	$: runningInstance = showInstances.find((instance) => instance.status === "running" || instance.status === "starting");
 
 	// Determine show status - use server isOnline for all users, fallback to client-side for authenticated users
-	$: showStatus = show.isOnline ? "online" : (show.lastOnlineAt !== null ? "tidigare" : "kommande");
-	$: statusLabel = showStatus === "online" ? "Online nu!" :
-	                 showStatus === "tidigare" ? "Tidigare" :
-	                 "Kommande";
-	$: statusClass = showStatus === "online" ? "is-success" :
-	                 showStatus === "tidigare" ? "is-dark" :
-	                 "is-warning";
+	$: showStatus = show.isOnline ? "online" : show.lastOnlineAt !== null ? "tidigare" : "kommande";
+	$: statusLabel = showStatus === "online" ? "Online nu!" : showStatus === "tidigare" ? "Tidigare" : "Kommande";
+	$: statusClass = showStatus === "online" ? "is-success" : showStatus === "tidigare" ? "is-dark" : "is-warning";
 
 	// Use the correct URL - show.url already contains the correct URL (instance URL when online)
 	$: currentUrl = show.url;
@@ -44,7 +40,7 @@
 
 	function formatLastOnlineDate(lastOnlineAt: string | Date | null): string {
 		if (!lastOnlineAt) return "";
-		const date = typeof lastOnlineAt === 'string' ? new Date(lastOnlineAt) : lastOnlineAt;
+		const date = typeof lastOnlineAt === "string" ? new Date(lastOnlineAt) : lastOnlineAt;
 		return date.toLocaleDateString("sv-SE", {
 			year: "numeric",
 			month: "long",
@@ -136,11 +132,7 @@
 					{#if showStatus === "online"}
 						<div class="url-display mt-4">
 							<code class="show-url">{currentUrl}</code>
-							<button
-								class="button is-small is-outlined copy-url-button"
-								on:click={handleCopyUrl}
-								title="Kopiera URL"
-							>
+							<button class="button is-small is-outlined copy-url-button" on:click={handleCopyUrl} title="Kopiera URL">
 								<span class="icon is-small">
 									<PicolCopy />
 								</span>
@@ -158,7 +150,8 @@
 					<!-- Show last online date for "tidigare" shows -->
 					{#if showStatus === "tidigare" && show.lastOnlineAt !== null}
 						<p class="is-size-7 has-text-grey-light mt-4">
-							<strong>Senast visad:</strong> {formatLastOnlineDate(show.lastOnlineAt)}
+							<strong>Senast visad:</strong>
+							{formatLastOnlineDate(show.lastOnlineAt)}
 						</p>
 					{/if}
 
@@ -167,21 +160,26 @@
 						<div class="instance-details">
 							<div class="instance-meta">
 								<span class="instance-status-detail is-size-7">
-									<strong>Status:</strong> {runningInstance.status === "starting" ? "Startar..." : "Körs"}
+									<strong>Status:</strong>
+									{runningInstance.status === "starting" ? "Startar..." : "Körs"}
 								</span>
 								<span class="instance-id-detail is-size-7">
-									<strong>ID:</strong> {formatInstanceId(runningInstance.instanceId)}
+									<strong>ID:</strong>
+									{formatInstanceId(runningInstance.instanceId)}
 								</span>
 								{#if runningInstance.port}
 									<span class="instance-port-detail is-size-7">
-										<strong>Port:</strong> {runningInstance.port}
+										<strong>Port:</strong>
+										{runningInstance.port}
 									</span>
 								{/if}
 								<span class="instance-adapter-detail is-size-7">
-									<strong>Adapter:</strong> {getAdapterDisplayName(runningInstance.metadata)}
+									<strong>Adapter:</strong>
+									{getAdapterDisplayName(runningInstance.metadata)}
 								</span>
 								<span class="instance-time-detail is-size-7">
-									<strong>Startad:</strong> {formatDate(runningInstance.createdAt)}
+									<strong>Startad:</strong>
+									{formatDate(runningInstance.createdAt)}
 								</span>
 							</div>
 							{#if runningInstance.url !== show.url}

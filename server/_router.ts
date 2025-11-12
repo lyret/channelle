@@ -7,7 +7,7 @@ import { chatRouter } from "./routers/chatRouter";
 import { effectsRouter } from "./routers/effectsRouter";
 import { showsRouter } from "./routers/showsRouter";
 import { configRouter } from "./routers/configRouter";
-import { theaterRouter, activeSessions as activeTheaterSessions } from "./routers/theaterRouter";
+import { authRouter, activeSessions as activeAuthSessions } from "./routers/authRouter";
 import { launcherRouter } from "./routers/launcherRouter";
 
 /**
@@ -25,7 +25,7 @@ export async function createAppRouter() {
 		effects: effectsRouter,
 		shows: showsRouter,
 		config: configRouter,
-		theater: theaterRouter,
+		auth: authRouter,
 		launcher: launcherRouter,
 	};
 
@@ -54,13 +54,12 @@ export async function createAppRouter() {
 				closeMediaPeer(peerId);
 			});
 
-			console.log("HERE", activeTheaterSessions.has(peerId), peerId, Array.from(activeTheaterSessions.keys()));
 			return {
 				peer: {
 					// Use the given id as the peer id in the initial context, it will be updated in the authentication middleware when applied
 					id: peerId,
 					// Default the inital partial peer to being a manager if we are running in theather mode
-					manager: activeTheaterSessions.has(peerId),
+					manager: activeAuthSessions.has(peerId),
 				} as Peer,
 			};
 		},

@@ -5,17 +5,10 @@ import { z } from "zod";
 import { trpc } from "../lib";
 import { SceneSetting } from "../_types";
 import { Show } from "../models/Show";
+import { authedProcedure } from "./authRouter";
 
 // Get the trpc router constructor and default procedure
 const { router: trcpRouter, procedure: trcpProcedure } = trpc();
-
-// Manager authorization procedure
-const managerProcedure = trcpProcedure.use(({ ctx, next }) => {
-	if (!ctx.peer.manager) {
-		throw new TRPCError({ code: "UNAUTHORIZED", message: "Only managers can modify configuration" });
-	}
-	return next();
-});
 
 // Global state for stage configuration
 const _stageConfig = {
@@ -99,7 +92,7 @@ export const configRouter = trcpRouter({
 	 * Sets runtime password and optionally persists to show if one is selected
 	 * @requires Manager role
 	 */
-	setPassword: managerProcedure
+	setPassword: authedProcedure
 		.input(
 			z.object({
 				password: z.string().optional(),
@@ -132,7 +125,7 @@ export const configRouter = trcpRouter({
 	 * Sets runtime overrides and optionally persists to show if one is selected
 	 * @requires Manager role
 	 */
-	setSetting: managerProcedure
+	setSetting: authedProcedure
 		.input(
 			z.object({
 				key: z.enum(["curtains", "chatEnabled", "effectsEnabled", "visitorAudioEnabled", "visitorVideoEnabled"]),
@@ -175,7 +168,7 @@ export const configRouter = trcpRouter({
 	 * Sets runtime scene and optionally persists to show if one is selected
 	 * @requires Manager role
 	 */
-	setScene: managerProcedure
+	setScene: authedProcedure
 		.input(
 			z.object({
 				scene: z.custom<Scene>().nullable(),
@@ -207,7 +200,7 @@ export const configRouter = trcpRouter({
 	 * Reset Settings - Reset all overrides to automatic
 	 * @requires Manager role
 	 */
-	resetSettings: managerProcedure.input(z.object({ persistToShow: z.boolean().default(false) })).mutation(async ({ input: { persistToShow } }) => {
+	resetSettings: authedProcedure.input(z.object({ persistToShow: z.boolean().default(false) })).mutation(async ({ input: { persistToShow } }) => {
 		// Reset runtime settings
 		_stageConfig.sceneSettings = {
 			curtains: SceneSetting.AUTOMATIC,
@@ -300,7 +293,7 @@ export const configRouter = trcpRouter({
 	/**
 	 * Update Show Metadata - Update name, description, nomenclature
 	 */
-	updateShowMetadata: managerProcedure
+	updateShowMetadata: authedProcedure
 		.input(
 			z.object({
 				showId: z.number().int().positive().optional(),
@@ -375,7 +368,7 @@ export const configRouter = trcpRouter({
 	 * Sync Runtime to Show - Persist all current runtime configuration to selected show
 	 * @requires Manager role
 	 */
-	syncToShow: managerProcedure.mutation(async (): Promise<{ success: boolean }> => {
+	syncToShow: authedProcedure.mutation(async (): Promise<{ success: boolean }> => {
 		if (!_stageConfig.selectedShowId) {
 			throw new TRPCError({
 				code: "BAD_REQUEST",

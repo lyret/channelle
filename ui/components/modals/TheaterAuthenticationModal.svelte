@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher } from "svelte";
 	import Modal from "./_Modal.svelte";
-	import { authenticateTheater, authError, isAuthenticating, clearAuthError } from "~/stores/theaterAuth";
+	import { authenticateTheater, authError, isAuthenticating, clearAuthError } from "~/api/auth";
 
 	const dispatch = createEventDispatcher<{
 		authenticated: void;

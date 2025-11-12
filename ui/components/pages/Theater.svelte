@@ -8,7 +8,7 @@
 
 	import { showsLoadingStore, showsErrorStore, fetchShows } from "~/api/config";
 	import { openCreateShowModal, openLauncherModal } from "~/stores/theaterModals";
-	import { isTheaterAuthenticated } from "~/stores/theaterAuth";
+	import { isTheaterAuthenticated } from "~/api/auth";
 
 	// Use reactive statement to get shows from store
 	$: isLoadingShows = $showsLoadingStore;

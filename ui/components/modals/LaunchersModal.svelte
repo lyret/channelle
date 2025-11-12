@@ -12,7 +12,7 @@
 		stopAllInstances,
 		stopInstance,
 	} from "~/api/launchers";
-	import { isTheaterAuthenticated } from "~/stores/theaterAuth";
+	import { isTheaterAuthenticated } from "~/api/auth";
 	import IconSettings from "~/components/picol/icons/Picol-settings.svelte";
 	import IconStop from "~/components/picol/icons/Picol-controls-stop.svelte";
 	import IconRefresh from "~/components/picol/icons/Picol-refresh.svelte";
@@ -159,7 +159,7 @@
 								<span>Uppdatera</span>
 							</button>
 							{#if $isTheaterAuthenticated && runningCount > 0}
-								<br/>
+								<br />
 								<button
 									class="button is-small is-danger is-outlined"
 									class:is-loading={isStoppingAll}

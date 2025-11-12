@@ -61,8 +61,8 @@ export const chatClient = appClient.chat;
 /** Client for the Effects API only */
 export const effectsClient = appClient.effects;
 
-/** Client for the Theater API only */
-export const theaterClient = appClient.theater;
+/** Client for the Authentication API only */
+export const authClient = appClient.auth;
 
 /** Client for the Launcher API only */
 export const launcherClient = appClient.launcher;
