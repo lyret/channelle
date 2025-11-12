@@ -7,8 +7,9 @@ import { chatRouter } from "./routers/chatRouter";
 import { effectsRouter } from "./routers/effectsRouter";
 import { showsRouter } from "./routers/showsRouter";
 import { configRouter } from "./routers/configRouter";
-import { authRouter, activeSessions as activeAuthSessions } from "./routers/authRouter";
-import { launcherRouter as launchersRouter } from "./routers/launcherRouter";
+import { authRouter } from "./routers/authRouter";
+import { launcherRouter } from "./routers/launcherRouter";
+import { leave, userRouter } from "./routers/userRouter";
 
 /**
  * Creates and returns the application router
@@ -21,9 +22,10 @@ export async function createAppRouter() {
 	const routerConfig = {
 		development: developmentRouter,
 		config: configRouter,
+		users: userRouter,
 		auth: authRouter,
 		shows: showsRouter,
-		launchers: launchersRouter,
+		launchers: launcherRouter,
 		chat: chatRouter,
 		media: mediaRouter,
 		effects: effectsRouter,
@@ -41,7 +43,7 @@ export async function createAppRouter() {
 		delete routerConfig["media"];
 		delete routerConfig["effects"];
 	} else {
-		delete routerConfig["shows"];
+		// delete routerConfig["shows"]; TODO: needed?
 		delete routerConfig["launchers"];
 	}
 
@@ -62,14 +64,13 @@ export async function createAppRouter() {
 			res.once("close", () => {
 				console.log("[TRPC] Peer Disconnected:", peerId);
 				closeMediaPeer(peerId);
+				leave(peerId);
 			});
 
 			return {
 				peer: {
 					// Use the given id as the peer id in the initial context, it will be updated in the authentication middleware when applied
 					id: peerId,
-					// Default the inital partial peer to being a manager if we are running in theather mode
-					manager: activeAuthSessions.has(peerId),
 				} as Peer,
 			};
 		},

@@ -65,26 +65,50 @@ export async function createConfiguration() {
 	// either by cli options, or set as environment variables
 	// Output relevant information along the way
 
+	// Theater configuration
+	// The THEATER option will make the CLI program build and run the orhestration theater instead of a stage
+
+	const theater = cli.theater !== undefined ? cli.theater : env.THEATER === "true" || false;
+	if (theater) {
+		console.log("🏛️ ", Chalk.bgBlueBright("[CONFIG]"), "Theater", theater);
+	}
+
+	// If THEATER_PASSWORD is set or 'theaterPassword' is given in the CLI it will be used for theater authentication
+	const theaterPassword = cli.theaterPassword !== undefined ? cli.theaterPassword : env.THEATER_PASSWORD || "admin";
+	if (theater) {
+		console.log("🏛️ ", Chalk.bgBlueBright("[CONFIG]"), "Theater Password", theaterPassword);
+	}
+
 	// Stage configuration
 	console.log();
+
+	// If SHOW_ID is set or 'showId' is given in the CLI it will be used to load a specific show configuration in stage mode
+	const showId = cli.showId !== undefined ? cli.showId : env.SHOW_ID ? Number(env.SHOW_ID) : undefined;
+	if (!theater && showId) {
+		console.log("🏷️ ", Chalk.bgBlueBright("[CONFIG]"), "Show ID", showId);
+	}
 
 	// If STAGE_NAME is set or the 'name' option is given in the CLI the
 	// deployment/stage will be named after the given string, otherwise it
 	// will be unnamned
 	const stageName = cli.name !== undefined ? cli.name : env.STAGE_NAME || "";
-	console.log("🏷️ ", Chalk.bgBlueBright("[CONFIG]"), "Stage Name", stageName);
+	if (showId == undefined) {
+		console.log("🏷️ ", Chalk.bgBlueBright("[CONFIG]"), "Stage Name", stageName);
+	}
 
 	// If STAGE_INVITE_LINK_KEY is set it will default the deployed stage to be password protected with the string given
 	// otherwise it will be set to an empty string and the stage will be public
 	const stageInviteLinkKey = cli.name !== undefined ? cli.inviteKey : env.STAGE_INVITE_LINK_KEY || "";
-	if (stageInviteLinkKey) {
+	if (showId == undefined && stageInviteLinkKey) {
 		console.log("🏷️ ", Chalk.bgBlueBright("[CONFIG]"), "Invite Link Key", stageInviteLinkKey);
 	}
 
 	// If STAGE_ID is set or 'id' is given in the CLI it will be used to identify this deployment (stage), otherwise a slug
 	// from the STAGE_NAME will be used
 	const stageId = cli.id !== undefined ? cli.id : env.STAGE_ID || Slug(stageName);
-	console.log("🏷️ ", Chalk.bgBlueBright("[CONFIG]"), "Identifier", stageId);
+	if (showId == undefined) {
+		console.log("🏷️ ", Chalk.bgBlueBright("[CONFIG]"), "Identifier", stageId);
+	}
 
 	// Runtime options
 	console.log();
@@ -128,22 +152,6 @@ export async function createConfiguration() {
 	// The START option will make the CLI program launch the server with the current configuration
 	const start = cli.start !== undefined ? cli.start : env.START != "false" || false;
 	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Start", start);
-
-	// The THEATER option will make the CLI program build and run the orhestration theater instead of a stage
-	const theater = cli.theater !== undefined ? cli.theater : env.THEATER === "true" || false;
-	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Theater", theater);
-
-	// If THEATER_PASSWORD is set or 'theaterPassword' is given in the CLI it will be used for theater authentication
-	const theaterPassword = cli.theaterPassword !== undefined ? cli.theaterPassword : env.THEATER_PASSWORD || "admin";
-	if (theater) {
-		console.log("🏷️ ", Chalk.bgBlueBright("[CONFIG]"), "Theater Password", theaterPassword);
-	}
-
-	// If SHOW_ID is set or 'showId' is given in the CLI it will be used to load a specific show configuration in stage mode
-	const showId = cli.showId !== undefined ? cli.showId : env.SHOW_ID ? Number(env.SHOW_ID) : undefined;
-	if (!theater && showId) {
-		console.log("🏷️ ", Chalk.bgBlueBright("[CONFIG]"), "Show ID", showId);
-	}
 
 	// Launcher configuration
 	console.log();

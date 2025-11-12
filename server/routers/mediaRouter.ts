@@ -1,9 +1,10 @@
 import type * as MediaSoup from "mediasoup";
-import type { Transport, Peer, Session, CustomAppData, MediaTag, Producer, Consumer } from "../_types";
+import type { Transport, Session, CustomAppData, MediaTag, Producer, Consumer } from "../_types";
 import { TRPCError } from "@trpc/server";
 import { trpc, mediaSoupRouter } from "../lib";
 import { getStageConfig, getCurrentSceneWithSettings } from "./configRouter";
 import { z } from "zod";
+import { join, userConnectionProcedure, getUsers } from "./userRouter";
 
 // Get the trcp router constructor and default procedure
 const { router: trcpRouter, procedure: trcpProcedure } = trpc();
@@ -16,13 +17,11 @@ const { router: trcpRouter, procedure: trcpProcedure } = trpc();
  * correlate tracks.
  */
 type Room = {
-	peers: Record<string, Peer>;
 	activeSpeaker: {
 		producerId: string | null;
 		volume: number | null;
 		peerId: string | null;
 	};
-	// Internals
 	sessions: Record<string, Session>;
 	transports: Record<string, Transport>;
 	producers: Record<string, Producer>;
@@ -31,7 +30,6 @@ type Room = {
 
 /** Internal state */
 const _room: Room = {
-	peers: {},
 	activeSpeaker: {
 		producerId: null,
 		volume: null,
@@ -44,39 +42,33 @@ const _room: Room = {
 	consumers: {},
 };
 
-// Peer connection procedure
-// Make sure this peer is connected. if we've disconnected the
-// peer because of a network outage we want the peer to know that
-// happened
-const roomProcedure = trcpProcedure.use(async ({ ctx, next }) => {
-	if (!ctx.peer?.id) {
-		throw new TRPCError({ code: "BAD_REQUEST", message: "No peer information given" });
-	} else if (!_room.peers[ctx.peer.id]) {
-		throw new TRPCError({ code: "BAD_REQUEST", message: "The given peer has not joined the room" });
-	} else {
-		// Make sure we have a session for this peer
-		if (!_room.sessions[ctx.peer.id]) {
-			const now = Date.now();
-			_room.sessions[ctx.peer.id] = {
-				peerId: ctx.peer.id,
-				joinTs: now,
-				lastSeenTs: now,
-				consumerLayers: {},
-				media: {},
-				stats: {},
-			};
-		}
-		// Update our most-recently-seem timestamp -- we're not stale!
-		else {
-			_room.peers[ctx.peer.id].online = true;
-			_room.sessions[ctx.peer.id].lastSeenTs = Date.now();
-		}
+/**
+ * Peer connection procedure
+ * Only allows identified peers to continue, and keeps their media session updated
+ */
+const mediaSessionProcedure = userConnectionProcedure.use(async ({ ctx, next }) => {
+	// Make sure we have a session for this peer
+	if (!_room.sessions[ctx.peer.id]) {
+		const now = Date.now();
+		_room.sessions[ctx.peer.id] = {
+			peerId: ctx.peer.id,
+			joinTs: now,
+			lastSeenTs: now,
+			consumerLayers: {},
+			media: {},
+			stats: {},
+		};
 	}
-	return next({ ctx: { peer: _room.peers[ctx.peer.id] } });
+	// Update our most-recently-seem timestamp -- we're not stale!
+	else {
+		_room.sessions[ctx.peer.id].lastSeenTs = Date.now();
+	}
+
+	return next({ ctx });
 });
 
 /**
- * Room Router
+ * Media Router
  * Handles server and client communication for orchastrating peer to peer media transmission
  */
 export const mediaRouter = trcpRouter({
@@ -95,12 +87,12 @@ export const mediaRouter = trcpRouter({
 	 *
 	 * @returns Complete room state for client synchronization
 	 */
-	sync: roomProcedure.query(async () => {
+	sync: mediaSessionProcedure.query(async () => {
 		const sceneConfig = getStageConfig();
 		const currentScene = getCurrentSceneWithSettings();
 
 		return {
-			peers: _room.peers,
+			peers: getUsers(),
 			sessions: _room.sessions,
 			activeSpeaker: _room.activeSpeaker,
 			password: sceneConfig.password,
@@ -121,26 +113,15 @@ export const mediaRouter = trcpRouter({
 		const msRouter = await mediaSoupRouter();
 
 		if (_room.sessions[ctx.peer.id]) {
-			console.log("[Room]", ctx.peer.id, "re-joined, possibly due a browser reload");
+			console.log("[Medida]", ctx.peer.id, "re-started their session possibly due an error or reload");
 			return { peerId: ctx.peer.id, routerRtpCapabilities: msRouter.rtpCapabilities };
 		}
 
-		const now = Date.now();
+		// Join a user
+		join(ctx.peer.id);
 
-		_room.peers[ctx.peer.id] = {
-			id: ctx.peer.id,
-			name: "",
-			actor: !CONFIG.runtime.production, // When developing, all new peers become actors
-			manager: Object.keys(_room.peers).length === 0, // The first peer is always a manager
-			banned: false,
-			// Inherit any previous properties if re-joining
-			...(_room.peers[ctx.peer.id] || {}),
-			// Update current status
-			online: true,
-			audioMuted: false,
-			videoMuted: false,
-		};
-		// Create a new session
+		// Create a new media session
+		const now = Date.now();
 		_room.sessions[ctx.peer.id] = {
 			joinTs: now,
 			lastSeenTs: now,
@@ -150,106 +131,22 @@ export const mediaRouter = trcpRouter({
 			stats: {},
 		};
 
-		console.log("[Room]", ctx.peer.id, "joined as new peer");
+		console.log("[Media]", ctx.peer.id, "started a new session");
 		return { peerId: ctx.peer.id, routerRtpCapabilities: msRouter.rtpCapabilities };
 	}),
 	// Leave
 	// Removes the peer from the room data structure and and closes
 	// all associated mediasoup objects
-	leave: roomProcedure.mutation(async ({ ctx }) => {
+	leave: mediaSessionProcedure.mutation(async ({ ctx }) => {
 		const peerId = ctx.peer.id;
 		closeMediaPeer(peerId);
-		console.log("[Room] Peer", peerId, "left");
+		console.log("[Medida] Peer", peerId, "left");
 		return;
 	}),
-	/**
-	 * Set Password - Update room access password
-	 *
-	 * Updates the room password for access control. Only managers can
-	 * modify the password. Used for temporary session-level password changes.
-	 *
-	 * Note: For persistent show passwords, use the Show API instead.
-	 *
-	 * @param password - New password string, or undefined to remove password
-	 * @requires Manager role
-	 */
-
-	/**
-	 * Update Peer - Modify peer information and roles
-	 *
-	 * Updates peer metadata including name, role assignments (actor, manager),
-	 * and access control (banned status). Provides comprehensive peer management
-	 * for room administrators.
-	 *
-	 * Roles:
-	 * - Actor: Can appear on stage, has media privileges
-	 * - Manager: Can control room settings and other peers
-	 * - Visitor: Basic participant without special privileges
-	 *
-	 * @param id - Peer ID to update
-	 * @param name - Display name (optional)
-	 * @param actor - Actor role flag (optional)
-	 * @param manager - Manager role flag (optional)
-	 * @param banned - Banned status flag (optional)
-	 * @requires Manager role (except for updating own name)
-	 */
-	updatePeer: roomProcedure
-		.input(
-			z.object({
-				id: z.string(),
-				name: z.string().optional(),
-				actor: z.boolean().optional(),
-				manager: z.boolean().optional(),
-				banned: z.boolean().optional(),
-			}),
-		)
-		.mutation(async ({ ctx, input: { id, name, actor, manager, banned } }) => {
-			const peer = _room.peers[id];
-
-			// Make sure that the peer in context is either the same as being updated or a manager
-			if (!(ctx.peer.id == id || ctx.peer.manager)) {
-				throw new TRPCError({ code: "UNAUTHORIZED", message: "Unauthorized" });
-			}
-
-			// Find the peer
-			if (!peer) {
-				throw new TRPCError({ code: "NOT_FOUND", message: "Peer with given id not found" });
-			}
-
-			// Update peer's name
-			if (name !== undefined) {
-				peer.name = name;
-			}
-
-			// Make sure that the peer in context is a manager
-			if (!ctx.peer.manager) {
-				return;
-			}
-
-			// Update peer's actor status
-			if (actor !== undefined) {
-				peer.actor = actor;
-			}
-
-			// Update peer's manager status
-			if (manager !== undefined) {
-				peer.manager = manager;
-			}
-
-			// Update peer's banned status
-			if (banned !== undefined) {
-				peer.banned = banned;
-			}
-
-			// Update the record of peers
-			_room.peers[id] = peer;
-
-			return;
-		}),
 	// Create Transport
 	// Create a mediasoup transport object and send back info needed
 	// to create a transport object on the client side
-	createTransport: roomProcedure.input(z.object({ direction: z.string() })).mutation(async ({ ctx, input: { direction } }) => {
+	createTransport: mediaSessionProcedure.input(z.object({ direction: z.string() })).mutation(async ({ ctx, input: { direction } }) => {
 		console.log(`[MS] Creating a ${direction} transport for peer ${ctx.peer.id}`);
 
 		const transport = await _createWebRtcTransport({ peerId: ctx.peer.id, direction });
@@ -263,7 +160,7 @@ export const mediaRouter = trcpRouter({
 	// Connect Transport
 	// Called from inside a client's `transport.on('connect')` event
 	// handler.
-	connectTransport: roomProcedure
+	connectTransport: mediaSessionProcedure
 		.input(z.object({ transportId: z.string(), dtlsParameters: z.custom<MediaSoup.types.DtlsParameters>() }))
 		.mutation(async ({ ctx, input: { transportId, dtlsParameters } }) => {
 			const transport = _room.transports[transportId];
@@ -280,7 +177,7 @@ export const mediaRouter = trcpRouter({
 	// Close Transport
 	// Called by a client that wants to close a single transport (for
 	// example, a client that is no longer sending any media).
-	closeTransport: roomProcedure.input(z.object({ transportId: z.string() })).mutation(async ({ ctx, input: { transportId } }) => {
+	closeTransport: mediaSessionProcedure.input(z.object({ transportId: z.string() })).mutation(async ({ ctx, input: { transportId } }) => {
 		const transport = _room.transports[transportId];
 
 		if (!transport) {
@@ -294,7 +191,7 @@ export const mediaRouter = trcpRouter({
 	}),
 	// Send Track
 	// Called from inside a client's `transport.on('produce')` event handler.
-	sendTrack: roomProcedure
+	sendTrack: mediaSessionProcedure
 		.input(
 			z.object({
 				transportId: z.string(),
@@ -345,7 +242,7 @@ export const mediaRouter = trcpRouter({
 	// on the server side, and send back info needed to create a consumer
 	// object on the client side. always start consumers paused. client
 	// will request media to resume when the connection completes
-	recvTrack: roomProcedure
+	recvTrack: mediaSessionProcedure
 		.input(z.object({ mediaPeerId: z.string(), mediaTag: z.custom<MediaTag>(), rtpCapabilities: z.custom<MediaSoup.types.RtpCapabilities>() }))
 		.mutation(async ({ ctx, input: { mediaPeerId, mediaTag, rtpCapabilities } }) => {
 			const producer = Object.values(_room.producers).find((p) => p.appData.mediaTag === mediaTag && p.appData.peerId === mediaPeerId);
@@ -413,7 +310,7 @@ export const mediaRouter = trcpRouter({
 		}),
 	// Pause Consumer
 	// Called to pause receiving a track for a specific client
-	pauseConsumer: roomProcedure.input(z.object({ consumerId: z.string() })).mutation(async ({ input: { consumerId } }) => {
+	pauseConsumer: mediaSessionProcedure.input(z.object({ consumerId: z.string() })).mutation(async ({ input: { consumerId } }) => {
 		const consumer = _room.consumers[consumerId];
 
 		if (!consumer) {
@@ -428,7 +325,7 @@ export const mediaRouter = trcpRouter({
 	}),
 	// Resume Consumer
 	// Called to resume receiving a track for a specific client
-	resumeConsumer: roomProcedure.input(z.object({ consumerId: z.string() })).mutation(async ({ input: { consumerId } }) => {
+	resumeConsumer: mediaSessionProcedure.input(z.object({ consumerId: z.string() })).mutation(async ({ input: { consumerId } }) => {
 		const consumer = _room.consumers[consumerId];
 
 		if (!consumer) {
@@ -444,7 +341,7 @@ export const mediaRouter = trcpRouter({
 	// Close Consumer
 	// Called to stop receiving a track for a specific client. close and
 	// clean up consumer object
-	closeConsumer: roomProcedure.input(z.object({ consumerId: z.string() })).mutation(async ({ input: { consumerId } }) => {
+	closeConsumer: mediaSessionProcedure.input(z.object({ consumerId: z.string() })).mutation(async ({ input: { consumerId } }) => {
 		const consumer = _room.consumers[consumerId];
 
 		if (!consumer) {
@@ -458,7 +355,7 @@ export const mediaRouter = trcpRouter({
 	// Consumer Set Layers
 	// Called to set the largest spatial layer that a specific client
 	// wants to receive
-	consumerSetLayers: roomProcedure
+	consumerSetLayers: mediaSessionProcedure
 		.input(z.object({ consumerId: z.string(), spatialLayer: z.any() }))
 		.mutation(async ({ input: { consumerId, spatialLayer } }) => {
 			const consumer = _room.consumers[consumerId];
@@ -475,7 +372,7 @@ export const mediaRouter = trcpRouter({
 		}),
 	// Pause Producer
 	// Called to stop sending a track from a specific client
-	pauseProducer: roomProcedure.input(z.object({ producerId: z.string() })).mutation(async ({ ctx, input: { producerId } }) => {
+	pauseProducer: mediaSessionProcedure.input(z.object({ producerId: z.string() })).mutation(async ({ ctx, input: { producerId } }) => {
 		const producer = _room.producers[producerId];
 
 		if (!producer) {
@@ -492,7 +389,7 @@ export const mediaRouter = trcpRouter({
 	}),
 	// Resume Producer
 	// Called to resume sending a track from a specific client
-	resumeProducer: roomProcedure.input(z.object({ producerId: z.string() })).mutation(async ({ ctx, input: { producerId } }) => {
+	resumeProducer: mediaSessionProcedure.input(z.object({ producerId: z.string() })).mutation(async ({ ctx, input: { producerId } }) => {
 		const producer = _room.producers[producerId];
 
 		if (!producer) {
@@ -509,7 +406,7 @@ export const mediaRouter = trcpRouter({
 	}),
 	// Close Producer
 	// Called by a client that is no longer sending a specific track
-	closeProducer: roomProcedure.input(z.object({ producerId: z.string() })).mutation(async ({ ctx, input: { producerId } }) => {
+	closeProducer: mediaSessionProcedure.input(z.object({ producerId: z.string() })).mutation(async ({ ctx, input: { producerId } }) => {
 		const producer = _room.producers[producerId];
 
 		if (!producer) {
@@ -531,7 +428,7 @@ async function removeStalePeers() {
 	const now = Date.now();
 	for (const [id, peer] of Object.entries(_room.sessions)) {
 		if (now - peer.lastSeenTs > 4200) {
-			console.log(`[Room] Removing stale peer ${id}`);
+			console.log(`[Medida] Removing stale peer ${id}`);
 			closeMediaPeer(id);
 		}
 	}
@@ -606,9 +503,6 @@ observeActiveSpeakers();
 /** Utility function for closing the session and transports related to a given peer */
 export async function closeMediaPeer(peerId: string) {
 	console.log("[MS] closing peer", peerId);
-	if (_room.peers[peerId]) {
-		_room.peers[peerId].online = false;
-	}
 	delete _room.sessions[peerId];
 	for (const transport of Object.values(_room.transports)) {
 		if (transport.appData.peerId === peerId) {

@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { trpc } from "../lib";
 import { z } from "zod";
+import { userConnectionProcedure } from "./userRouter";
 
 // Get the trpc router constructor and default procedure
 const { router: trcpRouter, procedure: trcpProcedure } = trpc();
@@ -12,7 +13,7 @@ interface AuthSession {
 	authenticatedAt: number;
 }
 
-/** In-memory session storage */
+/** In-memory authentication session storage */
 export const activeSessions = new Map<string, AuthSession>();
 
 /** Session expiration time: 8 hours in milliseconds */
@@ -34,9 +35,10 @@ function cleanupExpiredSessions(): void {
  * Authentication procedure
  * Only allows signed in users in theater mode to continue
  */
-export const authedProcedure = trcpProcedure.use(({ ctx, next }) => {
-	if (!CONFIG.runtime.theater) {
-		throw new TRPCError({ code: "UNAUTHORIZED", message: "Authentication only works in theater mode" });
+export const authedProcedure = userConnectionProcedure.use(({ ctx, next }) => {
+	if (!CONFIG.runtime.theater && ctx.peer.manager) {
+		// When in stage mode a connected manager has the same aces
+		return next({ ctx });
 	}
 
 	cleanupExpiredSessions();

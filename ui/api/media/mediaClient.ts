@@ -1,7 +1,7 @@
 import * as MediaSoup from "mediasoup-client";
 import DeepEqual from "deep-equal";
 import { writable, derived, get } from "svelte/store";
-import { mediaClient, wsPeerIdStore } from "../_trpcClient";
+import { mediaClient, userClient, wsPeerIdStore } from "../_trpcClient";
 import type { Peer, TransportDirection, CustomAppData, MediaTag } from "~/types/serverSideTypes";
 
 /**
@@ -555,7 +555,7 @@ export async function syncMediaRoom() {
  * Updates the name of a peer in the room
  */
 export async function updatePeerName(peerId: string, name: string) {
-	await mediaClient.updatePeer.mutate({
+	await userClient.update.mutate({
 		id: peerId,
 		name,
 	});
@@ -565,7 +565,7 @@ export async function updatePeerName(peerId: string, name: string) {
  * Updates the banned status of a peer in the room
  */
 export async function updatePeerBannedStatus(peerId: string, banned: boolean) {
-	await mediaClient.updatePeer.mutate({
+	await userClient.update.mutate({
 		id: peerId,
 		banned,
 	});
@@ -575,7 +575,7 @@ export async function updatePeerBannedStatus(peerId: string, banned: boolean) {
  * Updates the actor status of a peer in the room
  */
 export async function updatePeerActorStatus(peerId: string, actor: boolean) {
-	await mediaClient.updatePeer.mutate({
+	await userClient.update.mutate({
 		id: peerId,
 		actor,
 	});
@@ -585,7 +585,7 @@ export async function updatePeerActorStatus(peerId: string, actor: boolean) {
  * Updates the manager status of a peer in the room
  */
 export async function updatePeerManagerStatus(peerId: string, manager: boolean) {
-	await mediaClient.updatePeer.mutate({
+	await userClient.update.mutate({
 		id: peerId,
 		manager,
 	});
@@ -595,7 +595,7 @@ export async function updatePeerManagerStatus(peerId: string, manager: boolean) 
  * Updates multiple peer properties at once
  */
 export async function updatePeerProperties(peerId: string, data: { actor?: boolean; manager?: boolean; banned?: boolean }) {
-	await mediaClient.updatePeer.mutate({
+	await userClient.update.mutate({
 		id: peerId,
 		...data,
 	});

@@ -20,7 +20,7 @@
 		<div class="image-container has-text-centered header" style="height:100px" in:blur={{ duration: 5000, delay: 2000 }}>
 			<img src={logoSrc} alt="logotyp" class="mt-3 mb-0" style="height:80px" />
 		</div>
-		<ConfigurationInstruments showParticipants={true} showMediaLibrary={true} />
+		<ConfigurationInstruments showParticipants={true} showMediaLibrary={false} />
 	</main>
 </Wrapper>
 

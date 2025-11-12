@@ -42,7 +42,7 @@ type DebugConfig = {
 	verboseOutput: boolean;
 };
 
-type StageConfig = {
+type TheaterConfig = {
 	/** The password for administrator authentication. */
 	password: string;
 };

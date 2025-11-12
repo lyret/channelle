@@ -3,7 +3,6 @@
 	import IconLock from "../icons/Icon-lock.svelte";
 	import IconUnlock from "../icons/Icon-unlock.svelte";
 	import { configManager, passwordStore, currentShowStore } from "~/api/config";
-	import { currentModeStore, AppMode } from "~/api/config";
 
 	let inputRef: HTMLInputElement;
 	let inputValue: string = "";
@@ -15,7 +14,6 @@
 
 	$: isLocked = $passwordStore?.length;
 	$: isChanged = originalPassword !== inputValue;
-	$: isTheaterMode = $currentModeStore === AppMode.THEATER;
 	$: canSave = isChanged && !isLoading;
 	$: isChangingPassword = isChanged && inputValue.trim().length > 0;
 	$: isRemovingPassword = isChanged && inputValue.trim().length === 0 && isLocked;
@@ -104,7 +102,7 @@
 <div class="access-instrument">
 	<h1 class="title">Tillgång</h1>
 
-	{#if !isTheaterMode}
+	{#if !CONFIG.runtime.theater}
 		<div class="notification is-info is-light">
 			<p class="is-size-7">
 				<strong>Skrivskyddad vy</strong><br />
@@ -143,7 +141,7 @@
 						bind:value={inputValue}
 						on:keydown={handleKeydown}
 						placeholder={isLocked ? "Ange nytt lösenord eller lämna tomt för att ta bort" : "Ange ett lösenord för att låsa scenen"}
-						disabled={!isTheaterMode}
+						disabled={!CONFIG.runtime.theater}
 					/>
 				</div>
 				<div class="help-section">
@@ -168,7 +166,7 @@
 			</div>
 		</form>
 
-		{#if isTheaterMode}
+		{#if CONFIG.runtime.theater}
 			<div class="field">
 				<div class="control">
 					<button

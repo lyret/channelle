@@ -580,12 +580,8 @@ export async function initializeConfigAPI(): Promise<void> {
 	try {
 		configLoadingStore.set(true);
 
-		// Mode is determined by CONFIG.runtime.theater
-		const mode = CONFIG.runtime.theater ? AppMode.THEATER : AppMode.STAGE;
-		currentModeStore.set(mode);
-
 		// Initialize show selection based on mode
-		if (mode === AppMode.THEATER) {
+		if (CONFIG.runtime.theater) {
 			// In theater mode, get show ID from URL parameters
 			const urlParams = new URLSearchParams(window.location.search);
 			const showIdParam = urlParams.get("show");

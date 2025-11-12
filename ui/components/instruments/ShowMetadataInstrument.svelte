@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { configManager, currentShowStore } from "~/api/config";
-	import { currentModeStore, AppMode } from "~/api/config";
 	import IconSave from "../icons/Icon-save.svelte";
 	import IconX from "../icons/Icon-x.svelte";
 
@@ -22,8 +21,7 @@
 	const descriptionMaxLength = 1000;
 	const nomenclatureMaxLength = 100;
 
-	$: isTheaterMode = $currentModeStore === AppMode.THEATER;
-	$: canEdit = isTheaterMode && configManager.canUpdateConfig();
+	const canEdit = CONFIG.runtime.theater && configManager.canUpdateConfig();
 	$: hasChanges = nameInput !== originalName || descriptionInput !== originalDescription || nomenclatureInput !== originalNomenclature;
 	$: canSave = hasChanges && nameInput.trim().length > 0 && !isLoading;
 
@@ -146,7 +144,7 @@
 <div class="show-metadata-instrument">
 	<h1 class="title">Föreställningsinfo</h1>
 
-	{#if !isTheaterMode}
+	{#if !CONFIG.runtime.theater}
 		<div class="notification is-info is-light">
 			<p class="is-size-7">
 				<strong>Skrivskyddad vy</strong><br />
