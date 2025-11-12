@@ -231,9 +231,6 @@
 								<PicolControlsPlay />
 							</span><span>Lansera</span>
 						</button>
-					{/if}
-
-					{#if $isTheaterAuthenticated}
 						<a href={`/preparation?show=${show.id}`} class="button is-small is-secondary">
 							<span class="icon is-small">
 								<PicolEdit />

@@ -10,6 +10,36 @@ import { authedProcedure } from "./authRouter";
 // Get the trpc router constructor and default procedure
 const { router: trcpRouter, procedure: trcpProcedure } = trpc();
 
+/**
+ * Procedure that validates the show is editable (not previously shown)
+ * Extends authedProcedure with additional validation for show editing
+ */
+const editableShowProcedure = authedProcedure.use(async ({ ctx, next }) => {
+	// Check if there's a selected show that needs validation
+	if (_stageConfig.selectedShowId) {
+		try {
+			const show = await Show.findByPk(_stageConfig.selectedShowId);
+			if (show && show.lastOnlineAt !== null) {
+				throw new TRPCError({
+					code: "FORBIDDEN",
+					message: "Cannot edit a show that has been already shown",
+				});
+			}
+		} catch (error) {
+			if (error instanceof TRPCError) {
+				throw error;
+			}
+			console.error("[Config] Error validating show editability:", error);
+			throw new TRPCError({
+				code: "INTERNAL_SERVER_ERROR",
+				message: "Failed to validate show editability",
+			});
+		}
+	}
+
+	return next({ ctx });
+});
+
 // Global state for stage configuration
 const _stageConfig = {
 	// Runtime state
@@ -92,7 +122,7 @@ export const configRouter = trcpRouter({
 	 * Sets runtime password and optionally persists to show if one is selected
 	 * @requires Manager role
 	 */
-	setPassword: authedProcedure
+	setPassword: editableShowProcedure
 		.input(
 			z.object({
 				password: z.string().optional(),
@@ -125,7 +155,7 @@ export const configRouter = trcpRouter({
 	 * Sets runtime overrides and optionally persists to show if one is selected
 	 * @requires Manager role
 	 */
-	setSetting: authedProcedure
+	setSetting: editableShowProcedure
 		.input(
 			z.object({
 				key: z.enum(["curtains", "chatEnabled", "effectsEnabled", "visitorAudioEnabled", "visitorVideoEnabled"]),
@@ -168,7 +198,7 @@ export const configRouter = trcpRouter({
 	 * Sets runtime scene and optionally persists to show if one is selected
 	 * @requires Manager role
 	 */
-	setScene: authedProcedure
+	setScene: editableShowProcedure
 		.input(
 			z.object({
 				scene: z.custom<Scene>().nullable(),
@@ -200,7 +230,7 @@ export const configRouter = trcpRouter({
 	 * Reset Settings - Reset all overrides to automatic
 	 * @requires Manager role
 	 */
-	resetSettings: authedProcedure.input(z.object({ persistToShow: z.boolean().default(false) })).mutation(async ({ input: { persistToShow } }) => {
+	resetSettings: editableShowProcedure.input(z.object({ persistToShow: z.boolean().default(false) })).mutation(async ({ input: { persistToShow } }) => {
 		// Reset runtime settings
 		_stageConfig.sceneSettings = {
 			curtains: SceneSetting.AUTOMATIC,
@@ -293,7 +323,7 @@ export const configRouter = trcpRouter({
 	/**
 	 * Update Show Metadata - Update name, description, nomenclature
 	 */
-	updateShowMetadata: authedProcedure
+	updateShowMetadata: editableShowProcedure
 		.input(
 			z.object({
 				showId: z.number().int().positive().optional(),
@@ -368,7 +398,7 @@ export const configRouter = trcpRouter({
 	 * Sync Runtime to Show - Persist all current runtime configuration to selected show
 	 * @requires Manager role
 	 */
-	syncToShow: authedProcedure.mutation(async (): Promise<{ success: boolean }> => {
+	syncToShow: editableShowProcedure.mutation(async (): Promise<{ success: boolean }> => {
 		if (!_stageConfig.selectedShowId) {
 			throw new TRPCError({
 				code: "BAD_REQUEST",

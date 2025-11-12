@@ -43,7 +43,7 @@ export const authedProcedure = trcpProcedure.use(({ ctx, next }) => {
 	if (!activeSessions.has(ctx.peer.id)) {
 		throw new TRPCError({ code: "UNAUTHORIZED", message: "Only signed-in users are allowed to perform this action" });
 	}
-	return next();
+	return next({ ctx });
 });
 
 /**
