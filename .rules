@@ -169,6 +169,7 @@ channelle/
 - **Index files are export-only** - Use `index.ts` files solely for organizing imports and exports
 - Move all implementation logic to separate, descriptively named files
 - Index files should contain only `export` statements and type re-exports
+- **Prefer wildcard exports** - Use `export * from './module'` instead of explicit named exports in barrel files (TypeScript modules only; Svelte components require explicit default exports)
 - Keep index files minimal and focused on providing a clean public API
 
 ### Module Organization Guidelines

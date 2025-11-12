@@ -1,4 +1,5 @@
-export { mediaClient, configClient, showsClient, chatClient, effectsClient, developmentClient, theaterClient, launcherClient } from "./_trpcClient";
+// Export all API clients
+export * from "./_trpcClient";
 
 // Export unified configuration API
 export * from "./config";
@@ -13,3 +14,6 @@ export * from "./development";
 
 // Export launchers API
 export * from "./launchers";
+
+// Export theater authentication API
+export * from "../stores/theaterAuth";
