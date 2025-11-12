@@ -96,9 +96,6 @@ export const configStore = writable<{
 /** Configuration loading state */
 export const configLoadingStore = writable<boolean>(false);
 
-/** Configuration error state */
-export const configErrorStore = writable<string | null>(null);
-
 // ============================================================================
 // SHOW LIST MANAGEMENT STORES
 // ============================================================================
@@ -151,13 +148,11 @@ export const publicShowsStore = derived(showsStore, ($shows) => $shows.filter((s
 export async function getConfig(): Promise<void> {
 	try {
 		configLoadingStore.set(true);
-		configErrorStore.set(null);
 
 		const config = await configClient.getConfig.query();
 		configStore.set(config);
 	} catch (error) {
 		console.error("Failed to get configuration:", error);
-		configErrorStore.set(error instanceof Error ? error.message : "Failed to get configuration");
 	} finally {
 		configLoadingStore.set(false);
 	}
@@ -174,7 +169,6 @@ export async function getConfig(): Promise<void> {
 export async function selectShow(showId?: number, loadIntoRuntime: boolean = false): Promise<boolean> {
 	try {
 		configLoadingStore.set(true);
-		configErrorStore.set(null);
 
 		const result = await configClient.selectShow.mutate({ showId, loadIntoRuntime });
 
@@ -184,7 +178,6 @@ export async function selectShow(showId?: number, loadIntoRuntime: boolean = fal
 		return result.success;
 	} catch (error) {
 		console.error("Failed to select show:", error);
-		configErrorStore.set(error instanceof Error ? error.message : "Failed to select show");
 		return false;
 	} finally {
 		configLoadingStore.set(false);
@@ -197,22 +190,20 @@ export async function selectShow(showId?: number, loadIntoRuntime: boolean = fal
  *
  * @param password - New password or undefined to remove
  * @param persistToShow - Whether to persist to the selected show
- * @returns Promise<boolean> - true if operation was successful
+ * @returns Promise<{success: boolean, error?: string}> - result with success status and optional error
  */
-export async function setPassword(password?: string, persistToShow: boolean = false): Promise<boolean> {
+export async function setPassword(password?: string, persistToShow: boolean = false): Promise<{ success: boolean; error?: string }> {
 	try {
-		configErrorStore.set(null);
-
 		const result = await configClient.setPassword.mutate({ password, persistToShow });
 
 		// Refresh configuration after change
 		await getConfig();
 
-		return result.success;
+		return { success: result.success };
 	} catch (error) {
 		console.error("Failed to set password:", error);
-		configErrorStore.set(error instanceof Error ? error.message : "Failed to set password");
-		return false;
+		const errorMessage = error instanceof Error ? error.message : "Failed to set password";
+		return { success: false, error: errorMessage };
 	}
 }
 
@@ -220,29 +211,27 @@ export async function setPassword(password?: string, persistToShow: boolean = fa
  * Set scene setting override
  * Optionally persist to selected show if available
  *
- * @param key - Setting key to update
+ * @param key - Setting key to modify
  * @param value - Setting value (0=Auto, 1=Force Enable, 2=Force Disable)
  * @param persistToShow - Whether to persist to the selected show
- * @returns Promise<boolean> - true if operation was successful
+ * @returns Promise<{success: boolean, error?: string}> - result with success status and optional error
  */
 export async function setSetting(
 	key: "curtains" | "chatEnabled" | "effectsEnabled" | "visitorAudioEnabled" | "visitorVideoEnabled",
 	value: SceneSetting,
 	persistToShow: boolean = false,
-): Promise<boolean> {
+): Promise<{ success: boolean; error?: string }> {
 	try {
-		configErrorStore.set(null);
-
 		const result = await configClient.setSetting.mutate({ key, value, persistToShow });
 
 		// Refresh configuration after change
 		await getConfig();
 
-		return result.success;
+		return { success: result.success };
 	} catch (error) {
 		console.error("Failed to set setting:", error);
-		configErrorStore.set(error instanceof Error ? error.message : "Failed to set setting");
-		return false;
+		const errorMessage = error instanceof Error ? error.message : "Failed to set setting";
+		return { success: false, error: errorMessage };
 	}
 }
 
@@ -252,22 +241,20 @@ export async function setSetting(
  *
  * @param scene - Scene configuration or null to clear
  * @param persistToShow - Whether to persist to the selected show
- * @returns Promise<boolean> - true if operation was successful
+ * @returns Promise<{success: boolean, error?: string}> - result with success status and optional error
  */
-export async function setScene(scene: Scene | null, persistToShow: boolean = false): Promise<boolean> {
+export async function setScene(scene: Scene | null, persistToShow: boolean = false): Promise<{ success: boolean; error?: string }> {
 	try {
-		configErrorStore.set(null);
-
 		const result = await configClient.setScene.mutate({ scene, persistToShow });
 
 		// Refresh configuration after change
 		await getConfig();
 
-		return result.success;
+		return { success: result.success };
 	} catch (error) {
 		console.error("Failed to set scene:", error);
-		configErrorStore.set(error instanceof Error ? error.message : "Failed to set scene");
-		return false;
+		const errorMessage = error instanceof Error ? error.message : "Failed to set scene";
+		return { success: false, error: errorMessage };
 	}
 }
 
@@ -276,22 +263,21 @@ export async function setScene(scene: Scene | null, persistToShow: boolean = fal
  * Optionally persist to selected show if available
  *
  * @param persistToShow - Whether to persist to the selected show
- * @returns Promise<boolean> - true if operation was successful
+ * @returns Promise<{success: boolean, error?: string}> - result with success status and optional error
  */
-export async function resetSettings(persistToShow: boolean = false): Promise<boolean> {
+export async function resetSettings(persistToShow: boolean = false): Promise<{ success: boolean; error?: string }> {
 	try {
-		configErrorStore.set(null);
-
 		const result = await configClient.resetSettings.mutate({ persistToShow });
 
 		// Refresh configuration after change
 		await getConfig();
 
-		return result.success;
+		return { success: result.success };
 	} catch (error) {
 		console.error("Failed to reset settings:", error);
-		configErrorStore.set(error instanceof Error ? error.message : "Failed to reset settings");
-		return false;
+		const errorMessage = error instanceof Error ? error.message : "Failed to reset settings";
+
+		return { success: false, error: errorMessage };
 	}
 }
 
@@ -300,22 +286,23 @@ export async function resetSettings(persistToShow: boolean = false): Promise<boo
  *
  * @param showId - Show ID (optional, uses selected show if not provided)
  * @param metadata - Metadata fields to update
- * @returns Promise<boolean> - true if operation was successful
+ * @returns Promise<{success: boolean, error?: string}> - result with success status and optional error
  */
-export async function updateShowMetadata(showId?: number, metadata: { name?: string; description?: string; nomenclature?: string } = {}): Promise<boolean> {
+export async function updateShowMetadata(
+	showId?: number,
+	metadata: { name?: string; description?: string; nomenclature?: string } = {},
+): Promise<{ success: boolean; error?: string }> {
 	try {
-		configErrorStore.set(null);
-
 		const result = await configClient.updateShowMetadata.mutate({ showId, ...metadata });
 
 		// Refresh configuration after change
 		await getConfig();
 
-		return result.success;
+		return { success: result.success };
 	} catch (error) {
 		console.error("Failed to update show metadata:", error);
-		configErrorStore.set(error instanceof Error ? error.message : "Failed to update show metadata");
-		return false;
+		const errorMessage = error instanceof Error ? error.message : "Failed to update show metadata";
+		return { success: false, error: errorMessage };
 	}
 }
 
@@ -323,22 +310,20 @@ export async function updateShowMetadata(showId?: number, metadata: { name?: str
  * Sync current runtime configuration to selected show
  * Persists all runtime state to the selected show
  *
- * @returns Promise<boolean> - true if operation was successful
+ * @returns Promise<{success: boolean, error?: string}> - result with success status and optional error
  */
-export async function syncToShow(): Promise<boolean> {
+export async function syncToShow(): Promise<{ success: boolean; error?: string }> {
 	try {
-		configErrorStore.set(null);
-
 		const result = await configClient.syncToShow.mutate();
 
 		// Refresh configuration after sync
 		await getConfig();
 
-		return result.success;
+		return { success: result.success };
 	} catch (error) {
 		console.error("Failed to sync to show:", error);
-		configErrorStore.set(error instanceof Error ? error.message : "Failed to sync to show");
-		return false;
+		const errorMessage = error instanceof Error ? error.message : "Failed to sync to show";
+		return { success: false, error: errorMessage };
 	}
 }
 
@@ -530,7 +515,7 @@ export const SceneSettings = {
 	 * @param value - 0=Auto, 1=Show, 2=Hide
 	 * @param persistToShow - Whether to persist to selected show
 	 */
-	async setCurtains(value: SceneSetting, persistToShow: boolean = false): Promise<boolean> {
+	async setCurtains(value: SceneSetting, persistToShow: boolean = false): Promise<{ success: boolean; error?: string }> {
 		return await setSetting("curtains", value, persistToShow);
 	},
 
@@ -539,7 +524,7 @@ export const SceneSettings = {
 	 * @param value - 0=Auto, 1=Enable, 2=Disable
 	 * @param persistToShow - Whether to persist to selected show
 	 */
-	async setChatEnabled(value: SceneSetting, persistToShow: boolean = false): Promise<boolean> {
+	async setChatEnabled(value: SceneSetting, persistToShow: boolean = false): Promise<{ success: boolean; error?: string }> {
 		return await setSetting("chatEnabled", value, persistToShow);
 	},
 
@@ -548,7 +533,7 @@ export const SceneSettings = {
 	 * @param value - 0=Auto, 1=Enable, 2=Disable
 	 * @param persistToShow - Whether to persist to selected show
 	 */
-	async setEffectsEnabled(value: SceneSetting, persistToShow: boolean = false): Promise<boolean> {
+	async setEffectsEnabled(value: SceneSetting, persistToShow: boolean = false): Promise<{ success: boolean; error?: string }> {
 		return await setSetting("effectsEnabled", value, persistToShow);
 	},
 
@@ -557,7 +542,7 @@ export const SceneSettings = {
 	 * @param value - 0=Auto, 1=Enable, 2=Disable
 	 * @param persistToShow - Whether to persist to selected show
 	 */
-	async setVisitorAudioEnabled(value: SceneSetting, persistToShow: boolean = false): Promise<boolean> {
+	async setVisitorAudioEnabled(value: SceneSetting, persistToShow: boolean = false): Promise<{ success: boolean; error?: string }> {
 		return await setSetting("visitorAudioEnabled", value, persistToShow);
 	},
 
@@ -566,7 +551,7 @@ export const SceneSettings = {
 	 * @param value - 0=Auto, 1=Enable, 2=Disable
 	 * @param persistToShow - Whether to persist to selected show
 	 */
-	async setVisitorVideoEnabled(value: SceneSetting, persistToShow: boolean = false): Promise<boolean> {
+	async setVisitorVideoEnabled(value: SceneSetting, persistToShow: boolean = false): Promise<{ success: boolean; error?: string }> {
 		return await setSetting("visitorVideoEnabled", value, persistToShow);
 	},
 };
@@ -582,7 +567,6 @@ export const SceneSettings = {
 export async function initializeConfigAPI(): Promise<void> {
 	try {
 		configLoadingStore.set(true);
-		configErrorStore.set(null);
 
 		// Mode is determined by CONFIG.runtime.theater
 		const mode = CONFIG.runtime.theater ? AppMode.THEATER : AppMode.STAGE;
@@ -613,7 +597,6 @@ export async function initializeConfigAPI(): Promise<void> {
 		await getConfig();
 	} catch (error) {
 		console.error("Failed to initialize configuration API:", error);
-		configErrorStore.set("Failed to initialize configuration API");
 	} finally {
 		configLoadingStore.set(false);
 	}
@@ -639,7 +622,6 @@ export function clearConfigData(): void {
 	});
 
 	showsStore.set([]);
-	configErrorStore.set(null);
 	showsErrorStore.set(null);
 	configLoadingStore.set(false);
 	showsLoadingStore.set(false);
@@ -661,56 +643,56 @@ export class ConfigManager {
 	/**
 	 * Update password for currently selected show
 	 */
-	async updatePassword(password?: string): Promise<boolean> {
+	async updatePassword(password?: string): Promise<{ success: boolean; error?: string }> {
 		return await setPassword(password, true); // Always persist in manager context
 	}
 
 	/**
 	 * Update curtains override setting
 	 */
-	async updateCurtainsOverride(value: SceneSetting): Promise<boolean> {
+	async updateCurtainsOverride(value: SceneSetting): Promise<{ success: boolean; error?: string }> {
 		return await SceneSettings.setCurtains(value, true);
 	}
 
 	/**
 	 * Update chat enabled override setting
 	 */
-	async updateChatEnabledOverride(value: SceneSetting): Promise<boolean> {
+	async updateChatEnabledOverride(value: SceneSetting): Promise<{ success: boolean; error?: string }> {
 		return await SceneSettings.setChatEnabled(value, true);
 	}
 
 	/**
 	 * Update effects enabled override setting
 	 */
-	async updateEffectsEnabledOverride(value: SceneSetting): Promise<boolean> {
+	async updateEffectsEnabledOverride(value: SceneSetting): Promise<{ success: boolean; error?: string }> {
 		return await SceneSettings.setEffectsEnabled(value, true);
 	}
 
 	/**
 	 * Update visitor audio enabled override setting
 	 */
-	async updateVisitorAudioEnabledOverride(value: SceneSetting): Promise<boolean> {
+	async updateVisitorAudioEnabledOverride(value: SceneSetting): Promise<{ success: boolean; error?: string }> {
 		return await SceneSettings.setVisitorAudioEnabled(value, true);
 	}
 
 	/**
 	 * Update visitor video enabled override setting
 	 */
-	async updateVisitorVideoEnabledOverride(value: SceneSetting): Promise<boolean> {
+	async updateVisitorVideoEnabledOverride(value: SceneSetting): Promise<{ success: boolean; error?: string }> {
 		return await SceneSettings.setVisitorVideoEnabled(value, true);
 	}
 
 	/**
 	 * Update current scene
 	 */
-	async updateCurrentScene(scene: Scene): Promise<boolean> {
+	async updateCurrentScene(scene: Scene): Promise<{ success: boolean; error?: string }> {
 		return await setScene(scene, true);
 	}
 
 	/**
 	 * Update show metadata
 	 */
-	async updateMetadata(metadata: { name?: string; description?: string; nomenclature?: string }): Promise<boolean> {
+	async updateMetadata(metadata: { name?: string; description?: string; nomenclature?: string }): Promise<{ success: boolean; error?: string }> {
 		return await updateShowMetadata(undefined, metadata);
 	}
 

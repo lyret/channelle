@@ -12,7 +12,7 @@
 	let originalDescription = "";
 	let originalNomenclature = "";
 	let isLoading = false;
-	let error = "";
+	let errorMessage = "";
 	let success = false;
 
 	$: nameCharCount = nameInput.length;
@@ -58,8 +58,16 @@
 		return unsubscribe;
 	});
 
+	// Sets the displayed error message and clears after 8 seconds
+	function setError(message: string) {
+		errorMessage = message;
+		setTimeout(() => {
+			errorMessage = "";
+		}, 8000);
+	}
+
 	function resetForm() {
-		error = "";
+		errorMessage = "";
 		success = false;
 		// Reset to original values
 		nameInput = originalName;
@@ -71,7 +79,7 @@
 		if (!canSave) return;
 
 		isLoading = true;
-		error = "";
+		errorMessage = "";
 		success = false;
 
 		try {
@@ -90,13 +98,13 @@
 
 			// Check if we actually have changes to send
 			if (Object.keys(metadata).length === 0) {
-				error = "No changes detected";
+				setError("No changes detected");
 				return;
 			}
 
 			const result = await configManager.updateMetadata(metadata);
 
-			if (result) {
+			if (result.success) {
 				// Update only the original values for fields that were actually sent
 				if (metadata.name !== undefined) {
 					originalName = metadata.name;
@@ -115,19 +123,11 @@
 					success = false;
 				}, 3000);
 			} else {
-				error = "Kunde inte uppdatera metadata informationen.";
+				setError(result.error || "Okänt fel");
 			}
-		} catch (err) {
-			console.error("Error saving show metadata:", err);
-
-			// Handle tRPC errors specifically
-			if (err && typeof err === "object" && "message" in err) {
-				error = err.message as string;
-			} else if (err instanceof Error) {
-				error = err.message;
-			} else {
-				error = "An unexpected error occurred while saving";
-			}
+		} catch (error) {
+			console.error("Saving metadata failed:", error);
+			setError("Ett oväntat fel uppstod. Försök igen.");
 		} finally {
 			isLoading = false;
 		}
@@ -161,9 +161,9 @@
 		</div>
 	{/if}
 
-	{#if error}
+	{#if errorMessage}
 		<div class="notification is-danger is-light">
-			<p class="has-text-danger">✗ {error}</p>
+			<p class="has-text-danger">✗ {errorMessage}</p>
 		</div>
 	{/if}
 

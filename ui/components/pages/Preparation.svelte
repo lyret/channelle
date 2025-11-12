@@ -15,7 +15,7 @@
 	import TheaterWrapper from "~/components/theater/_TheaterWrapper.svelte";
 	import TheaterHeader from "~/components/theater/TheaterHeader.svelte";
 	import TheaterActionBar from "~/components/theater/TheaterActionBar.svelte";
-	import InstrumentContainer from "~/components/instruments/_InstrumentContainer.svelte";
+	import ConfigurationInstruments from "~/components/instruments/ConfigurationInstruments.svelte";
 	import IconArrowLeft from "~/components/picol/icons/Picol-arrow-full-left.svelte";
 
 	let currentShow: PublicShowDataResponse | null = null;
@@ -94,11 +94,16 @@
 			</a>
 		</TheaterActionBar>
 
-		<div class="has-text-centered mb-4" in:blur={{ duration: 500, delay: 1000 }}>
+		<div class="has-text-centered mt-2 mb-4" in:blur={{ duration: 500, delay: 1000 }}>
 			{#if loading}
 				<p class="subtitle is-4 has-text-grey">Laddar showdata...</p>
 			{:else if error}
 				<p class="subtitle is-4 has-text-danger">{error}</p>
+			{:else if currentShow && currentShow.lastOnlineAt !== null}
+				<p class="subtitle is-4 has-text-warning has-text-weight-semibold">
+					"{$currentShowStore?.name || currentShow.name}" har redan visats och kan inte längre redigeras här
+				</p>
+				<p class="is-size-6 mb-2">Du kan fortfarande se inställningarna nedan, men ändringar kommer inte att sparas.</p>
 			{:else if currentShow}
 				<p class="subtitle is-4 has-text-white">Förbereder "{$currentShowStore?.name || currentShow.name}" innan lansering</p>
 			{:else}
@@ -118,7 +123,7 @@
 				</div>
 			</div>
 		{:else if currentShow}
-			<InstrumentContainer showParticipants={false} showMediaLibrary={false} />
+			<ConfigurationInstruments showParticipants={false} showMediaLibrary={false} />
 		{/if}
 	</div>
 </TheaterWrapper>

@@ -97,6 +97,7 @@ export const configRouter = trcpRouter({
 						visitorAudioEnabledOverride: show.visitorAudioEnabledOverride,
 						visitorVideoEnabledOverride: show.visitorVideoEnabledOverride,
 						currentScene: show.currentScene,
+						lastOnlineAt: show.lastOnlineAt,
 						createdAt: show.createdAt,
 						updatedAt: show.updatedAt,
 					};
@@ -383,9 +384,7 @@ export const configRouter = trcpRouter({
 				if (error instanceof TRPCError) {
 					throw error;
 				}
-				if (error instanceof TRPCClientError) {
-					throw error;
-				}
+
 				console.error("[Config] Error updating show metadata:", error);
 				throw new TRPCError({
 					code: "INTERNAL_SERVER_ERROR",
@@ -463,6 +462,7 @@ export const configRouter = trcpRouter({
 				visitorAudioEnabledOverride: config.visitorAudioEnabledOverride,
 				visitorVideoEnabledOverride: config.visitorVideoEnabledOverride,
 				currentScene: config.currentScene,
+				lastOnlineAt: config.lastOnlineAt,
 				createdAt: config.createdAt,
 				updatedAt: config.updatedAt,
 			};

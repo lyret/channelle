@@ -5,6 +5,36 @@
 	import { onMount } from "svelte";
 	import { peersStore } from "~/api/media";
 	import { configManager, currentSceneStore, sceneSettingsStore, resetSettings } from "~/api/config";
+
+	// Error handling state
+	let errorMessage: string = "";
+	let isLoading = false;
+
+	// Sets the displayed error message and clears after 8 seconds
+	function setError(message: string) {
+		errorMessage = message;
+		setTimeout(() => {
+			errorMessage = "";
+		}, 8000);
+	}
+
+	// Handle API call results
+	async function handleApiCall(apiCall: Promise<{ success: boolean; error?: string }>) {
+		isLoading = true;
+		errorMessage = "";
+
+		try {
+			const result = await apiCall;
+			if (!result.success) {
+				setError(result.error || "Okänt fel");
+			}
+		} catch (error) {
+			console.error("API call failed:", error);
+			setError("Ett oväntat fel uppstod. Försök igen.");
+		} finally {
+			isLoading = false;
+		}
+	}
 	import { stageChatEnabledStore } from "~/api/media";
 
 	$: peers = Object.values($peersStore || {}).filter((p) => (p.actor || p.manager) && !p.banned);
@@ -102,9 +132,9 @@
 		};
 	});
 
-	function handleSceneSelect(event: CustomEvent<Scene>) {
+	async function handleSceneSelect(event: CustomEvent<Scene>) {
 		// Persist the scene selection to the server
-		configManager.updateCurrentScene(event.detail);
+		await handleApiCall(configManager.updateCurrentScene(event.detail));
 		// Collapse all expanded scenes after selection
 		expandedScenes = {};
 	}
@@ -116,11 +146,7 @@
 
 	// Reset all override settings to automatic
 	async function resetOverrides() {
-		try {
-			await resetSettings(true); // persist to show
-		} catch (error) {
-			console.error("Failed to reset settings:", error);
-		}
+		await handleApiCall(resetSettings(true)); // persist to show
 	}
 
 	// const doDesignTest = (style: "simple" | "ukraine") => {
@@ -172,6 +198,12 @@
 <div class="scene-selector-instrument">
 	<h1 class="title">Sceninställningar</h1>
 
+	{#if errorMessage}
+		<div class="notification is-danger is-light">
+			<p class="has-text-danger">✗ {errorMessage}</p>
+		</div>
+	{/if}
+
 	<div class="scene-content">
 		<Accordion title="Ange tvingande inställningar" isOpen={false}>
 			<p>Dessa inställningar åsidosätter alltid de inställningar som finns i den aktiva scenen.</p>
@@ -184,21 +216,27 @@
 						<button
 							class="button is-danger"
 							class:is-light={$sceneSettingsStore.curtains !== 2}
-							on:click={() => configManager.updateCurtainsOverride(2)}
+							class:is-loading={isLoading}
+							disabled={isLoading}
+							on:click={() => handleApiCall(configManager.updateCurtainsOverride(2))}
 						>
 							Dölj
 						</button>
 						<button
 							class="button is-info"
 							class:is-light={$sceneSettingsStore.curtains !== 0}
-							on:click={() => configManager.updateCurtainsOverride(0)}
+							class:is-loading={isLoading}
+							disabled={isLoading}
+							on:click={() => handleApiCall(configManager.updateCurtainsOverride(0))}
 						>
 							Automatiskt
 						</button>
 						<button
 							class="button is-success"
 							class:is-light={$sceneSettingsStore.curtains !== 1}
-							on:click={() => configManager.updateCurtainsOverride(1)}
+							class:is-loading={isLoading}
+							disabled={isLoading}
+							on:click={() => handleApiCall(configManager.updateCurtainsOverride(1))}
 						>
 							Visa
 						</button>
@@ -224,21 +262,27 @@
 						<button
 							class="button is-danger"
 							class:is-light={$sceneSettingsStore.chatEnabled !== 2}
-							on:click={() => configManager.updateChatEnabledOverride(2)}
+							class:is-loading={isLoading}
+							disabled={isLoading}
+							on:click={() => handleApiCall(configManager.updateChatEnabledOverride(2))}
 						>
 							Dölj
 						</button>
 						<button
 							class="button is-info"
 							class:is-light={$sceneSettingsStore.chatEnabled !== 0}
-							on:click={() => configManager.updateChatEnabledOverride(0)}
+							class:is-loading={isLoading}
+							disabled={isLoading}
+							on:click={() => handleApiCall(configManager.updateChatEnabledOverride(0))}
 						>
 							Automatiskt
 						</button>
 						<button
 							class="button is-success"
 							class:is-light={$sceneSettingsStore.chatEnabled !== 1}
-							on:click={() => configManager.updateChatEnabledOverride(1)}
+							class:is-loading={isLoading}
+							disabled={isLoading}
+							on:click={() => handleApiCall(configManager.updateChatEnabledOverride(1))}
 						>
 							Visa
 						</button>
@@ -264,21 +308,27 @@
 						<button
 							class="button is-danger"
 							class:is-light={$sceneSettingsStore.visitorVideoEnabled !== 2}
-							on:click={() => configManager.updateVisitorVideoEnabledOverride(2)}
+							class:is-loading={isLoading}
+							disabled={isLoading}
+							on:click={() => handleApiCall(configManager.updateVisitorVideoEnabledOverride(2))}
 						>
 							Nej
 						</button>
 						<button
 							class="button is-info"
 							class:is-light={$sceneSettingsStore.visitorVideoEnabled !== 0}
-							on:click={() => configManager.updateVisitorVideoEnabledOverride(0)}
+							class:is-loading={isLoading}
+							disabled={isLoading}
+							on:click={() => handleApiCall(configManager.updateVisitorVideoEnabledOverride(0))}
 						>
 							Automatiskt
 						</button>
 						<button
 							class="button is-success"
 							class:is-light={$sceneSettingsStore.visitorVideoEnabled !== 1}
-							on:click={() => configManager.updateVisitorVideoEnabledOverride(1)}
+							class:is-loading={isLoading}
+							disabled={isLoading}
+							on:click={() => handleApiCall(configManager.updateVisitorVideoEnabledOverride(1))}
 						>
 							Ja
 						</button>
@@ -304,21 +354,27 @@
 						<button
 							class="button is-danger"
 							class:is-light={$sceneSettingsStore.visitorAudioEnabled !== 2}
-							on:click={() => configManager.updateVisitorAudioEnabledOverride(2)}
+							class:is-loading={isLoading}
+							disabled={isLoading}
+							on:click={() => handleApiCall(configManager.updateVisitorAudioEnabledOverride(2))}
 						>
 							Nej
 						</button>
 						<button
 							class="button is-info"
 							class:is-light={$sceneSettingsStore.visitorAudioEnabled !== 0}
-							on:click={() => configManager.updateVisitorAudioEnabledOverride(0)}
+							class:is-loading={isLoading}
+							disabled={isLoading}
+							on:click={() => handleApiCall(configManager.updateVisitorAudioEnabledOverride(0))}
 						>
 							Automatiskt
 						</button>
 						<button
 							class="button is-success"
 							class:is-light={$sceneSettingsStore.visitorAudioEnabled !== 1}
-							on:click={() => configManager.updateVisitorAudioEnabledOverride(1)}
+							class:is-loading={isLoading}
+							disabled={isLoading}
+							on:click={() => handleApiCall(configManager.updateVisitorAudioEnabledOverride(1))}
 						>
 							Ja
 						</button>
@@ -344,21 +400,27 @@
 						<button
 							class="button is-danger"
 							class:is-light={$sceneSettingsStore.effectsEnabled !== 2}
-							on:click={() => configManager.updateEffectsEnabledOverride(2)}
+							class:is-loading={isLoading}
+							disabled={isLoading}
+							on:click={() => handleApiCall(configManager.updateEffectsEnabledOverride(2))}
 						>
 							Nej
 						</button>
 						<button
 							class="button is-info"
 							class:is-light={$sceneSettingsStore.effectsEnabled !== 0}
-							on:click={() => configManager.updateEffectsEnabledOverride(0)}
+							class:is-loading={isLoading}
+							disabled={isLoading}
+							on:click={() => handleApiCall(configManager.updateEffectsEnabledOverride(0))}
 						>
 							Automatiskt
 						</button>
 						<button
 							class="button is-success"
 							class:is-light={$sceneSettingsStore.effectsEnabled !== 1}
-							on:click={() => configManager.updateEffectsEnabledOverride(1)}
+							class:is-loading={isLoading}
+							disabled={isLoading}
+							on:click={() => handleApiCall(configManager.updateEffectsEnabledOverride(1))}
 						>
 							Ja
 						</button>
@@ -380,7 +442,9 @@
 			{#if hasActiveOverrides}
 				<div class="field">
 					<div class="control">
-						<button class="button is-warning" on:click={resetOverrides}> Återställ till automatiskt </button>
+						<button class="button is-warning" class:is-loading={isLoading} disabled={isLoading} on:click={resetOverrides}>
+							Återställ till automatiskt
+						</button>
 					</div>
 					<div class="help-section">
 						<p class="help">Återställer alla tvingande inställningar till "Automatiskt" - låter scenerna bestämma</p>

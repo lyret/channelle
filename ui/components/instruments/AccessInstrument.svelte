@@ -22,6 +22,14 @@
 
 	const inviteLinks = ["", ""];
 
+	// Sets the displayed error message and clears after 8 seconds
+	function setError(message: string) {
+		errorMessage = message;
+		setTimeout(() => {
+			errorMessage = "";
+		}, 8000);
+	}
+
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.key === "Enter" && canSave) {
 			event.preventDefault();
@@ -47,9 +55,9 @@
 
 		try {
 			// Use config manager to handle both theater and stage modes
-			const success = await configManager.updatePassword(inputValue || undefined);
+			const result = await configManager.updatePassword(inputValue || undefined);
 
-			if (success) {
+			if (result.success) {
 				// Update original password to reflect new state
 				originalPassword = inputValue || "";
 
@@ -63,11 +71,11 @@
 					successMessage = "";
 				}, 3000);
 			} else {
-				errorMessage = "Kunde inte uppdatera lösenordet. Försök igen.";
+				setError(result.error || "Okänt fel");
 			}
-		} catch (error) {
+		} catch (error: any) {
 			console.error("Failed to update password:", error);
-			errorMessage = "Ett fel uppstod när lösenordet skulle uppdateras.";
+			setError("Ett oväntat fel uppstod. Försök igen.");
 		} finally {
 			isLoading = false;
 		}

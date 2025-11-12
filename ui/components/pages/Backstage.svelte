@@ -4,7 +4,7 @@
 	import { initializeConfigManager } from "~/api/config";
 
 	import Wrapper from "./_Wrapper.svelte";
-	import InstrumentContainer from "~/components/instruments/_InstrumentContainer.svelte";
+	import ConfigurationInstruments from "~/components/instruments/ConfigurationInstruments.svelte";
 
 	import logoSrc from "~/assets/images/redrose.gif";
 
@@ -20,7 +20,7 @@
 		<div class="image-container has-text-centered header" style="height:100px" in:blur={{ duration: 5000, delay: 2000 }}>
 			<img src={logoSrc} alt="logotyp" class="mt-3 mb-0" style="height:80px" />
 		</div>
-		<InstrumentContainer showParticipants={true} showMediaLibrary={false} />
+		<ConfigurationInstruments showParticipants={true} showMediaLibrary={true} />
 	</main>
 </Wrapper>
 
