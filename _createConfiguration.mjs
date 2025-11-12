@@ -294,12 +294,15 @@ export async function createConfiguration() {
 			/** Indicates that we want to show verbose warnings and log messages */
 			verboseOutput: verbose,
 		},
+		/** Theater Settings */
+		theater: {
+			password: theaterPassword,
+		},
 		/** Stage Settings */
 		stage: {
 			name: stageName,
 			inviteKey: stageInviteLinkKey,
 			id: stageId,
-			theaterPassword: theaterPassword,
 			showId: showId,
 		},
 		/** Web Server Settings */

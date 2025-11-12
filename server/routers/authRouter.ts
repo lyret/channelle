@@ -61,7 +61,7 @@ export const authRouter = trcpRouter({
 		)
 		.mutation(async ({ input, ctx }) => {
 			// Verify password
-			if (input.password !== CONFIG.stage.theaterPassword) {
+			if (input.password !== CONFIG.theater.password) {
 				console.log(`[AuthRouter] Authentication failed for peer ${ctx.peer.id}: Invalid password`);
 				return {
 					success: false,

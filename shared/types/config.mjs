@@ -31,11 +31,15 @@
  */
 
 /**
+ * @typedef {Object} TheaterConfig
+ * @property {string} password - The password for administrator authentication.
+ */
+
+/**
  * @typedef {Object} StageConfig
  * @property {string} name - The name of the stage.
  * @property {string} inviteKey - The invite key for the stage.
  * @property {string} id - The identifier for the stage.
- * @property {string} theaterPassword - The password for theater authentication.
  * @property {number|undefined} showId - The show ID to initialize the stage with (optional).
  */
 
@@ -90,6 +94,7 @@
  * @property {PackageConfig} package - Package Information.
  * @property {BuildConfig} build - Build Settings.
  * @property {DebugConfig} debug - Debug Settings.
+ * @property {TheaterConfig} theater - Theater Settings.
  * @property {StageConfig} stage - Stage Settings.
  * @property {WebConfig} web - Web Server Settings.
  * @property {LauncherConfig} launcher - Launcher Settings.

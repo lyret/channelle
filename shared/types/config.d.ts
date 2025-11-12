@@ -43,14 +43,17 @@ type DebugConfig = {
 };
 
 type StageConfig = {
+	/** The password for administrator authentication. */
+	password: string;
+};
+
+type StageConfig = {
 	/** The name of the stage. */
 	name: string;
 	/** The invite key for the stage. */
 	inviteKey: string;
 	/** The identifier for the stage. */
 	id: string;
-	/** The password for theater authentication. */
-	theaterPassword: string;
 	/** The show ID to initialize the stage with (optional). */
 	showId?: number;
 };
@@ -127,6 +130,8 @@ type CONFIG = {
 	build: BuildConfig;
 	/** Debug Settings */
 	debug: DebugConfig;
+	/** Theater Settings */
+	theater: TheaterConfig;
 	/** Stage Settings */
 	stage: StageConfig;
 	/** Web Server Settings */

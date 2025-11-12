@@ -487,7 +487,7 @@ export const showsRouter = trcpRouter({
 		.mutation(async ({ input }): Promise<{ success: boolean; message?: string }> => {
 			try {
 				// Get theater password from config
-				const theaterPassword = CONFIG.stage.theaterPassword;
+				const theaterPassword = CONFIG.theater.password;
 
 				// Verify password
 				if (input.password !== theaterPassword) {
