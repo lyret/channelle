@@ -14,7 +14,7 @@
 	import IconKey from "../../icons/Icon-key.svelte";
 	import IconLayers from "../../icons/Icon-layers.svelte";
 	import IconUsers from "../../icons/Icon-users.svelte";
-	import IconXCircle from "../../icons/Icon-x-circle.svelte";
+	import PicolArrowLeft from "../../picol/icons/Picol-arrow-sans-left.svelte";
 
 	import { peerStore } from "~/api/media";
 	import { focusedInstrument } from "~/stores/instruments";
@@ -27,11 +27,10 @@
 <!-- Manager Contents -->
 {#if $peerStore.manager || CONFIG.runtime.debug}
 	{#if $focusedInstrument}
-		<div class="instrument-control">
-			<a on:click={() => focusedInstrument.set(undefined)}>
-				<span class="icon"><IconXCircle /></span>
-			</a>
-		</div>
+		<button class="button is-fullwidth mb-4 is-small close-button" on:click={() => focusedInstrument.set(undefined)}>
+			<span class="icon is-size-5"><PicolArrowLeft /></span>
+			<span>Visa alla instrument</span>
+		</button>
 		<div class="instrument">
 			{#if $focusedInstrument == "debug"}
 				<DebugInstrument />
@@ -89,18 +88,12 @@
 		border-radius: 8px;
 		margin-bottom: 24px;
 	}
-	.instrument-control {
-		font-size: 3em;
-		height: 24px;
-		margin-bottom: -24px;
-		margin-right: -10px;
-		text-align: right;
-	}
 	.instrument {
-		padding-top: 24px;
+		padding-top: 0px;
 	}
 
-	.select-view .button {
+	.select-view .button,
+	.close-button {
 		justify-content: start;
 		border-width: 0;
 	}
