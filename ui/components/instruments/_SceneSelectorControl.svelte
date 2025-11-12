@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher } from "svelte";
 	import IconMessageCircle from "../icons/Icon-message-circle.svelte";
-	import IconUser from "../icons/Icon-user.svelte";
+
 	import SceneLayoutPreview from "./_SceneLayoutPreview.svelte";
 	import type { Peer, Scene } from "~/types/serverSideTypes";
 
@@ -56,8 +56,11 @@
 					{#if layout.visitorVideoEnabled}
 						<span class="property-tag enabled">📹</span>
 					{/if}
-					{#if layout.effectsEnabled}
-						<span class="property-tag enabled">✨</span>
+					{#if layout.gratitudeEffectsEnabled}
+						<span class="property-tag enabled">👏</span>
+					{/if}
+					{#if layout.criticalEffectsEnabled}
+						<span class="property-tag enabled">🍅</span>
 					{/if}
 				</div>
 			</div>
@@ -124,8 +127,12 @@
 						<span class="property-desc">Publikvideo {layout.visitorVideoEnabled ? "på" : "av"}</span>
 					</div>
 					<div class="property-item">
-						<span class="property-tag" class:enabled={layout.effectsEnabled}>👏</span>
-						<span class="property-desc">Effekter {layout.effectsEnabled ? "på" : "av"}</span>
+						<span class="property-tag" class:enabled={layout.gratitudeEffectsEnabled}>🌹</span>
+						<span class="property-desc">Hyllningar {layout.gratitudeEffectsEnabled ? "på" : "av"}</span>
+					</div>
+					<div class="property-item">
+						<span class="property-tag" class:enabled={layout.criticalEffectsEnabled}>🍅</span>
+						<span class="property-desc">Kritik {layout.criticalEffectsEnabled ? "på" : "av"}</span>
 					</div>
 				</div>
 			</div>

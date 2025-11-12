@@ -48,13 +48,15 @@
 		$sceneSettingsStore.chatEnabled !== 0 ||
 		$sceneSettingsStore.visitorVideoEnabled !== 0 ||
 		$sceneSettingsStore.visitorAudioEnabled !== 0 ||
-		$sceneSettingsStore.effectsEnabled !== 0;
+		$sceneSettingsStore.gratitudeEffectsEnabled !== 0 ||
+		$sceneSettingsStore.criticalEffectsEnabled !== 0;
 
 	const auto: Scene = {
 		name: "Automatisk",
 		chatEnabled: true,
 		curtains: false,
-		effectsEnabled: true,
+		gratitudeEffectsEnabled: true,
+		criticalEffectsEnabled: true,
 		visitorAudioEnabled: false,
 		visitorVideoEnabled: false,
 		layout: [],
@@ -63,7 +65,8 @@
 		name: "Helt tom",
 		chatEnabled: true,
 		curtains: false,
-		effectsEnabled: true,
+		gratitudeEffectsEnabled: true,
+		criticalEffectsEnabled: true,
 		visitorAudioEnabled: false,
 		visitorVideoEnabled: false,
 		layout: [[{ type: "empty" }]],
@@ -72,7 +75,8 @@
 		name: "Chatduell",
 		chatEnabled: false,
 		curtains: false,
-		effectsEnabled: true,
+		gratitudeEffectsEnabled: true,
+		criticalEffectsEnabled: true,
 		visitorAudioEnabled: true,
 		visitorVideoEnabled: true,
 		layout: [[{ type: "actor", peerId: "-1" }, { type: "chat" }, { type: "actor", peerId: "-1" }]],
@@ -81,7 +85,8 @@
 		name: "En i fokus",
 		chatEnabled: true,
 		curtains: false,
-		effectsEnabled: true,
+		gratitudeEffectsEnabled: true,
+		criticalEffectsEnabled: true,
 		visitorAudioEnabled: true,
 		visitorVideoEnabled: true,
 		layout: [[{ type: "actor", peerId: "-1" }]],
@@ -90,7 +95,8 @@
 		name: "Två bredvid varandra",
 		chatEnabled: true,
 		curtains: false,
-		effectsEnabled: true,
+		gratitudeEffectsEnabled: true,
+		criticalEffectsEnabled: true,
 		visitorAudioEnabled: true,
 		visitorVideoEnabled: true,
 		layout: [
@@ -104,7 +110,8 @@
 		name: "Fyra rutor",
 		chatEnabled: true,
 		curtains: false,
-		effectsEnabled: true,
+		gratitudeEffectsEnabled: true,
+		criticalEffectsEnabled: true,
 		visitorAudioEnabled: true,
 		visitorVideoEnabled: true,
 		layout: [
@@ -394,46 +401,92 @@
 			</div>
 
 			<div class="field">
-				<label class="label">Tillåt blommor och applåder 🌹👏</label>
+				<label class="label">Tillåt blommor 🌹 och applåder 👏</label>
 				<div class="control">
 					<div class="buttons has-addons">
 						<button
 							class="button is-danger"
-							class:is-light={$sceneSettingsStore.effectsEnabled !== 2}
+							class:is-light={$sceneSettingsStore.gratitudeEffectsEnabled !== 2}
 							class:is-loading={isLoading}
 							disabled={isLoading}
-							on:click={() => handleApiCall(configManager.updateEffectsEnabledOverride(2))}
+							on:click={() => handleApiCall(configManager.updateGratitudeEffectsEnabledOverride(2))}
 						>
 							Nej
 						</button>
 						<button
 							class="button is-info"
-							class:is-light={$sceneSettingsStore.effectsEnabled !== 0}
+							class:is-light={$sceneSettingsStore.gratitudeEffectsEnabled !== 0}
 							class:is-loading={isLoading}
 							disabled={isLoading}
-							on:click={() => handleApiCall(configManager.updateEffectsEnabledOverride(0))}
+							on:click={() => handleApiCall(configManager.updateGratitudeEffectsEnabledOverride(0))}
 						>
 							Automatiskt
 						</button>
 						<button
 							class="button is-success"
-							class:is-light={$sceneSettingsStore.effectsEnabled !== 1}
+							class:is-light={$sceneSettingsStore.gratitudeEffectsEnabled !== 1}
 							class:is-loading={isLoading}
 							disabled={isLoading}
-							on:click={() => handleApiCall(configManager.updateEffectsEnabledOverride(1))}
+							on:click={() => handleApiCall(configManager.updateGratitudeEffectsEnabledOverride(1))}
 						>
-							Ja
+							Ok
 						</button>
 					</div>
 				</div>
 				<div class="help-section">
 					<p class="help">
-						{#if $sceneSettingsStore.effectsEnabled === 0}
+						{#if $sceneSettingsStore.gratitudeEffectsEnabled === 0}
 							Beroende på scen kan publiken ibland 🌹 och 👏
-						{:else if $sceneSettingsStore.effectsEnabled === 1}
-							<b>Hyllningar från publiken är alltid tillåtet</b>
+						{:else if $sceneSettingsStore.gratitudeEffectsEnabled === 1}
+							<b>Hyllningar från publiken är alltid tillåtna</b>
 						{:else}
 							<b>Hyllningar från publiken tillåts inte</b>
+						{/if}
+					</p>
+				</div>
+			</div>
+
+			<div class="field">
+				<label class="label">Tillåt kastade tomater 🍅</label>
+				<div class="control">
+					<div class="buttons has-addons">
+						<button
+							class="button is-danger"
+							class:is-light={$sceneSettingsStore.criticalEffectsEnabled !== 2}
+							class:is-loading={isLoading}
+							disabled={isLoading}
+							on:click={() => handleApiCall(configManager.updateCriticalEffectsEnabledOverride(2))}
+						>
+							Nej
+						</button>
+						<button
+							class="button is-info"
+							class:is-light={$sceneSettingsStore.criticalEffectsEnabled !== 0}
+							class:is-loading={isLoading}
+							disabled={isLoading}
+							on:click={() => handleApiCall(configManager.updateCriticalEffectsEnabledOverride(0))}
+						>
+							Automatiskt
+						</button>
+						<button
+							class="button is-success"
+							class:is-light={$sceneSettingsStore.criticalEffectsEnabled !== 1}
+							class:is-loading={isLoading}
+							disabled={isLoading}
+							on:click={() => handleApiCall(configManager.updateCriticalEffectsEnabledOverride(1))}
+						>
+							Ok
+						</button>
+					</div>
+				</div>
+				<div class="help-section">
+					<p class="help">
+						{#if $sceneSettingsStore.criticalEffectsEnabled === 0}
+							Beroende på scen kan publiken ibland 🍅
+						{:else if $sceneSettingsStore.criticalEffectsEnabled === 1}
+							<b>Kritik från publiken är alltid tillåten</b>
+						{:else}
+							<b>Kritik från publiken tillåts inte</b>
 						{/if}
 					</p>
 				</div>

@@ -27,7 +27,7 @@ export const effectsRouter = trcpRouter({
 	send: effectsProcedure
 		.input(
 			z.object({
-				type: z.enum(["flowers", "applause"]),
+				type: z.enum(["flowers", "applause", "tomato"]),
 				number: z.number(),
 			}),
 		)

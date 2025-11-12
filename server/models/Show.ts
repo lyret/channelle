@@ -11,7 +11,8 @@ export class Show extends Model {
 	declare showPassword: string;
 	declare curtainsOverride: SceneSetting;
 	declare chatEnabledOverride: SceneSetting;
-	declare effectsEnabledOverride: SceneSetting;
+	declare gratitudeEffectsEnabledOverride: SceneSetting;
+	declare criticalEffectsEnabledOverride: SceneSetting;
 	declare visitorAudioEnabledOverride: SceneSetting;
 	declare visitorVideoEnabledOverride: SceneSetting;
 	declare currentScene: Scene | null;
@@ -66,7 +67,12 @@ export function initShow(sequelize: Sequelize) {
 				allowNull: false,
 				defaultValue: 0, // SceneSetting.AUTOMATIC
 			},
-			effectsEnabledOverride: {
+			gratitudeEffectsEnabledOverride: {
+				type: DataTypes.INTEGER,
+				allowNull: false,
+				defaultValue: 0, // SceneSetting.AUTOMATIC
+			},
+			criticalEffectsEnabledOverride: {
 				type: DataTypes.INTEGER,
 				allowNull: false,
 				defaultValue: 0, // SceneSetting.AUTOMATIC

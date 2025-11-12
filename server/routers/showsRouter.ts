@@ -18,7 +18,8 @@ export interface PublicShowData {
 	isPasswordProtected: boolean;
 	curtainsOverride: SceneSetting;
 	chatEnabledOverride: SceneSetting;
-	effectsEnabledOverride: SceneSetting;
+	gratitudeEffectsEnabledOverride: SceneSetting;
+	criticalEffectsEnabledOverride: SceneSetting;
 	visitorAudioEnabledOverride: SceneSetting;
 	visitorVideoEnabledOverride: SceneSetting;
 	currentScene: Scene | null;
@@ -125,7 +126,8 @@ export const showsRouter = trcpRouter({
 					lastOnlineAt: show.lastOnlineAt,
 					curtainsOverride: show.curtainsOverride,
 					chatEnabledOverride: show.chatEnabledOverride,
-					effectsEnabledOverride: show.effectsEnabledOverride,
+					gratitudeEffectsEnabledOverride: show.gratitudeEffectsEnabledOverride,
+					criticalEffectsEnabledOverride: show.criticalEffectsEnabledOverride,
 					visitorAudioEnabledOverride: show.visitorAudioEnabledOverride,
 					visitorVideoEnabledOverride: show.visitorVideoEnabledOverride,
 					currentScene: show.currentScene,
@@ -153,7 +155,8 @@ export const showsRouter = trcpRouter({
 				showPassword: z.string().optional().default(""),
 				curtainsOverride: z.number().int().min(0).max(2).optional().default(0),
 				chatEnabledOverride: z.number().int().min(0).max(2).optional().default(0),
-				effectsEnabledOverride: z.number().int().min(0).max(2).optional().default(0),
+				gratitudeEffectsEnabledOverride: z.number().int().min(0).max(2).optional().default(0),
+				criticalEffectsEnabledOverride: z.number().int().min(0).max(2).optional().default(0),
 				visitorAudioEnabledOverride: z.number().int().min(0).max(2).optional().default(0),
 				visitorVideoEnabledOverride: z.number().int().min(0).max(2).optional().default(0),
 				currentScene: z
@@ -170,7 +173,8 @@ export const showsRouter = trcpRouter({
 						),
 						curtains: z.boolean(),
 						chatEnabled: z.boolean(),
-						effectsEnabled: z.boolean(),
+						gratitudeEffectsEnabled: z.boolean(),
+						criticalEffectsEnabled: z.boolean(),
 						visitorAudioEnabled: z.boolean(),
 						visitorVideoEnabled: z.boolean(),
 					})
@@ -200,7 +204,8 @@ export const showsRouter = trcpRouter({
 					showPassword: input.showPassword || "",
 					curtainsOverride: input.curtainsOverride || 0,
 					chatEnabledOverride: input.chatEnabledOverride || 0,
-					effectsEnabledOverride: input.effectsEnabledOverride || 0,
+					gratitudeEffectsEnabledOverride: input.gratitudeEffectsEnabledOverride || 0,
+					criticalEffectsEnabledOverride: input.criticalEffectsEnabledOverride || 0,
 					visitorAudioEnabledOverride: input.visitorAudioEnabledOverride || 0,
 					visitorVideoEnabledOverride: input.visitorVideoEnabledOverride || 0,
 					currentScene: input.currentScene || null,
@@ -216,7 +221,8 @@ export const showsRouter = trcpRouter({
 					isPasswordProtected: Boolean(show.showPassword && show.showPassword.trim() !== ""),
 					curtainsOverride: show.curtainsOverride,
 					chatEnabledOverride: show.chatEnabledOverride,
-					effectsEnabledOverride: show.effectsEnabledOverride,
+					gratitudeEffectsEnabledOverride: show.gratitudeEffectsEnabledOverride,
+					criticalEffectsEnabledOverride: show.criticalEffectsEnabledOverride,
 					visitorAudioEnabledOverride: show.visitorAudioEnabledOverride,
 					visitorVideoEnabledOverride: show.visitorVideoEnabledOverride,
 					currentScene: show.currentScene,
@@ -248,7 +254,8 @@ export const showsRouter = trcpRouter({
 				showPassword: z.string().optional(),
 				curtainsOverride: z.number().int().min(0).max(2).optional(),
 				chatEnabledOverride: z.number().int().min(0).max(2).optional(),
-				effectsEnabledOverride: z.number().int().min(0).max(2).optional(),
+				gratitudeEffectsEnabledOverride: z.number().int().min(0).max(2).optional(),
+				criticalEffectsEnabledOverride: z.number().int().min(0).max(2).optional(),
 				visitorAudioEnabledOverride: z.number().int().min(0).max(2).optional(),
 				visitorVideoEnabledOverride: z.number().int().min(0).max(2).optional(),
 				currentScene: z
@@ -265,7 +272,8 @@ export const showsRouter = trcpRouter({
 						),
 						curtains: z.boolean(),
 						chatEnabled: z.boolean(),
-						effectsEnabled: z.boolean(),
+						gratitudeEffectsEnabled: z.boolean(),
+						criticalEffectsEnabled: z.boolean(),
 						visitorAudioEnabled: z.boolean(),
 						visitorVideoEnabled: z.boolean(),
 					})
@@ -306,7 +314,8 @@ export const showsRouter = trcpRouter({
 					...(input.showPassword !== undefined && { showPassword: input.showPassword }),
 					...(input.curtainsOverride !== undefined && { curtainsOverride: input.curtainsOverride }),
 					...(input.chatEnabledOverride !== undefined && { chatEnabledOverride: input.chatEnabledOverride }),
-					...(input.effectsEnabledOverride !== undefined && { effectsEnabledOverride: input.effectsEnabledOverride }),
+					...(input.gratitudeEffectsEnabledOverride !== undefined && { gratitudeEffectsEnabledOverride: input.gratitudeEffectsEnabledOverride }),
+					...(input.criticalEffectsEnabledOverride !== undefined && { criticalEffectsEnabledOverride: input.criticalEffectsEnabledOverride }),
 					...(input.visitorAudioEnabledOverride !== undefined && { visitorAudioEnabledOverride: input.visitorAudioEnabledOverride }),
 					...(input.visitorVideoEnabledOverride !== undefined && { visitorVideoEnabledOverride: input.visitorVideoEnabledOverride }),
 					...(input.currentScene !== undefined && { currentScene: input.currentScene }),
@@ -322,7 +331,8 @@ export const showsRouter = trcpRouter({
 					isPasswordProtected: Boolean(show.showPassword && show.showPassword.trim() !== ""),
 					curtainsOverride: show.curtainsOverride,
 					chatEnabledOverride: show.chatEnabledOverride,
-					effectsEnabledOverride: show.effectsEnabledOverride,
+					gratitudeEffectsEnabledOverride: show.gratitudeEffectsEnabledOverride,
+					criticalEffectsEnabledOverride: show.criticalEffectsEnabledOverride,
 					visitorAudioEnabledOverride: show.visitorAudioEnabledOverride,
 					visitorVideoEnabledOverride: show.visitorVideoEnabledOverride,
 					currentScene: show.currentScene,
@@ -413,7 +423,8 @@ export const showsRouter = trcpRouter({
 							isPasswordProtected: false,
 							curtainsOverride: show.curtainsOverride,
 							chatEnabledOverride: show.chatEnabledOverride,
-							effectsEnabledOverride: show.effectsEnabledOverride,
+							gratitudeEffectsEnabledOverride: show.gratitudeEffectsEnabledOverride,
+							criticalEffectsEnabledOverride: show.criticalEffectsEnabledOverride,
 							visitorAudioEnabledOverride: show.visitorAudioEnabledOverride,
 							visitorVideoEnabledOverride: show.visitorVideoEnabledOverride,
 							currentScene: show.currentScene,
@@ -443,7 +454,8 @@ export const showsRouter = trcpRouter({
 						isPasswordProtected: true,
 						curtainsOverride: show.curtainsOverride,
 						chatEnabledOverride: show.chatEnabledOverride,
-						effectsEnabledOverride: show.effectsEnabledOverride,
+						gratitudeEffectsEnabledOverride: show.gratitudeEffectsEnabledOverride,
+						criticalEffectsEnabledOverride: show.criticalEffectsEnabledOverride,
 						visitorAudioEnabledOverride: show.visitorAudioEnabledOverride,
 						visitorVideoEnabledOverride: show.visitorVideoEnabledOverride,
 						currentScene: show.currentScene,

@@ -63,11 +63,18 @@ export const stageCurtainsStore = writable<boolean>(true);
 export const stageChatEnabledStore = writable<boolean>(true);
 
 /**
- * Real-time effects availability state
- * Updated immediately when effects enabled setting changes
- * Used by stage UI to enable/disable effect buttons
+ * Real-time gratitude effects availability state
+ * Updated immediately when gratitude effects enabled setting changes
+ * Used by stage UI to enable/disable gratitude effect buttons (flowers, applause)
  */
-export const stageEffectsEnabledStore = writable<boolean>(true);
+export const stageGratitudeEffectsEnabledStore = writable<boolean>(true);
+
+/**
+ * Real-time critical effects availability state
+ * Updated immediately when critical effects enabled setting changes
+ * Used by stage UI to enable/disable critical effect buttons (tomato)
+ */
+export const stageCriticalEffectsEnabledStore = writable<boolean>(true);
 
 /**
  * Real-time visitor audio permission state
@@ -410,7 +417,8 @@ export async function syncMediaRoom() {
 	if (currentScene) {
 		stageCurtainsStore.set(currentScene.curtains);
 		stageChatEnabledStore.set(currentScene.chatEnabled);
-		stageEffectsEnabledStore.set(currentScene.effectsEnabled);
+		stageGratitudeEffectsEnabledStore.set(currentScene.gratitudeEffectsEnabled);
+		stageCriticalEffectsEnabledStore.set(currentScene.criticalEffectsEnabled);
 		stageHaveVisitorAudioEnabledStore.set(currentScene.visitorAudioEnabled);
 		stageHaveVisitorVideoEnabledStore.set(currentScene.visitorVideoEnabled);
 	}

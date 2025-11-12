@@ -47,7 +47,8 @@ const _stageConfig = {
 	sceneSettings: {
 		curtains: SceneSetting.AUTOMATIC,
 		chatEnabled: SceneSetting.AUTOMATIC,
-		effectsEnabled: SceneSetting.AUTOMATIC,
+		gratitudeEffectsEnabled: SceneSetting.AUTOMATIC,
+		criticalEffectsEnabled: SceneSetting.AUTOMATIC,
 		visitorAudioEnabled: SceneSetting.AUTOMATIC,
 		visitorVideoEnabled: SceneSetting.AUTOMATIC,
 	},
@@ -73,7 +74,8 @@ export const configRouter = trcpRouter({
 				layout: _stageConfig.currentScene.layout,
 				curtains: _determineStateOfSetting("curtains"),
 				chatEnabled: _determineStateOfSetting("chatEnabled"),
-				effectsEnabled: _determineStateOfSetting("effectsEnabled"),
+				gratitudeEffectsEnabled: _determineStateOfSetting("gratitudeEffectsEnabled"),
+				criticalEffectsEnabled: _determineStateOfSetting("criticalEffectsEnabled"),
 				visitorAudioEnabled: _determineStateOfSetting("visitorAudioEnabled"),
 				visitorVideoEnabled: _determineStateOfSetting("visitorVideoEnabled"),
 			}) ||
@@ -93,7 +95,8 @@ export const configRouter = trcpRouter({
 						isPasswordProtected: Boolean(show.showPassword && show.showPassword.trim() !== ""),
 						curtainsOverride: show.curtainsOverride,
 						chatEnabledOverride: show.chatEnabledOverride,
-						effectsEnabledOverride: show.effectsEnabledOverride,
+						gratitudeEffectsEnabledOverride: show.gratitudeEffectsEnabledOverride,
+						criticalEffectsEnabledOverride: show.criticalEffectsEnabledOverride,
 						visitorAudioEnabledOverride: show.visitorAudioEnabledOverride,
 						visitorVideoEnabledOverride: show.visitorVideoEnabledOverride,
 						currentScene: show.currentScene,
@@ -159,7 +162,7 @@ export const configRouter = trcpRouter({
 	setSetting: editableShowProcedure
 		.input(
 			z.object({
-				key: z.enum(["curtains", "chatEnabled", "effectsEnabled", "visitorAudioEnabled", "visitorVideoEnabled"]),
+				key: z.enum(["curtains", "chatEnabled", "gratitudeEffectsEnabled", "criticalEffectsEnabled", "visitorAudioEnabled", "visitorVideoEnabled"]),
 				value: z.nativeEnum(SceneSetting),
 				persistToShow: z.boolean().default(false),
 			}),
@@ -176,7 +179,8 @@ export const configRouter = trcpRouter({
 						const fieldMap = {
 							curtains: "curtainsOverride",
 							chatEnabled: "chatEnabledOverride",
-							effectsEnabled: "effectsEnabledOverride",
+							gratitudeEffectsEnabled: "gratitudeEffectsEnabledOverride",
+							criticalEffectsEnabled: "criticalEffectsEnabledOverride",
 							visitorAudioEnabled: "visitorAudioEnabledOverride",
 							visitorVideoEnabled: "visitorVideoEnabledOverride",
 						};
@@ -236,7 +240,8 @@ export const configRouter = trcpRouter({
 		_stageConfig.sceneSettings = {
 			curtains: SceneSetting.AUTOMATIC,
 			chatEnabled: SceneSetting.AUTOMATIC,
-			effectsEnabled: SceneSetting.AUTOMATIC,
+			gratitudeEffectsEnabled: SceneSetting.AUTOMATIC,
+			criticalEffectsEnabled: SceneSetting.AUTOMATIC,
 			visitorAudioEnabled: SceneSetting.AUTOMATIC,
 			visitorVideoEnabled: SceneSetting.AUTOMATIC,
 		};
@@ -249,7 +254,8 @@ export const configRouter = trcpRouter({
 					await show.update({
 						curtainsOverride: SceneSetting.AUTOMATIC,
 						chatEnabledOverride: SceneSetting.AUTOMATIC,
-						effectsEnabledOverride: SceneSetting.AUTOMATIC,
+						gratitudeEffectsEnabledOverride: SceneSetting.AUTOMATIC,
+						criticalEffectsEnabledOverride: SceneSetting.AUTOMATIC,
 						visitorAudioEnabledOverride: SceneSetting.AUTOMATIC,
 						visitorVideoEnabledOverride: SceneSetting.AUTOMATIC,
 					});
@@ -293,7 +299,8 @@ export const configRouter = trcpRouter({
 						_stageConfig.sceneSettings = {
 							curtains: show.curtainsOverride || SceneSetting.AUTOMATIC,
 							chatEnabled: show.chatEnabledOverride || SceneSetting.AUTOMATIC,
-							effectsEnabled: show.effectsEnabledOverride || SceneSetting.AUTOMATIC,
+							gratitudeEffectsEnabled: show.gratitudeEffectsEnabledOverride || SceneSetting.AUTOMATIC,
+							criticalEffectsEnabled: show.criticalEffectsEnabledOverride || SceneSetting.AUTOMATIC,
 							visitorAudioEnabled: show.visitorAudioEnabledOverride || SceneSetting.AUTOMATIC,
 							visitorVideoEnabled: show.visitorVideoEnabledOverride || SceneSetting.AUTOMATIC,
 						};
@@ -418,7 +425,8 @@ export const configRouter = trcpRouter({
 				showPassword: _stageConfig.password || "",
 				curtainsOverride: _stageConfig.sceneSettings.curtains,
 				chatEnabledOverride: _stageConfig.sceneSettings.chatEnabled,
-				effectsEnabledOverride: _stageConfig.sceneSettings.effectsEnabled,
+				gratitudeEffectsEnabledOverride: _stageConfig.sceneSettings.gratitudeEffectsEnabled,
+				criticalEffectsEnabledOverride: _stageConfig.sceneSettings.criticalEffectsEnabled,
 				visitorAudioEnabledOverride: _stageConfig.sceneSettings.visitorAudioEnabled,
 				visitorVideoEnabledOverride: _stageConfig.sceneSettings.visitorVideoEnabled,
 				currentScene: _stageConfig.currentScene,
@@ -458,7 +466,8 @@ export const configRouter = trcpRouter({
 				isPasswordProtected: Boolean(config.showPassword && config.showPassword.trim() !== ""),
 				curtainsOverride: config.curtainsOverride,
 				chatEnabledOverride: config.chatEnabledOverride,
-				effectsEnabledOverride: config.effectsEnabledOverride,
+				gratitudeEffectsEnabledOverride: config.gratitudeEffectsEnabledOverride,
+				criticalEffectsEnabledOverride: config.criticalEffectsEnabledOverride,
 				visitorAudioEnabledOverride: config.visitorAudioEnabledOverride,
 				visitorVideoEnabledOverride: config.visitorVideoEnabledOverride,
 				currentScene: config.currentScene,
@@ -491,7 +500,8 @@ export function getCurrentSceneWithSettings(): Scene | undefined {
 		layout: _stageConfig.currentScene.layout,
 		curtains: _determineStateOfSetting("curtains"),
 		chatEnabled: _determineStateOfSetting("chatEnabled"),
-		effectsEnabled: _determineStateOfSetting("effectsEnabled"),
+		gratitudeEffectsEnabled: _determineStateOfSetting("gratitudeEffectsEnabled"),
+		criticalEffectsEnabled: _determineStateOfSetting("criticalEffectsEnabled"),
 		visitorAudioEnabled: _determineStateOfSetting("visitorAudioEnabled"),
 		visitorVideoEnabled: _determineStateOfSetting("visitorVideoEnabled"),
 	};

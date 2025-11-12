@@ -2,6 +2,8 @@
 	import { blur } from "svelte/transition";
 	import logoGif from "~/assets/images/logo-free.gif";
 	import stageLightsGif from "~/assets/gifs/stagelights_turning_orange_md_clr.gif";
+
+	export let withoutSubtitle = false;
 </script>
 
 <section class="has-text-centered" in:blur={{ delay: 500, duration: 1000 }}>
@@ -18,7 +20,9 @@
 		<img src={logoGif} alt="Channelle" class="logo" />
 	</div>
 </section>
-<h2 class="subtitle theater-title has-text-centered">Välkommen till vår kvartersteater</h2>
+{#if !withoutSubtitle}
+	<h2 class="subtitle theater-title has-text-centered">Välkommen till vår kvartersteater</h2>
+{/if}
 
 <style lang="scss">
 	.logo {

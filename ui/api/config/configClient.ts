@@ -63,7 +63,8 @@ export const configStore = writable<{
 	sceneSettings: {
 		curtains: SceneSetting;
 		chatEnabled: SceneSetting;
-		effectsEnabled: SceneSetting;
+		gratitudeEffectsEnabled: SceneSetting;
+		criticalEffectsEnabled: SceneSetting;
 		visitorAudioEnabled: SceneSetting;
 		visitorVideoEnabled: SceneSetting;
 	};
@@ -72,7 +73,8 @@ export const configStore = writable<{
 		layout: any[][];
 		curtains: boolean;
 		chatEnabled: boolean;
-		effectsEnabled: boolean;
+		gratitudeEffectsEnabled: boolean;
+		criticalEffectsEnabled: boolean;
 		visitorAudioEnabled: boolean;
 		visitorVideoEnabled: boolean;
 	};
@@ -84,7 +86,8 @@ export const configStore = writable<{
 	sceneSettings: {
 		curtains: 0, // SceneSetting.AUTOMATIC
 		chatEnabled: 0,
-		effectsEnabled: 0,
+		gratitudeEffectsEnabled: 0,
+		criticalEffectsEnabled: 0,
 		visitorAudioEnabled: 0,
 		visitorVideoEnabled: 0,
 	},
@@ -217,7 +220,7 @@ export async function setPassword(password?: string, persistToShow: boolean = fa
  * @returns Promise<{success: boolean, error?: string}> - result with success status and optional error
  */
 export async function setSetting(
-	key: "curtains" | "chatEnabled" | "effectsEnabled" | "visitorAudioEnabled" | "visitorVideoEnabled",
+	key: "curtains" | "chatEnabled" | "gratitudeEffectsEnabled" | "criticalEffectsEnabled" | "visitorAudioEnabled" | "visitorVideoEnabled",
 	value: SceneSetting,
 	persistToShow: boolean = false,
 ): Promise<{ success: boolean; error?: string }> {
@@ -529,12 +532,21 @@ export const SceneSettings = {
 	},
 
 	/**
-	 * Set effects enabled override setting
+	 * Set gratitude effects enabled override setting
 	 * @param value - 0=Auto, 1=Enable, 2=Disable
 	 * @param persistToShow - Whether to persist to selected show
 	 */
-	async setEffectsEnabled(value: SceneSetting, persistToShow: boolean = false): Promise<{ success: boolean; error?: string }> {
-		return await setSetting("effectsEnabled", value, persistToShow);
+	async setGratitudeEffectsEnabled(value: SceneSetting, persistToShow: boolean = false): Promise<{ success: boolean; error?: string }> {
+		return await setSetting("gratitudeEffectsEnabled", value, persistToShow);
+	},
+
+	/**
+	 * Set critical effects enabled override setting
+	 * @param value - 0=Auto, 1=Enable, 2=Disable
+	 * @param persistToShow - Whether to persist to selected show
+	 */
+	async setCriticalEffectsEnabled(value: SceneSetting, persistToShow: boolean = false): Promise<{ success: boolean; error?: string }> {
+		return await setSetting("criticalEffectsEnabled", value, persistToShow);
 	},
 
 	/**
@@ -612,7 +624,8 @@ export function clearConfigData(): void {
 		sceneSettings: {
 			curtains: 0,
 			chatEnabled: 0,
-			effectsEnabled: 0,
+			gratitudeEffectsEnabled: 0,
+			criticalEffectsEnabled: 0,
 			visitorAudioEnabled: 0,
 			visitorVideoEnabled: 0,
 		},
@@ -662,10 +675,17 @@ export class ConfigManager {
 	}
 
 	/**
-	 * Update effects enabled override setting
+	 * Update gratitude effects enabled override setting
 	 */
-	async updateEffectsEnabledOverride(value: SceneSetting): Promise<{ success: boolean; error?: string }> {
-		return await SceneSettings.setEffectsEnabled(value, true);
+	async updateGratitudeEffectsEnabledOverride(value: SceneSetting): Promise<{ success: boolean; error?: string }> {
+		return await SceneSettings.setGratitudeEffectsEnabled(value, true);
+	}
+
+	/**
+	 * Update critical effects enabled override setting
+	 */
+	async updateCriticalEffectsEnabledOverride(value: SceneSetting): Promise<{ success: boolean; error?: string }> {
+		return await SceneSettings.setCriticalEffectsEnabled(value, true);
 	}
 
 	/**

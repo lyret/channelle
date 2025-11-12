@@ -25,12 +25,13 @@ export type Scene = {
 	layout: StageLayout;
 	curtains: boolean;
 	chatEnabled: boolean;
-	effectsEnabled: boolean;
+	gratitudeEffectsEnabled: boolean;
+	criticalEffectsEnabled: boolean;
 	visitorAudioEnabled: boolean;
 	visitorVideoEnabled: boolean;
 };
 
-export type EffectData = { type: "flowers" | "applause"; number: number };
+export type EffectData = { type: "flowers" | "applause" | "tomato"; number: number };
 
 //Export types needed on the client side
 

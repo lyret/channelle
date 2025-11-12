@@ -3,7 +3,7 @@
 	import { onMount } from "svelte";
 	import { blur } from "svelte/transition";
 	import { createEffectsStore } from "~/stores/effects";
-	import { stageChatEnabledStore, stageEffectsEnabledStore } from "~/api/media";
+	import { stageChatEnabledStore, stageGratitudeEffectsEnabledStore, stageCriticalEffectsEnabledStore } from "~/api/media";
 	import { showStageChatStore, showStageStettingsStore } from "~/stores/stage";
 	import { windowFullscreenStore } from "~/stores/device";
 	import IconMaximize from "../../icons/Icon-maximize.svelte";
@@ -32,6 +32,7 @@
 	// Class list of all buttons in the action bar
 	const btnClassList = "button is-small";
 	const effectBtnClassList = "button effect is-small is-danger is-rounded is-light is-outlined is-warning";
+	const criticalEffectBtnClassList = "button effect is-small is-danger is-rounded";
 	const iconClassList = "icon is-size-4";
 </script>
 
@@ -44,14 +45,22 @@
 	{:else}
 		<div class="breaker" />
 	{/if}
-	<!-- EFFECTS -->
-	{#if $stageEffectsEnabledStore}
+	<!-- GRATITUDE EFFECTS -->
+	{#if $stageGratitudeEffectsEnabledStore}
 		<button class={effectBtnClassList} transition:blur on:click={() => effects.set({ type: "applause", number: 1 })}>
 			<span class={iconClassList}>👏</span></button
 		>
 		<button class={effectBtnClassList} transition:blur on:click={() => effects.set({ type: "flowers", number: 1 })}>
 			<span class={iconClassList}>🌹</span></button
 		>
+	{/if}
+	<!-- CRITICAL EFFECTS -->
+	{#if $stageCriticalEffectsEnabledStore}
+		<button class={criticalEffectBtnClassList} transition:blur on:click={() => effects.set({ type: "tomato", number: 1 })}>
+			<span class={iconClassList}>🍅</span></button
+		>
+	{/if}
+	{#if $stageGratitudeEffectsEnabledStore || $stageCriticalEffectsEnabledStore}
 		{#if !isMobile}
 			<div class="spacer" />
 		{/if}

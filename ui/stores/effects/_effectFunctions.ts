@@ -8,6 +8,9 @@ const flower = Confetti.shapeFromText({ text: "🌹", scalar: 4 });
 /** Hands SVG shape for confetti effects */
 const hands = Confetti.shapeFromText({ text: "👏", scalar: 6 });
 
+/** Tomato SVG shape for confetti effects */
+const tomato = Confetti.shapeFromText({ text: "🍅", scalar: 4 });
+
 /** Clap sound effect */
 const clap = new Audio(clapSrc);
 
@@ -103,4 +106,47 @@ export function triggerApplauseEffect() {
 		//@ts-expect-error unknown property
 		flat: true,
 	});
+}
+
+/** Tomato throw */
+export function triggerTomatoEffect() {
+	if (clap.paused) {
+		clap.play();
+	} else {
+		clap.currentTime = 0;
+	}
+
+	const x = Math.random();
+	Confetti({
+		particleCount: 3,
+		angle: 270,
+		spread: 45,
+		origin: { y: 0, x },
+		gravity: 1.2,
+		decay: 0.8,
+		startVelocity: 30,
+		colors: ["#ff4444", "#cc0000"],
+		shapes: [tomato],
+		scalar: 3,
+		//@ts-expect-error unknown property
+		flat: false,
+	});
+	setTimeout(
+		() =>
+			Confetti({
+				particleCount: 2,
+				angle: 270,
+				spread: 30,
+				origin: { y: 0, x: Math.random() },
+				gravity: 1.2,
+				decay: 0.7,
+				startVelocity: 35,
+				colors: ["#ff4444", "#cc0000"],
+				shapes: [tomato],
+				scalar: 2,
+				//@ts-expect-error unknown property
+				flat: false,
+			}),
+		150,
+	);
 }

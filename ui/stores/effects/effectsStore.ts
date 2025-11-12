@@ -1,6 +1,6 @@
 import type { EffectData } from "~/types/serverSideTypes";
 import { readable } from "svelte/store";
-import { triggerApplauseEffect, triggerFlowerGiftEffect } from "./_effectFunctions";
+import { triggerApplauseEffect, triggerFlowerGiftEffect, triggerTomatoEffect } from "./_effectFunctions";
 import { sendEffect, subscribeToEffects } from "~/api/effects";
 
 /** Store interface */
@@ -24,6 +24,8 @@ export function createEffectsStore(): EffectsStore {
 					triggerFlowerGiftEffect();
 				} else if (value.type == "applause") {
 					triggerApplauseEffect();
+				} else if (value.type == "tomato") {
+					triggerTomatoEffect();
 				}
 			}
 			set(value);
