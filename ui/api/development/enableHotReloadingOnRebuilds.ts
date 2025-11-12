@@ -7,7 +7,7 @@ export async function enableHotReloadingOnRebuilds() {
 	// Keep track of the local build counter
 	let _localBuildCounter = -1;
 
-	if (CONFIG.isProduction) {
+	if (CONFIG.runtime.production) {
 		return;
 	}
 	developmentClient.buildCounter.subscribe(undefined, {

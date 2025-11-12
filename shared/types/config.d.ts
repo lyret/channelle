@@ -123,8 +123,6 @@ type CONFIG = {
 	runtime: RuntimeConfig;
 	/** Package Information */
 	package: PackageConfig;
-	/** Indicates that we are in the production environment */
-	isProduction: boolean;
 	/** Build Settings */
 	build: BuildConfig;
 	/** Debug Settings */

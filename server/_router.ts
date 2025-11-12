@@ -8,7 +8,7 @@ import { effectsRouter } from "./routers/effectsRouter";
 import { showsRouter } from "./routers/showsRouter";
 import { configRouter } from "./routers/configRouter";
 import { authRouter, activeSessions as activeAuthSessions } from "./routers/authRouter";
-import { launcherRouter } from "./routers/launcherRouter";
+import { launcherRouter as launchersRouter } from "./routers/launcherRouter";
 
 /**
  * Creates and returns the application router
@@ -19,20 +19,30 @@ export async function createAppRouter() {
 
 	// Create the sub-route configuration
 	const routerConfig = {
-		room: mediaRouter,
 		development: developmentRouter,
-		chat: chatRouter,
-		effects: effectsRouter,
-		shows: showsRouter,
 		config: configRouter,
 		auth: authRouter,
-		launcher: launcherRouter,
+		shows: showsRouter,
+		launchers: launchersRouter,
+		chat: chatRouter,
+		media: mediaRouter,
+		effects: effectsRouter,
 	};
 
 	// Remove handling of incomming development messages from the cli
 	// when not developing
-	if (CONFIG.isProduction) {
+	if (CONFIG.runtime.production) {
 		delete routerConfig["development"];
+	}
+
+	// Remove the theater mode only routers
+	// when running as a stage and vice versa
+	if (CONFIG.runtime.theater) {
+		delete routerConfig["media"];
+		delete routerConfig["effects"];
+	} else {
+		delete routerConfig["shows"];
+		delete routerConfig["launchers"];
 	}
 
 	// Create the application router

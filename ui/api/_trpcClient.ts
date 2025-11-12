@@ -44,7 +44,7 @@ export const appClient = createTRPCClient<AppRouter>({
 });
 
 /** Client for the Media API only (room router on server) */
-export const mediaClient = appClient.room;
+export const mediaClient = appClient.media;
 
 /** Client for the Configuration API only */
 export const configClient = appClient.config;
@@ -64,5 +64,5 @@ export const effectsClient = appClient.effects;
 /** Client for the Authentication API only */
 export const authClient = appClient.auth;
 
-/** Client for the Launcher API only */
-export const launcherClient = appClient.launcher;
+/** Client for the Launchers API only */
+export const launchersClient = appClient.launchers;

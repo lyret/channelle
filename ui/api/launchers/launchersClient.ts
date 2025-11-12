@@ -1,5 +1,5 @@
 import { writable, derived } from "svelte/store";
-import { launcherClient } from "../_trpcClient";
+import { launchersClient } from "../_trpcClient";
 import type { LauncherSyncDataSerialized } from "~/types/serverSideTypes";
 
 /** Store for launcher system readiness */
@@ -36,7 +36,7 @@ export const runningInstancesCountStore = derived(instancesStore, (instances) =>
 export async function syncLauncherData(): Promise<void> {
 	try {
 		launcherErrorStore.set(null);
-		const syncData = await launcherClient.sync.query();
+		const syncData = await launchersClient.sync.query();
 
 		// Update all stores
 		launcherReadyStore.set(syncData.isReady);
@@ -56,16 +56,16 @@ export async function launchInstance(
 	showId: number,
 	adapterName?: string,
 ): Promise<{
-		success: boolean;
-		instanceId?: string;
-		url?: string;
-		message?: string;
-	}> {
+	success: boolean;
+	instanceId?: string;
+	url?: string;
+	message?: string;
+}> {
 	try {
 		launcherLoadingStore.set(true);
 		launcherErrorStore.set(null);
 
-		const result = await launcherClient.launch.mutate({
+		const result = await launchersClient.launch.mutate({
 			showId,
 			adapterName,
 		});
@@ -104,7 +104,7 @@ export async function stopInstance(instanceId: string): Promise<{
 		launcherLoadingStore.set(true);
 		launcherErrorStore.set(null);
 
-		const result = await launcherClient.stop.mutate({ instanceId });
+		const result = await launchersClient.stop.mutate({ instanceId });
 
 		// Refresh data after successful stop
 		await syncLauncherData();
@@ -139,7 +139,7 @@ export async function stopAllInstances(): Promise<{
 		launcherLoadingStore.set(true);
 		launcherErrorStore.set(null);
 
-		const result = await launcherClient.stopAll.mutate();
+		const result = await launchersClient.stopAll.mutate();
 
 		// Refresh data after successful stop
 		await syncLauncherData();
@@ -168,7 +168,7 @@ export async function stopAllInstances(): Promise<{
  */
 export async function getInstanceStatus(instanceId: string): Promise<string | null> {
 	try {
-		const result = await launcherClient.getInstanceStatus.query({ instanceId });
+		const result = await launchersClient.getInstanceStatus.query({ instanceId });
 		return result?.status || null;
 	} catch (error: any) {
 		console.error("[Launchers] Get status error:", error);
@@ -185,7 +185,7 @@ export async function checkCanLaunch(): Promise<{
 	adapterName?: string;
 }> {
 	try {
-		const result = await launcherClient.canLaunch.query();
+		const result = await launchersClient.canLaunch.query();
 		return {
 			canLaunch: result?.canLaunch || false,
 			reason: result?.reason,

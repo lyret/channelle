@@ -88,7 +88,6 @@
  * @typedef {Object} CONFIG - The global runtime context for the application
  * @property {RuntimeConfig} runtime - Runtime Options.
  * @property {PackageConfig} package - Package Information.
- * @property {boolean} isProduction - Indicates that we are in the production environment.
  * @property {BuildConfig} build - Build Settings.
  * @property {DebugConfig} debug - Debug Settings.
  * @property {StageConfig} stage - Stage Settings.

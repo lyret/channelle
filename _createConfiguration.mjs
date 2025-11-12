@@ -276,8 +276,6 @@ export async function createConfiguration() {
 			name: pkg.name,
 			version: pkg.version,
 		},
-		/** Indicates that we are in the production environment */
-		isProduction: production,
 		/** Build Settings */
 		build: {
 			/** The directory to use for server builds */
