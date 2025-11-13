@@ -14,6 +14,12 @@
 	let errorMessage = "";
 	let success = false;
 
+	// Computed placeholders to avoid template string issues
+	$: namePlaceholder = $currentShowStore?.nomenclature ? `Ange ${$currentShowStore.nomenclature.slice(0, -2)}ingsnamn` : "Ange föreställningsnamn";
+	$: descriptionPlaceholder = $currentShowStore?.nomenclature
+		? `Ange en beskrivning av ${$currentShowStore.nomenclature} (valfritt)`
+		: "Ange en beskrivning av föreställningen (valfritt)";
+
 	$: nameCharCount = nameInput.length;
 	$: descriptionCharCount = descriptionInput.length;
 	$: nomenclatureCharCount = nomenclatureInput.length;
@@ -142,20 +148,30 @@
 </script>
 
 <div class="show-metadata-instrument">
-	<h1 class="title">Föreställningsinfo</h1>
+	<h1 class="title">
+		{$currentShowStore?.nomenclature
+			? $currentShowStore.nomenclature.charAt(0).toUpperCase() + $currentShowStore.nomenclature.slice(1)
+			: "Föreställning"}sinfo
+	</h1>
 
 	{#if !CONFIG.runtime.theater}
 		<div class="notification is-info is-light">
 			<p class="is-size-7">
 				<strong>Skrivskyddad vy</strong><br />
-				Föreställningsinfo kan endast redigeras i förberedelsesläge (theater mode).
+				{$currentShowStore?.nomenclature
+					? $currentShowStore.nomenclature.charAt(0).toUpperCase() + $currentShowStore.nomenclature.slice(1)
+					: "Föreställning"}sinfo kan endast redigeras i förberedelsesläge (theater mode).
 			</p>
 		</div>
 	{/if}
 
 	{#if success}
 		<div class="notification is-success">
-			<p>✓ Föreställningsinfo har uppdaterats</p>
+			<p>
+				✓ {$currentShowStore?.nomenclature
+					? $currentShowStore.nomenclature.charAt(0).toUpperCase() + $currentShowStore.nomenclature.slice(1)
+					: "Föreställning"}sinfo har uppdaterats
+			</p>
 		</div>
 	{/if}
 
@@ -177,7 +193,7 @@
 					type="text"
 					bind:value={nameInput}
 					on:keydown={handleKeydown}
-					placeholder="Ange föreställningsnamn"
+					placeholder={namePlaceholder}
 					disabled={isLoading || !canEdit}
 					maxlength={nameMaxLength}
 				/>
@@ -232,7 +248,7 @@
 					class:is-warning={descriptionCharCount > descriptionMaxLength * 0.9}
 					bind:value={descriptionInput}
 					on:keydown={handleKeydown}
-					placeholder="Ange en beskrivning av föreställningen (valfritt)"
+					placeholder={descriptionPlaceholder}
 					disabled={isLoading || !canEdit}
 					rows="4"
 					maxlength={descriptionMaxLength}

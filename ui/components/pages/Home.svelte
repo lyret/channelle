@@ -6,6 +6,7 @@
 	import smokerSrc from "~/assets/images/smoker-cropped.png";
 	import ticketsSrc from "~/assets/images/tickets.png";
 	import { isStagePasswordOkStore } from "~/stores/stage";
+	import { currentShowStore } from "~/api/config";
 	import Wrapper from "./_Wrapper.svelte";
 	import PasswordCurtainMessage from "~/components/curtains/PasswordCurtainMessage.svelte";
 	import FloatingImage from "~/components/home/FloatingImage.svelte";
@@ -48,7 +49,6 @@
 			</div>
 		{:else}
 			<div class="poster">
-				<h2 class="subtitle is-1">Föreställning</h2>
 				<h1 class="title is-1">{CONFIG.stage.name}</h1>
 				{#if needStagePassword}
 					<div class="item">
@@ -72,7 +72,9 @@
 					>
 				{/if}
 				<a class="button alt" target="_blank" href="https://www.youtube.com/watch?v=8IXjE4a5Tj4"
-					><span class="is-family-default p-2">Om föreställningen <span class="icon"><IconArrowRight /></span></span></a
+					><span class="is-family-default p-2"
+						>Om {$currentShowStore?.nomenclature || "föreställningen"} <span class="icon"><IconArrowRight /></span></span
+					></a
 				>
 				<button class="button"><span class="is-family-default" on:click={() => (howToModalIsOpen = true)}>Hur funkar det?</span></button>
 			</div>
@@ -98,7 +100,7 @@
 					>
 					<img src={moneyPowerGreedSrc} alt="text saying money power greed" />
 					<h1 class="title is-2 is-family-secondary has-text-weight-medium is-strikethrough mb-0 pb-0">Biljettluckan</h1>
-					<h1 class="title is-3 is-family-secondary has-text-weight-medium is-italic">Gratis föreställning!</h1>
+					<h1 class="title is-3 is-family-secondary has-text-weight-medium is-italic">Gratis!</h1>
 				</div>
 			</div>
 		{/if}

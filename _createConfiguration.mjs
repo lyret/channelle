@@ -227,11 +227,12 @@ export async function createConfiguration() {
 			console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "WEBRTC WAN", publicIP);
 		}
 		if (lan) {
+			console.log(Object.entries(networkInterfaces()));
 			// Get any lan IP addresses of this server
 			const lanIP = Object.entries(networkInterfaces())
 				.map(([i, networks]) => networks.filter((n) => n.family == "IPv4").map((n) => ({ ...n, interface: i })))
 				.flat()
-				.find((n) => !n.internal)?.address;
+				.find((n) => !n.internal && n.netmask == "0xffffff00")?.address;
 
 			// Add listening info for WAN,
 			webRTCTransportListenInfos.push({

@@ -33,6 +33,7 @@ export interface ShowListItem {
 	id: number;
 	name: string;
 	description: string;
+	nomenclature: string;
 	isPasswordProtected: boolean;
 	isOnline: boolean;
 	lastOnlineAt: Date | null;
@@ -84,6 +85,7 @@ export const showsRouter = trcpRouter({
 					id: show.id,
 					name: show.name,
 					description: show.description,
+					nomenclature: show.nomenclature,
 					isPasswordProtected: Boolean(show.showPassword && show.showPassword.trim() !== ""),
 					isOnline: isCurrentlyOnline,
 					lastOnlineAt: show.lastOnlineAt,
@@ -226,6 +228,7 @@ export const showsRouter = trcpRouter({
 					visitorAudioEnabledOverride: show.visitorAudioEnabledOverride,
 					visitorVideoEnabledOverride: show.visitorVideoEnabledOverride,
 					currentScene: show.currentScene,
+					lastOnlineAt: show.lastOnlineAt,
 					createdAt: show.createdAt,
 					updatedAt: show.updatedAt,
 				};
@@ -336,6 +339,7 @@ export const showsRouter = trcpRouter({
 					visitorAudioEnabledOverride: show.visitorAudioEnabledOverride,
 					visitorVideoEnabledOverride: show.visitorVideoEnabledOverride,
 					currentScene: show.currentScene,
+					lastOnlineAt: show.lastOnlineAt,
 					createdAt: show.createdAt,
 					updatedAt: show.updatedAt,
 				};
@@ -428,6 +432,7 @@ export const showsRouter = trcpRouter({
 							visitorAudioEnabledOverride: show.visitorAudioEnabledOverride,
 							visitorVideoEnabledOverride: show.visitorVideoEnabledOverride,
 							currentScene: show.currentScene,
+							lastOnlineAt: show.lastOnlineAt,
 							createdAt: show.createdAt,
 							updatedAt: show.updatedAt,
 						},
@@ -459,6 +464,7 @@ export const showsRouter = trcpRouter({
 						visitorAudioEnabledOverride: show.visitorAudioEnabledOverride,
 						visitorVideoEnabledOverride: show.visitorVideoEnabledOverride,
 						currentScene: show.currentScene,
+						lastOnlineAt: show.lastOnlineAt,
 						createdAt: show.createdAt,
 						updatedAt: show.updatedAt,
 					},

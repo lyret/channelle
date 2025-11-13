@@ -143,7 +143,7 @@
 						</div>
 					{:else if showStatus === "kommande"}
 						<p class="is-size-7 has-text-grey-light mt-4">
-							<em>Föreställningen har inte startats ännu</em>
+							<em>{show.nomenclature} har inte startat ännu</em>
 						</p>
 					{/if}
 
