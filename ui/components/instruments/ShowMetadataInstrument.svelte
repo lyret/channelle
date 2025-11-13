@@ -149,9 +149,8 @@
 
 <div class="show-metadata-instrument">
 	<h1 class="title">
-		{$currentShowStore?.nomenclature
-			? $currentShowStore.nomenclature.charAt(0).toUpperCase() + $currentShowStore.nomenclature.slice(1)
-			: "Föreställning"}sinfo
+		{$currentShowStore?.nomenclature ? $currentShowStore.nomenclature.charAt(0).toUpperCase() + $currentShowStore.nomenclature.slice(1) : "Föreställning"}s
+		info
 	</h1>
 
 	{#if !CONFIG.runtime.theater}
