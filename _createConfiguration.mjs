@@ -198,8 +198,6 @@ export async function createConfiguration() {
 		console.log("🚀", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter DigitalOcean Region", digitaloceanRegion);
 	}
 
-	console.log();
-
 	// Create an array of transport listening info for webRTC, will be filled
 	// with configurations depending on the given wan, lan and local settings
 	// lower array-placement indicates preference in media soup
