@@ -254,9 +254,9 @@
 						{#if $sceneSettingsStore.curtains === 0}
 							Visas automatiskt enligt vald scen
 						{:else if $sceneSettingsStore.curtains === 1}
-							<b>Ridån är dold</b>
-						{:else}
 							<b>Ridån visas</b>
+						{:else}
+							<b>Ridån är dold</b>
 						{/if}
 					</p>
 				</div>

@@ -141,15 +141,17 @@
 		position: absolute;
 		top: clamp(8px, auto, 8px);
 		max-height: 100%;
-		height: 100%;
-		margin-top: 8px;
-		left: 8px;
-		right: 8px;
-		bottom: 12px;
+		height: auto;
+		left: 0px;
+		right: 0px;
+		bottom: 0px;
+		padding: 8px;
 		overflow-y: scroll;
 		z-index: 100;
 		-webkit-backdrop-filter: blur(10px);
 		backdrop-filter: blur(10px);
+		background-color: var(--channelle-menu-bg-color);
+		color: var(--channelle-menu-text-color);
 	}
 
 	.footer {
