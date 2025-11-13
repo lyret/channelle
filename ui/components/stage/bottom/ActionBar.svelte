@@ -36,14 +36,12 @@
 	const iconClassList = "icon is-size-4";
 </script>
 
-<div class="bar" style={`flex-wrap: ${isMobile ? "wrap" : "nowrap"};`}>
+<div class="bar">
 	<!-- STATUS -->
-	<span class="block"><StageDirections /></span>
-	<!-- SPACER / BREAKER -->
+	<span class="block is-hidden-mobile"><StageDirections /></span>
+	<!-- DESKTOP SPACER -->
 	{#if !isMobile}
 		<div class="spacer" />
-	{:else}
-		<div class="breaker" />
 	{/if}
 	<!-- GRATITUDE EFFECTS -->
 	{#if $stageGratitudeEffectsEnabledStore}
@@ -61,31 +59,15 @@
 		>
 	{/if}
 	{#if $stageGratitudeEffectsEnabledStore || $stageCriticalEffectsEnabledStore}
-		{#if !isMobile}
-			<div class="spacer" />
-		{/if}
+		<div class="spacer" />
 	{/if}
 	<!-- VIDEO -->
 	<CameraControls minimal={isMobile} />
 
 	<!-- AUDIO -->
 	<MicrophoneControls minimal={isMobile} />
-	<!-- FULLSCREEN -->
-	<button
-		type="button"
-		class={btnClassList + " is-hidden-mobile"}
-		class:active={$fullscreen}
-		transition:blur
-		on:click={() => {
-			fullscreen.toggle();
-		}}
-	>
-		{#if $fullscreen}
-			<span class={iconClassList}><IconMinimize /></span>
-		{:else}
-			<span class={iconClassList}><IconMaximize /></span>
-		{/if}
-	</button>
+	<!-- SPACER -->
+	<div class="spacer is-hidden-mobile" />
 	<!-- CHAT -->
 	{#if $stageChatEnabledStore}
 		<button
@@ -103,7 +85,27 @@
 			{/if}
 		</button>
 	{/if}
-	<!-- STAGE SETTINGS -->
+	<!-- SPACER -->
+	<div class="spacer" />
+	<!-- FULLSCREEN -->
+	<button
+		type="button"
+		class={btnClassList + " is-hidden-mobile"}
+		class:active={$fullscreen}
+		transition:blur
+		on:click={() => {
+			fullscreen.toggle();
+		}}
+	>
+		{#if $fullscreen}
+			<span class={iconClassList}><IconMinimize /></span>
+		{:else}
+			<span class={iconClassList}><IconMaximize /></span>
+		{/if}
+	</button>
+	<!-- SPACER -->
+	<div class="spacer is-hidden-mobile" />
+	<!-- SETTINGS -->
 	<button
 		class={btnClassList}
 		transition:blur
@@ -134,16 +136,17 @@
 		flex-direction: row;
 		justify-content: space-around;
 		height: 48px;
+		box-sizing: border-box;
+
+		@include mobile {
+			justify-content: space-between;
+		}
 	}
 	.block {
 		text-align: center;
 	}
 	.spacer {
 		flex-grow: 0.4;
-	}
-	.breaker {
-		flex-basis: 100%;
-		height: 0;
 	}
 
 	.button {
@@ -152,6 +155,7 @@
 		padding: 12px;
 		background-color: var(--channelle-menu-bg-color);
 		color: var(--channelle-menu-text-color);
+		box-sizing: border-box;
 	}
 	.button.active {
 		font-weight: 900;

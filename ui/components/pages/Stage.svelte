@@ -2,7 +2,7 @@
 	import { blur, fly } from "svelte/transition";
 
 	import Wrapper from "./_Wrapper.svelte";
-	import ActioNBar from "~/components/stage/bottom/ActionBar.svelte";
+	import ActionBar from "~/components/stage/bottom/ActionBar.svelte";
 	import ChatSidepanel from "~/components/stage/sidepanel/ChatSidePanel.svelte";
 	import OptionsSidePanel from "~/components/stage/sidepanel/OptionsSidePanel.svelte";
 	import StageChat from "~/components/stage/elements/Chat.svelte";
@@ -73,7 +73,7 @@
 
 		<!-- FOOTER -->
 		<div class="footer">
-			<ActioNBar />
+			<ActionBar />
 		</div>
 	</main>
 </Wrapper>
@@ -122,18 +122,17 @@
 		justify-items: end;
 		padding: 4px;
 
-		background-color: var(--channelle-menu-bg-color);
-		color: var(--channelle-menu-text-color);
-
 		@include mobile {
 			position: fixed;
 			order: 0;
+			min-width: unset;
 			max-width: unset;
 			width: 100%;
 			top: 0;
 			left: 0;
 			right: 0;
-			bottom: 120px;
+			bottom: 64px;
+			z-index: 10000;
 		}
 	}
 
