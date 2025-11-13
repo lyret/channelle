@@ -1,8 +1,7 @@
 import Confetti from "canvas-confetti";
-import clap1Src from "~/assets/sounds/analog-clap.wav";
-import clap2Src from "~/assets/sounds/damp-clap.wav";
-import clap3Src from "~/assets/sounds/dance-clap.wav";
-import clap4Src from "~/assets/sounds/sharp-clap.wav";
+import analogClap from "~/assets/sounds/analog-clap.wav";
+import danceClap from "~/assets/sounds/dance-clap.wav";
+import sharpClap from "~/assets/sounds/sharp-clap.wav";
 import shineSrc from "~/assets/sounds/shine.wav";
 import tinkSrc from "~/assets/sounds/c4.wav";
 import slimeSrc from "~/assets/sounds/slime.wav";
@@ -17,7 +16,7 @@ const hands = Confetti.shapeFromText({ text: "👏", scalar: 6 });
 const tomato = Confetti.shapeFromText({ text: "🍅", scalar: 12 });
 
 /** Clap sound effects */
-const clapSounds = [new Audio(clap1Src), new Audio(clap2Src), new Audio(clap3Src), new Audio(clap4Src)];
+const clapSounds = [new Audio(sharpClap), new Audio(analogClap), new Audio(danceClap)];
 
 /** Flower sound effect */
 const flowerSounds = [new Audio(tinkSrc), new Audio(shineSrc)];

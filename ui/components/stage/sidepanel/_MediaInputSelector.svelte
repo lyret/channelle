@@ -73,7 +73,6 @@
 		<span class="icon"><IconVideo /></span>
 	</div>
 </div>
-<hr />
 
 <style>
 	.label {

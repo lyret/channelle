@@ -8,16 +8,55 @@
 	import ParticipantsInstrument from "~/components/instruments/ParticipantsInstrument.svelte";
 	import SceneSelectorInstrument from "~/components/instruments/SceneSelectorInstrument.svelte";
 	import MediaInputSelector from "./_MediaInputSelector.svelte";
+	import Accordion from "~/components/Accordion.svelte";
+	import ForcedSettingsContent from "~/components/instruments/_ForcedSettingsContent.svelte";
 
 	import IconActivity from "../../icons/Icon-activity.svelte";
 	import IconExternalLink from "../../icons/Icon-external-link.svelte";
 	import IconKey from "../../icons/Icon-key.svelte";
 	import IconLayers from "../../icons/Icon-layers.svelte";
 	import IconUsers from "../../icons/Icon-users.svelte";
+	import IconMaximize from "../../icons/Icon-maximize.svelte";
+	import IconMinimize from "../../icons/Icon-minimize.svelte";
 	import PicolArrowLeft from "../../picol/icons/Picol-arrow-sans-left.svelte";
 
 	import { peerStore } from "~/api/media";
 	import { focusedInstrument } from "~/stores/instruments";
+	import { windowSizeStore, windowFullscreenStore } from "~/stores/device";
+
+	const windowSize = windowSizeStore();
+	const fullscreen = windowFullscreenStore();
+	$: isMobile = $windowSize.width <= 842;
+
+	// Error handling state for forced settings
+	let errorMessage: string = "";
+	let isLoading = false;
+
+	// Sets the displayed error message and clears after 8 seconds
+	function setError(message: string) {
+		errorMessage = message;
+		setTimeout(() => {
+			errorMessage = "";
+		}, 8000);
+	}
+
+	// Handle API call results
+	async function handleApiCall(apiCall: Promise<{ success: boolean; error?: string }>) {
+		isLoading = true;
+		errorMessage = "";
+
+		try {
+			const result = await apiCall;
+			if (!result.success) {
+				setError(result.error || "Okänt fel");
+			}
+		} catch (error) {
+			console.error("API call failed:", error);
+			setError("Ett oväntat fel uppstod. Försök igen.");
+		} finally {
+			isLoading = false;
+		}
+	}
 </script>
 
 <!-- Common Contents -->
@@ -35,7 +74,7 @@
 			{#if $focusedInstrument == "debug"}
 				<DebugInstrument />
 			{:else if $focusedInstrument == "scene-settings"}
-				<SceneSelectorInstrument />
+				<SceneSelectorInstrument hideForcedSettings={true} />
 			{:else if $focusedInstrument == "participants"}
 				<ParticipantsInstrument />
 			{:else if $focusedInstrument == "access"}
@@ -46,14 +85,13 @@
 		</div>
 	{:else}
 		<div class="select-view mb-4" in:blur={{ duration: 100 }}>
-			{#if CONFIG.runtime.debug}
-				<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "debug")}
-					><span class="icon is-size-5"><IconActivity /></span>
-					<span>Debug Tools</span></button
-				>
-				<hr />
-			{/if}
 			{#if $peerStore.manager}
+				<div class="mb-4">
+					<Accordion title="Snabba inställningar" isOpen={false}>
+						<ForcedSettingsContent {errorMessage} {isLoading} {handleApiCall} />
+					</Accordion>
+				</div>
+
 				<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "debug")}
 					><span class="icon is-size-5"><IconActivity /></span>
 					<span>Avancerad information</span></button
@@ -64,6 +102,26 @@
 					<span>Sceninställningar</span></button
 				>
 				<hr />
+				<!-- Fullscreen button for mobile -->
+				{#if isMobile}
+					<button
+						class="button is-fullwidth mb-4 is-small"
+						class:is-primary={$fullscreen}
+						on:click={() => {
+							fullscreen.toggle();
+						}}
+					>
+						<span class="icon is-size-5">
+							{#if $fullscreen}
+								<IconMinimize />
+							{:else}
+								<IconMaximize />
+							{/if}
+						</span>
+						<span>{$fullscreen ? "Avsluta fullskärm" : "Fullskärm"}</span>
+					</button>
+					<hr />
+				{/if}
 				<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "access")}
 					><span class="icon is-size-5"><IconKey /></span>
 					<span>Tillgång</span></button
@@ -78,6 +136,11 @@
 					<span class="icon is-size-5"><IconExternalLink /></span>
 					<span>Öppna Backstage</span>
 				</a>
+			{:else if CONFIG.runtime.debug}
+				<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "debug")}
+					><span class="icon is-size-5"><IconActivity /></span>
+					<span>Debug Tools</span></button
+				>
 			{/if}
 		</div>
 	{/if}

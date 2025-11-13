@@ -113,7 +113,7 @@ export const mediaRouter = trcpRouter({
 		const msRouter = await mediaSoupRouter();
 
 		if (_room.sessions[ctx.peer.id]) {
-			console.log("[Medida]", ctx.peer.id, "re-started their session possibly due an error or reload");
+			console.log("[Media]", ctx.peer.id, "re-started their session possibly due an error or reload");
 			return { peerId: ctx.peer.id, routerRtpCapabilities: msRouter.rtpCapabilities };
 		}
 
@@ -140,7 +140,7 @@ export const mediaRouter = trcpRouter({
 	leave: mediaSessionProcedure.mutation(async ({ ctx }) => {
 		const peerId = ctx.peer.id;
 		closeMediaPeer(peerId);
-		console.log("[Medida] Peer", peerId, "left");
+		console.log("[Media] Peer", peerId, "left");
 		return;
 	}),
 	// Create Transport
@@ -428,7 +428,7 @@ async function removeStalePeers() {
 	const now = Date.now();
 	for (const [id, peer] of Object.entries(_room.sessions)) {
 		if (now - peer.lastSeenTs > 4200) {
-			console.log(`[Medida] Removing stale peer ${id}`);
+			console.log(`[Media] Removing stale peer ${id}`);
 			closeMediaPeer(id);
 		}
 	}
