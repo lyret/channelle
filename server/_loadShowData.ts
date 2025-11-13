@@ -7,7 +7,7 @@ import { Show } from "./models/Show";
 export async function loadShowConfiguration(showId: number): Promise<void> {
 	try {
 		if (CONFIG.runtime.debug) {
-			console.log(`[Config] Loading show configuration from database entry with id: ${showId}...`);
+			console.log(`[Show Data] Loading show configuration from database entry with id: ${showId}...`);
 		}
 
 		const show = await Show.findByPk(showId);
@@ -16,10 +16,10 @@ export async function loadShowConfiguration(showId: number): Promise<void> {
 			throw new Error(`Show with id ${showId} not found`);
 		}
 
-		console.log(`[Config] Successfully loaded show: ${show.name}`);
+		console.log(`[Show Data] Successfully loaded show: ${show.name}`);
 
 		if (CONFIG.runtime.debug) {
-			console.log("[Config] Show configuration summary:");
+			console.log("[Show Data] Show configuration summary:");
 			Object.entries(show.toJSON()).forEach(([key, value]) => {
 				console.log(` - ${key}: ${value}`);
 			});
@@ -28,7 +28,7 @@ export async function loadShowConfiguration(showId: number): Promise<void> {
 		// Store the loaded show globally for access by other parts of the application
 		global.STAGE_SHOW_CONFIG = show.toJSON();
 	} catch (error) {
-		console.error("[Config] Error loading show configuration:", error);
+		console.error("[Show Data] Error loading show configuration:", error);
 		throw error;
 	}
 }
@@ -37,7 +37,7 @@ export async function loadShowConfiguration(showId: number): Promise<void> {
  * Get the currently loaded show configuration
  * Returns null if no show is loaded (e.g., stage mode without --showId)
  */
-export function getCurrentShowConfig(): any | null {
+export function getCurrentShowData(): any | null {
 	return global.STAGE_SHOW_CONFIG || null;
 }
 

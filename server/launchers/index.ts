@@ -1,5 +1,5 @@
 // Export registry functions
-export * from "./_launchAdapterRegistry";
+export * from "./launchAdapterRegistry";
 
 // Export types
 export * from "./types";
