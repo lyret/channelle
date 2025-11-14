@@ -159,12 +159,12 @@
 		transition: all 0.2s ease;
 
 		&:hover {
-			border-color: var(--bulma-info);
+			border-color: var(--bulma-link);
 			box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 		}
 
 		&.is-selected {
-			border-color: var(--bulma-success);
+			border: 2px solid var(--bulma-success);
 		}
 
 		&.is-expanded {
@@ -298,18 +298,18 @@
 		padding: 0.5rem;
 
 		&.empty-cell {
-			background: var(--bulma-grey-lighter);
-			color: var(--bulma-grey-dark);
-		}
-
-		&.chat-cell {
 			background: var(--bulma-info-light);
 			color: var(--bulma-info-dark);
 		}
 
+		&.chat-cell {
+			background: var(--bulma-link-light);
+			color: var(--bulma-link);
+		}
+
 		&.actor-cell {
-			background: var(--bulma-primary-light);
-			color: var(--bulma-primary-dark);
+			background: var(--bulma-link);
+			color: var(--bulma-link-dark);
 		}
 	}
 
@@ -332,7 +332,7 @@
 		border: none;
 		border-radius: var(--bulma-radius-small);
 		background: transparent;
-		color: var(--bulma-primary-dark);
+		color: var(--bulma-link-dark);
 		cursor: pointer;
 		font-weight: 500;
 		text-align: center;
@@ -341,13 +341,12 @@
 		-moz-appearance: none;
 
 		&:focus {
-			outline: 2px solid var(--bulma-primary);
+			outline: 2px solid var(--bulma-link-dark);
 			outline-offset: -2px;
-			background: rgba(255, 255, 255, 0.1);
 		}
 
 		&:hover {
-			background: rgba(255, 255, 255, 0.05);
+			outline: 2px solid var(--bulma-link-dark);
 		}
 	}
 

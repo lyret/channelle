@@ -4,6 +4,9 @@
 	export let layout: Scene;
 	export let size: "small" | "medium" | "large" = "small";
 
+	// Get body CSS properties
+	const css = window.getComputedStyle(document.body);
+
 	// Calculate grid dimensions
 	$: gridCols = layout.layout && layout.layout.length > 0 ? layout.layout[0].length : 1;
 	$: gridRows = layout.layout && layout.layout.length > 0 ? layout.layout.length : 1;
@@ -22,26 +25,26 @@
 	function getCellColor(cellType: string): string {
 		switch (cellType) {
 			case "actor":
-				return "#0203fe"; // Custom primary blue
+				return css.getPropertyValue("--bulma-link");
 			case "chat":
-				return "#fd584d"; // Custom info red
+				return css.getPropertyValue("--bulma-link-light");
 			case "empty":
-				return "#e8e8e8"; // Better contrast grey
+				return css.getPropertyValue("--bulma-info-light");
 			default:
-				return "#e8e8e8";
+				return css.getPropertyValue("--bulma-info-light");
 		}
 	}
 
 	function getCellStroke(cellType: string): string {
 		switch (cellType) {
 			case "actor":
-				return "#0001cc"; // Darker primary
+				return css.getPropertyValue("--bulma-link-dark");
 			case "chat":
-				return "#e54136"; // Darker info red
+				return css.getPropertyValue("--bulma-link");
 			case "empty":
-				return "#bfbfbf"; // Darker stroke for empty cells
+				return css.getPropertyValue("--bulma-info");
 			default:
-				return "#bfbfbf";
+				return css.getPropertyValue("--bulma-info");
 		}
 	}
 
