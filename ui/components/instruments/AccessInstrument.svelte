@@ -173,6 +173,7 @@
 						type="button"
 						class="button"
 						class:is-success={!isLocked && !isChanged && !errorMessage}
+						class:has-text-warning={!isChangingPassword && isLocked}
 						class:is-warning={isChangingPassword && !errorMessage}
 						class:is-danger={isRemovingPassword || errorMessage}
 						class:is-loading={isLoading}

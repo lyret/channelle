@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { setSetting, showSceneOverridesStores, resetSettings } from "~/api/shows";
+	import PicolBrightnessDarken from "../picol/icons/Picol-brightness-darken.svelte";
 
 	export let errorMessage: string = "";
 	export let isLoading: boolean = false;
@@ -28,6 +29,15 @@
 	<div class="control">
 		<div class="buttons has-addons">
 			<button
+				class="button"
+				class:is-dark={$showSceneOverridesStores.curtains !== 0}
+				class:is-loading={isLoading}
+				disabled={isLoading}
+				on:click={() => handleApiCall(setSetting("curtains", 0, true))}
+			>
+				Automatiskt
+			</button>
+			<button
 				class="button is-danger"
 				class:is-light={$showSceneOverridesStores.curtains !== 2}
 				class:is-loading={isLoading}
@@ -35,15 +45,6 @@
 				on:click={() => handleApiCall(setSetting("curtains", 2, true))}
 			>
 				Dölj
-			</button>
-			<button
-				class="button is-info"
-				class:is-light={$showSceneOverridesStores.curtains !== 0}
-				class:is-loading={isLoading}
-				disabled={isLoading}
-				on:click={() => handleApiCall(setSetting("curtains", 0, true))}
-			>
-				Automatiskt
 			</button>
 			<button
 				class="button is-success"
@@ -74,6 +75,15 @@
 	<div class="control">
 		<div class="buttons has-addons">
 			<button
+				class="button"
+				class:is-dark={$showSceneOverridesStores.chatEnabled !== 0}
+				class:is-loading={isLoading}
+				disabled={isLoading}
+				on:click={() => handleApiCall(setSetting("chatEnabled", 0, true))}
+			>
+				Automatiskt
+			</button>
+			<button
 				class="button is-danger"
 				class:is-light={$showSceneOverridesStores.chatEnabled !== 2}
 				class:is-loading={isLoading}
@@ -81,15 +91,6 @@
 				on:click={() => handleApiCall(setSetting("chatEnabled", 2, true))}
 			>
 				Dölj
-			</button>
-			<button
-				class="button is-info"
-				class:is-light={$showSceneOverridesStores.chatEnabled !== 0}
-				class:is-loading={isLoading}
-				disabled={isLoading}
-				on:click={() => handleApiCall(setSetting("chatEnabled", 0, true))}
-			>
-				Automatiskt
 			</button>
 			<button
 				class="button is-success"
@@ -120,6 +121,15 @@
 	<div class="control">
 		<div class="buttons has-addons">
 			<button
+				class="button"
+				class:is-dark={$showSceneOverridesStores.visitorVideoEnabled !== 0}
+				class:is-loading={isLoading}
+				disabled={isLoading}
+				on:click={() => handleApiCall(setSetting("visitorVideoEnabled", 0, true))}
+			>
+				Automatiskt
+			</button>
+			<button
 				class="button is-danger"
 				class:is-light={$showSceneOverridesStores.visitorVideoEnabled !== 2}
 				class:is-loading={isLoading}
@@ -127,15 +137,6 @@
 				on:click={() => handleApiCall(setSetting("visitorVideoEnabled", 2, true))}
 			>
 				Nej
-			</button>
-			<button
-				class="button is-info"
-				class:is-light={$showSceneOverridesStores.visitorVideoEnabled !== 0}
-				class:is-loading={isLoading}
-				disabled={isLoading}
-				on:click={() => handleApiCall(setSetting("visitorVideoEnabled", 0, true))}
-			>
-				Automatiskt
 			</button>
 			<button
 				class="button is-success"
@@ -166,6 +167,15 @@
 	<div class="control">
 		<div class="buttons has-addons">
 			<button
+				class="button"
+				class:is-dark={$showSceneOverridesStores.visitorAudioEnabled !== 0}
+				class:is-loading={isLoading}
+				disabled={isLoading}
+				on:click={() => handleApiCall(setSetting("visitorAudioEnabled", 0, true))}
+			>
+				Automatiskt
+			</button>
+			<button
 				class="button is-danger"
 				class:is-light={$showSceneOverridesStores.visitorAudioEnabled !== 2}
 				class:is-loading={isLoading}
@@ -173,15 +183,6 @@
 				on:click={() => handleApiCall(setSetting("visitorAudioEnabled", 2, true))}
 			>
 				Nej
-			</button>
-			<button
-				class="button is-info"
-				class:is-light={$showSceneOverridesStores.visitorAudioEnabled !== 0}
-				class:is-loading={isLoading}
-				disabled={isLoading}
-				on:click={() => handleApiCall(setSetting("visitorAudioEnabled", 0, true))}
-			>
-				Automatiskt
 			</button>
 			<button
 				class="button is-success"
@@ -212,6 +213,15 @@
 	<div class="control">
 		<div class="buttons has-addons">
 			<button
+				class="button"
+				class:is-dark={$showSceneOverridesStores.gratitudeEffectsEnabled !== 0}
+				class:is-loading={isLoading}
+				disabled={isLoading}
+				on:click={() => handleApiCall(setSetting("gratitudeEffectsEnabled", 0, true))}
+			>
+				Automatiskt
+			</button>
+			<button
 				class="button is-danger"
 				class:is-light={$showSceneOverridesStores.gratitudeEffectsEnabled !== 2}
 				class:is-loading={isLoading}
@@ -219,15 +229,6 @@
 				on:click={() => handleApiCall(setSetting("gratitudeEffectsEnabled", 2, true))}
 			>
 				Nej
-			</button>
-			<button
-				class="button is-info"
-				class:is-light={$showSceneOverridesStores.gratitudeEffectsEnabled !== 0}
-				class:is-loading={isLoading}
-				disabled={isLoading}
-				on:click={() => handleApiCall(setSetting("gratitudeEffectsEnabled", 0, true))}
-			>
-				Automatiskt
 			</button>
 			<button
 				class="button is-success"
@@ -258,6 +259,15 @@
 	<div class="control">
 		<div class="buttons has-addons">
 			<button
+				class="button"
+				class:is-dark={$showSceneOverridesStores.criticalEffectsEnabled !== 0}
+				class:is-loading={isLoading}
+				disabled={isLoading}
+				on:click={() => handleApiCall(setSetting("criticalEffectsEnabled", 0, true))}
+			>
+				Automatiskt
+			</button>
+			<button
 				class="button is-danger"
 				class:is-light={$showSceneOverridesStores.criticalEffectsEnabled !== 2}
 				class:is-loading={isLoading}
@@ -265,15 +275,6 @@
 				on:click={() => handleApiCall(setSetting("criticalEffectsEnabled", 2, true))}
 			>
 				Nej
-			</button>
-			<button
-				class="button is-info"
-				class:is-light={$showSceneOverridesStores.criticalEffectsEnabled !== 0}
-				class:is-loading={isLoading}
-				disabled={isLoading}
-				on:click={() => handleApiCall(setSetting("criticalEffectsEnabled", 0, true))}
-			>
-				Automatiskt
 			</button>
 			<button
 				class="button is-success"
@@ -302,7 +303,9 @@
 {#if hasActiveOverrides}
 	<div class="field">
 		<div class="control">
-			<button class="button is-warning" class:is-loading={isLoading} disabled={isLoading} on:click={resetOverrides}> Återställ till automatiskt </button>
+			<button class="button is-warning" class:is-loading={isLoading} disabled={isLoading} on:click={resetOverrides}>
+				Återställ alla till automatiskt
+			</button>
 		</div>
 		<div class="help-section">
 			<p class="help">Återställer alla tvingande inställningar till "Automatiskt" - låter scenerna bestämma</p>
