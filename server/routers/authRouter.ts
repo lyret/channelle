@@ -33,9 +33,9 @@ function cleanupExpiredSessions(): void {
 
 /**
  * Authentication procedure
- * Only allows signed in users in theater mode to continue
+ * Only allows signed in admin users to continue
  */
-export const authedProcedure = userConnectionProcedure.use(({ ctx, next }) => {
+export const adminUserProcedure = userConnectionProcedure.use(({ ctx, next }) => {
 	if (!CONFIG.runtime.theater && ctx.peer.manager) {
 		// When in stage mode a connected manager has the same aces
 		return next({ ctx });

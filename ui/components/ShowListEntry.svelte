@@ -6,10 +6,9 @@
 	import PicolArrowFullUpperright from "./picol/icons/Picol-arrow-full-upperright.svelte";
 	import PicolStop from "./picol/icons/Picol-controls-stop.svelte";
 	import PicolCopy from "./picol/icons/Picol-copy.svelte";
+	import type { ShowAttributes } from "~/api/shows";
 
-	import type { ShowListItem } from "~/types/serverSideTypes";
-
-	export let show: ShowListItem;
+	export let show: ShowAttributes;
 
 	let isLaunching = false;
 	let isStopping = false;

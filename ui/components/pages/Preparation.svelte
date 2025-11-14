@@ -2,8 +2,8 @@
 	import { onMount } from "svelte";
 	import { blur } from "svelte/transition";
 
-	import { getShow, currentShowStore, selectShow } from "~/api/config";
-	import { initializeConfigManager } from "~/api/config";
+	import { getShow, showMetadataStore, selectShow } from "~/api/shows";
+	import { initializeConfigAPI } from "~/api/shows";
 	import type { PublicShowData } from "~/types/serverSideTypes";
 
 	// Type alias for client-side data (dates serialized as strings)
@@ -74,8 +74,8 @@
 			}
 		}
 
-		// Initialize the config manager after loading show data
-		await initializeConfigManager();
+		// Initialize the config API after loading show data
+		await initializeConfigAPI();
 
 		loading = false;
 	});
@@ -101,11 +101,11 @@
 				<p class="subtitle is-4 has-text-danger has-text-weight-semibold mt-6">{error}</p>
 			{:else if currentShow && currentShow.lastOnlineAt !== null}
 				<p class="subtitle is-4 has-text-warning has-text-weight-semibold">
-					"{$currentShowStore?.name || currentShow.name}" har redan visats och kan inte längre redigeras här
+					"{$showMetadataStore?.name || currentShow.name}" har redan visats och kan inte längre redigeras här
 				</p>
 				<p class="is-size-6 mb-2">Du kan fortfarande se inställningarna nedan, men ändringar kommer inte att sparas.</p>
 			{:else if currentShow}
-				<p class="subtitle is-4 has-text-white">Förbereder "{$currentShowStore?.name || currentShow.name}" innan lansering</p>
+				<p class="subtitle is-4 has-text-white">Förbereder "{$showMetadataStore?.name || currentShow.name}" innan lansering</p>
 			{:else}
 				<p class="subtitle is-4 has-text-white">Förbereder innan lansering</p>
 			{/if}

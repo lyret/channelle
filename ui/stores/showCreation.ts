@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import { createShow } from "~/api/config";
+import { createShow } from "~/api/shows";
 
 /** Store for show creation loading state */
 export const isCreatingShow = writable<boolean>(false);

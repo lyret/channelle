@@ -6,12 +6,12 @@
 	import ShowsList from "../theater/ShowsList.svelte";
 	import IconSettings from "~/components/picol/icons/Picol-settings.svelte";
 
-	import { showsLoadingStore, showsErrorStore, fetchShows } from "~/api/config";
+	import { showsStoreIsLoading, showsErrorStore, fetchShows } from "~/api/shows";
 	import { openCreateShowModal, openLauncherModal } from "~/stores/theaterModals";
 	import { isTheaterAuthenticated } from "~/api/auth";
 
 	// Use reactive statement to get shows from store
-	$: isLoadingShows = $showsLoadingStore;
+	$: isLoadingShows = $showsStoreIsLoading;
 	$: showsError = $showsErrorStore;
 </script>
 

@@ -4,7 +4,7 @@
 	import AboutModal from "~/components/modals/TheaterAboutModal.svelte";
 	import CreateShowModal from "~/components/modals/TheaterCreateShowModal.svelte";
 	import LaunchersModal from "~/components/modals/LaunchersModal.svelte";
-	import { fetchShows, initializeConfigAPI, onlineShowsStore } from "~/api/config";
+	import { fetchShows, initializeConfigAPI, onlineShowsStore } from "~/api/shows";
 	import {
 		showAuthModal,
 		showAboutModal,

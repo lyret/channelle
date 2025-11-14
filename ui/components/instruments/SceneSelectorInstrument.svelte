@@ -5,7 +5,7 @@
 	import ForcedSettingsContent from "./_ForcedSettingsContent.svelte";
 	import { onMount } from "svelte";
 	import { peersStore, stageChatEnabledStore } from "~/api/media";
-	import { configManager, currentSceneStore } from "~/api/config";
+	import { setScene, showSceneSelectionStores } from "~/api/shows";
 
 	export let hideForcedSettings: boolean = false;
 
@@ -121,7 +121,7 @@
 
 	// Sync actual stage stores when the selected scene changes
 	onMount(() => {
-		const stop = currentSceneStore.subscribe((scene) => {
+		const stop = showSceneSelectionStores.subscribe((scene) => {
 			if (scene) {
 				stageChatEnabledStore.set(scene?.chatEnabled || false);
 			}
@@ -134,7 +134,7 @@
 
 	async function handleSceneSelect(event: CustomEvent<Scene>) {
 		// Persist the scene selection to the server
-		await handleApiCall(configManager.updateCurrentScene(event.detail));
+		await handleApiCall(setScene(event.detail, true));
 		// Collapse all expanded scenes after selection
 		expandedScenes = {};
 	}
@@ -213,7 +213,7 @@
 				<SceneSelectorControl
 					layout={auto}
 					{peers}
-					selectedLayout={$currentSceneStore}
+					selectedLayout={$showSceneSelectionStores}
 					bind:expanded={expandedScenes[auto.name]}
 					on:select={handleSceneSelect}
 					on:update={handleSceneUpdate}
@@ -221,7 +221,7 @@
 				<SceneSelectorControl
 					layout={empty}
 					{peers}
-					selectedLayout={$currentSceneStore}
+					selectedLayout={$showSceneSelectionStores}
 					bind:expanded={expandedScenes[empty.name]}
 					on:select={handleSceneSelect}
 					on:update={handleSceneUpdate}
@@ -229,7 +229,7 @@
 				<SceneSelectorControl
 					layout={oneXOne}
 					{peers}
-					selectedLayout={$currentSceneStore}
+					selectedLayout={$showSceneSelectionStores}
 					bind:expanded={expandedScenes[oneXOne.name]}
 					on:select={handleSceneSelect}
 					on:update={handleSceneUpdate}
@@ -237,7 +237,7 @@
 				<SceneSelectorControl
 					layout={oneXTwo}
 					{peers}
-					selectedLayout={$currentSceneStore}
+					selectedLayout={$showSceneSelectionStores}
 					bind:expanded={expandedScenes[oneXTwo.name]}
 					on:select={handleSceneSelect}
 					on:update={handleSceneUpdate}
@@ -245,7 +245,7 @@
 				<SceneSelectorControl
 					layout={chat}
 					{peers}
-					selectedLayout={$currentSceneStore}
+					selectedLayout={$showSceneSelectionStores}
 					bind:expanded={expandedScenes[chat.name]}
 					on:select={handleSceneSelect}
 					on:update={handleSceneUpdate}
@@ -253,7 +253,7 @@
 				<SceneSelectorControl
 					layout={twoXTwo}
 					{peers}
-					selectedLayout={$currentSceneStore}
+					selectedLayout={$showSceneSelectionStores}
 					bind:expanded={expandedScenes[twoXTwo.name]}
 					on:select={handleSceneSelect}
 					on:update={handleSceneUpdate}

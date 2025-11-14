@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { configManager, currentShowStore } from "~/api/config";
+	import { updateShowMetadata, showMetadataStore } from "~/api/shows";
 	import IconSave from "../icons/Icon-save.svelte";
 	import IconX from "../icons/Icon-x.svelte";
 
@@ -15,9 +15,9 @@
 	let success = false;
 
 	// Computed placeholders to avoid template string issues
-	$: namePlaceholder = $currentShowStore?.nomenclature ? `Ange ${$currentShowStore.nomenclature.slice(0, -2)}ingsnamn` : "Ange föreställningsnamn";
-	$: descriptionPlaceholder = $currentShowStore?.nomenclature
-		? `Ange en beskrivning av ${$currentShowStore.nomenclature} (valfritt)`
+	$: namePlaceholder = $showMetadataStore?.nomenclature ? `Ange ${$showMetadataStore.nomenclature.slice(0, -2)}` : "Ange namn";
+	$: descriptionPlaceholder = $showMetadataStore?.nomenclature
+		? `Ange en beskrivning av ${$showMetadataStore.nomenclature} (valfritt)`
 		: "Ange en beskrivning av föreställningen (valfritt)";
 
 	$: nameCharCount = nameInput.length;
@@ -27,7 +27,7 @@
 	const descriptionMaxLength = 1000;
 	const nomenclatureMaxLength = 100;
 
-	const canEdit = CONFIG.runtime.theater && configManager.canUpdateConfig();
+	const canEdit = CONFIG.runtime.theater;
 	$: hasChanges = nameInput !== originalName || descriptionInput !== originalDescription || nomenclatureInput !== originalNomenclature;
 	$: canSave = hasChanges && nameInput.trim().length > 0 && !isLoading;
 
@@ -35,7 +35,7 @@
 
 	onMount(() => {
 		// Subscribe to current show changes
-		const unsubscribe = currentShowStore.subscribe((show) => {
+		const unsubscribe = showMetadataStore.subscribe((show) => {
 			if (show) {
 				const newOriginalName = show.name || "";
 				const newOriginalDescription = show.description || "";
@@ -106,7 +106,7 @@
 				return;
 			}
 
-			const result = await configManager.updateMetadata(metadata);
+			const result = await updateShowMetadata(undefined, metadata);
 
 			if (result.success) {
 				// Update only the original values for fields that were actually sent
@@ -149,16 +149,17 @@
 
 <div class="show-metadata-instrument">
 	<h1 class="title">
-		{$currentShowStore?.nomenclature ? $currentShowStore.nomenclature.charAt(0).toUpperCase() + $currentShowStore.nomenclature.slice(1) : "Föreställning"}s
-		info
+		{$showMetadataStore?.nomenclature
+			? $showMetadataStore.nomenclature.charAt(0).toUpperCase() + $showMetadataStore.nomenclature.slice(1)
+			: "Föreställning"}s info
 	</h1>
 
 	{#if !CONFIG.runtime.theater}
 		<div class="notification is-info is-light">
 			<p class="is-size-7">
 				<strong>Skrivskyddad vy</strong><br />
-				{$currentShowStore?.nomenclature
-					? $currentShowStore.nomenclature.charAt(0).toUpperCase() + $currentShowStore.nomenclature.slice(1)
+				{$showMetadataStore?.nomenclature
+					? $showMetadataStore.nomenclature.charAt(0).toUpperCase() + $showMetadataStore.nomenclature.slice(1)
 					: "Föreställning"}sinfo kan endast redigeras i förberedelsesläge (theater mode).
 			</p>
 		</div>
@@ -167,8 +168,8 @@
 	{#if success}
 		<div class="notification is-success">
 			<p>
-				✓ {$currentShowStore?.nomenclature
-					? $currentShowStore.nomenclature.charAt(0).toUpperCase() + $currentShowStore.nomenclature.slice(1)
+				✓ {$showMetadataStore?.nomenclature
+					? $showMetadataStore.nomenclature.charAt(0).toUpperCase() + $showMetadataStore.nomenclature.slice(1)
 					: "Föreställning"}sinfo har uppdaterats
 			</p>
 		</div>

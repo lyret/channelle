@@ -3,7 +3,7 @@
 	import { blur } from "svelte/transition";
 	import * as mediaClient from "~/api/media/mediaClient";
 	import { wsPeerIdStore } from "~/api/_trpcClient";
-	import { configManager } from "~/api/config";
+	import { setPassword } from "~/api/shows";
 	import { SessionStats, PeerMediaStatus, ConnectionStatus } from "~/components/debug";
 
 	// Import all the stores from roomClient
@@ -107,10 +107,10 @@
 
 	async function setStagePassword() {
 		if (newPasswordInput.trim()) {
-			await configManager.updatePassword(newPasswordInput.trim());
+			await setPassword(newPasswordInput.trim(), true);
 			newPasswordInput = "";
 		} else {
-			await configManager.updatePassword(undefined);
+			await setPassword(undefined, true);
 		}
 	}
 

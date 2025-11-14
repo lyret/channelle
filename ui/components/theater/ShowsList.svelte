@@ -1,10 +1,10 @@
 <script lang="ts">
 	import ShowListEntry from "~/components/ShowListEntry.svelte";
-	import { showsStore } from "~/api/config";
+	import { showsListStore } from "~/api/shows";
 
 	// Separate shows into current/upcoming and previous
-	$: currentShows = $showsStore.filter(show => show.isOnline || show.lastOnlineAt === null);
-	$: previousShows = $showsStore.filter(show => !show.isOnline && show.lastOnlineAt !== null);
+	$: currentShows = $showsListStore.filter((show) => show.isOnline || show.lastOnlineAt === null);
+	$: previousShows = $showsListStore.filter((show) => !show.isOnline && show.lastOnlineAt !== null);
 </script>
 
 <div class="box">
@@ -25,7 +25,7 @@
 	{/if}
 
 	<!-- Empty state -->
-	{#if $showsStore.length === 0}
+	{#if $showsListStore.length === 0}
 		<div class="notification is-light">
 			<p class="is-family-secondary has-text-grey">Det finns inga föreställningar att visa just nu.</p>
 		</div>

@@ -30,7 +30,7 @@
 	} from "~/api/media";
 
 	// Configuration API imports
-	import { passwordStore, currentSceneStore, sceneSettingsStore } from "~/api/config";
+	import { showPasswordStore, showSceneSelectionStores, showSceneOverridesStores } from "~/api/shows";
 
 	import SessionStats from "./SessionStats.svelte";
 	import PeerMediaStatus from "./PeerMediaStatus.svelte";
@@ -71,12 +71,12 @@
 	}));
 
 	// Show configuration reactive statements
-	$: stagePassword = $passwordStore;
-	$: stagePredefinedLayout = $currentSceneStore;
-	$: stageChatEnabled = $sceneSettingsStore?.chatEnabled;
-	$: stageEffectsEnabled = $sceneSettingsStore?.effectsEnabled;
-	$: stageVisitorAudioEnabled = $sceneSettingsStore?.visitorAudioEnabled;
-	$: stageVisitorVideoEnabled = $sceneSettingsStore?.visitorVideoEnabled;
+	$: stagePassword = $showPasswordStore;
+	$: stagePredefinedLayout = $showSceneSelectionStores;
+	$: stageChatEnabled = $showSceneOverridesStores?.chatEnabled;
+	$: stageEffectsEnabled = $showSceneOverridesStores?.effectsEnabled;
+	$: stageVisitorAudioEnabled = $showSceneOverridesStores?.visitorAudioEnabled;
+	$: stageVisitorVideoEnabled = $showSceneOverridesStores?.visitorVideoEnabled;
 
 	// MediaRoom state reactive statements
 	$: stageCurtains = $stageCurtainsStore;

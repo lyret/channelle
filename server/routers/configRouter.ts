@@ -5,7 +5,7 @@ import { z } from "zod";
 import { trpc } from "../lib";
 import { SceneSetting } from "../_types";
 import { Show } from "../models/Show";
-import { authedProcedure } from "./authRouter";
+import { adminUserProcedure } from "./authRouter";
 
 // Get the trpc router constructor and default procedure
 const { router: trcpRouter, procedure: trcpProcedure } = trpc();
@@ -14,7 +14,7 @@ const { router: trcpRouter, procedure: trcpProcedure } = trpc();
  * Procedure that validates the show is editable (not previously shown)
  * Extends authedProcedure with additional validation for show editing
  */
-const editableShowProcedure = authedProcedure.use(async ({ ctx, next }) => {
+const editableShowProcedure = adminUserProcedure.use(async ({ ctx, next }) => {
 	// Check if there's a selected show that needs validation
 	if (_stageConfig.selectedShowId) {
 		try {

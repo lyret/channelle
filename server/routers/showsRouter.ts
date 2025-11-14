@@ -1,52 +1,14 @@
 import { Show } from "../models/Show";
 import { getActiveAdapter, isLauncherReady } from "../launchers";
 
-import type { Scene, SceneSetting } from "../_types";
+import type { ShowAttributes } from "../_types";
 import { TRPCError } from "@trpc/server";
 import { trpc } from "../lib";
 import { z } from "zod";
+import { adminUserProcedure } from "./authRouter";
 
 // Get the trpc router constructor and default procedure
 const { router: trcpRouter, procedure: trcpProcedure } = trpc();
-
-/** Public show information (without sensitive data like password) */
-export interface PublicShowData {
-	id: number;
-	name: string;
-	description: string;
-	nomenclature: string;
-	isPasswordProtected: boolean;
-	curtainsOverride: SceneSetting;
-	chatEnabledOverride: SceneSetting;
-	gratitudeEffectsEnabledOverride: SceneSetting;
-	criticalEffectsEnabledOverride: SceneSetting;
-	visitorAudioEnabledOverride: SceneSetting;
-	visitorVideoEnabledOverride: SceneSetting;
-	currentScene: Scene | null;
-	lastOnlineAt: Date | null;
-	createdAt: Date;
-	updatedAt: Date;
-}
-
-/** Show list item for displaying in UI */
-export interface ShowListItem {
-	id: number;
-	name: string;
-	description: string;
-	nomenclature: string;
-	isPasswordProtected: boolean;
-	isOnline: boolean;
-	lastOnlineAt: Date | null;
-	participantCount: number;
-	url: string;
-}
-
-/** Show authentication response */
-export interface ShowAuthResponse {
-	success: boolean;
-	message?: string;
-	showData?: PublicShowData;
-}
 
 /**
  * Shows Router - Handles show CRUD operations
@@ -55,7 +17,7 @@ export const showsRouter = trcpRouter({
 	/**
 	 * Get all shows (public information only)
 	 */
-	list: trcpProcedure.query(async (): Promise<ShowListItem[]> => {
+	list: trcpProcedure.query(async (): Promise<ShowAttributes[]> => {
 		try {
 			const shows = await Show.findAll({
 				order: [["updatedAt", "DESC"]],
@@ -72,12 +34,13 @@ export const showsRouter = trcpRouter({
 							.filter((instance) => instance.status === "running" || instance.status === "starting")
 							.map((instance) => ({ showId: instance.showId, url: instance.url }));
 					} catch (error) {
-						console.error("[ShowRouter] Error getting instances:", error);
+						console.error("[Shows] Error getting instances:", error);
 					}
 				}
 			}
 
-			return shows.map((show) => {
+			// FIXME: Continue with this!
+			return shows; /*shows.map((show) => {
 				const runningInstance = runningInstances.find((instance) => instance.showId === show.id);
 				const isCurrentlyOnline = Boolean(runningInstance);
 
@@ -92,9 +55,9 @@ export const showsRouter = trcpRouter({
 					participantCount: 0, // TODO: Implement participant counting
 					url: runningInstance ? runningInstance.url : `/stage/${show.id}`,
 				};
-			});
+			}); */
 		} catch (error) {
-			console.error("[ShowRouter] Error fetching shows:", error);
+			console.error("[Shows] Error fetching shows:", error);
 			throw new TRPCError({
 				code: "INTERNAL_SERVER_ERROR",
 				message: "Failed to fetch shows",
@@ -105,13 +68,13 @@ export const showsRouter = trcpRouter({
 	/**
 	 * Get a single show by ID (public information only)
 	 */
-	get: trcpProcedure
+	get: adminUserProcedure
 		.input(
 			z.object({
 				id: z.number().int().positive(),
 			}),
 		)
-		.query(async ({ input }): Promise<PublicShowData | null> => {
+		.query(async ({ input }): Promise<ShowAttributes | null> => {
 			try {
 				const show = await Show.findByPk(input.id);
 
@@ -119,25 +82,9 @@ export const showsRouter = trcpRouter({
 					return null;
 				}
 
-				return {
-					id: show.id,
-					name: show.name,
-					description: show.description,
-					nomenclature: show.nomenclature,
-					isPasswordProtected: Boolean(show.showPassword && show.showPassword.trim() !== ""),
-					lastOnlineAt: show.lastOnlineAt,
-					curtainsOverride: show.curtainsOverride,
-					chatEnabledOverride: show.chatEnabledOverride,
-					gratitudeEffectsEnabledOverride: show.gratitudeEffectsEnabledOverride,
-					criticalEffectsEnabledOverride: show.criticalEffectsEnabledOverride,
-					visitorAudioEnabledOverride: show.visitorAudioEnabledOverride,
-					visitorVideoEnabledOverride: show.visitorVideoEnabledOverride,
-					currentScene: show.currentScene,
-					createdAt: show.createdAt,
-					updatedAt: show.updatedAt,
-				};
+				return show;
 			} catch (error) {
-				console.error("[ShowRouter] Error fetching show:", error);
+				console.error("[Shows] Error fetching show:", error);
 				throw new TRPCError({
 					code: "INTERNAL_SERVER_ERROR",
 					message: "Failed to fetch show",
@@ -148,7 +95,7 @@ export const showsRouter = trcpRouter({
 	/**
 	 * Create a new show
 	 */
-	create: trcpProcedure
+	create: adminUserProcedure
 		.input(
 			z.object({
 				name: z.string().min(1).max(255),
@@ -185,7 +132,7 @@ export const showsRouter = trcpRouter({
 					.default(null),
 			}),
 		)
-		.mutation(async ({ input }): Promise<PublicShowData> => {
+		.mutation(async ({ input }): Promise<ShowAttributes> => {
 			try {
 				// Check if show name already exists
 				const existingShow = await Show.findOne({
@@ -213,30 +160,14 @@ export const showsRouter = trcpRouter({
 					currentScene: input.currentScene || null,
 				});
 
-				console.log(`[ShowRouter] Created new show: ${show.name} (ID: ${show.id})`);
+				console.log(`[Shows] Created new show: ${show.name} (ID: ${show.id})`);
 
-				return {
-					id: show.id,
-					name: show.name,
-					description: show.description,
-					nomenclature: show.nomenclature,
-					isPasswordProtected: Boolean(show.showPassword && show.showPassword.trim() !== ""),
-					curtainsOverride: show.curtainsOverride,
-					chatEnabledOverride: show.chatEnabledOverride,
-					gratitudeEffectsEnabledOverride: show.gratitudeEffectsEnabledOverride,
-					criticalEffectsEnabledOverride: show.criticalEffectsEnabledOverride,
-					visitorAudioEnabledOverride: show.visitorAudioEnabledOverride,
-					visitorVideoEnabledOverride: show.visitorVideoEnabledOverride,
-					currentScene: show.currentScene,
-					lastOnlineAt: show.lastOnlineAt,
-					createdAt: show.createdAt,
-					updatedAt: show.updatedAt,
-				};
+				return show;
 			} catch (error) {
 				if (error instanceof TRPCError) {
 					throw error;
 				}
-				console.error("[ShowRouter] Error creating show:", error);
+				console.error("[Shows] Error creating show:", error);
 				throw new TRPCError({
 					code: "INTERNAL_SERVER_ERROR",
 					message: "Failed to create show",
@@ -247,7 +178,7 @@ export const showsRouter = trcpRouter({
 	/**
 	 * Update an existing show
 	 */
-	update: trcpProcedure
+	update: adminUserProcedure
 		.input(
 			z.object({
 				id: z.number().int().positive(),
@@ -284,7 +215,7 @@ export const showsRouter = trcpRouter({
 					.nullable(),
 			}),
 		)
-		.mutation(async ({ input }): Promise<PublicShowData> => {
+		.mutation(async ({ input }): Promise<ShowAttributes> => {
 			try {
 				const show = await Show.findByPk(input.id);
 
@@ -324,30 +255,14 @@ export const showsRouter = trcpRouter({
 					...(input.currentScene !== undefined && { currentScene: input.currentScene }),
 				});
 
-				console.log(`[ShowRouter] Updated show: ${show.name} (ID: ${show.id})`);
+				console.log(`[Shows] Updated show: ${show.name} (ID: ${show.id})`);
 
-				return {
-					id: show.id,
-					name: show.name,
-					description: show.description,
-					nomenclature: show.nomenclature,
-					isPasswordProtected: Boolean(show.showPassword && show.showPassword.trim() !== ""),
-					curtainsOverride: show.curtainsOverride,
-					chatEnabledOverride: show.chatEnabledOverride,
-					gratitudeEffectsEnabledOverride: show.gratitudeEffectsEnabledOverride,
-					criticalEffectsEnabledOverride: show.criticalEffectsEnabledOverride,
-					visitorAudioEnabledOverride: show.visitorAudioEnabledOverride,
-					visitorVideoEnabledOverride: show.visitorVideoEnabledOverride,
-					currentScene: show.currentScene,
-					lastOnlineAt: show.lastOnlineAt,
-					createdAt: show.createdAt,
-					updatedAt: show.updatedAt,
-				};
+				return show;
 			} catch (error) {
 				if (error instanceof TRPCError) {
 					throw error;
 				}
-				console.error("[ShowRouter] Error updating show:", error);
+				console.error("[Shows] Error updating show:", error);
 				throw new TRPCError({
 					code: "INTERNAL_SERVER_ERROR",
 					message: "Failed to update show",
@@ -358,7 +273,7 @@ export const showsRouter = trcpRouter({
 	/**
 	 * Delete a show
 	 */
-	delete: trcpProcedure
+	delete: adminUserProcedure
 		.input(
 			z.object({
 				id: z.number().int().positive(),
@@ -376,143 +291,17 @@ export const showsRouter = trcpRouter({
 				}
 
 				await show.destroy();
-				console.log(`[ShowRouter] Deleted show: ${show.name} (ID: ${show.id})`);
+				console.log(`[Shows] Deleted show: ${show.name} (ID: ${show.id})`);
 
 				return { success: true };
 			} catch (error) {
 				if (error instanceof TRPCError) {
 					throw error;
 				}
-				console.error("[ShowRouter] Error deleting show:", error);
+				console.error("[Shows] Error deleting show:", error);
 				throw new TRPCError({
 					code: "INTERNAL_SERVER_ERROR",
 					message: "Failed to delete show",
-				});
-			}
-		}),
-
-	/**
-	 * Authenticate access to a password-protected show
-	 */
-	authenticate: trcpProcedure
-		.input(
-			z.object({
-				showId: z.number().int().positive(),
-				password: z.string(),
-			}),
-		)
-		.mutation(async ({ input }): Promise<ShowAuthResponse> => {
-			try {
-				const show = await Show.findByPk(input.showId);
-
-				if (!show) {
-					throw new TRPCError({
-						code: "NOT_FOUND",
-						message: "Show not found",
-					});
-				}
-
-				// Check if show is password protected
-				const isPasswordProtected = Boolean(show.showPassword && show.showPassword.trim() !== "");
-
-				if (!isPasswordProtected) {
-					// Show is not password protected, allow access
-					return {
-						success: true,
-						showData: {
-							id: show.id,
-							name: show.name,
-							description: show.description,
-							nomenclature: show.nomenclature,
-							isPasswordProtected: false,
-							curtainsOverride: show.curtainsOverride,
-							chatEnabledOverride: show.chatEnabledOverride,
-							gratitudeEffectsEnabledOverride: show.gratitudeEffectsEnabledOverride,
-							criticalEffectsEnabledOverride: show.criticalEffectsEnabledOverride,
-							visitorAudioEnabledOverride: show.visitorAudioEnabledOverride,
-							visitorVideoEnabledOverride: show.visitorVideoEnabledOverride,
-							currentScene: show.currentScene,
-							lastOnlineAt: show.lastOnlineAt,
-							createdAt: show.createdAt,
-							updatedAt: show.updatedAt,
-						},
-					};
-				}
-
-				// Verify password
-				if (input.password !== show.showPassword) {
-					return {
-						success: false,
-						message: "Invalid password",
-					};
-				}
-
-				console.log(`[ShowRouter] Authenticated access to show: ${show.name} (ID: ${show.id})`);
-
-				return {
-					success: true,
-					showData: {
-						id: show.id,
-						name: show.name,
-						description: show.description,
-						nomenclature: show.nomenclature,
-						isPasswordProtected: true,
-						curtainsOverride: show.curtainsOverride,
-						chatEnabledOverride: show.chatEnabledOverride,
-						gratitudeEffectsEnabledOverride: show.gratitudeEffectsEnabledOverride,
-						criticalEffectsEnabledOverride: show.criticalEffectsEnabledOverride,
-						visitorAudioEnabledOverride: show.visitorAudioEnabledOverride,
-						visitorVideoEnabledOverride: show.visitorVideoEnabledOverride,
-						currentScene: show.currentScene,
-						lastOnlineAt: show.lastOnlineAt,
-						createdAt: show.createdAt,
-						updatedAt: show.updatedAt,
-					},
-				};
-			} catch (error) {
-				if (error instanceof TRPCError) {
-					throw error;
-				}
-				console.error("[ShowRouter] Error authenticating show access:", error);
-				throw new TRPCError({
-					code: "INTERNAL_SERVER_ERROR",
-					message: "Failed to authenticate show access",
-				});
-			}
-		}),
-
-	/**
-	 * Authenticate theater access with global password
-	 */
-	authenticateTheater: trcpProcedure
-		.input(
-			z.object({
-				password: z.string(),
-			}),
-		)
-		.mutation(async ({ input }): Promise<{ success: boolean; message?: string }> => {
-			try {
-				// Get theater password from config
-				const theaterPassword = CONFIG.theater.password;
-
-				// Verify password
-				if (input.password !== theaterPassword) {
-					return {
-						success: false,
-						message: "Invalid theater password",
-					};
-				}
-
-				console.log("[ShowRouter] Theater authentication successful");
-
-				return {
-					success: true,
-				};
-			} catch (error) {
-				console.error("[ShowRouter] Error authenticating theater access:", error);
-				throw new TRPCError({
-					code: "INTERNAL_SERVER_ERROR",
-					message: "Failed to authenticate theater access",
 				});
 			}
 		}),

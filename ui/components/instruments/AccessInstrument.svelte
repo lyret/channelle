@@ -2,7 +2,7 @@
 	import { onMount } from "svelte";
 	import IconLock from "../icons/Icon-lock.svelte";
 	import IconUnlock from "../icons/Icon-unlock.svelte";
-	import { configManager, passwordStore, currentShowStore } from "~/api/config";
+	import { setPassword, showPasswordStore, showMetadataStore } from "~/api/shows";
 
 	let inputRef: HTMLInputElement;
 	let inputValue: string = "";
@@ -12,7 +12,7 @@
 	let successMessage: string = "";
 	let originalPassword = "";
 
-	$: isLocked = $passwordStore?.length;
+	$: isLocked = $showPasswordStore?.length;
 	$: isChanged = originalPassword !== inputValue;
 	$: canSave = isChanged && !isLoading;
 	$: isChangingPassword = isChanged && inputValue.trim().length > 0;
@@ -53,7 +53,7 @@
 
 		try {
 			// Use config manager to handle both theater and stage modes
-			const result = await configManager.updatePassword(inputValue || undefined);
+			const result = await setPassword(inputValue || undefined, true);
 
 			if (result.success) {
 				// Update original password to reflect new state
@@ -81,7 +81,7 @@
 
 	onMount(() => {
 		// Subscribe to password store - this will fire immediately with current value
-		const unsubscribe = passwordStore.subscribe((storeValue) => {
+		const unsubscribe = showPasswordStore.subscribe((storeValue) => {
 			// Handle both undefined (not loaded) and string (loaded) values
 			const newValue = storeValue !== undefined ? storeValue || "" : "";
 			inputValue = newValue;
@@ -119,7 +119,7 @@
 			</div>
 			<div class="help-section">
 				<p class="help">
-					Dela denna länk för att ge omedelbar tillgång till {$currentShowStore?.nomenclature || "föreställningen"} som aktör/skådespelare
+					Dela denna länk för att ge omedelbar tillgång till {$showMetadataStore?.nomenclature || "föreställningen"} som aktör/skådespelare
 				</p>
 			</div>
 		</div>

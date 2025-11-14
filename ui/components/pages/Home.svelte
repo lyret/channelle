@@ -6,7 +6,7 @@
 	import smokerSrc from "~/assets/images/smoker-cropped.png";
 	import ticketsSrc from "~/assets/images/tickets.png";
 	import { isStagePasswordOkStore } from "~/stores/stage";
-	import { currentShowStore } from "~/api/config";
+	import { showMetadataStore } from "~/api/shows";
 	import Wrapper from "./_Wrapper.svelte";
 	import PasswordCurtainMessage from "~/components/curtains/PasswordCurtainMessage.svelte";
 	import FloatingImage from "~/components/home/FloatingImage.svelte";
@@ -73,7 +73,7 @@
 				{/if}
 				<a class="button alt" target="_blank" href="https://www.youtube.com/watch?v=8IXjE4a5Tj4"
 					><span class="is-family-default p-2"
-						>Om {$currentShowStore?.nomenclature || "föreställningen"} <span class="icon"><IconArrowRight /></span></span
+						>Om {$showMetadataStore?.nomenclature || "föreställningen"} <span class="icon"><IconArrowRight /></span></span
 					></a
 				>
 				<button class="button"><span class="is-family-default" on:click={() => (howToModalIsOpen = true)}>Hur funkar det?</span></button>

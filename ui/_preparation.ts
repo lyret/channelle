@@ -1,6 +1,6 @@
 import "@babel/polyfill";
 import { enableMediaSoupDebugging, enableHotReloadingOnRebuilds } from "./api/development";
-import { enableConfigSynchronization } from "./api/config";
+import { enableConfigSynchronization } from "./api/shows";
 import { validateSessionWithServer } from "./api/auth";
 
 import Preparation from "~/components/pages/Preparation.svelte";
