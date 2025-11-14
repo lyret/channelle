@@ -15,6 +15,9 @@ try {
 	// Don't fail server startup, but log the error
 }
 
+// Starts the server when this file is executed
+await createServer();
+
 // Seed the database with shows if needed
 try {
 	await seedShows();
@@ -22,6 +25,3 @@ try {
 	console.error("[Server] Failed to seed shows:", error);
 	// Don't fail server startup, but log the error
 }
-
-// Starts the server when this file is executed
-createServer();

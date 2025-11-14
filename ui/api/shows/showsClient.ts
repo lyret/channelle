@@ -1,20 +1,6 @@
-import type { ShowAttributes as ServerSideShowAttributes } from "../../../server/models";
-import type { Optional } from "sequelize";
+import type { RouterOutputTypes, RouterInputTypes } from "../_trpcClient";
 import { writable, derived } from "svelte/store";
-
-// Import tRPC clients
 import { showsClient } from "../_trpcClient";
-
-// Type aliases for client-side data (dates serialized as strings)
-export type ShowAttributes = Omit<ServerSideShowAttributes, "createdAt" | "updatedAt" | "lastOnlineAt"> & {
-	createdAt: string;
-	updatedAt: string;
-	lastOnlineAt: string | null;
-};
-
-// Database-based types for creation and updates
-type CreateShowData = Optional<ShowAttributes, "id" | "createdAt" | "updatedAt">;
-type UpdateShowData = Partial<ShowAttributes> & { id: number };
 
 // ============================================================================
 // STORES
@@ -24,7 +10,7 @@ type UpdateShowData = Partial<ShowAttributes> & { id: number };
 export const showsStoreIsLoading = writable<boolean>(false);
 
 /** All available shows in the system */
-export const showsListStore = writable<ShowAttributes[]>([]);
+export const showsListStore = writable<RouterOutputTypes["shows"]["list"]>([]);
 
 /** Contains any errors from show client operations */
 export const showsErrorStore = writable<string | null>(null);
@@ -65,7 +51,7 @@ export async function fetchShows(): Promise<void> {
  * @param id - The unique identifier of the show to fetch
  * @returns Promise<PublicShowDataResponse | null> - Show data or null if not found
  */
-export async function getShow(id: number): Promise<ShowAttributes | null> {
+export async function getShow(id: number): Promise<RouterOutputTypes["shows"]["get"] | null> {
 	try {
 		showsErrorStore.set(null);
 		const show = await showsClient.get.query({ id });
@@ -83,7 +69,7 @@ export async function getShow(id: number): Promise<ShowAttributes | null> {
  * @param data - Show creation data
  * @returns Promise<PublicShowDataResponse | null> - Created show data or null if failed
  */
-export async function createShow(data: CreateShowData): Promise<ShowAttributes | null> {
+export async function createShow(data: RouterInputTypes["shows"]["create"]): Promise<RouterOutputTypes["shows"]["create"] | null> {
 	try {
 		showsStoreIsLoading.set(true);
 		showsErrorStore.set(null);
@@ -109,7 +95,7 @@ export async function createShow(data: CreateShowData): Promise<ShowAttributes |
  * @param data - Show update data with ID and fields to change
  * @returns Promise<PublicShowDataResponse | null> - Updated show data or null if failed
  */
-export async function updateShow(data: UpdateShowData): Promise<ShowAttributes | null> {
+export async function updateShow(data: RouterOutputTypes["shows"]["update"]): Promise<RouterOutputTypes["shows"]["update"] | null> {
 	try {
 		showsStoreIsLoading.set(true);
 		showsErrorStore.set(null);

@@ -1,7 +1,7 @@
 import { Show } from "../models/Show";
 import { getActiveAdapter, isLauncherReady } from "../launchers";
 
-import type { ShowAttributes } from "../_types";
+import type { ShowAttributes, ShowListEntry } from "../_types";
 import { TRPCError } from "@trpc/server";
 import { trpc } from "../lib";
 import { z } from "zod";
@@ -15,9 +15,9 @@ const { router: trcpRouter, procedure: trcpProcedure } = trpc();
  */
 export const showsRouter = trcpRouter({
 	/**
-	 * Get all shows (public information only)
+	 * List all shows
 	 */
-	list: trcpProcedure.query(async (): Promise<ShowAttributes[]> => {
+	list: trcpProcedure.query(async (): Promise<ShowListEntry[]> => {
 		try {
 			const shows = await Show.findAll({
 				order: [["updatedAt", "DESC"]],
@@ -38,9 +38,7 @@ export const showsRouter = trcpRouter({
 					}
 				}
 			}
-
-			// FIXME: Continue with this!
-			return shows; /*shows.map((show) => {
+			return shows.map((show) => {
 				const runningInstance = runningInstances.find((instance) => instance.showId === show.id);
 				const isCurrentlyOnline = Boolean(runningInstance);
 
@@ -49,13 +47,11 @@ export const showsRouter = trcpRouter({
 					name: show.name,
 					description: show.description,
 					nomenclature: show.nomenclature,
-					isPasswordProtected: Boolean(show.showPassword && show.showPassword.trim() !== ""),
 					isOnline: isCurrentlyOnline,
 					lastOnlineAt: show.lastOnlineAt,
-					participantCount: 0, // TODO: Implement participant counting
-					url: runningInstance ? runningInstance.url : `/stage/${show.id}`,
+					url: runningInstance ? runningInstance.url : "",
 				};
-			}); */
+			});
 		} catch (error) {
 			console.error("[Shows] Error fetching shows:", error);
 			throw new TRPCError({

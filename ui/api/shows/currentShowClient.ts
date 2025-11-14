@@ -90,6 +90,12 @@ export const showMetadataStore = derived(configStore, ($config) => $config.showM
 /** Currently selected show ID from configuration */
 export const showSelectedIdStore = derived(configStore, ($config) => $config.selectedShowId);
 
+/** Loading state for current show configuration operations */
+export const currentShowIsLoading = writable<boolean>(false);
+
+/** Error messages from current show configuration operations */
+export const currentShowError = writable<string | null>(null);
+
 // ============================================================================
 // UNIFIED CONFIGURATION API
 // ============================================================================
@@ -100,10 +106,12 @@ export const showSelectedIdStore = derived(configStore, ($config) => $config.sel
  */
 export async function getConfig(): Promise<void> {
 	try {
+		currentShowError.set(null);
 		const config = await configClient.getConfig.query();
 		configStore.set(config);
 	} catch (error) {
 		console.error("Failed to get configuration:", error);
+		currentShowError.set(error instanceof Error ? error.message : "Failed to get configuration");
 	}
 }
 
@@ -117,6 +125,9 @@ export async function getConfig(): Promise<void> {
  */
 export async function selectShow(showId?: number, loadIntoRuntime: boolean = false): Promise<boolean> {
 	try {
+		currentShowIsLoading.set(true);
+		currentShowError.set(null);
+
 		const result = await configClient.selectShow.mutate({ showId, loadIntoRuntime });
 
 		// Refresh configuration after selection
@@ -125,7 +136,10 @@ export async function selectShow(showId?: number, loadIntoRuntime: boolean = fal
 		return result.success;
 	} catch (error) {
 		console.error("Failed to select show:", error);
+		currentShowError.set(error instanceof Error ? error.message : "Failed to select show");
 		return false;
+	} finally {
+		currentShowIsLoading.set(false);
 	}
 }
 
@@ -286,7 +300,8 @@ export async function syncToShow(): Promise<{ success: boolean; error?: string }
  */
 export async function initializeConfigAPI(): Promise<void> {
 	try {
-		showsStoreIsLoading.set(true);
+		currentShowIsLoading.set(true);
+		currentShowError.set(null);
 
 		// Initialize show selection based on mode
 		if (CONFIG.runtime.theater) {
@@ -306,15 +321,13 @@ export async function initializeConfigAPI(): Promise<void> {
 			}
 		}
 
-		// Load shows list
-		await fetchShows();
-
 		// Load current configuration
 		await getConfig();
 	} catch (error) {
 		console.error("Failed to initialize configuration API:", error);
+		currentShowError.set(error instanceof Error ? error.message : "Failed to initialize configuration API");
 	} finally {
-		showsStoreIsLoading.set(false);
+		currentShowIsLoading.set(false);
 	}
 }
 
@@ -337,6 +350,10 @@ export function clearConfigData(): void {
 		selectedShowId: undefined,
 		showMetadata: null,
 	});
+
+	// Clear loading and error states
+	currentShowIsLoading.set(false);
+	currentShowError.set(null);
 }
 
 /**

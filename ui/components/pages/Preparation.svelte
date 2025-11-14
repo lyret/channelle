@@ -2,15 +2,7 @@
 	import { onMount } from "svelte";
 	import { blur } from "svelte/transition";
 
-	import { getShow, showMetadataStore, selectShow } from "~/api/shows";
-	import { initializeConfigAPI } from "~/api/shows";
-	import type { PublicShowData } from "~/types/serverSideTypes";
-
-	// Type alias for client-side data (dates serialized as strings)
-	type PublicShowDataResponse = Omit<PublicShowData, "createdAt" | "updatedAt"> & {
-		createdAt: string;
-		updatedAt: string;
-	};
+	import { showMetadataStore, selectShow, initializeConfigAPI, getShow, currentShowIsLoading, currentShowError } from "~/api/shows";
 
 	import TheaterWrapper from "~/components/theater/_TheaterWrapper.svelte";
 	import TheaterHeader from "~/components/theater/TheaterHeader.svelte";
@@ -18,66 +10,68 @@
 	import ConfigurationInstruments from "~/components/instruments/ConfigurationInstruments.svelte";
 	import IconArrowLeft from "~/components/picol/icons/Picol-arrow-full-left.svelte";
 
-	let currentShow: PublicShowDataResponse | null = null;
-	let loading = true;
-	let error: string | null = null;
+	// Use reactive statements to get show data from store
+	$: currentShow = $showMetadataStore;
+	$: showName = currentShow?.name || "Okänd föreställning";
+	$: isShowAlreadyPerformed = currentShow?.lastOnlineAt !== null;
 
 	onMount(async () => {
 		// Get show ID from URL parameters
 		const urlParams = new URLSearchParams(window.location.search);
-		const showId = urlParams.get("show");
+		const showIdParam = urlParams.get("show");
 
-		if (showId) {
-			try {
-				const showIdNum = parseInt(showId, 10);
-				if (!isNaN(showIdNum)) {
-					// Store show ID in session storage for persistence
-					sessionStorage.setItem("currentShowId", showIdNum.toString());
+		let showId: number | null = null;
 
-					currentShow = await getShow(showIdNum);
-					if (!currentShow) {
-						error = `Show with ID ${showIdNum} not found`;
-					} else {
-						// Select the show in the config system
-						await selectShow(showIdNum, true);
-					}
-				} else {
-					error = "Invalid show ID format";
-				}
-			} catch (err) {
-				error = err instanceof Error ? err.message : "Failed to load show data";
-				console.error("Error loading show:", err);
+		if (showIdParam) {
+			const showIdNum = parseInt(showIdParam, 10);
+			if (!isNaN(showIdNum)) {
+				showId = showIdNum;
+				// Store show ID in session storage for persistence
+				sessionStorage.setItem("currentShowId", showIdNum.toString());
+			} else {
+				currentShowError.set("Invalid show ID format");
+				return;
 			}
 		} else {
 			// Check if we have a show ID in session storage
 			const storedShowId = sessionStorage.getItem("currentShowId");
 			if (storedShowId) {
-				try {
-					const showIdNum = parseInt(storedShowId, 10);
-					if (!isNaN(showIdNum)) {
-						currentShow = await getShow(showIdNum);
-						if (!currentShow) {
-							error = `Show with ID ${showIdNum} not found`;
-						} else {
-							// Select the show in the config system
-							await selectShow(showIdNum, true);
-						}
-					} else {
-						error = "Invalid stored show ID format";
-					}
-				} catch (err) {
-					error = err instanceof Error ? err.message : "Failed to load stored show data";
-					console.error("Error loading stored show:", err);
+				const showIdNum = parseInt(storedShowId, 10);
+				if (!isNaN(showIdNum)) {
+					showId = showIdNum;
+				} else {
+					currentShowError.set("Invalid stored show ID format");
+					return;
 				}
 			} else {
-				error = "No show ID specified in URL";
+				currentShowError.set("No show ID specified in URL");
+				return;
 			}
 		}
 
-		// Initialize the config API after loading show data
-		await initializeConfigAPI();
+		if (showId) {
+			try {
+				// Verify the show exists
+				const showData = await getShow(showId);
+				if (!showData) {
+					currentShowError.set(`Show with ID ${showId} not found`);
+					return;
+				}
 
-		loading = false;
+				// Select the show in the config system (this will update showMetadataStore)
+				const success = await selectShow(showId, true);
+				if (!success) {
+					// selectShow already sets error in store
+					return;
+				}
+
+				// Initialize the config API after selecting the show
+				await initializeConfigAPI();
+			} catch (err) {
+				currentShowError.set(err instanceof Error ? err.message : "Failed to load show data");
+				console.error("Error loading show:", err);
+			}
+		}
 	});
 </script>
 
@@ -95,27 +89,27 @@
 		</TheaterActionBar>
 
 		<div class="has-text-centered mt-2 mb-4" in:blur={{ duration: 500, delay: 1000 }}>
-			{#if loading}
+			{#if $currentShowIsLoading}
 				<p class="subtitle is-4 has-text-grey">Laddar showdata...</p>
-			{:else if error}
-				<p class="subtitle is-4 has-text-danger has-text-weight-semibold mt-6">{error}</p>
-			{:else if currentShow && currentShow.lastOnlineAt !== null}
+			{:else if $currentShowError}
+				<p class="subtitle is-4 has-text-danger has-text-weight-semibold mt-6">{$currentShowError}</p>
+			{:else if currentShow && isShowAlreadyPerformed}
 				<p class="subtitle is-4 has-text-warning has-text-weight-semibold">
-					"{$showMetadataStore?.name || currentShow.name}" har redan visats och kan inte längre redigeras här
+					"{showName}" har redan visats och kan inte längre redigeras här
 				</p>
 				<p class="is-size-6 mb-2">Du kan fortfarande se inställningarna nedan, men ändringar kommer inte att sparas.</p>
 			{:else if currentShow}
-				<p class="subtitle is-4 has-text-white">Förbereder "{$showMetadataStore?.name || currentShow.name}" innan lansering</p>
+				<p class="subtitle is-4 has-text-white">Förbereder "{showName}" innan lansering</p>
 			{:else}
 				<p class="subtitle is-4 has-text-white">Förbereder innan lansering</p>
 			{/if}
 		</div>
 
-		{#if loading}
+		{#if $currentShowIsLoading}
 			<div class="has-text-centered" style="margin-top: 2rem;">
 				<div class="is-loading"></div>
 			</div>
-		{:else if error}
+		{:else if $currentShowError}
 			<div class="has-text-centered" style="margin-top: 1rem;">
 				<a href="/" class="button is-danger">Tillbaka till teatern</a>
 			</div>
@@ -124,76 +118,3 @@
 		{/if}
 	</div>
 </TheaterWrapper>
-
-<style>
-	:global(main) {
-		height: 100%;
-	}
-
-	.instruments,
-	.instrument {
-		background-color: var(--channelle-backstage-bg-color);
-	}
-	.instrument-cols-0 {
-		background-color: var(--channelle-main-bg-color);
-		height: 0;
-		flex-grow: 0;
-	}
-
-	li a {
-		color: var(--channelle-main-text-color);
-	}
-	li:hover a,
-	li.is-active a {
-		border-color: var(--channelle-backstage-text-color);
-		color: var(--channelle-backstage-text-color);
-		background-color: var(--channelle-backstage-bg-color);
-	}
-	.tabs ul {
-		border-color: var(--channelle-backstage-text-color);
-		border-bottom: none;
-	}
-
-	.header,
-	.tabs {
-		background-color: var(--channelle-main-bg-color);
-		padding: 0;
-		display: block;
-		flex-grow: 0;
-		flex-shrink: 0;
-		flex-basis: 1;
-	}
-
-	.tabs {
-		z-index: 10;
-	}
-
-	.instruments {
-		flex-grow: 1;
-		display: flex;
-		flex-direction: row;
-		overflow: hidden;
-	}
-
-	.instrument-cols-1 {
-		margin-left: 20%;
-		margin-right: 20%;
-	}
-	.instrument-cols-2 {
-		margin-left: 10%;
-		margin-right: 10%;
-	}
-	.instrument-cols-3 {
-		margin-left: 5%;
-		margin-right: 5%;
-	}
-
-	.instrument {
-		flex: 1;
-		margin: 10px;
-		padding: 10px;
-		padding-top: 20px;
-		padding-bottom: 20px;
-		overflow-y: auto;
-	}
-</style>

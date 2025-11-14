@@ -1,4 +1,3 @@
-import type { PublicShowData } from "./showsRouter";
 import type { Scene } from "../_types";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";

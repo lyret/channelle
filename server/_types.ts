@@ -31,6 +31,17 @@ export type Scene = {
 	visitorVideoEnabled: boolean;
 };
 
+/** Attributes for a shown when listed on the theater page */
+export type ShowListEntry = {
+	id: number;
+	name: string;
+	description: string;
+	nomenclature: string;
+	isOnline: boolean;
+	url: string;
+	lastOnlineAt: Date | null;
+};
+
 export type EffectData = { type: "flowers" | "applause" | "tomato"; number: number };
 
 //Export types needed on the client side

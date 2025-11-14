@@ -1,7 +1,14 @@
+import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
+import type { AppRouter } from "../../server/_types";
 import { writable, get } from "svelte/store";
 import { persisted } from "svelte-persisted-store";
-import type { AppRouter } from "../../server/_types";
 import { createTRPCClient, createWSClient, wsLink } from "@trpc/client";
+
+/** Types for all router inputs */
+export type RouterInputTypes = inferRouterInputs<AppRouter>;
+
+/** Types for all router outputs */
+export type RouterOutputTypes = inferRouterOutputs<AppRouter>;
 
 /** The stored webscoket peer identification used for re-authentications */
 export const wsPeerIdStore = persisted(`${CONFIG.stage.id}-peer-id`, "");
