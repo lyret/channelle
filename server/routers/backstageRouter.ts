@@ -1,66 +1,143 @@
-import type { Scene } from "../_types";
 import { TRPCError } from "@trpc/server";
+import type { Scene } from "../_types";
+import { SceneSetting } from "../_types";
+import { Show, ShowAttributes } from "../models";
 import { z } from "zod";
 import { trpc } from "../lib";
-import { SceneSetting } from "../_types";
-import { Show } from "../models/Show";
 import { adminUserProcedure } from "./authRouter";
 
 // Get the trpc router constructor and default procedure
 const { router: trcpRouter, procedure: trcpProcedure } = trpc();
 
 /**
- * Procedure that validates the show is editable (not previously shown)
- * Extends authedProcedure with additional validation for show editing
+ * The backstage configuration type is the fields of a show database object that effects
+ * the functionality and behavior of the stage and is changable from the backstage and preparations ui
  */
-const editableShowProcedure = adminUserProcedure.use(async ({ ctx, next }) => {
-	// Check if there's a selected show that needs validation
-	if (_stageConfig.selectedShowId) {
+type BackstageConfiguration = Omit<
+	ShowAttributes,
+	"id" | "online" | "createdAt" | "updatedAt" | "lastOnlineAt" | "nrOfTimesShown" | "nrOfTimes" | "nrOfTimesRehersed" | "url"
+> & {
+	/** Identification for the selected show in the database */
+	showId: ShowAttributes["id"] | null;
+};
+
+/**
+ * Global in-memory selected backstage configuration for
+ * when running the program in stage mode.
+ */
+const _backstageConfiguration: BackstageConfiguration = {
+	showId: null,
+	name: "",
+	description: "",
+	nomenclature: "föreställningen",
+	password: "",
+	curtainsOverride: SceneSetting.FORCED_ON,
+	chatEnabledOverride: SceneSetting.FORCED_OFF,
+	gratitudeEffectsEnabledOverride: SceneSetting.FORCED_OFF,
+	criticalEffectsEnabledOverride: SceneSetting.FORCED_OFF,
+	visitorAudioEnabledOverride: SceneSetting.FORCED_OFF,
+	visitorVideoEnabledOverride: SceneSetting.FORCED_OFF,
+	selectedScene: null,
+};
+
+/**
+ * Procedure that validates the a show is selected and add it to the context
+ */
+const selectedShowProcedure = adminUserProcedure
+	.input(
+		z.object({
+			showId: z.number().int().positive().optional(),
+		}),
+	)
+	.use(async ({ input: { showId }, ctx, next }) => {
+		// In stage mode the stage configuration does not need be be given or validated
+		// It is valid from the startup of the server
+		if (!CONFIG.runtime.theater) {
+			return next({ ctx: { ...ctx, show: null } });
+		}
+
 		try {
-			const show = await Show.findByPk(_stageConfig.selectedShowId);
-			if (show && show.lastOnlineAt !== null) {
+			if (showId) {
+				const show = await Show.findByPk(showId);
+				if (!show) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: "Selected show not found",
+					});
+				}
+				return next({ ctx: { ...ctx, show: null } });
+			} else {
 				throw new TRPCError({
-					code: "FORBIDDEN",
-					message: "Cannot edit a show that has been already shown",
+					code: "BAD_REQUEST",
+					message: "No selected show given",
 				});
 			}
 		} catch (error) {
 			if (error instanceof TRPCError) {
 				throw error;
 			}
-			console.error("[Config] Error validating show editability:", error);
+			console.error("[Config] Error selecting show:", error);
 			throw new TRPCError({
 				code: "INTERNAL_SERVER_ERROR",
-				message: "Failed to validate show editability",
+				message: "Failed to select show from given input",
 			});
 		}
-	}
+	});
 
+/**
+ * Procedure that validates that the selected show can be edited
+ */
+const editableShowProcedure = selectedShowProcedure.use(({ ctx, next }) => {
+	if (ctx.show && ctx.show.lastOnlineAt !== null) {
+		throw new TRPCError({
+			code: "FORBIDDEN",
+			message: "Cannot edit a show that has been already shown",
+		});
+	}
 	return next({ ctx });
 });
 
-// Global state for stage configuration
-const _stageConfig = {
-	// Runtime state
-	password: undefined as string | undefined,
-	sceneSettings: {
-		curtains: SceneSetting.AUTOMATIC,
-		chatEnabled: SceneSetting.AUTOMATIC,
-		gratitudeEffectsEnabled: SceneSetting.AUTOMATIC,
-		criticalEffectsEnabled: SceneSetting.AUTOMATIC,
-		visitorAudioEnabled: SceneSetting.AUTOMATIC,
-		visitorVideoEnabled: SceneSetting.AUTOMATIC,
-	},
-	currentScene: undefined as Scene | undefined,
-	// Show selection for persistent operations
-	selectedShowId: undefined as number | undefined,
-};
+function loadShowIntoConfiguration(show: Show) {
+	if (showId) {
+		const show = await Show.findByPk(showId);
+		if (!show) {
+			throw new TRPCError({
+				code: "NOT_FOUND",
+				message: "Selected show not found",
+			});
+		}
+
+		_backstageConfiguration.selectedShowId = showId;
+
+		// Optionally load show configuration into runtime state
+		if (loadIntoRuntime) {
+		} else {
+			console.log(`[Config] Selected show: ${show.name} (ID: ${showId})`);
+		}
+	} else {
+		// Clear selection
+		_backstageConfiguration.selectedShowId = undefined;
+		console.log("[Config] Cleared show selection");
+	}
+
+	_backstageConfiguration.password = show.showPassword || undefined;
+	_backstageConfiguration.sceneSettings = {
+		curtains: show.curtainsOverride || SceneSetting.AUTOMATIC,
+		chatEnabled: show.chatEnabledOverride || SceneSetting.AUTOMATIC,
+		gratitudeEffectsEnabled: show.gratitudeEffectsEnabledOverride || SceneSetting.AUTOMATIC,
+		criticalEffectsEnabled: show.criticalEffectsEnabledOverride || SceneSetting.AUTOMATIC,
+		visitorAudioEnabled: show.visitorAudioEnabledOverride || SceneSetting.AUTOMATIC,
+		visitorVideoEnabled: show.visitorVideoEnabledOverride || SceneSetting.AUTOMATIC,
+	};
+	_backstageConfiguration.currentScene = show.currentScene;
+	console.log(`[Config] Loaded show configuration into runtime: ${show.name} (ID: ${showId})`);
+}
 
 /**
  * Configuration Router - Unified stage configuration management
  * Handles all stage configuration including scenes, settings, passwords, and show metadata
  */
-export const configRouter = trcpRouter({
+export const backstageRouter = trcpRouter({
 	/**
 	 * Get Stage Configuration - Complete unified view of stage configuration
 	 * Combines runtime state with persistent show data when available
@@ -68,9 +145,9 @@ export const configRouter = trcpRouter({
 	getConfig: trcpProcedure.query(async () => {
 		// Get runtime scene configuration
 		const currentScene =
-			(_stageConfig.currentScene && {
-				name: _stageConfig.currentScene.name,
-				layout: _stageConfig.currentScene.layout,
+			(_backstageConfiguration.currentScene && {
+				name: _backstageConfiguration.currentScene.name,
+				layout: _backstageConfiguration.currentScene.layout,
 				curtains: _determineStateOfSetting("curtains"),
 				chatEnabled: _determineStateOfSetting("chatEnabled"),
 				gratitudeEffectsEnabled: _determineStateOfSetting("gratitudeEffectsEnabled"),
@@ -81,10 +158,10 @@ export const configRouter = trcpRouter({
 			undefined;
 
 		// Get show metadata if a show is selected
-		let showMetadata: PublicShowData | null = null;
-		if (_stageConfig.selectedShowId) {
+		let showMetadata: PublicShowData | null = null; // FIXME: 222
+		if (_backstageConfiguration.selectedShowId) {
 			try {
-				const show = await Show.findByPk(_stageConfig.selectedShowId);
+				const show = await Show.findByPk(_backstageConfiguration.selectedShowId);
 				if (show) {
 					showMetadata = {
 						id: show.id,
@@ -111,11 +188,11 @@ export const configRouter = trcpRouter({
 
 		return {
 			// Runtime configuration
-			password: _stageConfig.password,
-			sceneSettings: _stageConfig.sceneSettings,
+			password: _backstageConfiguration.password,
+			sceneSettings: _backstageConfiguration.sceneSettings,
 			currentScene,
 			// Show metadata (if available)
-			selectedShowId: _stageConfig.selectedShowId,
+			selectedShowId: _backstageConfiguration.selectedShowId,
 			showMetadata,
 		};
 	}),
@@ -134,12 +211,12 @@ export const configRouter = trcpRouter({
 		)
 		.mutation(async ({ input: { password, persistToShow } }) => {
 			// Set runtime password
-			_stageConfig.password = password;
+			_backstageConfiguration.password = password;
 
 			// Optionally persist to selected show
-			if (persistToShow && _stageConfig.selectedShowId) {
+			if (persistToShow && _backstageConfiguration.selectedShowId) {
 				try {
-					const show = await Show.findByPk(_stageConfig.selectedShowId);
+					const show = await Show.findByPk(_backstageConfiguration.selectedShowId);
 					if (show) {
 						await show.update({ showPassword: password || "" });
 						console.log(`[Config] Password persisted to show: ${show.name} (ID: ${show.id})`);
@@ -168,12 +245,12 @@ export const configRouter = trcpRouter({
 		)
 		.mutation(async ({ input: { key, value, persistToShow } }) => {
 			// Set runtime override
-			_stageConfig.sceneSettings[key] = value;
+			_backstageConfiguration.sceneSettings[key] = value;
 
 			// Optionally persist to selected show
-			if (persistToShow && _stageConfig.selectedShowId) {
+			if (persistToShow && _backstageConfiguration.selectedShowId) {
 				try {
-					const show = await Show.findByPk(_stageConfig.selectedShowId);
+					const show = await Show.findByPk(_backstageConfiguration.selectedShowId);
 					if (show) {
 						const fieldMap = {
 							curtains: "curtainsOverride",
@@ -211,12 +288,12 @@ export const configRouter = trcpRouter({
 		)
 		.mutation(async ({ input: { scene, persistToShow } }) => {
 			// Set runtime scene
-			_stageConfig.currentScene = scene || undefined;
+			_backstageConfiguration.currentScene = scene || undefined;
 
 			// Optionally persist to selected show
-			if (persistToShow && _stageConfig.selectedShowId) {
+			if (persistToShow && _backstageConfiguration.selectedShowId) {
 				try {
-					const show = await Show.findByPk(_stageConfig.selectedShowId);
+					const show = await Show.findByPk(_backstageConfiguration.selectedShowId);
 					if (show) {
 						await show.update({ currentScene: scene });
 						console.log(`[Config] Scene "${scene?.name || "null"}" persisted to show: ${show.name} (ID: ${show.id})`);
@@ -236,7 +313,7 @@ export const configRouter = trcpRouter({
 	 */
 	resetSettings: editableShowProcedure.input(z.object({ persistToShow: z.boolean().default(false) })).mutation(async ({ input: { persistToShow } }) => {
 		// Reset runtime settings
-		_stageConfig.sceneSettings = {
+		_backstageConfiguration.sceneSettings = {
 			curtains: SceneSetting.AUTOMATIC,
 			chatEnabled: SceneSetting.AUTOMATIC,
 			gratitudeEffectsEnabled: SceneSetting.AUTOMATIC,
@@ -246,9 +323,9 @@ export const configRouter = trcpRouter({
 		};
 
 		// Optionally persist to selected show
-		if (persistToShow && _stageConfig.selectedShowId) {
+		if (persistToShow && _backstageConfiguration.selectedShowId) {
 			try {
-				const show = await Show.findByPk(_stageConfig.selectedShowId);
+				const show = await Show.findByPk(_backstageConfiguration.selectedShowId);
 				if (show) {
 					await show.update({
 						curtainsOverride: SceneSetting.AUTOMATIC,
@@ -276,10 +353,9 @@ export const configRouter = trcpRouter({
 		.input(
 			z.object({
 				showId: z.number().int().positive().optional(),
-				loadIntoRuntime: z.boolean().default(false),
 			}),
 		)
-		.mutation(async ({ input: { showId, loadIntoRuntime } }): Promise<{ success: boolean }> => {
+		.mutation(async ({ input: { showId } }): Promise<{ success: boolean }> => {
 			try {
 				if (showId) {
 					const show = await Show.findByPk(showId);
@@ -290,27 +366,16 @@ export const configRouter = trcpRouter({
 						});
 					}
 
-					_stageConfig.selectedShowId = showId;
+					_backstageConfiguration.selectedShowId = showId;
 
 					// Optionally load show configuration into runtime state
 					if (loadIntoRuntime) {
-						_stageConfig.password = show.showPassword || undefined;
-						_stageConfig.sceneSettings = {
-							curtains: show.curtainsOverride || SceneSetting.AUTOMATIC,
-							chatEnabled: show.chatEnabledOverride || SceneSetting.AUTOMATIC,
-							gratitudeEffectsEnabled: show.gratitudeEffectsEnabledOverride || SceneSetting.AUTOMATIC,
-							criticalEffectsEnabled: show.criticalEffectsEnabledOverride || SceneSetting.AUTOMATIC,
-							visitorAudioEnabled: show.visitorAudioEnabledOverride || SceneSetting.AUTOMATIC,
-							visitorVideoEnabled: show.visitorVideoEnabledOverride || SceneSetting.AUTOMATIC,
-						};
-						_stageConfig.currentScene = show.currentScene;
-						console.log(`[Config] Loaded show configuration into runtime: ${show.name} (ID: ${showId})`);
 					} else {
 						console.log(`[Config] Selected show: ${show.name} (ID: ${showId})`);
 					}
 				} else {
 					// Clear selection
-					_stageConfig.selectedShowId = undefined;
+					_backstageConfiguration.selectedShowId = undefined;
 					console.log("[Config] Cleared show selection");
 				}
 
@@ -340,7 +405,7 @@ export const configRouter = trcpRouter({
 			}),
 		)
 		.mutation(async ({ input }): Promise<{ success: boolean }> => {
-			const targetShowId = input.showId || _stageConfig.selectedShowId;
+			const targetShowId = input.showId || _backstageConfiguration.selectedShowId;
 
 			if (!targetShowId) {
 				throw new TRPCError({
@@ -404,7 +469,7 @@ export const configRouter = trcpRouter({
 	 * @requires Manager role
 	 */
 	syncToShow: editableShowProcedure.mutation(async (): Promise<{ success: boolean }> => {
-		if (!_stageConfig.selectedShowId) {
+		if (!_backstageConfiguration.selectedShowId) {
 			throw new TRPCError({
 				code: "BAD_REQUEST",
 				message: "No show selected for sync operation",
@@ -412,7 +477,7 @@ export const configRouter = trcpRouter({
 		}
 
 		try {
-			const show = await Show.findByPk(_stageConfig.selectedShowId);
+			const show = await Show.findByPk(_backstageConfiguration.selectedShowId);
 			if (!show) {
 				throw new TRPCError({
 					code: "NOT_FOUND",
@@ -421,14 +486,14 @@ export const configRouter = trcpRouter({
 			}
 
 			await show.update({
-				showPassword: _stageConfig.password || "",
-				curtainsOverride: _stageConfig.sceneSettings.curtains,
-				chatEnabledOverride: _stageConfig.sceneSettings.chatEnabled,
-				gratitudeEffectsEnabledOverride: _stageConfig.sceneSettings.gratitudeEffectsEnabled,
-				criticalEffectsEnabledOverride: _stageConfig.sceneSettings.criticalEffectsEnabled,
-				visitorAudioEnabledOverride: _stageConfig.sceneSettings.visitorAudioEnabled,
-				visitorVideoEnabledOverride: _stageConfig.sceneSettings.visitorVideoEnabled,
-				currentScene: _stageConfig.currentScene,
+				showPassword: _backstageConfiguration.password || "",
+				curtainsOverride: _backstageConfiguration.sceneSettings.curtains,
+				chatEnabledOverride: _backstageConfiguration.sceneSettings.chatEnabled,
+				gratitudeEffectsEnabledOverride: _backstageConfiguration.sceneSettings.gratitudeEffectsEnabled,
+				criticalEffectsEnabledOverride: _backstageConfiguration.sceneSettings.criticalEffectsEnabled,
+				visitorAudioEnabledOverride: _backstageConfiguration.sceneSettings.visitorAudioEnabled,
+				visitorVideoEnabledOverride: _backstageConfiguration.sceneSettings.visitorVideoEnabled,
+				currentScene: _backstageConfiguration.currentScene,
 			});
 
 			console.log(`[Config] Runtime configuration synced to show: ${show.name} (ID: ${show.id})`);
@@ -485,18 +550,18 @@ export const configRouter = trcpRouter({
  * Get stage configuration (for use by other routers)
  */
 export function getStageConfig() {
-	return _stageConfig;
+	return _backstageConfiguration;
 }
 
 /**
  * Get current scene with resolved settings (for use by other routers)
  */
 export function getCurrentSceneWithSettings(): Scene | undefined {
-	if (!_stageConfig.currentScene) return undefined;
+	if (!_backstageConfiguration.currentScene) return undefined;
 
 	return {
-		name: _stageConfig.currentScene.name,
-		layout: _stageConfig.currentScene.layout,
+		name: _backstageConfiguration.currentScene.name,
+		layout: _backstageConfiguration.currentScene.layout,
 		curtains: _determineStateOfSetting("curtains"),
 		chatEnabled: _determineStateOfSetting("chatEnabled"),
 		gratitudeEffectsEnabled: _determineStateOfSetting("gratitudeEffectsEnabled"),
@@ -509,24 +574,24 @@ export function getCurrentSceneWithSettings(): Scene | undefined {
 /**
  * Determine the effective state of a setting based on overrides and scene config
  */
-function _determineStateOfSetting(key: keyof typeof _stageConfig.sceneSettings): boolean {
-	if (_stageConfig.sceneSettings[key] === SceneSetting.FORCED_ON) {
+function _determineStateOfSetting(key: keyof typeof _backstageConfiguration.sceneSettings): boolean {
+	if (_backstageConfiguration.sceneSettings[key] === SceneSetting.FORCED_ON) {
 		return true;
 	}
 
-	if (_stageConfig.sceneSettings[key] === SceneSetting.FORCED_OFF) {
+	if (_backstageConfiguration.sceneSettings[key] === SceneSetting.FORCED_OFF) {
 		return false;
 	}
 
-	if (_stageConfig.currentScene) {
-		return _stageConfig.currentScene[key];
+	if (_backstageConfiguration.currentScene) {
+		return _backstageConfiguration.currentScene[key];
 	}
 
 	return false;
 }
 
 /** Configuration Router Type */
-export type ConfigRouter = typeof configRouter;
+export type ConfigRouter = typeof backstageRouter;
 
 // Backward compatibility exports
 export const getSceneConfig = getStageConfig;

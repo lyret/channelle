@@ -62,7 +62,7 @@ export async function seedShows(): Promise<void> {
 
 		console.log(`[Database] Successfully created ${createdShows.length} shows:`);
 		createdShows.forEach((show) => {
-			const passwordStatus = show.showPassword ? "(password protected)" : "(public)";
+			const passwordStatus = show.password ? "(password protected)" : "(public)";
 			console.log(`  - ${show.name} ${passwordStatus}`);
 		});
 	} catch (error) {

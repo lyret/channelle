@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { setSetting, showSceneOverridesStores, resetSettings } from "~/api/shows";
-	import PicolBrightnessDarken from "../picol/icons/Picol-brightness-darken.svelte";
 
 	export let errorMessage: string = "";
 	export let isLoading: boolean = false;

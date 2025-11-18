@@ -1,2 +1,2 @@
-export * from "./currentShowClient";
+export * from "./backstageClient";
 export * from "./showsClient";

@@ -1,64 +1,13 @@
+import type { RouterOutputTypes } from "../_trpcClient";
+import type { Scene, SceneSetting } from "../../types/serverSideTypes";
 import { writable, derived } from "svelte/store";
-import type { PublicShowData, Scene, SceneSetting } from "../../types/serverSideTypes";
-
-// Import tRPC clients
-import { configClient } from "../_trpcClient";
-
-// Type aliases for client-side data (dates serialized as strings)
-type PublicShowDataResponse = Omit<PublicShowData, "createdAt" | "updatedAt"> & {
-	createdAt: string;
-	updatedAt: string;
-};
-
-/**
- * Configuration Client - Unified stage configuration management
- *
- * This module provides comprehensive configuration management functionality including:
- * - Unified server-side show selection and configuration
- * - Show CRUD operations (create, read, update, delete)
- * - Runtime configuration (passwords, scene settings, layouts)
- * - Real-time configuration synchronization
- * - Theater and stage mode support through unified API
- *
- * The client mirrors the server's unified configuration architecture where:
- * - configRouter handles runtime configuration with optional persistence
- * - showsRouter handles basic CRUD operations
- * - All configuration operations work against a server-selected show
- */
-
-// ============================================================================
-// CONFIGURATION STATE STORES
-// ============================================================================
+import { backstageClient } from "../_trpcClient";
 
 /**
  * Complete configuration state store
  * Contains all current runtime configuration including show metadata
  */
-export const configStore = writable<{
-	// Runtime configuration
-	password?: string;
-	sceneSettings: {
-		curtains: SceneSetting;
-		chatEnabled: SceneSetting;
-		gratitudeEffectsEnabled: SceneSetting;
-		criticalEffectsEnabled: SceneSetting;
-		visitorAudioEnabled: SceneSetting;
-		visitorVideoEnabled: SceneSetting;
-	};
-	currentScene?: {
-		name: string;
-		layout: any[][];
-		curtains: boolean;
-		chatEnabled: boolean;
-		gratitudeEffectsEnabled: boolean;
-		criticalEffectsEnabled: boolean;
-		visitorAudioEnabled: boolean;
-		visitorVideoEnabled: boolean;
-	};
-	// Show metadata (if available)
-	selectedShowId?: number;
-	showMetadata?: PublicShowDataResponse | null;
-}>({
+const _configStore = writable<RouterOutputTypes["backstage"]["getConfig"]>({
 	password: undefined,
 	sceneSettings: {
 		curtains: 0, // SceneSetting.AUTOMATIC
@@ -76,19 +25,16 @@ export const configStore = writable<{
 // DERIVED STORES (Convenient views of configuration data)
 
 /** Current password from configuration */
-export const showPasswordStore = derived(configStore, ($config) => $config.password);
+export const showPasswordStore = derived(_configStore, ($config) => $config.password);
 
 /** Current scene settings from configuration */
-export const showSceneOverridesStores = derived(configStore, ($config) => $config.sceneSettings);
+export const showSceneOverridesStores = derived(_configStore, ($config) => $config.sceneSettings);
 
 /** Current active scene from configuration */
-export const showSceneSelectionStores = derived(configStore, ($config) => $config.currentScene);
+export const showSceneSelectionStores = derived(_configStore, ($config) => $config.currentScene);
 
 /** Current show metadata from configuration */
-export const showMetadataStore = derived(configStore, ($config) => $config.showMetadata);
-
-/** Currently selected show ID from configuration */
-export const showSelectedIdStore = derived(configStore, ($config) => $config.selectedShowId);
+export const showMetadataStore = derived(_configStore, ($config) => $config.showMetadata);
 
 /** Loading state for current show configuration operations */
 export const currentShowIsLoading = writable<boolean>(false);
@@ -104,11 +50,11 @@ export const currentShowError = writable<string | null>(null);
  * Get current stage configuration
  * Returns complete configuration including runtime state and show metadata
  */
-export async function getConfig(): Promise<void> {
+async function _updateConfig(): Promise<void> {
 	try {
 		currentShowError.set(null);
-		const config = await configClient.getConfig.query();
-		configStore.set(config);
+		const config = await backstageClient.getConfig.query();
+		_configStore.set(config);
 	} catch (error) {
 		console.error("Failed to get configuration:", error);
 		currentShowError.set(error instanceof Error ? error.message : "Failed to get configuration");
@@ -120,18 +66,16 @@ export async function getConfig(): Promise<void> {
  * All subsequent configuration operations will work against this selected show
  *
  * @param showId - The ID of the show to select
- * @param loadIntoRuntime - Whether to load show configuration into runtime state
- * @returns Promise<boolean> - true if selection was successful
  */
-export async function selectShow(showId?: number, loadIntoRuntime: boolean = false): Promise<boolean> {
+async function _setSelectedShow(showId?: number): Promise<boolean> {
 	try {
 		currentShowIsLoading.set(true);
 		currentShowError.set(null);
 
-		const result = await configClient.selectShow.mutate({ showId, loadIntoRuntime });
+		const result = await backstageClient.selectShow.mutate({ showId });
 
 		// Refresh configuration after selection
-		await getConfig();
+		await _updateConfig();
 
 		return result.success;
 	} catch (error) {
@@ -153,10 +97,10 @@ export async function selectShow(showId?: number, loadIntoRuntime: boolean = fal
  */
 export async function setPassword(password?: string, persistToShow: boolean = false): Promise<{ success: boolean; error?: string }> {
 	try {
-		const result = await configClient.setPassword.mutate({ password, persistToShow });
+		const result = await backstageClient.setPassword.mutate({ password, persistToShow });
 
 		// Refresh configuration after change
-		await getConfig();
+		await _updateConfig();
 
 		return { success: result.success };
 	} catch (error) {
@@ -181,10 +125,10 @@ export async function setSetting(
 	persistToShow: boolean = false,
 ): Promise<{ success: boolean; error?: string }> {
 	try {
-		const result = await configClient.setSetting.mutate({ key, value, persistToShow });
+		const result = await backstageClient.setSetting.mutate({ key, value, persistToShow });
 
 		// Refresh configuration after change
-		await getConfig();
+		await _updateConfig();
 
 		return { success: result.success };
 	} catch (error) {
@@ -204,10 +148,10 @@ export async function setSetting(
  */
 export async function setScene(scene: Scene | null, persistToShow: boolean = false): Promise<{ success: boolean; error?: string }> {
 	try {
-		const result = await configClient.setScene.mutate({ scene, persistToShow });
+		const result = await backstageClient.setScene.mutate({ scene, persistToShow });
 
 		// Refresh configuration after change
-		await getConfig();
+		await _updateConfig();
 
 		return { success: result.success };
 	} catch (error) {
@@ -226,10 +170,10 @@ export async function setScene(scene: Scene | null, persistToShow: boolean = fal
  */
 export async function resetSettings(persistToShow: boolean = false): Promise<{ success: boolean; error?: string }> {
 	try {
-		const result = await configClient.resetSettings.mutate({ persistToShow });
+		const result = await backstageClient.resetSettings.mutate({ persistToShow });
 
 		// Refresh configuration after change
-		await getConfig();
+		await _updateConfig();
 
 		return { success: result.success };
 	} catch (error) {
@@ -240,22 +184,16 @@ export async function resetSettings(persistToShow: boolean = false): Promise<{ s
 	}
 }
 
-/**
- * Update show metadata (name, description, nomenclature)
- *
- * @param showId - Show ID (optional, uses selected show if not provided)
- * @param metadata - Metadata fields to update
- * @returns Promise<{success: boolean, error?: string}> - result with success status and optional error
- */
+/** Update show metadata */
 export async function updateShowMetadata(
 	showId?: number,
 	metadata: { name?: string; description?: string; nomenclature?: string } = {},
 ): Promise<{ success: boolean; error?: string }> {
 	try {
-		const result = await configClient.updateShowMetadata.mutate({ showId, ...metadata });
+		const result = await backstageClient.updateShowMetadata.mutate({ showId, ...metadata });
 
 		// Refresh configuration after change
-		await getConfig();
+		await _updateConfig();
 
 		return { success: result.success };
 	} catch (error) {
@@ -266,33 +204,20 @@ export async function updateShowMetadata(
 }
 
 /**
- * Sync current runtime configuration to selected show
- * Persists all runtime state to the selected show
+ * Enable global config synchronization
  *
- * @returns Promise<{success: boolean, error?: string}> - result with success status and optional error
+ * Sets up periodic config refresh to detect external changes from other users/tabs.
+ * This ensures all config-dependent components stay in sync with server state.
  */
-export async function syncToShow(): Promise<{ success: boolean; error?: string }> {
-	try {
-		const result = await configClient.syncToShow.mutate();
-
-		// Refresh configuration after sync
-		await getConfig();
-
-		return { success: result.success };
-	} catch (error) {
-		console.error("Failed to sync to show:", error);
-		const errorMessage = error instanceof Error ? error.message : "Failed to sync to show";
-		return { success: false, error: errorMessage };
-	}
+export function enableConfigSynchronization(): void {
+	setInterval(async () => {
+		try {
+			await _updateConfig();
+		} catch (error) {
+			console.error("Failed to sync config:", error);
+		}
+	}, 2000); // Check every 2 seconds
 }
-
-// ============================================================================
-// SHOW CRUD OPERATIONS
-// ============================================================================
-
-// ============================================================================
-// LIFECYCLE FUNCTIONS
-// ============================================================================
 
 /**
  * Initialize the configuration API system
@@ -309,65 +234,24 @@ export async function initializeConfigAPI(): Promise<void> {
 			const urlParams = new URLSearchParams(window.location.search);
 			const showIdParam = urlParams.get("show");
 			if (showIdParam) {
-				const showId = parseInt(showIdParam, 10);
+				const showId = parseInt(showIdParam);
 				if (!isNaN(showId)) {
-					await selectShow(showId, true); // Load show config into runtime
+					await _setSelectedShow(showId);
 				}
 			}
 		} else {
 			// In stage mode, show ID comes from CONFIG
-			if (CONFIG.stage?.showId) {
-				await selectShow(CONFIG.stage.showId, true); // Load show config into runtime
+			if (CONFIG.stage.showId) {
+				await _setSelectedShow(CONFIG.stage.showId);
 			}
 		}
 
 		// Load current configuration
-		await getConfig();
+		await _updateConfig();
 	} catch (error) {
-		console.error("Failed to initialize configuration API:", error);
+		console.error("Failed to load show data:", error);
 		currentShowError.set(error instanceof Error ? error.message : "Failed to initialize configuration API");
 	} finally {
 		currentShowIsLoading.set(false);
 	}
-}
-
-/**
- * Clear all configuration data and reset stores to initial state
- * Useful for logout scenarios or when switching contexts
- */
-export function clearConfigData(): void {
-	configStore.set({
-		password: undefined,
-		sceneSettings: {
-			curtains: 0,
-			chatEnabled: 0,
-			gratitudeEffectsEnabled: 0,
-			criticalEffectsEnabled: 0,
-			visitorAudioEnabled: 0,
-			visitorVideoEnabled: 0,
-		},
-		currentScene: undefined,
-		selectedShowId: undefined,
-		showMetadata: null,
-	});
-
-	// Clear loading and error states
-	currentShowIsLoading.set(false);
-	currentShowError.set(null);
-}
-
-/**
- * Enable global config synchronization
- *
- * Sets up periodic config refresh to detect external changes from other users/tabs.
- * This ensures all config-dependent components stay in sync with server state.
- */
-export function enableConfigSynchronization(): void {
-	setInterval(async () => {
-		try {
-			await getConfig();
-		} catch (error) {
-			console.error("Failed to sync config:", error);
-		}
-	}, 2000); // Check every 2 seconds
 }

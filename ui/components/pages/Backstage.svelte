@@ -1,17 +1,10 @@
 <script lang="ts">
-	import { onMount } from "svelte";
 	import { blur } from "svelte/transition";
-	import { initializeConfigAPI } from "~/api/shows";
 
 	import Wrapper from "./_Wrapper.svelte";
 	import ConfigurationInstruments from "~/components/instruments/ConfigurationInstruments.svelte";
 
 	import logoSrc from "~/assets/images/redrose.gif";
-
-	onMount(async () => {
-		// Initialize the config API for backstage mode
-		await initializeConfigAPI();
-	});
 </script>
 
 <Wrapper lockedToManager={true}>

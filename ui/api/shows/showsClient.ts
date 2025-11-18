@@ -45,12 +45,7 @@ export async function fetchShows(): Promise<void> {
 	}
 }
 
-/**
- * Get a specific show by ID
- *
- * @param id - The unique identifier of the show to fetch
- * @returns Promise<PublicShowDataResponse | null> - Show data or null if not found
- */
+/** Get a specific show by ID */
 export async function getShow(id: number): Promise<RouterOutputTypes["shows"]["get"] | null> {
 	try {
 		showsErrorStore.set(null);
@@ -63,12 +58,7 @@ export async function getShow(id: number): Promise<RouterOutputTypes["shows"]["g
 	}
 }
 
-/**
- * Create a new show in the system
- *
- * @param data - Show creation data
- * @returns Promise<PublicShowDataResponse | null> - Created show data or null if failed
- */
+/** Create a new show in the system */
 export async function createShow(data: RouterInputTypes["shows"]["create"]): Promise<RouterOutputTypes["shows"]["create"] | null> {
 	try {
 		showsStoreIsLoading.set(true);
@@ -89,12 +79,7 @@ export async function createShow(data: RouterInputTypes["shows"]["create"]): Pro
 	}
 }
 
-/**
- * Update an existing show's basic information
- *
- * @param data - Show update data with ID and fields to change
- * @returns Promise<PublicShowDataResponse | null> - Updated show data or null if failed
- */
+/** Update an existing show's basic information */
 export async function updateShow(data: RouterOutputTypes["shows"]["update"]): Promise<RouterOutputTypes["shows"]["update"] | null> {
 	try {
 		showsStoreIsLoading.set(true);
@@ -115,12 +100,7 @@ export async function updateShow(data: RouterOutputTypes["shows"]["update"]): Pr
 	}
 }
 
-/**
- * Delete a show from the system
- *
- * @param id - The unique identifier of the show to delete
- * @returns Promise<boolean> - true if deletion was successful
- */
+/** Delete a show from the system */
 export async function deleteShow(id: number): Promise<boolean> {
 	try {
 		showsStoreIsLoading.set(true);

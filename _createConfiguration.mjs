@@ -91,9 +91,9 @@ export async function createConfiguration() {
 	// If STAGE_NAME is set or the 'name' option is given in the CLI the
 	// deployment/stage will be named after the given string, otherwise it
 	// will be unnamned
-	const stageName = cli.name !== undefined ? cli.name : env.STAGE_NAME || "";
+	const showName = cli.name !== undefined ? cli.name : env.STAGE_NAME || "";
 	if (showId == undefined) {
-		console.log("🏷️ ", Chalk.bgBlueBright("[CONFIG]"), "Stage Name", stageName);
+		console.log("🏷️ ", Chalk.bgBlueBright("[CONFIG]"), "Stage Name", showName);
 	}
 
 	// If STAGE_INVITE_LINK_KEY is set it will default the deployed stage to be password protected with the string given
@@ -105,7 +105,7 @@ export async function createConfiguration() {
 
 	// If STAGE_ID is set or 'id' is given in the CLI it will be used to identify this deployment (stage), otherwise a slug
 	// from the STAGE_NAME will be used
-	const stageId = cli.id !== undefined ? cli.id : env.STAGE_ID || Slug(stageName);
+	const stageId = cli.id !== undefined ? cli.id : env.STAGE_ID || Slug(showName);
 	if (showId == undefined) {
 		console.log("🏷️ ", Chalk.bgBlueBright("[CONFIG]"), "Identifier", stageId);
 	}
@@ -306,7 +306,7 @@ export async function createConfiguration() {
 		},
 		/** Stage Settings */
 		stage: {
-			name: stageName,
+			name: showName,
 			inviteKey: stageInviteLinkKey,
 			id: stageId,
 			showId: showId,

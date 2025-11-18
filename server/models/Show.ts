@@ -8,17 +8,21 @@ export class Show extends Model {
 	declare name: string;
 	declare description: string;
 	declare nomenclature: string;
-	declare showPassword: string;
+	declare password: string;
+	declare selectedScene: Scene | null;
 	declare curtainsOverride: SceneSetting;
 	declare chatEnabledOverride: SceneSetting;
 	declare gratitudeEffectsEnabledOverride: SceneSetting;
 	declare criticalEffectsEnabledOverride: SceneSetting;
 	declare visitorAudioEnabledOverride: SceneSetting;
 	declare visitorVideoEnabledOverride: SceneSetting;
-	declare currentScene: Scene | null;
-	declare lastOnlineAt: Date | null;
+	declare url: string | null;
+	declare online: boolean;
+	declare nrOfTimesRehersed: number;
+	declare nrOfTimesShown: number;
 	declare createdAt: Date;
 	declare updatedAt: Date;
+	declare lastOnlineAt: Date | null;
 }
 
 /** Initialize the Show model. */
@@ -52,10 +56,25 @@ export function initShow(sequelize: Sequelize) {
 					len: [1, 100],
 				},
 			},
-			showPassword: {
+			password: {
 				type: DataTypes.STRING,
 				allowNull: true,
 				defaultValue: "",
+			},
+			url: {
+				type: DataTypes.STRING,
+				allowNull: true,
+				defaultValue: null,
+			},
+			nrOfTimesRehersed: {
+				type: DataTypes.INTEGER,
+				allowNull: false,
+				defaultValue: 0,
+			},
+			nrOfTimesShown: {
+				type: DataTypes.INTEGER,
+				allowNull: false,
+				defaultValue: 0,
 			},
 			curtainsOverride: {
 				type: DataTypes.INTEGER,
@@ -87,7 +106,7 @@ export function initShow(sequelize: Sequelize) {
 				allowNull: false,
 				defaultValue: 0, // SceneSetting.AUTOMATIC
 			},
-			currentScene: {
+			selectedScene: {
 				type: DataTypes.JSON,
 				allowNull: true,
 				defaultValue: null,
@@ -96,6 +115,12 @@ export function initShow(sequelize: Sequelize) {
 				type: DataTypes.DATE,
 				allowNull: true,
 				defaultValue: null,
+			},
+			online: {
+				type: DataTypes.VIRTUAL,
+				get() {
+					return this.url !== null;
+				},
 			},
 		},
 		{

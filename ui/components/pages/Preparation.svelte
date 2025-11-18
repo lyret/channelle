@@ -1,8 +1,7 @@
 <script lang="ts">
-	import { onMount } from "svelte";
 	import { blur } from "svelte/transition";
 
-	import { showMetadataStore, selectShow, initializeConfigAPI, getShow, currentShowIsLoading, currentShowError } from "~/api/shows";
+	import { showMetadataStore, currentShowIsLoading, currentShowError } from "~/api/shows";
 
 	import TheaterWrapper from "~/components/theater/_TheaterWrapper.svelte";
 	import TheaterHeader from "~/components/theater/TheaterHeader.svelte";
@@ -14,65 +13,6 @@
 	$: currentShow = $showMetadataStore;
 	$: showName = currentShow?.name || "Okänd föreställning";
 	$: isShowAlreadyPerformed = currentShow?.lastOnlineAt !== null;
-
-	onMount(async () => {
-		// Get show ID from URL parameters
-		const urlParams = new URLSearchParams(window.location.search);
-		const showIdParam = urlParams.get("show");
-
-		let showId: number | null = null;
-
-		if (showIdParam) {
-			const showIdNum = parseInt(showIdParam, 10);
-			if (!isNaN(showIdNum)) {
-				showId = showIdNum;
-				// Store show ID in session storage for persistence
-				sessionStorage.setItem("currentShowId", showIdNum.toString());
-			} else {
-				currentShowError.set("Invalid show ID format");
-				return;
-			}
-		} else {
-			// Check if we have a show ID in session storage
-			const storedShowId = sessionStorage.getItem("currentShowId");
-			if (storedShowId) {
-				const showIdNum = parseInt(storedShowId, 10);
-				if (!isNaN(showIdNum)) {
-					showId = showIdNum;
-				} else {
-					currentShowError.set("Invalid stored show ID format");
-					return;
-				}
-			} else {
-				currentShowError.set("No show ID specified in URL");
-				return;
-			}
-		}
-
-		if (showId) {
-			try {
-				// Verify the show exists
-				const showData = await getShow(showId);
-				if (!showData) {
-					currentShowError.set(`Show with ID ${showId} not found`);
-					return;
-				}
-
-				// Select the show in the config system (this will update showMetadataStore)
-				const success = await selectShow(showId, true);
-				if (!success) {
-					// selectShow already sets error in store
-					return;
-				}
-
-				// Initialize the config API after selecting the show
-				await initializeConfigAPI();
-			} catch (err) {
-				currentShowError.set(err instanceof Error ? err.message : "Failed to load show data");
-				console.error("Error loading show:", err);
-			}
-		}
-	});
 </script>
 
 <TheaterWrapper>

@@ -6,7 +6,7 @@ import { developmentRouter } from "./routers/developmentRouter";
 import { chatRouter } from "./routers/chatRouter";
 import { effectsRouter } from "./routers/effectsRouter";
 import { showsRouter } from "./routers/showsRouter";
-import { configRouter } from "./routers/configRouter";
+import { backstageRouter } from "./routers/backstageRouter";
 import { authRouter } from "./routers/authRouter";
 import { launcherRouter } from "./routers/launcherRouter";
 import { leave, userRouter } from "./routers/userRouter";
@@ -21,7 +21,7 @@ export async function createAppRouter() {
 	// Create the sub-route configuration
 	const routerConfig = {
 		development: developmentRouter,
-		config: configRouter,
+		backstage: backstageRouter,
 		users: userRouter,
 		auth: authRouter,
 		shows: showsRouter,

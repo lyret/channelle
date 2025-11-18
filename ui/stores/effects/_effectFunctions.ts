@@ -13,7 +13,7 @@ const flower = Confetti.shapeFromText({ text: "🌹", scalar: 4 });
 const hands = Confetti.shapeFromText({ text: "👏", scalar: 6 });
 
 /** Tomato SVG shape for confetti effects */
-const tomato = Confetti.shapeFromText({ text: "🍅", scalar: 12 });
+const tomato = Confetti.shapeFromText({ text: "🍅", scalar: 8 });
 
 /** Clap sound effects */
 const clapSounds = [new Audio(sharpClap), new Audio(analogClap), new Audio(danceClap)];
