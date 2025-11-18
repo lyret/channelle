@@ -1,44 +1,14 @@
 import { TRPCError } from "@trpc/server";
 import type { Scene } from "../_types";
 import { SceneSetting } from "../_types";
-import { Show, ShowAttributes } from "../models";
+import { Show } from "../models/Show";
 import { z } from "zod";
 import { trpc } from "../lib";
 import { adminUserProcedure } from "./authRouter";
+import { getGlobalBackstageConfiguration, toBackstageConfiguration } from "../_globalBackstageData";
 
 // Get the trpc router constructor and default procedure
 const { router: trcpRouter, procedure: trcpProcedure } = trpc();
-
-/**
- * The backstage configuration type is the fields of a show database object that effects
- * the functionality and behavior of the stage and is changable from the backstage and preparations ui
- */
-type BackstageConfiguration = Omit<
-	ShowAttributes,
-	"id" | "online" | "createdAt" | "updatedAt" | "lastOnlineAt" | "nrOfTimesShown" | "nrOfTimes" | "nrOfTimesRehersed" | "url"
-> & {
-	/** Identification for the selected show in the database */
-	showId: ShowAttributes["id"] | null;
-};
-
-/**
- * Global in-memory selected backstage configuration for
- * when running the program in stage mode.
- */
-const _backstageConfiguration: BackstageConfiguration = {
-	showId: null,
-	name: "",
-	description: "",
-	nomenclature: "föreställningen",
-	password: "",
-	curtainsOverride: SceneSetting.FORCED_ON,
-	chatEnabledOverride: SceneSetting.FORCED_OFF,
-	gratitudeEffectsEnabledOverride: SceneSetting.FORCED_OFF,
-	criticalEffectsEnabledOverride: SceneSetting.FORCED_OFF,
-	visitorAudioEnabledOverride: SceneSetting.FORCED_OFF,
-	visitorVideoEnabledOverride: SceneSetting.FORCED_OFF,
-	selectedScene: null,
-};
 
 /**
  * Procedure that validates the a show is selected and add it to the context
@@ -50,10 +20,9 @@ const selectedShowProcedure = adminUserProcedure
 		}),
 	)
 	.use(async ({ input: { showId }, ctx, next }) => {
-		// In stage mode the stage configuration does not need be be given or validated
-		// It is valid from the startup of the server
+		// In stage mode the global configuration is used
 		if (!CONFIG.runtime.theater) {
-			return next({ ctx: { ...ctx, show: null } });
+			return next({ ctx: { ...ctx, config: getGlobalBackstageConfiguration() } });
 		}
 
 		try {
@@ -65,7 +34,7 @@ const selectedShowProcedure = adminUserProcedure
 						message: "Selected show not found",
 					});
 				}
-				return next({ ctx: { ...ctx, show: null } });
+				return next({ ctx: { ...ctx, config: toBackstageConfiguration(show) } });
 			} else {
 				throw new TRPCError({
 					code: "BAD_REQUEST",
@@ -88,50 +57,19 @@ const selectedShowProcedure = adminUserProcedure
  * Procedure that validates that the selected show can be edited
  */
 const editableShowProcedure = selectedShowProcedure.use(({ ctx, next }) => {
-	if (ctx.show && ctx.show.lastOnlineAt !== null) {
+	// In stage mode the configuration is always editable
+	if (!CONFIG.runtime.theater) {
+		return next({ ctx });
+	}
+
+	if (!ctx.config.isEditable) {
 		throw new TRPCError({
 			code: "FORBIDDEN",
-			message: "Cannot edit a show that has been already shown",
+			message: "Show is not editable right now",
 		});
 	}
 	return next({ ctx });
 });
-
-function loadShowIntoConfiguration(show: Show) {
-	if (showId) {
-		const show = await Show.findByPk(showId);
-		if (!show) {
-			throw new TRPCError({
-				code: "NOT_FOUND",
-				message: "Selected show not found",
-			});
-		}
-
-		_backstageConfiguration.selectedShowId = showId;
-
-		// Optionally load show configuration into runtime state
-		if (loadIntoRuntime) {
-		} else {
-			console.log(`[Config] Selected show: ${show.name} (ID: ${showId})`);
-		}
-	} else {
-		// Clear selection
-		_backstageConfiguration.selectedShowId = undefined;
-		console.log("[Config] Cleared show selection");
-	}
-
-	_backstageConfiguration.password = show.showPassword || undefined;
-	_backstageConfiguration.sceneSettings = {
-		curtains: show.curtainsOverride || SceneSetting.AUTOMATIC,
-		chatEnabled: show.chatEnabledOverride || SceneSetting.AUTOMATIC,
-		gratitudeEffectsEnabled: show.gratitudeEffectsEnabledOverride || SceneSetting.AUTOMATIC,
-		criticalEffectsEnabled: show.criticalEffectsEnabledOverride || SceneSetting.AUTOMATIC,
-		visitorAudioEnabled: show.visitorAudioEnabledOverride || SceneSetting.AUTOMATIC,
-		visitorVideoEnabled: show.visitorVideoEnabledOverride || SceneSetting.AUTOMATIC,
-	};
-	_backstageConfiguration.currentScene = show.currentScene;
-	console.log(`[Config] Loaded show configuration into runtime: ${show.name} (ID: ${showId})`);
-}
 
 /**
  * Configuration Router - Unified stage configuration management

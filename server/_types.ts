@@ -1,5 +1,6 @@
 import type * as MediaSoup from "mediasoup";
 import type { CustomAppData, TransportDirection } from "./lib/mediaSoup";
+import type { ShowAttributes } from "./models";
 
 // TODO: Create a types folder maybe ?
 
@@ -31,15 +32,21 @@ export type Scene = {
 	visitorVideoEnabled: boolean;
 };
 
-/** Attributes for a shown when listed on the theater page */
-export type ShowListEntry = {
-	id: number;
-	name: string;
-	description: string;
-	nomenclature: string;
-	isOnline: boolean;
-	url: string;
-	lastOnlineAt: Date | null;
+/** The Shown attribues needed when listed on the theater page */
+export type ShowListEntry = Pick<ShowAttributes, "id" | "name" | "description" | "nomenclature" | "online" | "url" | "lastOnlineAt">;
+
+/**
+ * The backstage configuration type is the fields of a show database object that effects
+ * the functionality and behavior of the stage and is changable from the backstage and preparations ui
+ */
+export type BackstageConfiguration = Omit<
+	ShowAttributes,
+	"id" | "online" | "createdAt" | "updatedAt" | "lastOnlineAt" | "nrOfTimesShown" | "nrOfTimes" | "nrOfTimesRehersed" | "url"
+> & {
+	/** Identification for the selected show in the database */
+	showId: ShowAttributes["id"] | null;
+	/** Determines if the backstage configuration is editable */
+	isEditable: boolean;
 };
 
 export type EffectData = { type: "flowers" | "applause" | "tomato"; number: number };

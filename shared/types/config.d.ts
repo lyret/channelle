@@ -15,6 +15,8 @@ type RuntimeConfig = {
 	start: boolean;
 	/** Indicates if theater mode is enabled. */
 	theater: boolean;
+	/** The slug identifier for the deployment. */
+	slug: string;
 };
 
 type PackageConfig = {
@@ -37,25 +39,23 @@ type BuildConfig = {
 	theaterInterfaceInputs: Array<string>;
 };
 
-type DebugConfig = {
-	/** Indicates that we want to show verbose warnings and log messages. */
-	verboseOutput: boolean;
-};
-
 type TheaterConfig = {
 	/** The password for administrator authentication. */
 	password: string;
 };
 
-type StageConfig = {
-	/** The name of the stage. */
+type ShowDefaults = {
+	/** The name of the show. */
 	name: string;
-	/** The invite key for the stage. */
-	inviteKey: string;
-	/** The identifier for the stage. */
-	id: string;
+	/** The password for the show. */
+	password: string;
+};
+
+type BackstageConfig = {
 	/** The show ID to initialize the stage with (optional). */
 	showId?: number;
+	/** Default show configuration. */
+	showDefaults: ShowDefaults;
 };
 
 type WebConfig = {
@@ -128,12 +128,10 @@ type CONFIG = {
 	package: PackageConfig;
 	/** Build Settings */
 	build: BuildConfig;
-	/** Debug Settings */
-	debug: DebugConfig;
 	/** Theater Settings */
 	theater: TheaterConfig;
-	/** Stage Settings */
-	stage: StageConfig;
+	/** Backstage Settings */
+	backstage: BackstageConfig;
 	/** Web Server Settings */
 	web: WebConfig;
 	/** Launcher Settings */

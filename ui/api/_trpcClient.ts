@@ -11,7 +11,7 @@ export type RouterInputTypes = inferRouterInputs<AppRouter>;
 export type RouterOutputTypes = inferRouterOutputs<AppRouter>;
 
 /** The stored webscoket peer identification used for re-authentications */
-export const wsPeerIdStore = persisted(`${CONFIG.stage.id}-peer-id`, "");
+export const wsPeerIdStore = persisted(`${CONFIG.runtime.slug}-peer-id`, "");
 
 /** Svelte Store that indicates if the client is connected to the server through websocket */
 export const wsIsConnectedStore = writable<boolean>(false);

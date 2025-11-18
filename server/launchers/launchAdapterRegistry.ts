@@ -150,7 +150,9 @@ function initializeAdapter(adapter: LaunchAdapter): void {
 		}
 
 		_adapters.set(adapter.name, adapter);
-		console.log(`[Launchers] Registered adapter: ${adapter.name} (${adapter.displayName})`);
+		if (CONFIG.runtime.verbose) {
+			console.log(`[Launchers] Registered adapter: ${adapter.name}`);
+		}
 	} catch (error) {
 		console.error("[Launchers] Error registering adapter:", error);
 	}

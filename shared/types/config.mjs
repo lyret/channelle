@@ -8,6 +8,7 @@
  * @property {boolean} watch - Indicates if watch mode is enabled.
  * @property {boolean} start - Indicates if start mode is enabled.
  * @property {boolean} theater - Indicates if theater mode is enabled.
+ * @property {string} slug - The slug identifier for the deployment.
  */
 
 /**
@@ -26,21 +27,20 @@
  */
 
 /**
- * @typedef {Object} DebugConfig
- * @property {boolean} verboseOutput - Indicates that we want to show verbose warnings and log messages.
- */
-
-/**
  * @typedef {Object} TheaterConfig
  * @property {string} password - The password for administrator authentication.
  */
 
 /**
- * @typedef {Object} StageConfig
- * @property {string} name - The name of the stage.
- * @property {string} inviteKey - The invite key for the stage.
- * @property {string} id - The identifier for the stage.
+ * @typedef {Object} ShowDefaults
+ * @property {string} name - The name of the show.
+ * @property {string} password - The password for the show.
+ */
+
+/**
+ * @typedef {Object} BackstageConfig
  * @property {number|undefined} showId - The show ID to initialize the stage with (optional).
+ * @property {ShowDefaults} showDefaults - Default show configuration.
  */
 
 /**
@@ -93,9 +93,8 @@
  * @property {RuntimeConfig} runtime - Runtime Options.
  * @property {PackageConfig} package - Package Information.
  * @property {BuildConfig} build - Build Settings.
- * @property {DebugConfig} debug - Debug Settings.
  * @property {TheaterConfig} theater - Theater Settings.
- * @property {StageConfig} stage - Stage Settings.
+ * @property {BackstageConfig} backstage - Backstage Settings.
  * @property {WebConfig} web - Web Server Settings.
  * @property {LauncherConfig} launcher - Launcher Settings.
  * @property {MediasoupConfig} mediasoup - MediaSoup Settings.

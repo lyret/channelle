@@ -64,7 +64,7 @@ export class LocalAdapter extends LaunchAdapter {
 	async launch(show: Show): Promise<LaunchResult> {
 		// Check if there's already an instance for this show
 		const existingInstance = Array.from(this.instances.values()).find(
-			(instance) => instance.showId === show.id && (instance.status === "running" || instance.status === "starting")
+			(instance) => instance.showId === show.id && (instance.status === "running" || instance.status === "starting"),
 		);
 		if (existingInstance) {
 			throw new Error(`An instance for show "${show.name}" is already running (ID: ${existingInstance.instanceId})`);
@@ -284,7 +284,7 @@ export class LocalAdapter extends LaunchAdapter {
 		// Handle process output
 		if (childProcess.stdout) {
 			childProcess.stdout.on("data", (data) => {
-				if (CONFIG.debug.verboseOutput) {
+				if (CONFIG.runtime.debug) {
 					console.log(`[LocalAdapter:${instanceId}] stdout: ${data.toString().trim()}`);
 				}
 			});
@@ -315,12 +315,9 @@ export class LocalAdapter extends LaunchAdapter {
 			instance.status = "stopped";
 
 			// Mark show as having been online with current timestamp
-				Show.update(
-					{ lastOnlineAt: new Date() },
-					{ where: { id: instance.showId } }
-				).catch(error => {
-					console.error(`[LocalAdapter] Error updating show lastOnlineAt timestamp:`, error);
-				});
+			Show.update({ lastOnlineAt: new Date() }, { where: { id: instance.showId } }).catch((error) => {
+				console.error(`[LocalAdapter] Error updating show lastOnlineAt timestamp:`, error);
+			});
 		});
 
 		childProcess.on("error", (error) => {

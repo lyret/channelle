@@ -223,13 +223,17 @@ export function enableConfigSynchronization(): void {
  * Initialize the configuration API system
  * Sets up show selection based on application mode and loads initial configuration
  */
+// FIXME: fix this
 export async function initializeConfigAPI(): Promise<void> {
 	try {
-		currentShowIsLoading.set(true);
-		currentShowError.set(null);
+		// In stage mode, show id is constant and does not need to be determined on the client
+		if (!CONFIG.runtime.theater) {
+		}
+		// Get the selected show from the search parameter "show"
+		else {
+			currentShowIsLoading.set(true);
+			currentShowError.set(null);
 
-		// Initialize show selection based on mode
-		if (CONFIG.runtime.theater) {
 			// In theater mode, get show ID from URL parameters
 			const urlParams = new URLSearchParams(window.location.search);
 			const showIdParam = urlParams.get("show");
@@ -239,13 +243,7 @@ export async function initializeConfigAPI(): Promise<void> {
 					await _setSelectedShow(showId);
 				}
 			}
-		} else {
-			// In stage mode, show ID comes from CONFIG
-			if (CONFIG.stage.showId) {
-				await _setSelectedShow(CONFIG.stage.showId);
-			}
 		}
-
 		// Load current configuration
 		await _updateConfig();
 	} catch (error) {

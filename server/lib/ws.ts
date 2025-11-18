@@ -18,7 +18,7 @@ export async function ws(): Promise<WebSocketServer> {
 		server: httpServer,
 	});
 
-	if (CONFIG.runtime.debug) {
+	if (CONFIG.runtime.verbose) {
 		_ws.on("connection", (ws) => {
 			console.log(`[WS] +Connections (${_ws.clients.size})`);
 			ws.once("close", () => {

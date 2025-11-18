@@ -2,7 +2,7 @@ import * as MediaSoup from "mediasoup-client";
 
 /** Sets the debug level for MediaSoup, requires and makes and additional reload due to the import order of MediaSoup */
 export function enableMediaSoupDebugging() {
-	const enabled = !!CONFIG.debug.verboseOutput;
+	const enabled = !!CONFIG.runtime.verbose;
 	const previouslyEnabled = !!window.localStorage.getItem("debug");
 	if (!enabled) {
 		window.localStorage.removeItem("debug");

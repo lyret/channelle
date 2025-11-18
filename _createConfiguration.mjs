@@ -24,8 +24,8 @@ export async function createConfiguration() {
 	const cli = Nopt(
 		{
 			name: String,
-			inviteKey: String,
-			id: String,
+			password: String,
+			slug: String,
 			theaterPassword: String,
 			showId: Number,
 			production: Boolean,
@@ -88,26 +88,19 @@ export async function createConfiguration() {
 		console.log("🏷️ ", Chalk.bgBlueBright("[CONFIG]"), "Show ID", showId);
 	}
 
-	// If STAGE_NAME is set or the 'name' option is given in the CLI the
+	// If SHOW_NAME is set or the 'name' option is given in the CLI the
 	// deployment/stage will be named after the given string, otherwise it
 	// will be unnamned
-	const showName = cli.name !== undefined ? cli.name : env.STAGE_NAME || "";
-	if (showId == undefined) {
-		console.log("🏷️ ", Chalk.bgBlueBright("[CONFIG]"), "Stage Name", showName);
+	const showName = cli.name !== undefined ? cli.name : env.SHOW_NAME || "";
+	if (showId == undefined && showName) {
+		console.log("🏷️ ", Chalk.bgBlueBright("[CONFIG]"), "Show Name", showName);
 	}
 
-	// If STAGE_INVITE_LINK_KEY is set it will default the deployed stage to be password protected with the string given
+	// If SHOW_PASSWORD is set it will default the deployed stage to be password protected with the string given
 	// otherwise it will be set to an empty string and the stage will be public
-	const stageInviteLinkKey = cli.name !== undefined ? cli.inviteKey : env.STAGE_INVITE_LINK_KEY || "";
-	if (showId == undefined && stageInviteLinkKey) {
-		console.log("🏷️ ", Chalk.bgBlueBright("[CONFIG]"), "Invite Link Key", stageInviteLinkKey);
-	}
-
-	// If STAGE_ID is set or 'id' is given in the CLI it will be used to identify this deployment (stage), otherwise a slug
-	// from the STAGE_NAME will be used
-	const stageId = cli.id !== undefined ? cli.id : env.STAGE_ID || Slug(showName);
-	if (showId == undefined) {
-		console.log("🏷️ ", Chalk.bgBlueBright("[CONFIG]"), "Identifier", stageId);
+	const showPassword = cli.password !== undefined ? cli.password : env.SHOW_PASSWORD || "";
+	if (showId == undefined && showPassword) {
+		console.log("🏷️ ", Chalk.bgBlueBright("[CONFIG]"), "Show Password", showPassword);
 	}
 
 	// Runtime options
@@ -153,13 +146,20 @@ export async function createConfiguration() {
 	const start = cli.start !== undefined ? cli.start : env.START != "false" || false;
 	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Start", start);
 
+	// If SLUG is set or 'slug' is given in the CLI it will be used to identify this deployment (stage), otherwise a slug
+	// from the SHOW_NAME will be used
+	const slug = cli.slug !== undefined ? cli.slug : env.SLUG || Slug(showName);
+	if (showId == undefined) {
+		console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Runtime Slug", slug);
+	}
+
 	// Launcher configuration
 	console.log();
 
 	// The THEATER_ADAPTER option sets which adapter is active for launching stages
 	const theaterAdapter = cli.theaterAdapter !== undefined ? cli.theaterAdapter : env.THEATER_ADAPTER || "none";
 	if (theater) {
-		console.log("🚀", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter", theaterAdapter.toUpperCase());
+		console.log("🔸", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter", theaterAdapter.toUpperCase());
 	}
 
 	// The THEATER_ADAPTER_LOCAL_MAX_STAGES option sets the maximum number of local stage instances that can be launched simultaneously
@@ -170,14 +170,14 @@ export async function createConfiguration() {
 				? Number(env.THEATER_ADAPTER_LOCAL_MAX_STAGES)
 				: 1;
 	if (theater && theaterAdapter === "local") {
-		console.log("🚀", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter Local Max Stages", maxLocalStages);
+		console.log("🔸", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter Local Max Stages", maxLocalStages);
 	}
 
 	// The THEATER_ADAPTER_DIGITALOCEAN_API_KEY option sets the API key for DigitalOcean launcher adapter
 	const digitaloceanApiKey =
 		cli.theaterAdapterDigitaloceanApiKey !== undefined ? cli.theaterAdapterDigitaloceanApiKey : env.THEATER_ADAPTER_DIGITALOCEAN_API_KEY || "";
 	if (theater && theaterAdapter === "digitalocean" && digitaloceanApiKey) {
-		console.log("🚀", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter DigitalOcean API Key", "***" + digitaloceanApiKey.slice(-4));
+		console.log("🔸", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter DigitalOcean API Key", "***" + digitaloceanApiKey.slice(-4));
 	}
 
 	// The THEATER_ADAPTER_DIGITALOCEAN_MAX_VPNS option sets the maximum number of DigitalOcean VPN servers that can be launched
@@ -188,14 +188,14 @@ export async function createConfiguration() {
 				? Number(env.THEATER_ADAPTER_DIGITALOCEAN_MAX_VPNS)
 				: 5;
 	if (theater && theaterAdapter === "digitalocean") {
-		console.log("🚀", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter DigitalOcean Max VPNs", maxDigitaloceanVpns);
+		console.log("🔸", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter DigitalOcean Max VPNs", maxDigitaloceanVpns);
 	}
 
 	// The THEATER_ADAPTER_DIGITALOCEAN_REGION option sets the DigitalOcean region for droplet deployment
 	const digitaloceanRegion =
 		cli.theaterAdapterDigitaloceanRegion !== undefined ? cli.theaterAdapterDigitaloceanRegion : env.THEATER_ADAPTER_DIGITALOCEAN_REGION || "ams3";
 	if (theater && theaterAdapter === "digitalocean") {
-		console.log("🚀", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter DigitalOcean Region", digitaloceanRegion);
+		console.log("🔸", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter DigitalOcean Region", digitaloceanRegion);
 	}
 
 	// Create an array of transport listening info for webRTC, will be filled
@@ -276,6 +276,7 @@ export async function createConfiguration() {
 			watch: watch,
 			start: start,
 			theater: theater,
+			slug: slug,
 		},
 		/** Package Information */
 		package: {
@@ -295,21 +296,18 @@ export async function createConfiguration() {
 			/** The files to use as build inputs for the theater-interface, relative to the 'theater-interface' folder. */
 			theaterInterfaceInputs: ["theater.html", "_theater.ts", "preparation.html", "_preparation.ts"],
 		},
-		/** Debug Settings */
-		debug: {
-			/** Indicates that we want to show verbose warnings and log messages */
-			verboseOutput: verbose,
-		},
+
 		/** Theater Settings */
 		theater: {
 			password: theaterPassword,
 		},
-		/** Stage Settings */
-		stage: {
-			name: showName,
-			inviteKey: stageInviteLinkKey,
-			id: stageId,
+		/** Backstage Settings */
+		backstage: {
 			showId: showId,
+			showDefaults: {
+				name: showName,
+				password: showPassword,
+			},
 		},
 		/** Web Server Settings */
 		web: {

@@ -2,7 +2,7 @@ import type * as MediaSoup from "mediasoup";
 import type { Transport, Session, CustomAppData, MediaTag, Producer, Consumer } from "../_types";
 import { TRPCError } from "@trpc/server";
 import { trpc, mediaSoupRouter } from "../lib";
-import { getStageConfig, getCurrentSceneWithSettings } from "./configRouter";
+import { getStageConfig, getCurrentSceneWithSettings } from "./backstageRouter";
 import { z } from "zod";
 import { join, userConnectionProcedure, getUsers } from "./userRouter";
 
