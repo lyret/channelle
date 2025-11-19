@@ -4,6 +4,7 @@
 	import stageLightsGif from "~/assets/gifs/stagelights_turning_orange_md_clr.gif";
 
 	export let withoutSubtitle = false;
+	export let minimal = false;
 </script>
 
 <section class="has-text-centered" in:blur={{ delay: 500, duration: 1000 }}>
@@ -17,10 +18,12 @@
 				<img src={stageLightsGif} alt="Stage lights" class="stage-lights" />
 			</div>
 		</div>
-		<img src={logoGif} alt="Channelle" class="logo" />
+		{#if !minimal}
+			<img src={logoGif} alt="Channelle" class="logo" />
+		{/if}
 	</div>
 </section>
-{#if !withoutSubtitle}
+{#if !minimal}
 	<h2 class="subtitle theater-title has-text-centered">Välkommen till vår kvartersteater</h2>
 {/if}
 

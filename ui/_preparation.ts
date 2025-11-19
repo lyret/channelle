@@ -1,6 +1,6 @@
 import "@babel/polyfill";
 import { enableMediaSoupDebugging, enableHotReloadingOnRebuilds } from "./api/development";
-import { enableConfigSynchronization } from "./api/shows";
+import { subscribeToBackstageConfigurationChanges } from "./api/backstage";
 import { validateSessionWithServer } from "./api/auth";
 
 import Preparation from "~/components/pages/Preparation.svelte";
@@ -11,8 +11,8 @@ enableMediaSoupDebugging();
 // Enables hot reloading of the debug app when developing
 enableHotReloadingOnRebuilds();
 
-// Enable global config synchronization for real-time updates
-enableConfigSynchronization();
+// Enable configuration synchronization for real-time updates when changes are made
+subscribeToBackstageConfigurationChanges();
 
 // Validate authenticationsession with the server
 validateSessionWithServer();

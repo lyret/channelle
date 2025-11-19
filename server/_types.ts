@@ -32,17 +32,20 @@ export type Scene = {
 	visitorVideoEnabled: boolean;
 };
 
-/** The Shown attribues needed when listed on the theater page */
+/** The Show attribues needed when listed on the theater page */
 export type ShowListEntry = Pick<ShowAttributes, "id" | "name" | "description" | "nomenclature" | "online" | "url" | "lastOnlineAt">;
+
+/** The Show attributes that are editibale from the backstage interface */
+export type EditableShowAttributes = Omit<
+	ShowAttributes,
+	"id" | "online" | "createdAt" | "updatedAt" | "lastOnlineAt" | "nrOfTimesShown" | "nrOfTimes" | "nrOfTimesRehersed" | "url"
+>;
 
 /**
  * The backstage configuration type is the fields of a show database object that effects
  * the functionality and behavior of the stage and is changable from the backstage and preparations ui
  */
-export type BackstageConfiguration = Omit<
-	ShowAttributes,
-	"id" | "online" | "createdAt" | "updatedAt" | "lastOnlineAt" | "nrOfTimesShown" | "nrOfTimes" | "nrOfTimesRehersed" | "url"
-> & {
+export type BackstageConfiguration = EditableShowAttributes & {
 	/** Identification for the selected show in the database */
 	showId: ShowAttributes["id"] | null;
 	/** Determines if the backstage configuration is editable */

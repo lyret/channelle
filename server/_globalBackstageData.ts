@@ -1,6 +1,17 @@
+import Emittery from "emittery";
 import type { BackstageConfiguration } from "./_types";
 import { SceneSetting } from "./_types";
 import { Show } from "./models/Show";
+
+/** Event */
+const _configUpdateEmitter = new EventEmitter();
+
+/**
+ * Emit show update event
+ */
+export function emitShowUpdate(showId: number, updatedShow: BackstageConfiguration) {
+	_configUpdateEmitter.emit(`show:${showId}`, updatedShow);
+}
 
 /**
  * Global in-memory selected backstage configuration for
@@ -81,6 +92,33 @@ export function toBackstageConfiguration(show: Show): BackstageConfiguration {
 		visitorVideoEnabledOverride: show.visitorVideoEnabledOverride,
 		selectedScene: show.selectedScene,
 	};
+}
+
+/** Utility function that updates a given backstage id to the database */
+export async function saveBackstageConfiguration(config: BackstageConfiguration) {
+	if (config.showId) {
+		try {
+			const show = await Show.findByPk(config.showId);
+			if (show) {
+				await show.update({
+					name: config.name,
+					description: config.description,
+					nomenclature: config.nomenclature,
+					password: config.password,
+					curtainsOverride: config.curtainsOverride,
+					chatEnabledOverride: config.chatEnabledOverride,
+					gratitudeEffectsEnabledOverride: config.gratitudeEffectsEnabledOverride,
+					criticalEffectsEnabledOverride: config.criticalEffectsEnabledOverride,
+					visitorAudioEnabledOverride: config.visitorAudioEnabledOverride,
+					visitorVideoEnabledOverride: config.visitorVideoEnabledOverride,
+					selectedScene: config.selectedScene,
+				});
+				console.log(`[Backstage] Configuration persisted to the database on show with id ${show.id}: ${show.name}`);
+			}
+		} catch (error) {
+			console.error("[Backstage] Error persisting backstage config to database:", error);
+		}
+	}
 }
 
 /**

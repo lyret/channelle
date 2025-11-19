@@ -1,5 +1,6 @@
 import "@babel/polyfill";
 import { enableMediaSoupDebugging, enableHotReloadingOnRebuilds } from "./api/development";
+import { subscribeToBackstageConfigurationChanges } from "./api/backstage";
 
 import Backstage from "~/components/pages/Backstage.svelte";
 
@@ -8,6 +9,9 @@ enableMediaSoupDebugging();
 
 // Enables hot reloading of the debug app when developing
 enableHotReloadingOnRebuilds();
+
+// Enable configuration synchronization for real-time updates when changes are made
+subscribeToBackstageConfigurationChanges();
 
 // Mount the Svelte interface
 const backstageComponent = new Backstage({

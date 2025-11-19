@@ -17,8 +17,7 @@
 
 <TheaterWrapper>
 	<div in:blur={{ delay: 500, duration: 1000 }}>
-		<!-- Header with Action Bar -->
-		<TheaterHeader withoutSubtitle={true} />
+		<TheaterHeader minimal={true} />
 		<TheaterActionBar>
 			<a slot="right" class="button is-small is-inverted" href="/">
 				<span class="icon is-size-4">
