@@ -27,7 +27,7 @@ const _localConfigStore = writable<BackstageConfiguration>({
 /** Current show password from configuration */
 export const showPasswordStore = derived(_localConfigStore, ($config) => $config.password);
 
-/** Current overriden scene settings from configuration */
+/** Current actual scene settings from configuration after taking selected scene and overrides into account */
 export const showSceneSettingsStore = derived(_localConfigStore, ($config) => ({
 	curtains: $config.curtainsOverride == 1 || ($config.curtainsOverride == 0 && $config.selectedScene?.curtains) || true,
 	chatEnabled: $config.chatEnabledOverride == 1 || ($config.chatEnabledOverride == 0 && $config.selectedScene?.chatEnabled) || false,
@@ -41,6 +41,16 @@ export const showSceneSettingsStore = derived(_localConfigStore, ($config) => ({
 		$config.visitorAudioEnabledOverride == 1 || ($config.visitorAudioEnabledOverride == 0 && $config.selectedScene?.visitorAudioEnabled) || false,
 	visitorVideoEnabled:
 		$config.visitorVideoEnabledOverride == 1 || ($config.visitorVideoEnabledOverride == 0 && $config.selectedScene?.visitorVideoEnabled) || false,
+}));
+
+/** Current actually override value for settings from the configuration */
+export const showSceneOverridesStore = derived(_localConfigStore, ($config) => ({
+	curtainsOverride: $config.curtainsOverride,
+	chatEnabledOverride: $config.chatEnabledOverride,
+	visitorAudioEnabledOverride: $config.visitorAudioEnabledOverride,
+	visitorVideoEnabledOverride: $config.visitorVideoEnabledOverride,
+	gratitudeEffectsEnabledOverride: $config.gratitudeEffectsEnabledOverride,
+	criticalEffectsEnabledOverride: $config.criticalEffectsEnabledOverride,
 }));
 
 /** Currently selected scene from configuration */
@@ -62,12 +72,14 @@ export const configurationHasError = writable<string | null>(null);
 /** Updates the given configuration properties */
 export async function updateConfigurationSettings(update: Partial<EditableShowAttributes>) {
 	try {
+		configurationIsLoading.set(true);
 		await backstageClient.updateProperties.mutate({ showId: _localShowId, update: update });
+		configurationIsLoading.set(false);
 		return { success: true };
 	} catch (error) {
-		console.error("Failed to update configuration properties:", { error, showId: _localShowId, update });
 		const errorMessage = error instanceof Error ? error.message : "Failed to update configuration properties";
-		configurationHasError.set(errorMessage);
+		_setError(errorMessage);
+		configurationIsLoading.set(false);
 		return { success: false, error: errorMessage };
 	}
 }
@@ -75,12 +87,14 @@ export async function updateConfigurationSettings(update: Partial<EditableShowAt
 /** Reset all overrididen settings to automatic */
 export async function automateOverridenSettings() {
 	try {
+		configurationIsLoading.set(true);
 		await backstageClient.automateOverridenSettings.mutate({ showId: _localShowId });
+		configurationIsLoading.set(false);
 		return { success: true };
 	} catch (error) {
-		console.error("Failed to reset settings to automatic:", error);
 		const errorMessage = error instanceof Error ? error.message : "Failed to reset settings";
-		configurationHasError.set(errorMessage);
+		_setError(errorMessage);
+		configurationIsLoading.set(false);
 		return { success: false, error: errorMessage };
 	}
 }
@@ -115,7 +129,7 @@ export async function subscribeToBackstageConfigurationChanges(): Promise<void> 
 			{
 				onData: (data) => {
 					if (CONFIG.runtime.debug) {
-						console.error("Configuration subscription data:", data);
+						console.log("Configuration subscription data:", { data });
 					}
 					_localConfigStore.set(data.config);
 					_localShowId = data.config.showId || 0;
@@ -124,8 +138,7 @@ export async function subscribeToBackstageConfigurationChanges(): Promise<void> 
 					}
 				},
 				onError: (error) => {
-					console.error("Configuration subscription error:", error);
-					configurationHasError.set(error instanceof Error ? error.message : "Unknown initialization error");
+					_setError(error instanceof Error ? error.message : "Unknown initialization error");
 				},
 				onComplete: () => {
 					console.log("Configuration subscription completed");
@@ -133,9 +146,17 @@ export async function subscribeToBackstageConfigurationChanges(): Promise<void> 
 			},
 		);
 	} catch (error) {
-		console.error("Failed to start configuration synchronization:", error);
-		configurationHasError.set(error instanceof Error ? error.message : "Unknown initialization error");
+		_setError(error instanceof Error ? error.message : "Unknown initialization error");
 	} finally {
 		configurationIsLoading.set(false);
 	}
+}
+
+/** Utility function to set the error message and clears it after 8 seconds */
+function _setError(message: string) {
+	console.error("Configuration error:", message);
+	configurationHasError.set(message);
+	setTimeout(() => {
+		configurationHasError.set(null);
+	}, 8000);
 }

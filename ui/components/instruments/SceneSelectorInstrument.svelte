@@ -5,39 +5,9 @@
 	import ForcedSettingsContent from "./_ForcedSettingsContent.svelte";
 	import { onMount } from "svelte";
 	import { peersStore, stageChatEnabledStore } from "~/api/media";
-	import { setScene, showSceneSelectionStores } from "~/api/shows";
+	import { updateConfigurationSettings, showSelectedSceneStore, configurationHasError } from "~/api/backstage";
 
 	export let hideForcedSettings: boolean = false;
-
-	// Error handling state
-	let errorMessage: string = "";
-	let isLoading = false;
-
-	// Sets the displayed error message and clears after 8 seconds
-	function setError(message: string) {
-		errorMessage = message;
-		setTimeout(() => {
-			errorMessage = "";
-		}, 8000);
-	}
-
-	// Handle API call results
-	async function handleApiCall(apiCall: Promise<{ success: boolean; error?: string }>) {
-		isLoading = true;
-		errorMessage = "";
-
-		try {
-			const result = await apiCall;
-			if (!result.success) {
-				setError(result.error || "Okänt fel");
-			}
-		} catch (error) {
-			console.error("API call failed:", error);
-			setError("Ett oväntat fel uppstod. Försök igen.");
-		} finally {
-			isLoading = false;
-		}
-	}
 
 	$: peers = Object.values($peersStore || {}).filter((p) => (p.actor || p.manager) && !p.banned);
 
@@ -121,7 +91,7 @@
 
 	// Sync actual stage stores when the selected scene changes
 	onMount(() => {
-		const stop = showSceneSelectionStores.subscribe((scene) => {
+		const stop = showSelectedSceneStore.subscribe((scene) => {
 			if (scene) {
 				stageChatEnabledStore.set(scene?.chatEnabled || false);
 			}
@@ -133,15 +103,9 @@
 	});
 
 	async function handleSceneSelect(event: CustomEvent<Scene>) {
-		// Persist the scene selection to the server
-		await handleApiCall(setScene(event.detail, true));
+		updateConfigurationSettings({ selectedScene: event.detail });
 		// Collapse all expanded scenes after selection
 		expandedScenes = {};
-	}
-
-	function handleSceneUpdate() {
-		// Handle scene layout updates (peer assignments)
-		// This already triggers persistence if the scene is currently selected
 	}
 
 	// TODO: Theming
@@ -194,16 +158,16 @@
 <div class="scene-selector-instrument">
 	<h1 class="title">Sceninställningar</h1>
 
-	{#if errorMessage}
+	{#if $configurationHasError}
 		<div class="notification is-danger is-light">
-			<p class="has-text-danger">✗ {errorMessage}</p>
+			<p class="has-text-danger">✗ {$configurationHasError}</p>
 		</div>
 	{/if}
 
 	<div class="scene-content">
 		{#if !hideForcedSettings}
 			<Accordion title="Ange tvingande inställningar" isOpen={false}>
-				<ForcedSettingsContent {errorMessage} {isLoading} {handleApiCall} />
+				<ForcedSettingsContent />
 			</Accordion>
 		{/if}
 
@@ -213,50 +177,44 @@
 				<SceneSelectorControl
 					layout={auto}
 					{peers}
-					selectedLayout={$showSceneSelectionStores}
+					selectedLayout={$showSelectedSceneStore}
 					bind:expanded={expandedScenes[auto.name]}
 					on:select={handleSceneSelect}
-					on:update={handleSceneUpdate}
 				/>
 				<SceneSelectorControl
 					layout={empty}
 					{peers}
-					selectedLayout={$showSceneSelectionStores}
+					selectedLayout={$showSelectedSceneStore}
 					bind:expanded={expandedScenes[empty.name]}
 					on:select={handleSceneSelect}
-					on:update={handleSceneUpdate}
 				/>
 				<SceneSelectorControl
 					layout={oneXOne}
 					{peers}
-					selectedLayout={$showSceneSelectionStores}
+					selectedLayout={$showSelectedSceneStore}
 					bind:expanded={expandedScenes[oneXOne.name]}
 					on:select={handleSceneSelect}
-					on:update={handleSceneUpdate}
 				/>
 				<SceneSelectorControl
 					layout={oneXTwo}
 					{peers}
-					selectedLayout={$showSceneSelectionStores}
+					selectedLayout={$showSelectedSceneStore}
 					bind:expanded={expandedScenes[oneXTwo.name]}
 					on:select={handleSceneSelect}
-					on:update={handleSceneUpdate}
 				/>
 				<SceneSelectorControl
 					layout={chat}
 					{peers}
-					selectedLayout={$showSceneSelectionStores}
+					selectedLayout={$showSelectedSceneStore}
 					bind:expanded={expandedScenes[chat.name]}
 					on:select={handleSceneSelect}
-					on:update={handleSceneUpdate}
 				/>
 				<SceneSelectorControl
 					layout={twoXTwo}
 					{peers}
-					selectedLayout={$showSceneSelectionStores}
+					selectedLayout={$showSelectedSceneStore}
 					bind:expanded={expandedScenes[twoXTwo.name]}
 					on:select={handleSceneSelect}
-					on:update={handleSceneUpdate}
 				/>
 			</div>
 		</div>

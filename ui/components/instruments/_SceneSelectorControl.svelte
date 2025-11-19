@@ -7,7 +7,7 @@
 
 	const dispatch = createEventDispatcher<{ update: Scene; select: Scene }>();
 
-	export let selectedLayout: Scene | undefined;
+	export let selectedLayout: Scene | null;
 	export let peers: Array<Peer>;
 	export let layout: Scene;
 	export let expanded: boolean = false;

@@ -4,16 +4,17 @@ import { trpc } from "../lib";
 import { z } from "zod";
 
 // Get the trpc router constructor and default procedure
-const { router: trcpRouter, procedure: trcpProcedure } = trpc();
+const { router: trcpRouter, procedure, middleware } = trpc();
 
 /** In-memory user session storage */
 const _users: Record<string, Peer> = {};
 
 /**
- * User connection procedure
- * Only allows identified users to continue and keeps their online status updated
+ * Retrive peer details middleware
+ * Only allows identified user peers to continue and retrive their details from the database
+ * and passes it along with the context
  */
-export const userConnectionProcedure = trcpProcedure.use(async ({ ctx, next }) => {
+export const retrivePeerDetailsMiddleware = middleware(async ({ ctx, next }) => {
 	if (!ctx.peer?.id) {
 		throw new TRPCError({ code: "BAD_REQUEST", message: "No peer id given in request" });
 	} else if (CONFIG.runtime.theater) {
@@ -26,6 +27,12 @@ export const userConnectionProcedure = trcpProcedure.use(async ({ ctx, next }) =
 	}
 	return next({ ctx: { peer: _users[ctx.peer.id] } });
 });
+
+/**
+ * Connected User Procedure
+ * Only allows identified users to continue and keeps their online status updated
+ */
+export const connectedUserProcedure = procedure.use(retrivePeerDetailsMiddleware);
 
 /** Returns all known users */
 export function getUsers(): Record<string, Peer> {
@@ -64,7 +71,7 @@ export function leave(peerId: string): void {
  */
 export const userRouter = trcpRouter({
 	// Authenticate as a user
-	join: trcpProcedure.input(z.object({ name: z.string().nonempty() })).mutation(async ({ input, ctx }) => {
+	join: procedure.input(z.object({ name: z.string().nonempty() })).mutation(async ({ input, ctx }) => {
 		if (!ctx.peer?.id) {
 			throw new TRPCError({ code: "BAD_REQUEST", message: "No peer information given" });
 		}
@@ -72,11 +79,11 @@ export const userRouter = trcpRouter({
 		join(ctx.peer.id, input.name);
 	}),
 	// Deauthenticate as a user
-	leave: userConnectionProcedure.mutation(async ({ ctx }) => {
+	leave: connectedUserProcedure.mutation(async ({ ctx }) => {
 		leave(ctx.peer.id);
 	}),
 	// Update user information
-	update: userConnectionProcedure
+	update: connectedUserProcedure
 		.input(
 			z.object({
 				id: z.string(),

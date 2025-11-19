@@ -1,10 +1,10 @@
 import { TRPCError } from "@trpc/server";
 import { trpc } from "../lib";
 import { z } from "zod";
-import { userConnectionProcedure } from "./userRouter";
+import { connectedUserProcedure, retrivePeerDetailsMiddleware } from "./userRouter";
 
 // Get the trpc router constructor and default procedure
-const { router: trcpRouter, procedure: trcpProcedure } = trpc();
+const { router: trcpRouter, procedure: trcpProcedure, middleware } = trpc();
 
 /** Authentication session data */
 interface AuthSession {
@@ -32,21 +32,32 @@ function cleanupExpiredSessions(): void {
 }
 
 /**
- * Authentication procedure
+ * Authentication procedure middleware
  * Only allows signed in admin users to continue
  */
-export const adminUserProcedure = userConnectionProcedure.use(({ ctx, next }) => {
-	if (!CONFIG.runtime.theater && ctx.peer.manager) {
-		// When in stage mode a connected manager has the same aces
+export const authenticateAdminMiddleware = middleware(({ ctx, next }) => {
+	// When in stage mode all connected managers have admin access
+	if (!CONFIG.runtime.theater) {
+		if (!ctx.peer.manager) {
+			throw new TRPCError({ code: "UNAUTHORIZED", message: "Only managers are allowed to perform this action" });
+		}
+
 		return next({ ctx });
 	}
 
+	// Find out if the connection is authenticated
 	cleanupExpiredSessions();
 	if (!activeSessions.has(ctx.peer.id)) {
 		throw new TRPCError({ code: "UNAUTHORIZED", message: "Only signed-in users are allowed to perform this action" });
 	}
 	return next({ ctx });
 });
+
+/**
+ * Authentication procedure
+ * Only allows signed in admin users to continue
+ */
+export const authenticatedAdminProcedure = connectedUserProcedure.use(authenticateAdminMiddleware);
 
 /**
  * Authentication Router - Handles secure theater authentication with session management

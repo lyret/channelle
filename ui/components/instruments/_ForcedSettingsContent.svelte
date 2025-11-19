@@ -1,56 +1,51 @@
 <script lang="ts">
-	import { setSetting, showSceneOverridesStores, resetSettings } from "~/api/shows";
-
-	export let errorMessage: string = "";
-	export let isLoading: boolean = false;
-	export let handleApiCall: (apiCall: Promise<{ success: boolean; error?: string }>) => Promise<void>;
+	import { showSceneOverridesStore, updateConfigurationSettings, automateOverridenSettings, configurationIsLoading } from "~/api/backstage/backstageClient";
 
 	// Check if any override settings are not automatic
 	$: hasActiveOverrides =
-		$showSceneOverridesStores.curtains !== 0 ||
-		$showSceneOverridesStores.chatEnabled !== 0 ||
-		$showSceneOverridesStores.visitorVideoEnabled !== 0 ||
-		$showSceneOverridesStores.visitorAudioEnabled !== 0 ||
-		$showSceneOverridesStores.gratitudeEffectsEnabled !== 0 ||
-		$showSceneOverridesStores.criticalEffectsEnabled !== 0;
-
-	// Reset all override settings to automatic
-	async function resetOverrides() {
-		await handleApiCall(resetSettings(true)); // persist to show
-	}
+		$showSceneOverridesStore.curtainsOverride !== 0 ||
+		$showSceneOverridesStore.chatEnabledOverride !== 0 ||
+		$showSceneOverridesStore.visitorAudioEnabledOverride !== 0 ||
+		$showSceneOverridesStore.visitorAudioEnabledOverride !== 0 ||
+		$showSceneOverridesStore.gratitudeEffectsEnabledOverride !== 0 ||
+		$showSceneOverridesStore.criticalEffectsEnabledOverride !== 0;
 </script>
 
 <p>Dessa inställningar åsidosätter alltid de inställningar som finns i den aktiva scenen.</p>
 <p>Använd "Automatiskt" för att låta varje scen bestämma sina egna inställningar.</p>
 
 <div class="field mt-2">
-	<label class="label">Visa ridån 🎭</label>
-	<div class="control">
-		<div class="buttons has-addons">
+	<p class="label">Visa ridån 🎭</p>
+	<div class="level is-mobile">
+		<div class="level-item">
 			<button
-				class="button"
-				class:is-dark={$showSceneOverridesStores.curtains !== 0}
-				class:is-loading={isLoading}
-				disabled={isLoading}
-				on:click={() => handleApiCall(setSetting("curtains", 0, true))}
+				class="button is-info"
+				class:is-light={$showSceneOverridesStore.curtainsOverride !== 0}
+				class:is-loading={$configurationIsLoading}
+				disabled={$configurationIsLoading}
+				on:click={() => updateConfigurationSettings({ curtainsOverride: 0 })}
 			>
 				Automatiskt
 			</button>
+		</div>
+		<div class="level-item">
 			<button
 				class="button is-danger"
-				class:is-light={$showSceneOverridesStores.curtains !== 2}
-				class:is-loading={isLoading}
-				disabled={isLoading}
-				on:click={() => handleApiCall(setSetting("curtains", 2, true))}
+				class:is-light={$showSceneOverridesStore.curtainsOverride !== 2}
+				class:is-loading={$configurationIsLoading}
+				disabled={$configurationIsLoading}
+				on:click={() => updateConfigurationSettings({ curtainsOverride: 2 })}
 			>
 				Dölj
 			</button>
+		</div>
+		<div class="level-item">
 			<button
 				class="button is-success"
-				class:is-light={$showSceneOverridesStores.curtains !== 1}
-				class:is-loading={isLoading}
-				disabled={isLoading}
-				on:click={() => handleApiCall(setSetting("curtains", 1, true))}
+				class:is-light={$showSceneOverridesStore.curtainsOverride !== 1}
+				class:is-loading={$configurationIsLoading}
+				disabled={$configurationIsLoading}
+				on:click={() => updateConfigurationSettings({ curtainsOverride: 1 })}
 			>
 				Visa
 			</button>
@@ -58,9 +53,9 @@
 	</div>
 	<div class="help-section">
 		<p class="help">
-			{#if $showSceneOverridesStores.curtains === 0}
+			{#if $showSceneOverridesStore.curtainsOverride === 0}
 				Visas automatiskt enligt vald scen
-			{:else if $showSceneOverridesStores.curtains === 1}
+			{:else if $showSceneOverridesStore.curtainsOverride === 1}
 				<b>Ridån visas</b>
 			{:else}
 				<b>Ridån är dold</b>
@@ -70,33 +65,37 @@
 </div>
 
 <div class="field">
-	<label class="label">Visa chatt-panelen 💬</label>
-	<div class="control">
-		<div class="buttons has-addons">
+	<p class="label">Visa chatt-panelen 💬</p>
+	<div class="level is-mobile">
+		<div class="level-item">
 			<button
 				class="button"
-				class:is-dark={$showSceneOverridesStores.chatEnabled !== 0}
-				class:is-loading={isLoading}
-				disabled={isLoading}
-				on:click={() => handleApiCall(setSetting("chatEnabled", 0, true))}
+				class:is-dark={$showSceneOverridesStore.chatEnabledOverride !== 0}
+				class:is-loading={$configurationIsLoading}
+				disabled={$configurationIsLoading}
+				on:click={() => updateConfigurationSettings({ chatEnabledOverride: 0 })}
 			>
 				Automatiskt
 			</button>
+		</div>
+		<div class="level-item">
 			<button
 				class="button is-danger"
-				class:is-light={$showSceneOverridesStores.chatEnabled !== 2}
-				class:is-loading={isLoading}
-				disabled={isLoading}
-				on:click={() => handleApiCall(setSetting("chatEnabled", 2, true))}
+				class:is-light={$showSceneOverridesStore.chatEnabledOverride !== 2}
+				class:is-loading={$configurationIsLoading}
+				disabled={$configurationIsLoading}
+				on:click={() => updateConfigurationSettings({ chatEnabledOverride: 2 })}
 			>
 				Dölj
 			</button>
+		</div>
+		<div class="level-item">
 			<button
 				class="button is-success"
-				class:is-light={$showSceneOverridesStores.chatEnabled !== 1}
-				class:is-loading={isLoading}
-				disabled={isLoading}
-				on:click={() => handleApiCall(setSetting("chatEnabled", 1, true))}
+				class:is-light={$showSceneOverridesStore.chatEnabledOverride !== 1}
+				class:is-loading={$configurationIsLoading}
+				disabled={$configurationIsLoading}
+				on:click={() => updateConfigurationSettings({ chatEnabledOverride: 1 })}
 			>
 				Visa
 			</button>
@@ -104,9 +103,9 @@
 	</div>
 	<div class="help-section">
 		<p class="help">
-			{#if $showSceneOverridesStores.chatEnabled === 0}
+			{#if $showSceneOverridesStore.chatEnabledOverride === 0}
 				Chatten visas beroende på vald scen
-			{:else if $showSceneOverridesStores.chatEnabled === 1}
+			{:else if $showSceneOverridesStore.chatEnabledOverride === 1}
 				<b>Chatten är aktiverad</b>
 			{:else}
 				<b>Chatten är av-aktiverad</b>
@@ -116,33 +115,37 @@
 </div>
 
 <div class="field">
-	<label class="label">Tillåt video från publiken 🤳</label>
-	<div class="control">
-		<div class="buttons has-addons">
+	<p class="label">Tillåt video från publiken 🤳</p>
+	<div class="level is-mobile">
+		<div class="level-item">
 			<button
 				class="button"
-				class:is-dark={$showSceneOverridesStores.visitorVideoEnabled !== 0}
-				class:is-loading={isLoading}
-				disabled={isLoading}
-				on:click={() => handleApiCall(setSetting("visitorVideoEnabled", 0, true))}
+				class:is-dark={$showSceneOverridesStore.visitorVideoEnabledOverride !== 0}
+				class:is-loading={$configurationIsLoading}
+				disabled={$configurationIsLoading}
+				on:click={() => updateConfigurationSettings({ visitorVideoEnabledOverride: 0 })}
 			>
 				Automatiskt
 			</button>
+		</div>
+		<div class="level-item">
 			<button
 				class="button is-danger"
-				class:is-light={$showSceneOverridesStores.visitorVideoEnabled !== 2}
-				class:is-loading={isLoading}
-				disabled={isLoading}
-				on:click={() => handleApiCall(setSetting("visitorVideoEnabled", 2, true))}
+				class:is-light={$showSceneOverridesStore.visitorVideoEnabledOverride !== 2}
+				class:is-loading={$configurationIsLoading}
+				disabled={$configurationIsLoading}
+				on:click={() => updateConfigurationSettings({ visitorVideoEnabledOverride: 2 })}
 			>
 				Nej
 			</button>
+		</div>
+		<div class="level-item">
 			<button
 				class="button is-success"
-				class:is-light={$showSceneOverridesStores.visitorVideoEnabled !== 1}
-				class:is-loading={isLoading}
-				disabled={isLoading}
-				on:click={() => handleApiCall(setSetting("visitorVideoEnabled", 1, true))}
+				class:is-light={$showSceneOverridesStore.visitorVideoEnabledOverride !== 1}
+				class:is-loading={$configurationIsLoading}
+				disabled={$configurationIsLoading}
+				on:click={() => updateConfigurationSettings({ visitorVideoEnabledOverride: 1 })}
 			>
 				Ja
 			</button>
@@ -150,9 +153,9 @@
 	</div>
 	<div class="help-section">
 		<p class="help">
-			{#if $showSceneOverridesStores.visitorVideoEnabled === 0}
+			{#if $showSceneOverridesStore.visitorVideoEnabledOverride === 0}
 				Publikens video är tillåten beroende på scen
-			{:else if $showSceneOverridesStores.visitorVideoEnabled === 1}
+			{:else if $showSceneOverridesStore.visitorVideoEnabledOverride === 1}
 				<b>Video från publiken är alltid tillåtet</b>
 			{:else}
 				<b>Video från publiken tillåts inte</b>
@@ -162,33 +165,37 @@
 </div>
 
 <div class="field">
-	<label class="label">Tillåt ljud från publiken 🎤</label>
-	<div class="control">
-		<div class="buttons has-addons">
+	<p class="label">Tillåt ljud från publiken 🎤</p>
+	<div class="level is-mobile">
+		<div class="level-item">
 			<button
 				class="button"
-				class:is-dark={$showSceneOverridesStores.visitorAudioEnabled !== 0}
-				class:is-loading={isLoading}
-				disabled={isLoading}
-				on:click={() => handleApiCall(setSetting("visitorAudioEnabled", 0, true))}
+				class:is-dark={$showSceneOverridesStore.visitorAudioEnabledOverride !== 0}
+				class:is-loading={$configurationIsLoading}
+				disabled={$configurationIsLoading}
+				on:click={() => updateConfigurationSettings({ visitorAudioEnabledOverride: 0 })}
 			>
 				Automatiskt
 			</button>
+		</div>
+		<div class="level-item">
 			<button
 				class="button is-danger"
-				class:is-light={$showSceneOverridesStores.visitorAudioEnabled !== 2}
-				class:is-loading={isLoading}
-				disabled={isLoading}
-				on:click={() => handleApiCall(setSetting("visitorAudioEnabled", 2, true))}
+				class:is-light={$showSceneOverridesStore.visitorAudioEnabledOverride !== 2}
+				class:is-loading={$configurationIsLoading}
+				disabled={$configurationIsLoading}
+				on:click={() => updateConfigurationSettings({ visitorAudioEnabledOverride: 2 })}
 			>
 				Nej
 			</button>
+		</div>
+		<div class="level-item">
 			<button
 				class="button is-success"
-				class:is-light={$showSceneOverridesStores.visitorAudioEnabled !== 1}
-				class:is-loading={isLoading}
-				disabled={isLoading}
-				on:click={() => handleApiCall(setSetting("visitorAudioEnabled", 1, true))}
+				class:is-light={$showSceneOverridesStore.visitorAudioEnabledOverride !== 1}
+				class:is-loading={$configurationIsLoading}
+				disabled={$configurationIsLoading}
+				on:click={() => updateConfigurationSettings({ visitorAudioEnabledOverride: 1 })}
 			>
 				Ja
 			</button>
@@ -196,9 +203,9 @@
 	</div>
 	<div class="help-section">
 		<p class="help">
-			{#if $showSceneOverridesStores.visitorAudioEnabled === 0}
+			{#if $showSceneOverridesStore.visitorAudioEnabledOverride === 0}
 				Publikens ljud är tillåten beroende på scen
-			{:else if $showSceneOverridesStores.visitorAudioEnabled === 1}
+			{:else if $showSceneOverridesStore.visitorAudioEnabledOverride === 1}
 				<b>Ljud från publiken är alltid tillåtet</b>
 			{:else}
 				<b>Ljud från publiken tillåts inte</b>
@@ -208,43 +215,48 @@
 </div>
 
 <div class="field">
-	<label class="label">Tillåt blommor 🌹 och applåder 👏</label>
-	<div class="control">
-		<div class="buttons has-addons">
+	<p class="label">Tillåt blommor 🌹 och applåder 👏</p>
+	<div class="level is-mobile">
+		<div class="level-item">
 			<button
 				class="button"
-				class:is-dark={$showSceneOverridesStores.gratitudeEffectsEnabled !== 0}
-				class:is-loading={isLoading}
-				disabled={isLoading}
-				on:click={() => handleApiCall(setSetting("gratitudeEffectsEnabled", 0, true))}
+				class:is-dark={$showSceneOverridesStore.gratitudeEffectsEnabledOverride !== 0}
+				class:is-loading={$configurationIsLoading}
+				disabled={$configurationIsLoading}
+				on:click={() => updateConfigurationSettings({ gratitudeEffectsEnabledOverride: 0 })}
 			>
 				Automatiskt
 			</button>
+		</div>
+		<div class="level-item">
 			<button
 				class="button is-danger"
-				class:is-light={$showSceneOverridesStores.gratitudeEffectsEnabled !== 2}
-				class:is-loading={isLoading}
-				disabled={isLoading}
-				on:click={() => handleApiCall(setSetting("gratitudeEffectsEnabled", 2, true))}
+				class:is-light={$showSceneOverridesStore.gratitudeEffectsEnabledOverride !== 2}
+				class:is-loading={$configurationIsLoading}
+				disabled={$configurationIsLoading}
+				on:click={() => updateConfigurationSettings({ gratitudeEffectsEnabledOverride: 2 })}
 			>
 				Nej
 			</button>
+		</div>
+		<div class="level-item">
 			<button
 				class="button is-success"
-				class:is-light={$showSceneOverridesStores.gratitudeEffectsEnabled !== 1}
-				class:is-loading={isLoading}
-				disabled={isLoading}
-				on:click={() => handleApiCall(setSetting("gratitudeEffectsEnabled", 1, true))}
+				class:is-light={$showSceneOverridesStore.gratitudeEffectsEnabledOverride !== 1}
+				class:is-loading={$configurationIsLoading}
+				disabled={$configurationIsLoading}
+				on:click={() => updateConfigurationSettings({ gratitudeEffectsEnabledOverride: 1 })}
 			>
 				Ok
 			</button>
 		</div>
 	</div>
+
 	<div class="help-section">
 		<p class="help">
-			{#if $showSceneOverridesStores.gratitudeEffectsEnabled === 0}
+			{#if $showSceneOverridesStore.gratitudeEffectsEnabledOverride === 0}
 				Beroende på scen kan publiken ibland 🌹 och 👏
-			{:else if $showSceneOverridesStores.gratitudeEffectsEnabled === 1}
+			{:else if $showSceneOverridesStore.gratitudeEffectsEnabledOverride === 1}
 				<b>Hyllningar från publiken är alltid tillåtna</b>
 			{:else}
 				<b>Hyllningar från publiken tillåts inte</b>
@@ -254,33 +266,37 @@
 </div>
 
 <div class="field">
-	<label class="label">Tillåt kastade tomater 🍅</label>
-	<div class="control">
-		<div class="buttons has-addons">
+	<p class="label">Tillåt kastade tomater 🍅</p>
+	<div class="level is-mobile">
+		<div class="level-item">
 			<button
 				class="button"
-				class:is-dark={$showSceneOverridesStores.criticalEffectsEnabled !== 0}
-				class:is-loading={isLoading}
-				disabled={isLoading}
-				on:click={() => handleApiCall(setSetting("criticalEffectsEnabled", 0, true))}
+				class:is-dark={$showSceneOverridesStore.criticalEffectsEnabledOverride !== 0}
+				class:is-loading={$configurationIsLoading}
+				disabled={$configurationIsLoading}
+				on:click={() => updateConfigurationSettings({ criticalEffectsEnabledOverride: 0 })}
 			>
 				Automatiskt
 			</button>
+		</div>
+		<div class="level-item">
 			<button
 				class="button is-danger"
-				class:is-light={$showSceneOverridesStores.criticalEffectsEnabled !== 2}
-				class:is-loading={isLoading}
-				disabled={isLoading}
-				on:click={() => handleApiCall(setSetting("criticalEffectsEnabled", 2, true))}
+				class:is-light={$showSceneOverridesStore.criticalEffectsEnabledOverride !== 2}
+				class:is-loading={$configurationIsLoading}
+				disabled={$configurationIsLoading}
+				on:click={() => updateConfigurationSettings({ criticalEffectsEnabledOverride: 2 })}
 			>
 				Nej
 			</button>
+		</div>
+		<div class="level-item">
 			<button
 				class="button is-success"
-				class:is-light={$showSceneOverridesStores.criticalEffectsEnabled !== 1}
-				class:is-loading={isLoading}
-				disabled={isLoading}
-				on:click={() => handleApiCall(setSetting("criticalEffectsEnabled", 1, true))}
+				class:is-light={$showSceneOverridesStore.criticalEffectsEnabledOverride !== 1}
+				class:is-loading={$configurationIsLoading}
+				disabled={$configurationIsLoading}
+				on:click={() => updateConfigurationSettings({ criticalEffectsEnabledOverride: 1 })}
 			>
 				Ok
 			</button>
@@ -288,9 +304,9 @@
 	</div>
 	<div class="help-section">
 		<p class="help">
-			{#if $showSceneOverridesStores.criticalEffectsEnabled === 0}
-				Beroende på scen kan publiken ibland 🍅
-			{:else if $showSceneOverridesStores.criticalEffectsEnabled === 1}
+			{#if $showSceneOverridesStore.criticalEffectsEnabledOverride === 0}
+				Beroende på scen kan publiken ibland kasta ruttna tomater
+			{:else if $showSceneOverridesStore.criticalEffectsEnabledOverride === 1}
 				<b>Kritik från publiken är alltid tillåten</b>
 			{:else}
 				<b>Kritik från publiken tillåts inte</b>
@@ -301,10 +317,17 @@
 
 {#if hasActiveOverrides}
 	<div class="field">
-		<div class="control">
-			<button class="button is-warning" class:is-loading={isLoading} disabled={isLoading} on:click={resetOverrides}>
-				Återställ alla till automatiskt
-			</button>
+		<div class="level is-mobile">
+			<div class="level-item">
+				<button
+					class="button is fullwidth is-warning"
+					class:is-loading={$configurationIsLoading}
+					disabled={$configurationIsLoading}
+					on:click={automateOverridenSettings}
+				>
+					Återställ alla till automatiskt
+				</button>
+			</div>
 		</div>
 		<div class="help-section">
 			<p class="help">Återställer alla tvingande inställningar till "Automatiskt" - låter scenerna bestämma</p>

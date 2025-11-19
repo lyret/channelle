@@ -4,7 +4,7 @@
 	import { blur } from "svelte/transition";
 	import { createEffectsStore } from "~/stores/effects";
 	import { stageChatEnabledStore, stageGratitudeEffectsEnabledStore, stageCriticalEffectsEnabledStore } from "~/api/media";
-	import { showStageChatStore, showStageStettingsStore } from "~/stores/stage";
+	import { showStageChatStore, showStageSettingsStore } from "~/stores/stage";
 	import { windowFullscreenStore } from "~/stores/device";
 	import IconMaximize from "../../icons/Icon-maximize.svelte";
 	import IconMessageCircle from "../../icons/Icon-message-circle.svelte";
@@ -76,7 +76,7 @@
 			class:active={$showStageChatStore}
 			on:click={() => {
 				showStageChatStore.set(!$showStageChatStore);
-				showStageStettingsStore.set(false);
+				showStageSettingsStore.set(false);
 			}}
 		>
 			<span class={iconClassList}><IconMessageCircle /></span>
@@ -109,14 +109,14 @@
 	<button
 		class={btnClassList}
 		transition:blur
-		class:active={$showStageStettingsStore}
+		class:active={$showStageSettingsStore}
 		on:click={() => {
-			showStageStettingsStore.set(!$showStageStettingsStore);
+			showStageSettingsStore.set(!$showStageSettingsStore);
 			showStageChatStore.set(false);
 		}}
 	>
 		<span class={iconClassList}>
-			{#if $showStageStettingsStore}
+			{#if $showStageSettingsStore}
 				<IconToggleRight />
 			{:else}
 				<IconToggleLeft />

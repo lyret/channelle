@@ -27,36 +27,6 @@
 	const windowSize = windowSizeStore();
 	const fullscreen = windowFullscreenStore();
 	$: isMobile = $windowSize.width <= 842;
-
-	// Error handling state for forced settings
-	let errorMessage: string = "";
-	let isLoading = false;
-
-	// Sets the displayed error message and clears after 8 seconds
-	function setError(message: string) {
-		errorMessage = message;
-		setTimeout(() => {
-			errorMessage = "";
-		}, 8000);
-	}
-
-	// Handle API call results
-	async function handleApiCall(apiCall: Promise<{ success: boolean; error?: string }>) {
-		isLoading = true;
-		errorMessage = "";
-
-		try {
-			const result = await apiCall;
-			if (!result.success) {
-				setError(result.error || "Okänt fel");
-			}
-		} catch (error) {
-			console.error("API call failed:", error);
-			setError("Ett oväntat fel uppstod. Försök igen.");
-		} finally {
-			isLoading = false;
-		}
-	}
 </script>
 
 <!-- Common Contents -->
@@ -88,7 +58,7 @@
 			{#if $peerStore.manager}
 				<div class="mb-4">
 					<Accordion title="Snabba inställningar" isOpen={false}>
-						<ForcedSettingsContent {errorMessage} {isLoading} {handleApiCall} />
+						<ForcedSettingsContent />
 					</Accordion>
 				</div>
 

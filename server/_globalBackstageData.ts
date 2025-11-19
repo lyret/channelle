@@ -1,17 +1,6 @@
-import Emittery from "emittery";
 import type { BackstageConfiguration } from "./_types";
 import { SceneSetting } from "./_types";
 import { Show } from "./models/Show";
-
-/** Event */
-const _configUpdateEmitter = new EventEmitter();
-
-/**
- * Emit show update event
- */
-export function emitShowUpdate(showId: number, updatedShow: BackstageConfiguration) {
-	_configUpdateEmitter.emit(`show:${showId}`, updatedShow);
-}
 
 /**
  * Global in-memory selected backstage configuration for
@@ -19,7 +8,7 @@ export function emitShowUpdate(showId: number, updatedShow: BackstageConfigurati
  */
 let _backstageConfiguration: BackstageConfiguration = {
 	showId: null,
-	isEditable: false,
+	isEditable: true,
 	name: "",
 	description: "",
 	nomenclature: "föreställningen",

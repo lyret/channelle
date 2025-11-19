@@ -53,7 +53,7 @@
 
 		try {
 			// Use config manager to handle both theater and stage modes
-			const result = await updateConfigurationSettings({ password: inputValue || undefined });
+			const result = await updateConfigurationSettings({ password: inputValue });
 
 			if (result.success) {
 				// Update original password to reflect new state
@@ -89,9 +89,9 @@
 		});
 
 		const currentUrl = new URL(window.location.href);
-		const searchParams = new URLSearchParams("invite=" + $showPasswordStore);
-		inviteLinks[0] = `${currentUrl.origin}?${searchParams.toString()}`;
-		inviteLinks[1] = `${currentUrl.origin}/backstage?${searchParams.toString()}`;
+		const searchParams = $showPasswordStore ? "?" + new URLSearchParams("invite=" + $showPasswordStore).toString() : "";
+		inviteLinks[0] = `${currentUrl.origin}${searchParams}`;
+		inviteLinks[1] = `${currentUrl.origin}/backstage${searchParams}`;
 
 		return () => {
 			unsubscribe();
@@ -101,21 +101,11 @@
 
 <div class="access-instrument">
 	<h1 class="title">Tillgång</h1>
-
-	{#if !CONFIG.runtime.theater}
-		<div class="notification is-info is-light">
-			<p class="is-size-7">
-				<strong>Skrivskyddad vy</strong><br />
-				Tillgångsinställningar kan endast redigeras i förberedelsesläge (theater mode).
-			</p>
-		</div>
-	{/if}
-
 	<div class="access-content">
 		<div class="field">
 			<label class="label" for="actor-link">Länk för aktörer</label>
 			<div class="control">
-				<input id="actor-link" class="input" type="text" value={inviteLinks[0]} readonly />
+				<input id="actor-link" class="input" type="text" value={inviteLinks[1]} readonly />
 			</div>
 			<div class="help-section">
 				<p class="help">
@@ -141,7 +131,6 @@
 						bind:value={inputValue}
 						on:keydown={handleKeydown}
 						placeholder={isLocked ? "Ange nytt lösenord eller lämna tomt för att ta bort" : "Ange ett lösenord för att låsa scenen"}
-						disabled={!CONFIG.runtime.theater}
 					/>
 				</div>
 				<div class="help-section">
@@ -166,55 +155,53 @@
 			</div>
 		</form>
 
-		{#if CONFIG.runtime.theater}
-			<div class="field">
-				<div class="control">
-					<button
-						type="button"
-						class="button"
-						class:is-success={!isLocked && !isChanged && !errorMessage}
-						class:has-text-warning={!isChangingPassword && isLocked}
-						class:is-warning={isChangingPassword && !errorMessage}
-						class:is-danger={isRemovingPassword || errorMessage}
-						class:is-loading={isLoading}
-						disabled={!canSave}
-						on:click={onButtonClick}
-					>
-						<span class="icon">
-							{#if isLocked}
-								{#if isChanged && inputValue.length}
-									<IconLock />
-								{:else if isChanged}
-									<IconUnlock />
-								{:else}
-									<IconLock />
-								{/if}
-							{:else if isChanged}
+		<div class="field">
+			<div class="control">
+				<button
+					type="button"
+					class="button"
+					class:is-success={!isLocked && !isChanged && !errorMessage}
+					class:has-text-warning={!isChangingPassword && isLocked}
+					class:is-warning={isChangingPassword && !errorMessage}
+					class:is-danger={isRemovingPassword || errorMessage}
+					class:is-loading={isLoading}
+					disabled={!canSave}
+					on:click={onButtonClick}
+				>
+					<span class="icon">
+						{#if isLocked}
+							{#if isChanged && inputValue.length}
 								<IconLock />
-							{:else}
+							{:else if isChanged}
 								<IconUnlock />
-							{/if}
-						</span>
-						<span>
-							{#if isRemovingPassword}
-								Ta bort lösenord
-							{:else if isChangingPassword}
-								{isLocked ? "Uppdatera lösenord" : "Aktivera lösenord"}
-							{:else if isLocked}
-								Lösenord aktivt
 							{:else}
-								Inget lösenord
+								<IconLock />
 							{/if}
-						</span>
-					</button>
-				</div>
+						{:else if isChanged}
+							<IconLock />
+						{:else}
+							<IconUnlock />
+						{/if}
+					</span>
+					<span>
+						{#if isRemovingPassword}
+							Ta bort lösenord
+						{:else if isChangingPassword}
+							{isLocked ? "Uppdatera lösenord" : "Aktivera lösenord"}
+						{:else if isLocked}
+							Lösenord aktivt
+						{:else}
+							Inget lösenord
+						{/if}
+					</span>
+				</button>
 			</div>
+		</div>
 
-			{#if isChangingPassword}
-				<div class="notification is-info is-light">
-					<p class="is-size-7">Om du ändrar lösenordet måste alla deltagare ange det på nytt för att få tillgång.</p>
-				</div>
-			{/if}
+		{#if isChangingPassword}
+			<div class="notification is-info is-light">
+				<p class="is-size-7">Om du ändrar lösenordet måste alla deltagare ange det på nytt för att få tillgång.</p>
+			</div>
 		{/if}
 	</div>
 </div>

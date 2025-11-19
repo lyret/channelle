@@ -11,7 +11,7 @@
 
 	import { calculatedStageLayoutStore } from "~/stores/stage";
 
-	import { showStageChatStore, showStageStettingsStore } from "~/stores/stage";
+	import { showStageChatStore, showStageSettingsStore } from "~/stores/stage";
 
 	$: matrix = $calculatedStageLayoutStore.layout || [];
 	$: height = Math.max(matrix.length, 1);
@@ -53,10 +53,10 @@
 					{/if}
 				</div>
 			</div>
-			{#if $showStageStettingsStore || $showStageChatStore}
+			{#if $showStageSettingsStore || $showStageChatStore}
 				<div class="sidebar">
 					<div class="sidebar-contents" style="z-index: 9999" in:fly={{ y: 200 }} out:fly={{ y: 200 }}>
-						{#if $showStageStettingsStore}
+						{#if $showStageSettingsStore}
 							<OptionsSidePanel />
 						{:else}
 							<ChatSidepanel />

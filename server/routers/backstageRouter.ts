@@ -5,8 +5,9 @@ import { SceneSetting } from "../_types";
 import { Show } from "../models/Show";
 import { z } from "zod";
 import { trpc } from "../lib";
-import { adminUserProcedure } from "./authRouter";
+import { authenticateAdminMiddleware } from "./authRouter";
 import { getGlobalBackstageConfiguration, saveBackstageConfiguration, toBackstageConfiguration } from "../_globalBackstageData";
+import { retrivePeerDetailsMiddleware } from "./userRouter";
 
 // Internal event emitter for message updates
 const _updateEmitter = new Emittery<{
@@ -31,26 +32,28 @@ const _editableShowAttributesSchema = z.object({
 }) satisfies z.ZodType<EditableShowAttributes>;
 
 // Get the trpc router constructor and default procedure
-const { router: trcpRouter } = trpc();
+const { router: trcpRouter, procedure } = trpc();
 
 /**
  * Procedure that validates the a configuration is selected and add it to the context
  */
-const withConfigProcedure = adminUserProcedure
+export const withConfigProcedure = procedure
 	.input(
-		z.object({
-			showId: z.number().int().positive().optional(),
-		}),
+		z
+			.object({
+				showId: z.number().int().gte(0).optional(),
+			})
+			.optional(),
 	)
-	.use(async ({ input: { showId }, ctx, next }) => {
+	.use(async ({ input, ctx, next }) => {
 		// In stage mode the global configuration is used
 		if (!CONFIG.runtime.theater) {
 			return next({ ctx: { ...ctx, config: getGlobalBackstageConfiguration() } });
 		}
 
 		try {
-			if (showId) {
-				const show = await Show.findByPk(showId);
+			if (input?.showId) {
+				const show = await Show.findByPk(input.showId);
 				if (!show) {
 					throw new TRPCError({
 						code: "NOT_FOUND",
@@ -79,35 +82,38 @@ const withConfigProcedure = adminUserProcedure
 /**
  * Procedure that validates that the selected show can be edited
  */
-const editConfigProcedure = withConfigProcedure.use(async ({ ctx, next }) => {
-	try {
-		if (!ctx.config.isEditable) {
+const editConfigProcedure = withConfigProcedure
+	.use(retrivePeerDetailsMiddleware)
+	.use(authenticateAdminMiddleware)
+	.use(async ({ ctx, next }) => {
+		try {
+			if (!ctx.config.isEditable) {
+				throw new TRPCError({
+					code: "FORBIDDEN",
+					message: "Show is not configurable",
+				});
+			}
+
+			// Tries to edit the backstage configuration
+			const results = await next({ ctx });
+
+			// Triess to persist the selected edits to the show in the database
+			await saveBackstageConfiguration(ctx.config);
+			_updateEmitter.emit(ctx.config.showId || 0, ctx.config);
+
+			// Return the results of the editing procedure
+			return results;
+		} catch (error) {
+			if (error instanceof TRPCError) {
+				throw error;
+			}
+			console.error("[Backstage] Error editing configuration:", error);
 			throw new TRPCError({
-				code: "FORBIDDEN",
-				message: "Show is not configurable",
+				code: "INTERNAL_SERVER_ERROR",
+				message: "Failed to edit the backstage configuration",
 			});
 		}
-
-		// Tries to edit the backstage configuration
-		const results = await next({ ctx });
-
-		// Triess to persist the selected edits to the show in the database
-		await saveBackstageConfiguration(ctx.config);
-		_updateEmitter.emit(ctx.config.showId || 0, ctx.config);
-
-		// Return the results of the editing procedure
-		return results;
-	} catch (error) {
-		if (error instanceof TRPCError) {
-			throw error;
-		}
-		console.error("[Backstage] Error editing configuration:", error);
-		throw new TRPCError({
-			code: "INTERNAL_SERVER_ERROR",
-			message: "Failed to edit the backstage configuration",
-		});
-	}
-});
+	});
 
 /**
  * Configuration Router - Unified stage configuration management

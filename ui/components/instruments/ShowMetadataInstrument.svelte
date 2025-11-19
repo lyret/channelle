@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { updateShowMetadata, showMetadataStore } from "~/api/shows";
+	import { updateConfigurationSettings, showMetadataStore } from "~/api/backstage/backstageClient";
 	import IconSave from "../icons/Icon-save.svelte";
 	import IconX from "../icons/Icon-x.svelte";
 
@@ -106,7 +106,7 @@
 				return;
 			}
 
-			const result = await updateShowMetadata(undefined, metadata);
+			const result = await updateConfigurationSettings(metadata);
 
 			if (result.success) {
 				// Update only the original values for fields that were actually sent

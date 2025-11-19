@@ -2,9 +2,9 @@ import type * as MediaSoup from "mediasoup";
 import type { Transport, Session, CustomAppData, MediaTag, Producer, Consumer } from "../_types";
 import { TRPCError } from "@trpc/server";
 import { trpc, mediaSoupRouter } from "../lib";
-import { getStageConfig, getCurrentSceneWithSettings } from "./backstageRouter";
 import { z } from "zod";
-import { join, userConnectionProcedure, getUsers } from "./userRouter";
+import { join, getUsers, retrivePeerDetailsMiddleware } from "./userRouter";
+import { withConfigProcedure } from "./backstageRouter";
 
 // Get the trcp router constructor and default procedure
 const { router: trcpRouter, procedure: trcpProcedure } = trpc();
@@ -46,7 +46,7 @@ const _room: Room = {
  * Peer connection procedure
  * Only allows identified peers to continue, and keeps their media session updated
  */
-const mediaSessionProcedure = userConnectionProcedure.use(async ({ ctx, next }) => {
+const mediaSessionProcedure = withConfigProcedure.use(retrivePeerDetailsMiddleware).use(async ({ ctx, next }) => {
 	// Make sure we have a session for this peer
 	if (!_room.sessions[ctx.peer.id]) {
 		const now = Date.now();
@@ -87,18 +87,30 @@ export const mediaRouter = trcpRouter({
 	 *
 	 * @returns Complete room state for client synchronization
 	 */
-	sync: mediaSessionProcedure.query(async () => {
-		const sceneConfig = getStageConfig();
-		const currentScene = getCurrentSceneWithSettings();
-
+	sync: mediaSessionProcedure.query(async ({ ctx: { config } }) => {
 		return {
 			peers: getUsers(),
 			sessions: _room.sessions,
 			activeSpeaker: _room.activeSpeaker,
-			password: sceneConfig.password,
-			sceneSettings: sceneConfig.sceneSettings,
-			currentLayout: currentScene?.layout || [],
-			currentScene: currentScene,
+			// TODO: remove and use only backstage router path
+			sceneSettings: {
+				curtains: config.curtainsOverride == 1 || (config.curtainsOverride == 0 && config.selectedScene?.curtains) || true,
+				chatEnabled: config.chatEnabledOverride == 1 || (config.chatEnabledOverride == 0 && config.selectedScene?.chatEnabled) || false,
+				gratitudeEffects:
+					config.gratitudeEffectsEnabledOverride == 1 ||
+					(config.gratitudeEffectsEnabledOverride == 0 && config.selectedScene?.gratitudeEffectsEnabled) ||
+					false,
+				criticalEffects:
+					config.criticalEffectsEnabledOverride == 1 ||
+					(config.criticalEffectsEnabledOverride == 0 && config.selectedScene?.criticalEffectsEnabled) ||
+					false,
+				visitorAudioEnabled:
+					config.visitorAudioEnabledOverride == 1 || (config.visitorAudioEnabledOverride == 0 && config.selectedScene?.visitorAudioEnabled) || false,
+				visitorVideoEnabled:
+					config.visitorVideoEnabledOverride == 1 || (config.visitorVideoEnabledOverride == 0 && config.selectedScene?.visitorVideoEnabled) || false,
+			},
+			currentLayout: config.selectedScene?.layout || [],
+			currentScene: config.selectedScene,
 		};
 	}),
 	// Join

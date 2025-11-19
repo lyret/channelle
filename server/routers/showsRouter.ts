@@ -5,7 +5,7 @@ import type { ShowAttributes, ShowListEntry } from "../_types";
 import { TRPCError } from "@trpc/server";
 import { trpc } from "../lib";
 import { z } from "zod";
-import { adminUserProcedure } from "./authRouter";
+import { authenticatedAdminProcedure } from "./authRouter";
 
 // Get the trpc router constructor and default procedure
 const { router: trcpRouter, procedure: trcpProcedure } = trpc();
@@ -64,7 +64,7 @@ export const showsRouter = trcpRouter({
 	/**
 	 * Get a single show by ID (public information only)
 	 */
-	get: adminUserProcedure
+	get: authenticatedAdminProcedure
 		.input(
 			z.object({
 				id: z.number().int().positive(),
@@ -91,7 +91,7 @@ export const showsRouter = trcpRouter({
 	/**
 	 * Create a new show
 	 */
-	create: adminUserProcedure
+	create: authenticatedAdminProcedure
 		.input(
 			z.object({
 				name: z.string().min(1).max(255),
@@ -174,7 +174,7 @@ export const showsRouter = trcpRouter({
 	/**
 	 * Update an existing show
 	 */
-	update: adminUserProcedure
+	update: authenticatedAdminProcedure
 		.input(
 			z.object({
 				id: z.number().int().positive(),
@@ -269,7 +269,7 @@ export const showsRouter = trcpRouter({
 	/**
 	 * Delete a show
 	 */
-	delete: adminUserProcedure
+	delete: authenticatedAdminProcedure
 		.input(
 			z.object({
 				id: z.number().int().positive(),
