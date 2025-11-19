@@ -5,7 +5,7 @@
 	import IconStar from "../icons/Icon-star.svelte";
 	import IconUsers from "../icons/Icon-users.svelte";
 
-	const backstageOnly = persisted("instruments-chat-backstage-only", false);
+	const backstageOnly = persisted(`${CONFIG.runtime.slug}-instruments-chat-backstage-only`, false);
 </script>
 
 <div class="chat-instrument">

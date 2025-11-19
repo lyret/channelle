@@ -8,7 +8,7 @@
 	import IconStar from "../../icons/Icon-star.svelte";
 	import IconUsers from "../../icons/Icon-users.svelte";
 
-	const backstageOnly = persisted("panel-chat-backstage-only", false);
+	const backstageOnly = persisted(`${CONFIG.runtime.slug}-panel-chat-backstage-only`, false);
 
 	onMount(() => {
 		const stop = stageChatEnabledStore.subscribe((enabled) => {

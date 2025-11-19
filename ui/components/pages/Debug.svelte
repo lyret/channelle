@@ -3,7 +3,6 @@
 	import { blur } from "svelte/transition";
 	import * as mediaClient from "~/api/media/mediaClient";
 	import { wsPeerIdStore } from "~/api/_trpcClient";
-	import { setPassword } from "~/api/shows";
 	import { SessionStats, PeerMediaStatus, ConnectionStatus } from "~/components/debug";
 
 	// Import all the stores from roomClient
@@ -105,15 +104,6 @@
 		return consumer.appData.mediaTag.includes("audio");
 	}
 
-	async function setStagePassword() {
-		if (newPasswordInput.trim()) {
-			await setPassword(newPasswordInput.trim(), true);
-			newPasswordInput = "";
-		} else {
-			await setPassword(undefined, true);
-		}
-	}
-
 	async function updatePeerName() {
 		if (targetPeerId && peerNameInput.trim()) {
 			await mediaClient.updatePeerName(targetPeerId, peerNameInput.trim());
@@ -138,22 +128,6 @@
 			</div>
 			<div class="column is-6">
 				<PeerMediaStatus peerId={myPeerId} peerData={peer} sessionData={{ media: {} }} isActiveSpeaker={activeSpeaker === myPeerId} />
-			</div>
-		</div>
-	</div>
-
-	<!-- Stage Management -->
-	<div class="box">
-		<h2 class="subtitle">Stage Management</h2>
-		<div class="field">
-			<label class="label is-small" for="stage-password">Set Stage Password</label>
-			<div class="field has-addons">
-				<div class="control is-expanded">
-					<input id="stage-password" class="input is-small" type="text" placeholder="New password (empty to remove)" bind:value={newPasswordInput} />
-				</div>
-				<div class="control">
-					<button class="button is-small is-primary" on:click={setStagePassword}>Set Password</button>
-				</div>
 			</div>
 		</div>
 	</div>

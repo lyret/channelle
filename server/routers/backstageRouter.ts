@@ -168,49 +168,5 @@ export const backstageRouter = trcpRouter({
 	}),
 });
 
-/**
- * Get stage configuration (for use by other routers)
- */
-export function getStageConfig() {
-	return getGlobalBackstageConfiguration();
-}
-
-/**
- * Get current scene with resolved settings (for use by other routers)
- */
-export function getCurrentSceneWithSettings(): Scene | undefined {
-	if (!_backstageConfiguration.currentScene) return undefined;
-
-	return {
-		name: _backstageConfiguration.currentScene.name,
-		layout: _backstageConfiguration.currentScene.layout,
-		curtains: _determineStateOfSetting("curtains"),
-		chatEnabled: _determineStateOfSetting("chatEnabled"),
-		gratitudeEffectsEnabled: _determineStateOfSetting("gratitudeEffectsEnabled"),
-		criticalEffectsEnabled: _determineStateOfSetting("criticalEffectsEnabled"),
-		visitorAudioEnabled: _determineStateOfSetting("visitorAudioEnabled"),
-		visitorVideoEnabled: _determineStateOfSetting("visitorVideoEnabled"),
-	};
-}
-
-/**
- * Determine the effective state of a setting based on overrides and scene config
- */
-function _determineStateOfSetting(key: keyof typeof _backstageConfiguration.sceneSettings): boolean {
-	if (_backstageConfiguration.sceneSettings[key] === SceneSetting.FORCED_ON) {
-		return true;
-	}
-
-	if (_backstageConfiguration.sceneSettings[key] === SceneSetting.FORCED_OFF) {
-		return false;
-	}
-
-	if (_backstageConfiguration.currentScene) {
-		return _backstageConfiguration.currentScene[key];
-	}
-
-	return false;
-}
-
 /** Configuration Router Type */
 export type BackstageRouter = typeof backstageRouter;

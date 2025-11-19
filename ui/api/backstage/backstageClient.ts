@@ -28,13 +28,19 @@ const _localConfigStore = writable<BackstageConfiguration>({
 export const showPasswordStore = derived(_localConfigStore, ($config) => $config.password);
 
 /** Current overriden scene settings from configuration */
-export const showSceneOverridesStore = derived(_localConfigStore, ($config) => ({
-	curtainsOverride: $config.curtainsOverride,
-	chatEnabledOverride: $config.chatEnabledOverride,
-	gratitudeEffectsEnabledOverride: $config.gratitudeEffectsEnabledOverride,
-	criticalEffectsEnabledOverride: $config.criticalEffectsEnabledOverride,
-	visitorAudioEnabledOverride: $config.visitorAudioEnabledOverride,
-	visitorVideoEnabledOverride: $config.visitorVideoEnabledOverride,
+export const showSceneSettingsStore = derived(_localConfigStore, ($config) => ({
+	curtains: $config.curtainsOverride == 1 || ($config.curtainsOverride == 0 && $config.selectedScene?.curtains) || true,
+	chatEnabled: $config.chatEnabledOverride == 1 || ($config.chatEnabledOverride == 0 && $config.selectedScene?.chatEnabled) || false,
+	gratitudeEffects:
+		$config.gratitudeEffectsEnabledOverride == 1 ||
+		($config.gratitudeEffectsEnabledOverride == 0 && $config.selectedScene?.gratitudeEffectsEnabled) ||
+		false,
+	criticalEffects:
+		$config.criticalEffectsEnabledOverride == 1 || ($config.criticalEffectsEnabledOverride == 0 && $config.selectedScene?.criticalEffectsEnabled) || false,
+	visitorAudioEnabled:
+		$config.visitorAudioEnabledOverride == 1 || ($config.visitorAudioEnabledOverride == 0 && $config.selectedScene?.visitorAudioEnabled) || false,
+	visitorVideoEnabled:
+		$config.visitorVideoEnabledOverride == 1 || ($config.visitorVideoEnabledOverride == 0 && $config.selectedScene?.visitorVideoEnabled) || false,
 }));
 
 /** Currently selected scene from configuration */
@@ -42,9 +48,9 @@ export const showSelectedSceneStore = derived(_localConfigStore, ($config) => $c
 
 /** Current show metadata from configuration */
 export const showMetadataStore = derived(_localConfigStore, ($config) => ({
-	name: $config.name,
+	name: $config.name || "namnlös",
 	description: $config.description,
-	nomenclature: $config.nomenclature,
+	nomenclature: $config.nomenclature || "föreställningen",
 }));
 
 /** Loading state for current show configuration operations */

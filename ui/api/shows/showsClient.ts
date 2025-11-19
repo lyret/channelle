@@ -18,7 +18,7 @@ export const showsErrorStore = writable<string | null>(null);
 // DERIVED STORES (Convenient views of show data)
 
 /** Shows that are currently running/online - filtered from showsStore */
-export const onlineShowsStore = derived(showsListStore, ($shows) => $shows.filter((show) => show.isOnline));
+export const onlineShowsStore = derived(showsListStore, ($shows) => $shows.filter((show) => show.online));
 
 // ============================================================================
 // SHOW CRUD FUNCTIONS

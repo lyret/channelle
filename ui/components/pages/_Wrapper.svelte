@@ -3,6 +3,7 @@
 	import { onMount } from "svelte";
 
 	import { hasJoinedRoomStore, isBannedFromTheRoom, joinMediaRoom, peerStore, stageCurtainsStore } from "~/api/media";
+	import { showMetadataStore } from "~/api/backstage";
 
 	import AuthenticateCurtainMessage from "~/components/curtains/AuthenticateCurtainMessage.svelte";
 	import BlockedCurtainMessage from "~/components/curtains/BlockedCurtainMessage.svelte";
@@ -66,7 +67,7 @@
 	<div class="overlay">
 		<div class="menu" in:blur={{ duration: 1000 }} out:blur={{ duration: 500 }}>
 			<img class="logo" src={logoSrc} alt="Channelle" />
-			{#if CONFIG.stage.name}<h1 class="title is-family-title">{CONFIG.stage.name}</h1>{/if}
+			{#if $showMetadataStore.name}<h1 class="title is-family-title">{$showMetadataStore.name}</h1>{/if}
 			{#if $isBannedFromTheRoom}
 				<BlockedCurtainMessage />
 			{:else if $hasJoinedRoomStore && !hasEnteredName}

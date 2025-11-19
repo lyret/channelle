@@ -29,16 +29,13 @@
 		hasRecvTransportStore,
 	} from "~/api/media";
 
-	// Configuration API imports
-	import { showPasswordStore, showSceneSelectionStores, showSceneOverridesStores } from "~/api/shows";
-
 	import SessionStats from "./SessionStats.svelte";
 	import PeerMediaStatus from "./PeerMediaStatus.svelte";
 	import ConnectionStatus from "./ConnectionStatus.svelte";
 	import VideoConnectionDebug from "./VideoConnectionDebug.svelte";
+	import { showSceneSettingsStore } from "~/api";
 
 	// Local state for UI
-	let newPasswordInput = "";
 	let peerNameInput = "";
 	let targetPeerId = "";
 	let activeDebugTab = "overview"; // overview, video-debug, consumers, etc.
@@ -71,12 +68,8 @@
 	}));
 
 	// Show configuration reactive statements
-	$: stagePassword = $showPasswordStore;
-	$: stagePredefinedLayout = $showSceneSelectionStores;
-	$: stageChatEnabled = $showSceneOverridesStores?.chatEnabled;
-	$: stageEffectsEnabled = $showSceneOverridesStores?.effectsEnabled;
-	$: stageVisitorAudioEnabled = $showSceneOverridesStores?.visitorAudioEnabled;
-	$: stageVisitorVideoEnabled = $showSceneOverridesStores?.visitorVideoEnabled;
+	$: stageVisitorAudioEnabled = $showSceneSettingsStore?.visitorAudioEnabled;
+	$: stageVisitorVideoEnabled = $showSceneSettingsStore?.visitorVideoEnabled;
 
 	// MediaRoom state reactive statements
 	$: stageCurtains = $stageCurtainsStore;
@@ -308,30 +301,10 @@
 						<table class="table is-fullwidth is-narrow">
 							<tbody>
 								<tr>
-									<td><strong>Password:</strong></td>
-									<td>{stagePassword || "None"}</td>
-								</tr>
-								<tr>
 									<td><strong>Curtains:</strong></td>
 									<td>
 										<span class="tag is-small" class:is-warning={stageCurtains} class:is-success={!stageCurtains}>
 											{stageCurtains ? "Closed" : "Open"}
-										</span>
-									</td>
-								</tr>
-								<tr>
-									<td><strong>Chat:</strong></td>
-									<td>
-										<span class="tag is-small" class:is-success={stageChatEnabled} class:is-danger={!stageChatEnabled}>
-											{stageChatEnabled ? "Enabled" : "Disabled"}
-										</span>
-									</td>
-								</tr>
-								<tr>
-									<td><strong>Effects:</strong></td>
-									<td>
-										<span class="tag is-small" class:is-success={stageEffectsEnabled} class:is-danger={!stageEffectsEnabled}>
-											{stageEffectsEnabled ? "Enabled" : "Disabled"}
 										</span>
 									</td>
 								</tr>
@@ -356,14 +329,6 @@
 											{stageVisitorVideoEnabled ? "Enabled" : "Disabled"}
 										</span>
 									</td>
-								</tr>
-								<tr>
-									<td><strong>Layout:</strong></td>
-									<td>{stageLayout || "Default"}</td>
-								</tr>
-								<tr>
-									<td><strong>Scene:</strong></td>
-									<td>{stagePredefinedLayout || "None"}</td>
 								</tr>
 							</tbody>
 						</table>
@@ -567,7 +532,6 @@
 											<span
 												class="tag"
 												class:is-success={consumer.track?.readyState === "live"}
-												class:is-warning={consumer.track?.readyState === "muted"}
 												class:is-danger={consumer.track?.readyState === "ended"}
 											>
 												{consumer.track?.readyState || "No Track"}

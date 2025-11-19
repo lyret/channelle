@@ -2,7 +2,7 @@
 	import { onMount } from "svelte";
 	import IconLock from "../icons/Icon-lock.svelte";
 	import IconUnlock from "../icons/Icon-unlock.svelte";
-	import { setPassword, showPasswordStore, showMetadataStore } from "~/api/shows";
+	import { showPasswordStore, showMetadataStore, updateConfigurationSettings } from "~/api/backstage";
 
 	let inputRef: HTMLInputElement;
 	let inputValue: string = "";
@@ -53,7 +53,7 @@
 
 		try {
 			// Use config manager to handle both theater and stage modes
-			const result = await setPassword(inputValue || undefined, true);
+			const result = await updateConfigurationSettings({ password: inputValue || undefined });
 
 			if (result.success) {
 				// Update original password to reflect new state
@@ -89,7 +89,7 @@
 		});
 
 		const currentUrl = new URL(window.location.href);
-		const searchParams = new URLSearchParams("invite=" + CONFIG.stage.inviteKey);
+		const searchParams = new URLSearchParams("invite=" + $showPasswordStore);
 		inviteLinks[0] = `${currentUrl.origin}?${searchParams.toString()}`;
 		inviteLinks[1] = `${currentUrl.origin}/backstage?${searchParams.toString()}`;
 
