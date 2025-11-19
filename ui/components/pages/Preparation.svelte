@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { blur } from "svelte/transition";
 
-	import { showMetadataStore, configurationIsLoading, configurationHasError } from "~/api/backstage/backstageClient";
+	import { showMetadataStore, configurationIsLoading, configurationError } from "~/api/backstage/backstageClient";
 
 	import TheaterWrapper from "~/components/theater/_TheaterWrapper.svelte";
 	import TheaterHeader from "~/components/theater/TheaterHeader.svelte";
@@ -27,8 +27,8 @@
 		</TheaterActionBar>
 
 		<div class="has-text-centered mt-2 mb-4" in:blur={{ duration: 500, delay: 1000 }}>
-			{#if $configurationHasError}
-				<p class="subtitle is-4 has-text-danger has-text-weight-semibold mt-6">{$configurationHasError}</p>
+			{#if $configurationError}
+				<p class="subtitle is-4 has-text-danger has-text-weight-semibold mt-6">{$configurationError}</p>
 			{:else if currentShow}
 				<p class="subtitle is-4 has-text-white">
 					Förbereder "{showName}" innan lansering {#if $configurationIsLoading}
@@ -38,7 +38,7 @@
 			{/if}
 		</div>
 
-		{#if $configurationHasError}
+		{#if $configurationError}
 			<div class="has-text-centered" style="margin-top: 1rem;">
 				<a href="/" class="button is-danger">Tillbaka till teatern</a>
 			</div>

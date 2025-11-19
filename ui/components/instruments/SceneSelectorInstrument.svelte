@@ -3,9 +3,8 @@
 	import SceneSelectorControl from "./_SceneSelectorControl.svelte";
 	import Accordion from "../Accordion.svelte";
 	import ForcedSettingsContent from "./_ForcedSettingsContent.svelte";
-	import { onMount } from "svelte";
-	import { peersStore, stageChatEnabledStore } from "~/api/media";
-	import { updateConfigurationSettings, showSelectedSceneStore, configurationHasError } from "~/api/backstage";
+	import { peersStore } from "~/api/media";
+	import { updateConfigurationSettings, showSelectedSceneStore } from "~/api/backstage";
 
 	export let hideForcedSettings: boolean = false;
 
@@ -13,6 +12,8 @@
 
 	// Track expanded states for each scene
 	let expandedScenes: Record<string, boolean> = {};
+
+	let errorMessage: string = "";
 
 	const auto: Scene = {
 		name: "Automatisk",
@@ -89,23 +90,24 @@
 		],
 	};
 
-	// Sync actual stage stores when the selected scene changes
-	onMount(() => {
-		const stop = showSelectedSceneStore.subscribe((scene) => {
-			if (scene) {
-				stageChatEnabledStore.set(scene?.chatEnabled || false);
-			}
-		});
-
-		return () => {
-			stop();
-		};
-	});
+	function handleError(message: string) {
+		errorMessage = message;
+		// Clear error after 8 seconds
+		setTimeout(() => {
+			errorMessage = "";
+		}, 8000);
+	}
 
 	async function handleSceneSelect(event: CustomEvent<Scene>) {
-		updateConfigurationSettings({ selectedScene: event.detail });
-		// Collapse all expanded scenes after selection
-		expandedScenes = {};
+		errorMessage = "";
+		const result = await updateConfigurationSettings({ selectedScene: event.detail });
+
+		if (!result.success) {
+			handleError(result.error || "Failed to update scene");
+		} else {
+			// Collapse all expanded scenes after successful selection
+			expandedScenes = {};
+		}
 	}
 
 	// TODO: Theming
@@ -158,16 +160,16 @@
 <div class="scene-selector-instrument">
 	<h1 class="title">Sceninställningar</h1>
 
-	{#if $configurationHasError}
+	{#if errorMessage}
 		<div class="notification is-danger is-light">
-			<p class="has-text-danger">✗ {$configurationHasError}</p>
+			<p class="has-text-danger">✗ {errorMessage}</p>
 		</div>
 	{/if}
 
 	<div class="scene-content">
 		{#if !hideForcedSettings}
 			<Accordion title="Ange tvingande inställningar" isOpen={false}>
-				<ForcedSettingsContent />
+				<ForcedSettingsContent on:error={(e) => handleError(e.detail)} />
 			</Accordion>
 		{/if}
 

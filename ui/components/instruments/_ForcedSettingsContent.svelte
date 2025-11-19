@@ -1,5 +1,10 @@
 <script lang="ts">
-	import { showSceneOverridesStore, updateConfigurationSettings, automateOverridenSettings, configurationIsLoading } from "~/api/backstage/backstageClient";
+	import { createEventDispatcher } from "svelte";
+	import { showSceneOverridesStore, updateConfigurationSettings, automateOverridenSettings } from "~/api/backstage/backstageClient";
+	import type { EditableShowAttributes } from "~/types/serverSideTypes";
+
+	let isLoading = false;
+	const dispatcher = createEventDispatcher<{ error: string }>();
 
 	// Check if any override settings are not automatic
 	$: hasActiveOverrides =
@@ -9,6 +14,26 @@
 		$showSceneOverridesStore.visitorAudioEnabledOverride !== 0 ||
 		$showSceneOverridesStore.gratitudeEffectsEnabledOverride !== 0 ||
 		$showSceneOverridesStore.criticalEffectsEnabledOverride !== 0;
+
+	async function handleUpdate(update: Partial<EditableShowAttributes>) {
+		isLoading = true;
+		const result = await updateConfigurationSettings(update);
+		isLoading = false;
+
+		if (!result.success) {
+			dispatcher("error", result.error || "Failed to update setting");
+		}
+	}
+
+	async function handleAutomateSettings() {
+		isLoading = true;
+		const result = await automateOverridenSettings();
+		isLoading = false;
+
+		if (!result.success) {
+			dispatcher("error", result.error || "Failed to update setting");
+		}
+	}
 </script>
 
 <p>Dessa inställningar åsidosätter alltid de inställningar som finns i den aktiva scenen.</p>
@@ -21,9 +46,9 @@
 			<button
 				class="button is-info"
 				class:is-light={$showSceneOverridesStore.curtainsOverride !== 0}
-				class:is-loading={$configurationIsLoading}
-				disabled={$configurationIsLoading}
-				on:click={() => updateConfigurationSettings({ curtainsOverride: 0 })}
+				class:is-loading={isLoading}
+				disabled={isLoading}
+				on:click={() => handleUpdate({ curtainsOverride: 0 })}
 			>
 				Automatiskt
 			</button>
@@ -32,9 +57,9 @@
 			<button
 				class="button is-danger"
 				class:is-light={$showSceneOverridesStore.curtainsOverride !== 2}
-				class:is-loading={$configurationIsLoading}
-				disabled={$configurationIsLoading}
-				on:click={() => updateConfigurationSettings({ curtainsOverride: 2 })}
+				class:is-loading={isLoading}
+				disabled={isLoading}
+				on:click={() => handleUpdate({ curtainsOverride: 2 })}
 			>
 				Dölj
 			</button>
@@ -43,9 +68,9 @@
 			<button
 				class="button is-success"
 				class:is-light={$showSceneOverridesStore.curtainsOverride !== 1}
-				class:is-loading={$configurationIsLoading}
-				disabled={$configurationIsLoading}
-				on:click={() => updateConfigurationSettings({ curtainsOverride: 1 })}
+				class:is-loading={isLoading}
+				disabled={isLoading}
+				on:click={() => handleUpdate({ curtainsOverride: 1 })}
 			>
 				Visa
 			</button>
@@ -71,9 +96,9 @@
 			<button
 				class="button"
 				class:is-dark={$showSceneOverridesStore.chatEnabledOverride !== 0}
-				class:is-loading={$configurationIsLoading}
-				disabled={$configurationIsLoading}
-				on:click={() => updateConfigurationSettings({ chatEnabledOverride: 0 })}
+				class:is-loading={isLoading}
+				disabled={isLoading}
+				on:click={() => handleUpdate({ chatEnabledOverride: 0 })}
 			>
 				Automatiskt
 			</button>
@@ -82,9 +107,9 @@
 			<button
 				class="button is-danger"
 				class:is-light={$showSceneOverridesStore.chatEnabledOverride !== 2}
-				class:is-loading={$configurationIsLoading}
-				disabled={$configurationIsLoading}
-				on:click={() => updateConfigurationSettings({ chatEnabledOverride: 2 })}
+				class:is-loading={isLoading}
+				disabled={isLoading}
+				on:click={() => handleUpdate({ chatEnabledOverride: 2 })}
 			>
 				Dölj
 			</button>
@@ -93,9 +118,9 @@
 			<button
 				class="button is-success"
 				class:is-light={$showSceneOverridesStore.chatEnabledOverride !== 1}
-				class:is-loading={$configurationIsLoading}
-				disabled={$configurationIsLoading}
-				on:click={() => updateConfigurationSettings({ chatEnabledOverride: 1 })}
+				class:is-loading={isLoading}
+				disabled={isLoading}
+				on:click={() => handleUpdate({ chatEnabledOverride: 1 })}
 			>
 				Visa
 			</button>
@@ -121,9 +146,9 @@
 			<button
 				class="button"
 				class:is-dark={$showSceneOverridesStore.visitorVideoEnabledOverride !== 0}
-				class:is-loading={$configurationIsLoading}
-				disabled={$configurationIsLoading}
-				on:click={() => updateConfigurationSettings({ visitorVideoEnabledOverride: 0 })}
+				class:is-loading={isLoading}
+				disabled={isLoading}
+				on:click={() => handleUpdate({ visitorVideoEnabledOverride: 0 })}
 			>
 				Automatiskt
 			</button>
@@ -132,9 +157,9 @@
 			<button
 				class="button is-danger"
 				class:is-light={$showSceneOverridesStore.visitorVideoEnabledOverride !== 2}
-				class:is-loading={$configurationIsLoading}
-				disabled={$configurationIsLoading}
-				on:click={() => updateConfigurationSettings({ visitorVideoEnabledOverride: 2 })}
+				class:is-loading={isLoading}
+				disabled={isLoading}
+				on:click={() => handleUpdate({ visitorVideoEnabledOverride: 2 })}
 			>
 				Nej
 			</button>
@@ -143,9 +168,9 @@
 			<button
 				class="button is-success"
 				class:is-light={$showSceneOverridesStore.visitorVideoEnabledOverride !== 1}
-				class:is-loading={$configurationIsLoading}
-				disabled={$configurationIsLoading}
-				on:click={() => updateConfigurationSettings({ visitorVideoEnabledOverride: 1 })}
+				class:is-loading={isLoading}
+				disabled={isLoading}
+				on:click={() => handleUpdate({ visitorVideoEnabledOverride: 1 })}
 			>
 				Ja
 			</button>
@@ -171,9 +196,9 @@
 			<button
 				class="button"
 				class:is-dark={$showSceneOverridesStore.visitorAudioEnabledOverride !== 0}
-				class:is-loading={$configurationIsLoading}
-				disabled={$configurationIsLoading}
-				on:click={() => updateConfigurationSettings({ visitorAudioEnabledOverride: 0 })}
+				class:is-loading={isLoading}
+				disabled={isLoading}
+				on:click={() => handleUpdate({ visitorAudioEnabledOverride: 0 })}
 			>
 				Automatiskt
 			</button>
@@ -182,9 +207,9 @@
 			<button
 				class="button is-danger"
 				class:is-light={$showSceneOverridesStore.visitorAudioEnabledOverride !== 2}
-				class:is-loading={$configurationIsLoading}
-				disabled={$configurationIsLoading}
-				on:click={() => updateConfigurationSettings({ visitorAudioEnabledOverride: 2 })}
+				class:is-loading={isLoading}
+				disabled={isLoading}
+				on:click={() => handleUpdate({ visitorAudioEnabledOverride: 2 })}
 			>
 				Nej
 			</button>
@@ -193,9 +218,9 @@
 			<button
 				class="button is-success"
 				class:is-light={$showSceneOverridesStore.visitorAudioEnabledOverride !== 1}
-				class:is-loading={$configurationIsLoading}
-				disabled={$configurationIsLoading}
-				on:click={() => updateConfigurationSettings({ visitorAudioEnabledOverride: 1 })}
+				class:is-loading={isLoading}
+				disabled={isLoading}
+				on:click={() => handleUpdate({ visitorAudioEnabledOverride: 1 })}
 			>
 				Ja
 			</button>
@@ -221,9 +246,9 @@
 			<button
 				class="button"
 				class:is-dark={$showSceneOverridesStore.gratitudeEffectsEnabledOverride !== 0}
-				class:is-loading={$configurationIsLoading}
-				disabled={$configurationIsLoading}
-				on:click={() => updateConfigurationSettings({ gratitudeEffectsEnabledOverride: 0 })}
+				class:is-loading={isLoading}
+				disabled={isLoading}
+				on:click={() => handleUpdate({ gratitudeEffectsEnabledOverride: 0 })}
 			>
 				Automatiskt
 			</button>
@@ -232,9 +257,9 @@
 			<button
 				class="button is-danger"
 				class:is-light={$showSceneOverridesStore.gratitudeEffectsEnabledOverride !== 2}
-				class:is-loading={$configurationIsLoading}
-				disabled={$configurationIsLoading}
-				on:click={() => updateConfigurationSettings({ gratitudeEffectsEnabledOverride: 2 })}
+				class:is-loading={isLoading}
+				disabled={isLoading}
+				on:click={() => handleUpdate({ gratitudeEffectsEnabledOverride: 2 })}
 			>
 				Nej
 			</button>
@@ -243,9 +268,9 @@
 			<button
 				class="button is-success"
 				class:is-light={$showSceneOverridesStore.gratitudeEffectsEnabledOverride !== 1}
-				class:is-loading={$configurationIsLoading}
-				disabled={$configurationIsLoading}
-				on:click={() => updateConfigurationSettings({ gratitudeEffectsEnabledOverride: 1 })}
+				class:is-loading={isLoading}
+				disabled={isLoading}
+				on:click={() => handleUpdate({ gratitudeEffectsEnabledOverride: 1 })}
 			>
 				Ok
 			</button>
@@ -272,9 +297,9 @@
 			<button
 				class="button"
 				class:is-dark={$showSceneOverridesStore.criticalEffectsEnabledOverride !== 0}
-				class:is-loading={$configurationIsLoading}
-				disabled={$configurationIsLoading}
-				on:click={() => updateConfigurationSettings({ criticalEffectsEnabledOverride: 0 })}
+				class:is-loading={isLoading}
+				disabled={isLoading}
+				on:click={() => handleUpdate({ criticalEffectsEnabledOverride: 0 })}
 			>
 				Automatiskt
 			</button>
@@ -283,9 +308,9 @@
 			<button
 				class="button is-danger"
 				class:is-light={$showSceneOverridesStore.criticalEffectsEnabledOverride !== 2}
-				class:is-loading={$configurationIsLoading}
-				disabled={$configurationIsLoading}
-				on:click={() => updateConfigurationSettings({ criticalEffectsEnabledOverride: 2 })}
+				class:is-loading={isLoading}
+				disabled={isLoading}
+				on:click={() => handleUpdate({ criticalEffectsEnabledOverride: 2 })}
 			>
 				Nej
 			</button>
@@ -294,9 +319,9 @@
 			<button
 				class="button is-success"
 				class:is-light={$showSceneOverridesStore.criticalEffectsEnabledOverride !== 1}
-				class:is-loading={$configurationIsLoading}
-				disabled={$configurationIsLoading}
-				on:click={() => updateConfigurationSettings({ criticalEffectsEnabledOverride: 1 })}
+				class:is-loading={isLoading}
+				disabled={isLoading}
+				on:click={() => handleUpdate({ criticalEffectsEnabledOverride: 1 })}
 			>
 				Ok
 			</button>
@@ -319,12 +344,7 @@
 	<div class="field">
 		<div class="level is-mobile">
 			<div class="level-item">
-				<button
-					class="button is fullwidth is-warning"
-					class:is-loading={$configurationIsLoading}
-					disabled={$configurationIsLoading}
-					on:click={automateOverridenSettings}
-				>
+				<button class="button is fullwidth is-warning" class:is-loading={isLoading} disabled={isLoading} on:click={handleAutomateSettings}>
 					Återställ alla till automatiskt
 				</button>
 			</div>
@@ -344,6 +364,14 @@
 		font-weight: 600;
 		color: var(--bulma-text-strong);
 		margin-bottom: 0.5rem;
+	}
+
+	.notification {
+		margin-bottom: 1rem;
+
+		p {
+			margin-bottom: 0;
+		}
 	}
 
 	.help {

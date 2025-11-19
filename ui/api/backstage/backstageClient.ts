@@ -63,23 +63,19 @@ export const showMetadataStore = derived(_localConfigStore, ($config) => ({
 	nomenclature: $config.nomenclature || "föreställningen",
 }));
 
-/** Loading state for current show configuration operations */
+/** Loading state for backstage configuration sync operations */
 export const configurationIsLoading = writable<boolean>(false);
 
-/** Error messages from current show configuration operations */
-export const configurationHasError = writable<string | null>(null);
+/** Error messages from the backstage configuration sync operations */
+export const configurationError = writable<string | null>(null);
 
 /** Updates the given configuration properties */
 export async function updateConfigurationSettings(update: Partial<EditableShowAttributes>) {
 	try {
-		configurationIsLoading.set(true);
 		await backstageClient.updateProperties.mutate({ showId: _localShowId, update: update });
-		configurationIsLoading.set(false);
 		return { success: true };
 	} catch (error) {
 		const errorMessage = error instanceof Error ? error.message : "Failed to update configuration properties";
-		_setError(errorMessage);
-		configurationIsLoading.set(false);
 		return { success: false, error: errorMessage };
 	}
 }
@@ -87,14 +83,10 @@ export async function updateConfigurationSettings(update: Partial<EditableShowAt
 /** Reset all overrididen settings to automatic */
 export async function automateOverridenSettings() {
 	try {
-		configurationIsLoading.set(true);
 		await backstageClient.automateOverridenSettings.mutate({ showId: _localShowId });
-		configurationIsLoading.set(false);
 		return { success: true };
 	} catch (error) {
 		const errorMessage = error instanceof Error ? error.message : "Failed to reset settings";
-		_setError(errorMessage);
-		configurationIsLoading.set(false);
 		return { success: false, error: errorMessage };
 	}
 }
@@ -106,7 +98,7 @@ export async function automateOverridenSettings() {
 export async function subscribeToBackstageConfigurationChanges(): Promise<void> {
 	try {
 		configurationIsLoading.set(true);
-		configurationHasError.set(null);
+		configurationError.set(null);
 		let showId = 0;
 
 		// In stage mode, show id is constant and does not need to be determined on the client,
@@ -138,7 +130,8 @@ export async function subscribeToBackstageConfigurationChanges(): Promise<void> 
 					}
 				},
 				onError: (error) => {
-					_setError(error instanceof Error ? error.message : "Unknown initialization error");
+					console.error("Configuration subscription error:", error instanceof Error ? error.message : "Unknown initialization error");
+					configurationError.set(error instanceof Error ? error.message : "Unknown initialization error");
 				},
 				onComplete: () => {
 					console.log("Configuration subscription completed");
@@ -146,17 +139,9 @@ export async function subscribeToBackstageConfigurationChanges(): Promise<void> 
 			},
 		);
 	} catch (error) {
-		_setError(error instanceof Error ? error.message : "Unknown initialization error");
+		console.error("Configuration subscription error:", error instanceof Error ? error.message : "Unknown initialization error");
+		configurationError.set(error instanceof Error ? error.message : "Unknown initialization error");
 	} finally {
 		configurationIsLoading.set(false);
 	}
-}
-
-/** Utility function to set the error message and clears it after 8 seconds */
-function _setError(message: string) {
-	console.error("Configuration error:", message);
-	configurationHasError.set(message);
-	setTimeout(() => {
-		configurationHasError.set(null);
-	}, 8000);
 }
