@@ -16,6 +16,14 @@
 			"type": "node"
 		},
 		{
+			"name": "Stage",
+			"request": "launch",
+			"runtimeArgs": ["run-script", "stage:dev"],
+			"runtimeExecutable": "npm",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node"
+		},
+		{
 			"type": "chrome",
 			"name": "Client",
 			"request": "launch",
