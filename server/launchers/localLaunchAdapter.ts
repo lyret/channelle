@@ -261,7 +261,7 @@ export class LocalAdapter extends LaunchAdapter {
 			throw new Error(`CLI script not found at ${cliPath}`);
 		}
 
-		const args = ["cli.mjs", "--start", "--no-build", "--no-watch", "--no-theater", `--port=${port}`, `--showId=${showId}`, "--no-debug"];
+		const args = ["cli.mjs", "--start", "--build", "--no-theater", `--port=${port}`, `--showId=${showId}`, "--no-debug"];
 
 		console.log(`[LocalAdapter] Spawning process: node ${args.join(" ")}`);
 
