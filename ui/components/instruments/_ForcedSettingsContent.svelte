@@ -40,7 +40,7 @@
 <p>Använd "Automatiskt" för att låta varje scen bestämma sina egna inställningar.</p>
 
 <div class="field mt-2">
-	<p class="label">Visa ridån 🎭</p>
+	<p class="label">Ridån 🎭</p>
 	<div class="level is-mobile">
 		<div class="level-item">
 			<button
@@ -61,7 +61,7 @@
 				disabled={isLoading}
 				on:click={() => handleUpdate({ curtainsOverride: 2 })}
 			>
-				Dölj
+				Uppe
 			</button>
 		</div>
 		<div class="level-item">
@@ -72,7 +72,7 @@
 				disabled={isLoading}
 				on:click={() => handleUpdate({ curtainsOverride: 1 })}
 			>
-				Visa
+				Nere
 			</button>
 		</div>
 	</div>
@@ -81,9 +81,9 @@
 			{#if $showSceneOverridesStore.curtainsOverride === 0}
 				Visas automatiskt enligt vald scen
 			{:else if $showSceneOverridesStore.curtainsOverride === 1}
-				<b>Ridån visas</b>
+				<b>Ridån visas och täcker innehållet på scenen</b>
 			{:else}
-				<b>Ridån är dold</b>
+				<b>Ridån visas inte</b>
 			{/if}
 		</p>
 	</div>

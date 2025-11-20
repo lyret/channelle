@@ -30,7 +30,8 @@ export const showPasswordStore = derived(_localConfigStore, ($config) => $config
 
 /** Current actual scene settings from configuration after taking selected scene and overrides into account */
 export const showSceneSettingsStore = derived(_localConfigStore, ($config) => ({
-	curtains: $config.curtainsOverride == 1 || ($config.curtainsOverride == 0 && $config.selectedScene?.curtains) || true,
+	curtains:
+		$config.curtainsOverride == 2 ? false : $config.curtainsOverride == 1 || ($config.curtainsOverride == 0 && $config.selectedScene?.curtains) || true,
 	chatEnabled: $config.chatEnabledOverride == 1 || ($config.chatEnabledOverride == 0 && $config.selectedScene?.chatEnabled) || false,
 	gratitudeEffects:
 		$config.gratitudeEffectsEnabledOverride == 1 ||

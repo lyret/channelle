@@ -2,8 +2,8 @@
 	import { blur } from "svelte/transition";
 	import { onMount } from "svelte";
 
-	import { hasJoinedRoomStore, isBannedFromTheRoom, joinMediaRoom, peerStore, stageCurtainsStore } from "~/api/media";
-	import { showMetadataStore } from "~/api/backstage";
+	import { hasJoinedRoomStore, isBannedFromTheRoom, joinMediaRoom, peerStore } from "~/api/media";
+	import { showMetadataStore, showSceneSettingsStore } from "~/api/backstage";
 
 	import AuthenticateCurtainMessage from "~/components/curtains/AuthenticateCurtainMessage.svelte";
 	import BlockedCurtainMessage from "~/components/curtains/BlockedCurtainMessage.svelte";
@@ -49,7 +49,7 @@
 		!determiningState &&
 		(!$hasJoinedRoomStore || !hasEnteredName || !hasInteractedWithTheDocument || $isBannedFromTheRoom || needsInviteKey || needsToBeManager);
 	$: renderContent = !determiningState && !renderMessages;
-	$: renderCurtains = determiningState || renderMessages || (curtainsAreEnabled && $stageCurtainsStore);
+	$: renderCurtains = determiningState || renderMessages || (curtainsAreEnabled && $showSceneSettingsStore.curtains);
 </script>
 
 <!-- Content -->
