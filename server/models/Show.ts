@@ -8,6 +8,7 @@ export class Show extends Model {
 	declare name: string;
 	declare description: string;
 	declare nomenclature: string;
+	declare script: string | null;
 	declare password: string;
 	declare selectedScene: Scene | null;
 	declare curtainsOverride: SceneSetting;
@@ -55,6 +56,11 @@ export function initShow(sequelize: Sequelize) {
 					notEmpty: true,
 					len: [1, 100],
 				},
+			},
+			script: {
+				type: DataTypes.JSON,
+				allowNull: true,
+				defaultValue: null,
 			},
 			password: {
 				type: DataTypes.STRING,

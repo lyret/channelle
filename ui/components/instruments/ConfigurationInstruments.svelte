@@ -8,15 +8,15 @@
 	import ParticipantsInstrument from "./ParticipantsInstrument.svelte";
 	import SceneSelectorInstrument from "./SceneSelectorInstrument.svelte";
 	import ShowMetadataInstrument from "./ShowMetadataInstrument.svelte";
+	import ScriptInstrument from "./ScriptInstrument.svelte";
 
-	import IconCheckCircle from "../icons/Icon-check-circle.svelte";
-	import IconCircle from "../icons/Icon-circle.svelte";
-	import IconKey from "../icons/Icon-key.svelte";
-	import IconLayers from "../icons/Icon-layers.svelte";
-	import IconMessageCircle from "../icons/Icon-message-circle.svelte";
-	import IconUsers from "../icons/Icon-users.svelte";
-	import IconImage from "../icons/Icon-image.svelte";
-	import IconInfo from "../icons/Icon-info.svelte";
+	import IconAccess from "../picol/icons/Picol-view.svelte";
+	import IconScenes from "../picol/icons/Picol-link.svelte";
+	import IconChat from "../picol/icons/Picol-chat.svelte";
+	import IconUsers from "../picol/icons/Picol-group-full.svelte";
+	import IconImage from "../picol/icons/Picol-image.svelte";
+	import IconInfo from "../picol/icons/Picol-label.svelte";
+	import IconScript from "../picol/icons/Picol-script.svelte";
 
 	// Props for customizing which instruments to show
 	export let showParticipants = false;
@@ -33,13 +33,6 @@
 				<!-- svelte-ignore a11y-click-events-have-key-events -->
 				<a on:click={() => openInstruments.toggle("show-metadata")}>
 					<span class="icon"><IconInfo /></span> Info
-					<span class="icon">
-						{#if $openInstruments["show-metadata"]}
-							<IconCheckCircle />
-						{:else}
-							<IconCircle />
-						{/if}
-					</span>
 				</a>
 			</li>
 			<li class:is-active={$openInstruments["scene-settings"]}>
@@ -47,14 +40,7 @@
 				<!-- svelte-ignore a11y-no-static-element-interactions -->
 				<!-- svelte-ignore a11y-click-events-have-key-events -->
 				<a on:click={() => openInstruments.toggle("scene-settings")}>
-					<span class="icon"><IconLayers /></span> Scenen
-					<span class="icon">
-						{#if $openInstruments["scene-settings"]}
-							<IconCheckCircle />
-						{:else}
-							<IconCircle />
-						{/if}
-					</span>
+					<span class="icon"><IconScenes /></span> Scenen
 				</a>
 			</li>
 			{#if showParticipants}
@@ -65,13 +51,6 @@
 					<a on:click={() => openInstruments.toggle("participants")}>
 						<span class="icon"><IconUsers /></span>
 						Deltagare
-						<span class="icon">
-							{#if $openInstruments["participants"]}
-								<IconCheckCircle />
-							{:else}
-								<IconCircle />
-							{/if}
-						</span>
 					</a>
 				</li>
 			{/if}
@@ -80,19 +59,21 @@
 				<!-- svelte-ignore a11y-no-static-element-interactions -->
 				<!-- svelte-ignore a11y-click-events-have-key-events -->
 				<a on:click={() => openInstruments.toggle("chat")}>
-					<span class="icon"><IconMessageCircle /></span>
+					<span class="icon"><IconChat /></span>
 					{#if CONFIG.runtime.theater}
 						Diskussion
 					{:else}
 						Chatt
 					{/if}
-					<span class="icon">
-						{#if $openInstruments["chat"]}
-							<IconCheckCircle />
-						{:else}
-							<IconCircle />
-						{/if}
-					</span>
+				</a>
+			</li>
+			<li class:is-active={$openInstruments["script"]}>
+				<!-- svelte-ignore a11y-missing-attribute -->
+				<!-- svelte-ignore a11y-no-static-element-interactions -->
+				<!-- svelte-ignore a11y-click-events-have-key-events -->
+				<a on:click={() => openInstruments.toggle("script")}>
+					<span class="icon"><IconScript /></span>
+					Manuskript
 				</a>
 			</li>
 			<li class:is-active={$openInstruments["access"]}>
@@ -100,15 +81,8 @@
 				<!-- svelte-ignore a11y-no-static-element-interactions -->
 				<!-- svelte-ignore a11y-click-events-have-key-events -->
 				<a on:click={() => openInstruments.toggle("access")}>
-					<span class="icon"><IconKey /></span>
+					<span class="icon"><IconAccess /></span>
 					Tillgång
-					<span class="icon">
-						{#if $openInstruments["access"]}
-							<IconCheckCircle />
-						{:else}
-							<IconCircle />
-						{/if}
-					</span>
 				</a>
 			</li>
 			{#if showMediaLibrary}
@@ -119,13 +93,6 @@
 					<a on:click={() => openInstruments.toggle("media-library")}>
 						<span class="icon"><IconImage /></span>
 						Mediabibliotek
-						<span class="icon">
-							{#if $openInstruments["media-library"]}
-								<IconCheckCircle />
-							{:else}
-								<IconCircle />
-							{/if}
-						</span>
 					</a>
 				</li>
 			{/if}
@@ -156,6 +123,11 @@
 			<ChatInstrument />
 		</div>
 	{/if}
+	{#if $openInstruments["script"]}
+		<div class="instrument">
+			<ScriptInstrument />
+		</div>
+	{/if}
 	{#if $openInstruments["access"]}
 		<div class="instrument">
 			<AccessInstrument />
@@ -177,9 +149,6 @@
 		background-color: var(--channelle-main-bg-color);
 		height: 0;
 		flex-grow: 0;
-	}
-
-	li {
 	}
 
 	li a {

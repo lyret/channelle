@@ -149,28 +149,13 @@
 
 <div class="show-metadata-instrument">
 	<h1 class="title">
-		{$showMetadataStore?.nomenclature
-			? $showMetadataStore.nomenclature.charAt(0).toUpperCase() + $showMetadataStore.nomenclature.slice(1)
-			: "Föreställning"}s info
+		{$showMetadataStore?.nomenclature ? $showMetadataStore.nomenclature : "föreställningen"}s info
 	</h1>
-
-	{#if !CONFIG.runtime.theater}
-		<div class="notification is-info is-light">
-			<p class="is-size-7">
-				<strong>Skrivskyddad vy</strong><br />
-				{$showMetadataStore?.nomenclature
-					? $showMetadataStore.nomenclature.charAt(0).toUpperCase() + $showMetadataStore.nomenclature.slice(1)
-					: "Föreställning"}sinfo kan endast redigeras i förberedelsesläge (theater mode).
-			</p>
-		</div>
-	{/if}
 
 	{#if success}
 		<div class="notification is-success">
 			<p>
-				✓ {$showMetadataStore?.nomenclature
-					? $showMetadataStore.nomenclature.charAt(0).toUpperCase() + $showMetadataStore.nomenclature.slice(1)
-					: "Föreställning"}sinfo har uppdaterats
+				✓ {$showMetadataStore?.nomenclature || "Föreställningen"} har uppdaterats
 			</p>
 		</div>
 	{/if}

@@ -63,6 +63,11 @@ export const showMetadataStore = derived(_localConfigStore, ($config) => ({
 	nomenclature: $config.nomenclature || "föreställningen",
 }));
 
+/** Current show script from configuration */
+export const showScriptStore = derived(_localConfigStore, ($config) => ({
+	script: $config.script || null,
+}));
+
 /** Loading state for backstage configuration sync operations */
 export const configurationIsLoading = writable<boolean>(false);
 

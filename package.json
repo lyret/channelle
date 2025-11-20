@@ -29,6 +29,10 @@
 		"npm": ">10.0.0"
 	},
 	"dependencies": {
+		"@tiptap/core": "^3.11.0",
+		"@tiptap/extension-typography": "^3.11.0",
+		"@tiptap/pm": "^3.11.0",
+		"@tiptap/starter-kit": "^3.11.0",
 		"@trpc/client": "^11.5.1",
 		"@trpc/server": "^11.5.1",
 		"@types/deep-equal": "^1.0.4",

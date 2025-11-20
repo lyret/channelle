@@ -7,15 +7,18 @@
 	import MediaLibraryInstrument from "~/components/instruments/MediaLibraryInstrument.svelte";
 	import ParticipantsInstrument from "~/components/instruments/ParticipantsInstrument.svelte";
 	import SceneSelectorInstrument from "~/components/instruments/SceneSelectorInstrument.svelte";
+	import ScriptInstrument from "~/components/instruments/ScriptInstrument.svelte";
 	import MediaInputSelector from "./_MediaInputSelector.svelte";
 	import Accordion from "~/components/Accordion.svelte";
 	import ForcedSettingsContent from "~/components/instruments/_ForcedSettingsContent.svelte";
 
+	import IconAccess from "../../picol/icons/Picol-view.svelte";
+	import IconScenes from "../../picol/icons/Picol-link.svelte";
+	import IconUsers from "../../picol/icons/Picol-group-full.svelte";
+	import IconScript from "../../picol/icons/Picol-script.svelte";
+
 	import IconActivity from "../../icons/Icon-activity.svelte";
 	import IconExternalLink from "../../icons/Icon-external-link.svelte";
-	import IconKey from "../../icons/Icon-key.svelte";
-	import IconLayers from "../../icons/Icon-layers.svelte";
-	import IconUsers from "../../icons/Icon-users.svelte";
 	import IconMaximize from "../../icons/Icon-maximize.svelte";
 	import IconMinimize from "../../icons/Icon-minimize.svelte";
 	import PicolArrowLeft from "../../picol/icons/Picol-arrow-sans-left.svelte";
@@ -51,6 +54,8 @@
 				<AccessInstrument />
 			{:else if $focusedInstrument == "media-library"}
 				<MediaLibraryInstrument />
+			{:else if $focusedInstrument == "script"}
+				<ScriptInstrument />
 			{/if}
 		</div>
 	{:else}
@@ -68,7 +73,7 @@
 				>
 				<hr />
 				<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "scene-settings")}
-					><span class="icon is-size-5"><IconLayers /></span>
+					><span class="icon is-size-5"><IconScenes /></span>
 					<span>Sceninställningar</span></button
 				>
 				<hr />
@@ -93,13 +98,18 @@
 					<hr />
 				{/if}
 				<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "access")}
-					><span class="icon is-size-5"><IconKey /></span>
+					><span class="icon is-size-5"><IconAccess /></span>
 					<span>Tillgång</span></button
 				>
 				<hr />
 				<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "participants")}
 					><span class="icon is-size-5"><IconUsers /></span>
 					<span>Deltagare</span></button
+				>
+				<hr />
+				<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "script")}
+					><span class="icon is-size-5"><IconScript /></span>
+					<span>Rich Text</span></button
 				>
 				<hr />
 				<a class="button is-fullwidth is-small" href="/backstage" target="_blank">
