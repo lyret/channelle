@@ -214,12 +214,12 @@ export async function createConfiguration() {
 			// Add listening infos for WAN,
 			webRTCTransportListenInfos.push({
 				protocol: "udp",
-				ip: publicIP,
+				ip: "0.0.0.0",
 				announcedAddress: publicIP,
 			});
 			webRTCTransportListenInfos.push({
 				protocol: "tcp",
-				ip: publicIP,
+				ip: "0.0.0.0",
 				announcedAddress: publicIP,
 			});
 			console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "WEBRTC WAN", publicIP);
@@ -371,7 +371,9 @@ export async function createConfiguration() {
 						kind: "video",
 						mimeType: "video/VP8",
 						clockRate: 90000,
-						parameters: {},
+						parameters: {
+							// 'x-google-start-bitrate': 1000
+						},
 					},
 					{
 						kind: "video",
