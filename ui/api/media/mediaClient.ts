@@ -68,29 +68,13 @@ export const audioProducer = writable<Producer | null>(null);
  * Updated periodically through room sync
  */
 export const currentActiveSpeakerStore = readable<ActiveSpeaker | null>(null, (set) => {
-	const {unsubscribe} = mediaClient.activeSpeaker.subscribe(undefined, {
+	const { unsubscribe } = mediaClient.activeSpeaker.subscribe(undefined, {
 		onData: (activeSpeaker) => {
 			set(activeSpeaker);
-		}
+		},
 	});
 	return unsubscribe;
 });
-
-function createOpenInstrumentsStore() {
-	return {
-		toggle: (instrument: InstrumentName) => {
-			const _value = get(_innerStore) || {};
-			if (_value[instrument]) {
-				delete _value[instrument];
-			} else {
-				_value[instrument] = true;
-			}
-			_innerStore.set(_value);
-		},
-		set: _innerStore.set,
-		subscribe: (),
-	};
-}
 
 /**
  * List of all active consumers for receiving remote media
@@ -333,7 +317,6 @@ export async function leaveMediaRoom() {
  */
 export async function syncMediaRoom() {
 	const { peers, sessions } = await mediaClient.sync.query();
-
 
 	// Decide if we need to update tracks list
 	// build list of peers, sorted by join time, removing last
