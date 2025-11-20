@@ -24,7 +24,7 @@
 	} from "~/api/media";
 
 	// Local state for UI
-	let newPasswordInput = "";
+
 	let peerNameInput = "";
 	let targetPeerId = "";
 
@@ -63,22 +63,47 @@
 		localCamVideo.srcObject = null;
 	}
 
+	// Keep track of consumer tracks to detect changes
+	const consumerTrackMap = new Map();
+
 	// Update consumer videos when consumers change
-	$: {
-		consumers.forEach((consumer) => {
-			const key = `${consumer.appData.peerId}-${consumer.appData.mediaTag}`;
+	$: updateConsumerVideos(consumers, consumerVideos);
+
+	function updateConsumerVideos(consumerList: any[], videoElements: { [key: string]: HTMLVideoElement }) {
+		const currentKeys = new Set();
+
+		consumerList.forEach((consumer) => {
+			const key = getConsumerKey(consumer);
+			currentKeys.add(key);
+
 			if (consumer.track && consumer.track.kind === "video") {
-				const videoElement = consumerVideos[key];
-				if (videoElement) {
+				const videoElement = videoElements[key];
+				const lastTrackId = consumerTrackMap.get(key);
+
+				// Check if this is a new track or track has changed
+				if (videoElement && (!lastTrackId || lastTrackId !== consumer.track.id)) {
+					console.log("[Debug] Assigning/updating stream to video element for:", key, "trackId:", consumer.track.id);
 					try {
 						const stream = new MediaStream([consumer.track]);
 						videoElement.srcObject = stream;
 						videoElement.play().catch((e) => {
 							console.warn("[Debug] Video play failed for", key, e);
 						});
+						consumerTrackMap.set(key, consumer.track.id);
 					} catch (e) {
 						console.error("[Debug] Error setting video source for", key, e);
 					}
+				}
+			}
+		});
+
+		// Clean up tracks for consumers that no longer exist
+		consumerTrackMap.forEach((trackId, key) => {
+			if (!currentKeys.has(key)) {
+				consumerTrackMap.delete(key);
+				const videoElement = videoElements[key];
+				if (videoElement) {
+					videoElement.srcObject = null;
 				}
 			}
 		});
@@ -109,6 +134,36 @@
 			await mediaClient.updatePeerName(targetPeerId, peerNameInput.trim());
 			peerNameInput = "";
 			targetPeerId = "";
+		}
+	}
+
+	function forceRefreshConsumers() {
+		console.log("[Debug] Force refreshing consumers...");
+		consumerTrackMap.clear();
+		Object.values(consumerVideos).forEach((video) => {
+			if (video) video.srcObject = null;
+		});
+		updateConsumerVideos(consumers, consumerVideos);
+	}
+
+	function bindVideoElement(element: HTMLVideoElement, consumerKey: string) {
+		if (element) {
+			consumerVideos[consumerKey] = element;
+			console.log("[Debug] Video element bound for:", consumerKey);
+
+			// Force a reactive update by calling the update function
+			updateConsumerVideos(consumers, consumerVideos);
+
+			// Return cleanup function
+			return {
+				destroy() {
+					if (consumerVideos[consumerKey]) {
+						consumerVideos[consumerKey].srcObject = null;
+						delete consumerVideos[consumerKey];
+						consumerTrackMap.delete(consumerKey);
+					}
+				},
+			};
 		}
 	}
 </script>
@@ -164,14 +219,19 @@
 							<p class="subtitle is-6 mb-1">{consumer.appData.peerId}</p>
 							<p class="is-size-7 has-text-grey">{consumer.appData.mediaTag}</p>
 							<video
-								bind:this={consumerVideos[getConsumerKey(consumer)]}
+								use:bindVideoElement={getConsumerKey(consumer)}
 								autoplay
 								playsinline
 								muted
 								controls={false}
 								class="video-preview"
 								class:is-paused={consumer.paused}
-								on:loadeddata={() => console.log("[Debug] Video loadeddata for:", getConsumerKey(consumer))}
+								on:loadeddata={() => {
+									const key = getConsumerKey(consumer);
+									console.log("[Debug] Video loadeddata for:", key);
+									// Force update when video is ready
+									setTimeout(() => updateConsumerVideos(consumers, consumerVideos), 100);
+								}}
 								on:canplay={() => console.log("[Debug] Video canplay for:", getConsumerKey(consumer))}
 								on:error={(e) => console.error("[Debug] Video error for:", getConsumerKey(consumer), e)}
 							/>
@@ -291,11 +351,11 @@
 		<div class="columns">
 			<div class="column is-6">
 				<div class="field">
-					<label class="label is-small" for="peer-select">Update Peer Name</label>
+					<label class="label is-small">Update Peer Name</label>
 					<div class="field is-grouped">
 						<div class="control">
 							<div class="select is-small">
-								<select id="peer-select" bind:value={targetPeerId}>
+								<select bind:value={targetPeerId}>
 									<option value="">Select Peer...</option>
 									{#each peersList as peer (peer.peerId)}
 										<option value={peer.peerId}>{peer.peerId} ({peer.name || "Unnamed"})</option>
@@ -304,7 +364,7 @@
 							</div>
 						</div>
 						<div class="control is-expanded">
-							<input id="peer-name-input" class="input is-small" type="text" placeholder="New name" bind:value={peerNameInput} />
+							<input class="input is-small" type="text" placeholder="New name" bind:value={peerNameInput} />
 						</div>
 						<div class="control">
 							<button class="button is-small is-primary" on:click={updatePeerName} disabled={!targetPeerId || !peerNameInput.trim()}>
@@ -320,6 +380,15 @@
 	<!-- Controls Section -->
 	<div class="box">
 		<h2 class="subtitle">Controls</h2>
+
+		<!-- Debug Controls -->
+		<div class="field">
+			<label class="label is-small">Debug Controls:</label>
+			<div class="buttons are-small">
+				<button class="button is-warning" on:click={forceRefreshConsumers}>Force Refresh Video Streams</button>
+				<button class="button is-info" on:click={() => console.log("Consumers:", consumers, "Videos:", consumerVideos)}>Log State</button>
+			</div>
+		</div>
 
 		<!-- Room Controls -->
 		<div class="field">

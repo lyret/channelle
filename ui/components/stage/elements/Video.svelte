@@ -28,39 +28,6 @@
 	// Make stream reactive to all dependencies
 	$: stream = findStream(peerId, isLocalPeer, $localMediaStream, $consumersStore);
 
-	// Enhanced reactive debugging to track changes
-	$: {
-		const now = Date.now();
-		const timeSinceLastUpdate = now - debugInfo.lastUpdate;
-		debugInfo.lastUpdate = now;
-
-		console.log(`[Video] REACTIVE UPDATE for ${peerId} (${timeSinceLastUpdate}ms since last):`, {
-			isLocalPeer,
-			hasLocalMediaStream: !!$localMediaStream,
-			localMediaTracks: $localMediaStream?.getTracks().length || 0,
-			totalConsumers: $consumersStore.length,
-			myConsumers: $consumersStore.filter((c) => c.appData.peerId === peerId),
-			hasStream: !!stream,
-			streamTracks: stream?.getTracks().length || 0,
-			streamHasVideo,
-			streamHasAudio,
-			streamId: stream?.id || null,
-			lastStreamId,
-			debugInfo,
-			peerOnline: peer?.online,
-			sessionExists: !!session,
-			hasVideoAvailable,
-			hasVideoConsumer: !!hasVideoConsumer,
-		});
-
-		// Track stream changes
-		if (stream?.id !== lastStreamId) {
-			debugInfo.streamChanges++;
-			lastStreamId = stream?.id || null;
-			console.log(`[Video] Stream changed for ${peerId}: ${lastStreamId} (change #${debugInfo.streamChanges})`);
-		}
-	}
-
 	// Enhanced consumer monitoring
 	$: {
 		const relevantConsumers = $consumersStore.filter((c) => c.appData.peerId === peerId);
