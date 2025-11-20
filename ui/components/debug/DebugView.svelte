@@ -10,7 +10,6 @@
 	// MediaRoom API imports
 	import {
 		deviceStore,
-		stageCurtainsStore,
 		camPausedStore,
 		micPausedStore,
 		localMediaStream,
@@ -72,7 +71,7 @@
 	$: stageVisitorVideoEnabled = $showSceneSettingsStore?.visitorVideoEnabled;
 
 	// MediaRoom state reactive statements
-	$: stageCurtains = $stageCurtainsStore;
+	$: stageCurtains = $showSceneSettingsStore.curtains;
 	$: camVideoPaused = $camPausedStore;
 	$: camAudioPaused = $micPausedStore;
 

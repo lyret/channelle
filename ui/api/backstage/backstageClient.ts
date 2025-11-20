@@ -12,6 +12,7 @@ const _localConfigStore = writable<BackstageConfiguration>({
 	name: "",
 	description: "",
 	nomenclature: "föreställningen",
+	script: null,
 	password: "",
 	curtainsOverride: 1,
 	chatEnabledOverride: 2,

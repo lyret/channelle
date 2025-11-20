@@ -3,7 +3,7 @@
 	import { onMount } from "svelte";
 	import { blur } from "svelte/transition";
 	import { createEffectsStore } from "~/stores/effects";
-	import { stageChatEnabledStore, stageGratitudeEffectsEnabledStore, stageCriticalEffectsEnabledStore } from "~/api/media";
+	import { showSceneSettingsStore } from "~/api";
 	import { showStageChatStore, showStageSettingsStore } from "~/stores/stage";
 	import { windowFullscreenStore } from "~/stores/device";
 	import IconMaximize from "../../icons/Icon-maximize.svelte";
@@ -44,7 +44,7 @@
 		<div class="spacer" />
 	{/if}
 	<!-- GRATITUDE EFFECTS -->
-	{#if $stageGratitudeEffectsEnabledStore}
+	{#if $showSceneSettingsStore.gratitudeEffects}
 		<button class={effectBtnClassList} transition:blur on:click={() => effects.set({ type: "applause", number: 1 })}>
 			<span class={iconClassList}>👏</span></button
 		>
@@ -53,12 +53,12 @@
 		>
 	{/if}
 	<!-- CRITICAL EFFECTS -->
-	{#if $stageCriticalEffectsEnabledStore}
+	{#if $showSceneSettingsStore.criticalEffects}
 		<button class={criticalEffectBtnClassList} transition:blur on:click={() => effects.set({ type: "tomato", number: 1 })}>
 			<span class={iconClassList}>🍅</span></button
 		>
 	{/if}
-	{#if $stageGratitudeEffectsEnabledStore || $stageCriticalEffectsEnabledStore}
+	{#if $showSceneSettingsStore.gratitudeEffects || $showSceneSettingsStore.criticalEffects}
 		<div class="spacer" />
 	{/if}
 	<!-- VIDEO -->
@@ -69,7 +69,7 @@
 	<!-- SPACER -->
 	<div class="spacer is-hidden-mobile" />
 	<!-- CHAT -->
-	{#if $stageChatEnabledStore}
+	{#if $showSceneSettingsStore.chatEnabled}
 		<button
 			class={btnClassList}
 			transition:blur

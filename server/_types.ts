@@ -32,6 +32,13 @@ export type Scene = {
 	visitorVideoEnabled: boolean;
 };
 
+/** Active Speaker Value */
+export type ActiveSpeaker = {
+	producerId: string | null;
+	volume: number | null;
+	peerId: string | null;
+};
+
 /** The Show attribues needed when listed on the theater page */
 export type ShowListEntry = Pick<ShowAttributes, "id" | "name" | "description" | "nomenclature" | "online" | "url" | "lastOnlineAt">;
 

@@ -1,104 +1,18 @@
 import * as MediaSoup from "mediasoup-client";
 import DeepEqual from "deep-equal";
-import { writable, derived, get } from "svelte/store";
+import { writable, derived, get, readable } from "svelte/store";
 import { mediaClient, userClient, wsPeerIdStore } from "../_trpcClient";
-import type { Peer, TransportDirection, CustomAppData, MediaTag } from "~/types/serverSideTypes";
-
-/**
- * MediaRoom API - WebRTC media streaming and peer management
- *
- * This API handles all WebRTC/MediaSoup functionality for real-time
- * audio/video communication between participants in a show.
- *
- * Key responsibilities:
- * - WebRTC media streaming (audio/video)
- * - Peer connection management
- * - MediaSoup transport handling
- * - Real-time synchronization of media state
- * - Stage UI state for immediate visual feedback
- *
- * Architecture:
- * - Uses MediaSoup for professional-grade WebRTC
- * - Automatic peer-to-peer media routing
- * - Scalable one-to-many broadcasting
- * - Real-time synchronization via polling
- *
- * Usage:
- * 1. Join media room: await joinMediaRoom()
- * 2. Start media: await startLocalMediaStream(true, true)
- * 3. Send streams: await sendMediaStreams()
- * 4. Subscribe to peers: automatic via polling
- */
+import type { Peer, TransportDirection, CustomAppData, MediaTag, ActiveSpeaker } from "~/types/serverSideTypes";
 
 type Transport = MediaSoup.types.Transport<CustomAppData>;
 type Consumer = MediaSoup.types.Consumer<CustomAppData>;
 type Producer = MediaSoup.types.Producer<CustomAppData>;
-
-// ============================================================================
-// MEDIA STORES
-// ============================================================================
 
 /**
  * MediaSoup device - initialized when joining media room with router RTP capabilities
  * Contains codec information and WebRTC capabilities
  */
 export const deviceStore = writable<MediaSoup.types.Device | null>(null);
-
-// ============================================================================
-// STAGE UI STORES (Real-time display state)
-// ============================================================================
-
-/**
- * Real-time curtains display state
- * Updated immediately when scene curtains setting changes
- * Used by stage UI to show/hide curtains instantly
- */
-export const stageCurtainsStore = writable<boolean>(true);
-
-/**
- * Real-time chat panel visibility state
- * Updated immediately when chat enabled setting changes
- * Used by stage UI to show/hide chat panel
- */
-export const stageChatEnabledStore = writable<boolean>(true);
-
-/**
- * Real-time gratitude effects availability state
- * Updated immediately when gratitude effects enabled setting changes
- * Used by stage UI to enable/disable gratitude effect buttons (flowers, applause)
- */
-export const stageGratitudeEffectsEnabledStore = writable<boolean>(true);
-
-/**
- * Real-time critical effects availability state
- * Updated immediately when critical effects enabled setting changes
- * Used by stage UI to enable/disable critical effect buttons (tomato)
- */
-export const stageCriticalEffectsEnabledStore = writable<boolean>(true);
-
-/**
- * Real-time visitor audio permission state
- * Updated immediately when visitor audio setting changes
- * Used by stage UI to enable/disable visitor microphones
- */
-export const stageHaveVisitorAudioEnabledStore = writable<boolean>(true);
-
-/**
- * Real-time visitor video permission state
- * Updated immediately when visitor video setting changes
- * Used by stage UI to enable/disable visitor cameras
- */
-export const stageHaveVisitorVideoEnabledStore = writable<boolean>(true);
-
-// ============================================================================
-// MEDIA STATE STORES
-// ============================================================================
-
-/**
- * General paused state for media streaming
- * @deprecated Use camPausedStore and micPausedStore for specific control
- */
-export const paused = writable(false);
 
 /**
  * Video track pause state - when true, video is paused/muted locally
@@ -153,7 +67,30 @@ export const audioProducer = writable<Producer | null>(null);
  * Currently active speaker in the room
  * Updated periodically through room sync
  */
-export const currentActiveSpeakerStore = writable<{ peerId?: string | null }>({});
+export const currentActiveSpeakerStore = readable<ActiveSpeaker | null>(null, (set) => {
+	const {unsubscribe} = mediaClient.activeSpeaker.subscribe(undefined, {
+		onData: (activeSpeaker) => {
+			set(activeSpeaker);
+		}
+	});
+	return unsubscribe;
+});
+
+function createOpenInstrumentsStore() {
+	return {
+		toggle: (instrument: InstrumentName) => {
+			const _value = get(_innerStore) || {};
+			if (_value[instrument]) {
+				delete _value[instrument];
+			} else {
+				_value[instrument] = true;
+			}
+			_innerStore.set(_value);
+		},
+		set: _innerStore.set,
+		subscribe: (),
+	};
+}
 
 /**
  * List of all active consumers for receiving remote media
@@ -294,28 +231,12 @@ export function logDebugState(context = "DEBUG") {
 // PUBLIC API FUNCTIONS
 // ============================================================================
 
-// ============================================================================
-// PUBLIC API FUNCTIONS
-// ============================================================================
-
 /**
  * Join the media room and initialize WebRTC capabilities
  *
  * This is the primary entry point for establishing media connectivity.
  * It initializes the MediaSoup device, establishes server connection,
  * and begins automatic room state synchronization.
- *
- * @throws {Error} If device initialization fails or connection is rejected
- *
- * @example
- * ```typescript
- * try {
- *   await joinMediaRoom();
- *   console.log('Successfully joined media room');
- * } catch (error) {
- *   console.error('Failed to join:', error);
- * }
- * ```
  */
 export async function joinMediaRoom() {
 	// Signal that we're a new peer and initialize our
@@ -411,20 +332,8 @@ export async function leaveMediaRoom() {
  * @private Generally called automatically, but can be used for manual sync
  */
 export async function syncMediaRoom() {
-	const { peers, sessions, activeSpeaker, currentScene } = await mediaClient.sync.query();
+	const { peers, sessions } = await mediaClient.sync.query();
 
-	// Update the known stage UI states (needed for real-time stage display)
-	if (currentScene) {
-		stageCurtainsStore.set(currentScene.curtains);
-		stageChatEnabledStore.set(currentScene.chatEnabled);
-		stageGratitudeEffectsEnabledStore.set(currentScene.gratitudeEffectsEnabled);
-		stageCriticalEffectsEnabledStore.set(currentScene.criticalEffectsEnabled);
-		stageHaveVisitorAudioEnabledStore.set(currentScene.visitorAudioEnabled);
-		stageHaveVisitorVideoEnabledStore.set(currentScene.visitorVideoEnabled);
-	}
-
-	// Update the active speaker
-	currentActiveSpeakerStore.set(activeSpeaker);
 
 	// Decide if we need to update tracks list
 	// build list of peers, sorted by join time, removing last

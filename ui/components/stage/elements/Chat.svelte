@@ -2,12 +2,12 @@
 	import { blur } from "svelte/transition";
 	import ChatInput from "../../chat/ChatInput.svelte";
 	import ChatList from "../../chat/ChatList.svelte";
-	import { stageChatEnabledStore } from "~/api/media";
+	import { showSceneSettingsStore } from "~/api";
 </script>
 
 <div class="chat-window" in:blur={{ duration: 500 }}>
 	<ChatList />
-	{#if $stageChatEnabledStore}
+	{#if $showSceneSettingsStore.chatEnabled}
 		<ChatInput />
 	{/if}
 </div>

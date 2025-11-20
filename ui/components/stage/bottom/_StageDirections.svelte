@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { slide } from "svelte/transition";
 	import IconAlertTriangle from "~/components/icons/Icon-alert-triangle.svelte";
-	import { videoProducer, audioProducer, camPausedStore, micPausedStore, stageCurtainsStore, peerStore } from "~/api/media";
+	import { videoProducer, audioProducer, camPausedStore, micPausedStore, peerStore } from "~/api/media";
+	import { showSceneSettingsStore } from "~/api";
 
 	$: isCameraOn = !!$videoProducer && !$camPausedStore;
 	$: isMicOn = !!$audioProducer && !$micPausedStore;
 	$: isActor = $peerStore.actor;
-	$: isOnStage = isActor && !$stageCurtainsStore;
+	$: isOnStage = isActor && !$showSceneSettingsStore.curtains;
 	$: isCameraOffStage = isOnStage && !isCameraOn;
 	$: isMicOffStage = isOnStage && !isMicOn;
 	$: visible = isCameraOffStage || isMicOffStage;

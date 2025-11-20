@@ -19,7 +19,7 @@ const _editableShowAttributesSchema = z.object({
 	name: z.string().min(1).max(255),
 	description: z.string(),
 	nomenclature: z.string().min(1).max(100),
-	script: z.any().optional(),
+	script: z.any(),
 	password: z.string(),
 	selectedScene: z.custom<Scene | null>(),
 	curtainsOverride: z.enum(SceneSetting),

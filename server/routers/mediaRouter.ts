@@ -1,10 +1,16 @@
 import type * as MediaSoup from "mediasoup";
-import type { Transport, Session, CustomAppData, MediaTag, Producer, Consumer } from "../_types";
+import type { Transport, Session, CustomAppData, MediaTag, Producer, Consumer, ActiveSpeaker } from "../_types";
 import { TRPCError } from "@trpc/server";
 import { trpc, mediaSoupRouter } from "../lib";
 import { z } from "zod";
 import { join, getUsers, retrivePeerDetailsMiddleware } from "./userRouter";
 import { withConfigProcedure } from "./backstageRouter";
+import Emittery from "emittery";
+
+// Internal event emitter for message updates
+const _mediaEventsEmitter = new Emittery<{
+	activeSpeaker: ActiveSpeaker | null;
+}>();
 
 // Get the trcp router constructor and default procedure
 const { router: trcpRouter, procedure: trcpProcedure } = trpc();
@@ -17,11 +23,6 @@ const { router: trcpRouter, procedure: trcpProcedure } = trpc();
  * correlate tracks.
  */
 type Room = {
-	activeSpeaker: {
-		producerId: string | null;
-		volume: number | null;
-		peerId: string | null;
-	};
 	sessions: Record<string, Session>;
 	transports: Record<string, Transport>;
 	producers: Record<string, Producer>;
@@ -30,11 +31,6 @@ type Room = {
 
 /** Internal state */
 const _room: Room = {
-	activeSpeaker: {
-		producerId: null,
-		volume: null,
-		peerId: null,
-	},
 	// Internals
 	sessions: {},
 	transports: {},
@@ -87,31 +83,26 @@ export const mediaRouter = trcpRouter({
 	 *
 	 * @returns Complete room state for client synchronization
 	 */
+
 	sync: mediaSessionProcedure.query(async ({ ctx: { config } }) => {
 		return {
 			peers: getUsers(),
 			sessions: _room.sessions,
-			activeSpeaker: _room.activeSpeaker,
-			// TODO: remove and use only backstage router path
-			sceneSettings: {
-				curtains: config.curtainsOverride == 1 || (config.curtainsOverride == 0 && config.selectedScene?.curtains) || true,
-				chatEnabled: config.chatEnabledOverride == 1 || (config.chatEnabledOverride == 0 && config.selectedScene?.chatEnabled) || false,
-				gratitudeEffects:
-					config.gratitudeEffectsEnabledOverride == 1 ||
-					(config.gratitudeEffectsEnabledOverride == 0 && config.selectedScene?.gratitudeEffectsEnabled) ||
-					false,
-				criticalEffects:
-					config.criticalEffectsEnabledOverride == 1 ||
-					(config.criticalEffectsEnabledOverride == 0 && config.selectedScene?.criticalEffectsEnabled) ||
-					false,
-				visitorAudioEnabled:
-					config.visitorAudioEnabledOverride == 1 || (config.visitorAudioEnabledOverride == 0 && config.selectedScene?.visitorAudioEnabled) || false,
-				visitorVideoEnabled:
-					config.visitorVideoEnabledOverride == 1 || (config.visitorVideoEnabledOverride == 0 && config.selectedScene?.visitorVideoEnabled) || false,
-			},
-			currentLayout: config.selectedScene?.layout || [],
-			currentScene: config.selectedScene,
 		};
+	}),
+	/** Subscription for the currently active speaker */
+	activeSpeaker: trcpProcedure.subscription(async function* ({ ctx: { peer } }) {
+		console.log(`[Media] Client ${peer.id} subscribed to the currently active speaker`);
+
+		yield null;
+
+		for await (const activeSpeaker of _mediaEventsEmitter.events("activeSpeaker")) {
+			if (!activeSpeaker) {
+				yield null;
+			} else {
+				yield activeSpeaker;
+			}
+		}
 	}),
 	// Join
 	// Adds the peer to the room data structure and creates a
@@ -224,7 +215,6 @@ export const mediaRouter = trcpRouter({
 			if (!transport) {
 				throw new TRPCError({ code: "NOT_FOUND", message: `server-side transport ${transportId} not found` });
 			}
-
 
 			// Validate RTP parameters on server side
 			if (!rtpParameters) {
@@ -512,15 +502,15 @@ async function observeActiveSpeakers() {
 	audioLevelObserver.on("volumes", (volumes) => {
 		const { producer, volume } = volumes[0];
 		console.log("[MS] Audio-level volumes event", producer.appData.peerId, volume);
-		_room.activeSpeaker.producerId = producer.id;
-		_room.activeSpeaker.volume = volume;
-		_room.activeSpeaker.peerId = (producer.appData as CustomAppData).peerId;
+		_mediaEventsEmitter.emit("activeSpeaker", {
+			producerId: producer.id,
+			volume,
+			peerId: (producer.appData as CustomAppData).peerId,
+		});
 	});
 	audioLevelObserver.on("silence", () => {
 		console.log("[MS] Audio-level silence event");
-		_room.activeSpeaker.producerId = null;
-		_room.activeSpeaker.volume = null;
-		_room.activeSpeaker.peerId = null;
+		_mediaEventsEmitter.emit("activeSpeaker", null);
 	});
 }
 observeActiveSpeakers();
