@@ -214,12 +214,12 @@ export async function createConfiguration() {
 			// Add listening infos for WAN,
 			webRTCTransportListenInfos.push({
 				protocol: "udp",
-				ip: "0.0.0.0",
+				ip: publicIP,
 				announcedAddress: publicIP,
 			});
 			webRTCTransportListenInfos.push({
 				protocol: "tcp",
-				ip: "0.0.0.0",
+				ip: publicIP,
 				announcedAddress: publicIP,
 			});
 			console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "WEBRTC WAN", publicIP);

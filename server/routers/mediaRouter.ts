@@ -161,13 +161,19 @@ export const mediaRouter = trcpRouter({
 	createTransport: mediaSessionProcedure.input(z.object({ direction: z.string() })).mutation(async ({ ctx, input: { direction } }) => {
 		console.log(`[MS] Creating a ${direction} transport for peer ${ctx.peer.id}`);
 
-		const transport = await _createWebRtcTransport({ peerId: ctx.peer.id, direction });
-		_room.transports[transport.id] = transport;
+		try {
+			const transport = await _createWebRtcTransport({ peerId: ctx.peer.id, direction });
+			_room.transports[transport.id] = transport;
 
-		const { id, iceParameters, iceCandidates, dtlsParameters } = transport;
-		return {
-			transportOptions: { id, iceParameters, iceCandidates, dtlsParameters },
-		};
+			const { id, iceParameters, iceCandidates, dtlsParameters } = transport;
+			return {
+				transportOptions: { id, iceParameters, iceCandidates, dtlsParameters },
+			};
+		} catch (error) {
+			console.error("ERROR", error);
+			console.error("ERROR", error);
+			throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create transport" });
+		}
 	}),
 	// Connect Transport
 	// Called from inside a client's `transport.on('connect')` event
@@ -609,6 +615,7 @@ async function _createWebRtcTransport({ peerId, direction }): Promise<Transport>
 	}
 
 	const _router = await mediaSoupRouter();
+	console.log("here", _router, { listenInfos });
 	const transport = await _router.createWebRtcTransport({
 		listenInfos: listenInfos,
 		enableUdp: true,
@@ -617,6 +624,7 @@ async function _createWebRtcTransport({ peerId, direction }): Promise<Transport>
 		initialAvailableOutgoingBitrate: initialAvailableOutgoingBitrate,
 		appData: { peerId, clientDirection: direction },
 	});
+	console.log("here 2", transport);
 
 	// FIXME: Debug logging for flatbuffers issue - remove after fixing
 	console.log("[MS Server Debug] WebRTC transport created successfully:", {
