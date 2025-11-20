@@ -6,7 +6,7 @@
 	import PicolArrowFullUpperright from "./picol/icons/Picol-arrow-full-upperright.svelte";
 	import PicolStop from "./picol/icons/Picol-controls-stop.svelte";
 	import PicolCopy from "./picol/icons/Picol-copy.svelte";
-	import type { ShowAttributes } from "~/api/shows";
+	import type { ShowAttributes } from "~/types/serverSideTypes";
 
 	export let show: ShowAttributes;
 
@@ -19,7 +19,7 @@
 	$: runningInstance = showInstances.find((instance) => instance.status === "running" || instance.status === "starting");
 
 	// Determine show status - use server isOnline for all users, fallback to client-side for authenticated users
-	$: showStatus = show.isOnline ? "online" : show.lastOnlineAt !== null ? "tidigare" : "kommande";
+	$: showStatus = show.online ? "online" : show.lastOnlineAt !== null ? "tidigare" : "kommande";
 	$: statusLabel = showStatus === "online" ? "Online nu!" : showStatus === "tidigare" ? "Tidigare" : "Kommande";
 	$: statusClass = showStatus === "online" ? "is-success" : showStatus === "tidigare" ? "is-dark" : "is-warning";
 
@@ -98,7 +98,7 @@
 
 	async function handleCopyUrl() {
 		try {
-			await navigator.clipboard.writeText(currentUrl);
+			await navigator.clipboard.writeText(currentUrl || "");
 			copyButtonText = "Kopierad!";
 			setTimeout(() => {
 				copyButtonText = "";

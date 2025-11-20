@@ -62,7 +62,7 @@
 		<div class="select-view mb-4" in:blur={{ duration: 100 }}>
 			{#if $peerStore.manager}
 				<div class="mb-4">
-					<Accordion title="Snabba inställningar" isOpen={false}>
+					<Accordion title="Snabba sceninställningar" isOpen={false}>
 						<ForcedSettingsContent />
 					</Accordion>
 				</div>
@@ -109,7 +109,7 @@
 				<hr />
 				<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "script")}
 					><span class="icon is-size-5"><IconScript /></span>
-					<span>Rich Text</span></button
+					<span>Manuskript</span></button
 				>
 				<hr />
 				<a class="button is-fullwidth is-small" href="/backstage" target="_blank">
