@@ -92,14 +92,14 @@ export async function createConfiguration() {
 	// deployment/stage will be named after the given string, otherwise it
 	// will be unnamned
 	const showName = cli.name !== undefined ? cli.name : env.SHOW_NAME || "";
-	if (showId == undefined && showName) {
+	if (showId == undefined && !theater && showName) {
 		console.log("🏷️ ", Chalk.bgBlueBright("[CONFIG]"), "Show Name", showName);
 	}
 
 	// If SHOW_PASSWORD is set it will default the deployed stage to be password protected with the string given
 	// otherwise it will be set to an empty string and the stage will be public
 	const showPassword = cli.password !== undefined ? cli.password : env.SHOW_PASSWORD || "";
-	if (showId == undefined && showPassword) {
+	if (showId == undefined && !theater && showPassword) {
 		console.log("🏷️ ", Chalk.bgBlueBright("[CONFIG]"), "Show Password", showPassword);
 	}
 
@@ -371,9 +371,7 @@ export async function createConfiguration() {
 						kind: "video",
 						mimeType: "video/VP8",
 						clockRate: 90000,
-						parameters: {
-							// 'x-google-start-bitrate': 1000
-						},
+						parameters: {},
 					},
 					{
 						kind: "video",

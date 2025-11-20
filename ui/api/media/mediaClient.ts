@@ -327,16 +327,36 @@ export async function joinMediaRoom() {
 	try {
 		let device = get(deviceStore);
 		if (!device) {
+			// FIXME: Debug logging for flatbuffers issue - remove after fixing
+			console.log("[MS Debug] Router RTP capabilities:", JSON.stringify(routerRtpCapabilities, null, 2));
+
+			// Validate router capabilities
+			if (!routerRtpCapabilities) {
+				throw new Error("Missing router RTP capabilities");
+			}
+			if (!routerRtpCapabilities.codecs || routerRtpCapabilities.codecs.length === 0) {
+				throw new Error("Invalid router RTP capabilities: missing codecs");
+			}
+
 			device = new MediaSoup.Device();
 			await device.load({ routerRtpCapabilities });
 			deviceStore.set(device);
+
+			// FIXME: Debug logging for flatbuffers issue - remove after fixing
+			console.log("[MS Debug] Device loaded successfully:", {
+				loaded: device.loaded,
+				rtpCapabilities: !!device.rtpCapabilities,
+				sctpCapabilities: !!device.sctpCapabilities,
+			});
 		}
 	} catch (error: any) {
 		if (error.name === "UnsupportedError") {
 			console.error("[MEDIA DEVICE] The browser not supported for video calls");
 			throw error;
 		} else {
-			console.error("[MEDIA DEVICE] The media device could not be initialized");
+			console.error("[MEDIA DEVICE] The media device could not be initialized:", error);
+			// FIXME: Debug logging for flatbuffers issue - remove after fixing
+			console.error("[MS Debug] Device initialization error details:", error.stack);
 			throw error;
 		}
 	}
@@ -1250,6 +1270,19 @@ async function _createTransport(direction: TransportDirection, peerId: string): 
 		transport.on("produce", (params, resolve, reject) => {
 			const { kind, rtpParameters } = params;
 			const appData = params.appData as CustomAppData;
+
+			// FIXME: Debug logging for flatbuffers issue - remove after fixing
+			console.log("[MS Debug] Full produce params:", JSON.stringify(params, null, 2));
+			console.log("[MS Debug] RTP parameters:", JSON.stringify(rtpParameters, null, 2));
+			console.log("[MS Debug] App data:", JSON.stringify(appData, null, 2));
+
+			// Validate required parameters to prevent flatbuffers errors
+			if (!rtpParameters || !rtpParameters.codecs || rtpParameters.codecs.length === 0) {
+				console.error("[MS] Invalid RTP parameters:", rtpParameters);
+				reject(new Error("Invalid RTP parameters - missing codecs"));
+				return;
+			}
+
 			console.log("[MS] transport produce event", appData);
 
 			// Respect the current paused status

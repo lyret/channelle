@@ -220,6 +220,24 @@ export const mediaRouter = trcpRouter({
 				throw new TRPCError({ code: "NOT_FOUND", message: `server-side transport ${transportId} not found` });
 			}
 
+			// FIXME: Debug logging for flatbuffers issue - remove after fixing
+			console.log("[MS Server Debug] Producer creation params:", {
+				kind,
+				paused,
+				appData,
+				rtpParametersKeys: Object.keys(rtpParameters || {}),
+				codecsCount: rtpParameters?.codecs?.length || 0,
+				encodingsCount: rtpParameters?.encodings?.length || 0,
+			});
+
+			// Validate RTP parameters on server side
+			if (!rtpParameters) {
+				throw new TRPCError({ code: "BAD_REQUEST", message: "Missing rtpParameters" });
+			}
+			if (!rtpParameters.codecs || rtpParameters.codecs.length === 0) {
+				throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid rtpParameters: missing codecs" });
+			}
+
 			const producer = await transport.produce({
 				kind,
 				rtpParameters,
@@ -577,6 +595,19 @@ async function _closeConsumer(consumer: Consumer) {
 async function _createWebRtcTransport({ peerId, direction }): Promise<Transport> {
 	const { listenInfos, initialAvailableOutgoingBitrate } = CONFIG.mediasoup.webRTCTransport;
 
+	// FIXME: Debug logging for flatbuffers issue - remove after fixing
+	console.log("[MS Server Debug] Creating WebRTC transport:", {
+		peerId,
+		direction,
+		listenInfosCount: listenInfos?.length || 0,
+		initialAvailableOutgoingBitrate,
+	});
+
+	// Validate transport configuration
+	if (!listenInfos || listenInfos.length === 0) {
+		throw new Error("Invalid transport configuration: missing listenInfos");
+	}
+
 	const _router = await mediaSoupRouter();
 	const transport = await _router.createWebRtcTransport({
 		listenInfos: listenInfos,
@@ -585,6 +616,13 @@ async function _createWebRtcTransport({ peerId, direction }): Promise<Transport>
 		preferUdp: true,
 		initialAvailableOutgoingBitrate: initialAvailableOutgoingBitrate,
 		appData: { peerId, clientDirection: direction },
+	});
+
+	// FIXME: Debug logging for flatbuffers issue - remove after fixing
+	console.log("[MS Server Debug] WebRTC transport created successfully:", {
+		id: transport.id,
+		iceParameters: !!transport.iceParameters,
+		dtlsParameters: !!transport.dtlsParameters,
 	});
 
 	return transport;
