@@ -143,6 +143,7 @@ channelle/
 - **NEVER create demonstration files** or example code files
 - **NEVER run linting commands** (npm run lint, eslint, etc.)
 - **NEVER create markdown files** for examples, documentation, or summaries
+- **NEVER start the server** - Only build the project for testing purposes
 
 ### Required Behavior
 - Focus solely on implementing requested functionality
