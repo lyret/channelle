@@ -126,24 +126,24 @@ export async function createConfiguration() {
 	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "HTTP Port", port);
 
 	// The LOCAL options enables the stage server to be reached from the loopback interface of the machine running the server
-	const local = cli.local !== undefined ? cli.local : env.LOCAL != "false" || true;
+	const local = cli.local !== undefined ? cli.local : env.LOCAL != "false";
 
 	// The LAN options enables the stage server to be reached from within the current local area network
-	const lan = cli.lan !== undefined ? cli.lan : env.LAN != "false" || true;
+	const lan = cli.lan !== undefined ? cli.lan : env.LAN != "false";
 
 	// The WAN options enables the stage server to be reached from the current wide area network, i.e.  the public internet
-	const wan = cli.wan !== undefined ? cli.wan : env.WAN != "false" || production;
+	const wan = cli.wan !== undefined ? cli.wan : env.WAN != "false";
 
 	// The BUILD option makes the CLI program generate fresh server and frontend code bundles for the current configuration
-	const build = cli.build !== undefined ? cli.build : env.BUILD != "false" || false;
+	const build = cli.build !== undefined ? cli.build : env.BUILD != "false";
 	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Build", build);
 
 	// The WATCH option makes the CLI program stay alive and watch and rebuild the source code files when changed
-	const watch = cli.watch !== undefined ? cli.watch : env.WATCH != "false" || false;
+	const watch = cli.watch !== undefined ? cli.watch : env.WATCH != "false";
 	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Watch", watch);
 
 	// The START option will make the CLI program launch the server with the current configuration
-	const start = cli.start !== undefined ? cli.start : env.START != "false" || false;
+	const start = cli.start !== undefined ? cli.start : env.START != "false";
 	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Start", start);
 
 	// If SLUG is set or 'slug' is given in the CLI it will be used to identify this deployment (stage), otherwise a slug
