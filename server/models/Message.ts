@@ -1,6 +1,5 @@
 import type { Sequelize } from "sequelize";
 import { Model, DataTypes } from "sequelize";
-import { Peer } from "./Peer";
 
 /** Message model. */
 export class Message extends Model {
@@ -9,6 +8,7 @@ export class Message extends Model {
 	declare backstage: boolean;
 	declare peerId: string;
 	declare peerName: string;
+	declare showId: number | null;
 	declare createdAt: Date;
 }
 
@@ -39,6 +39,14 @@ export function initMessage(sequelize: Sequelize) {
 				defaultValue: "",
 				allowNull: false,
 			},
+			showId: {
+				type: DataTypes.INTEGER,
+				allowNull: true,
+				references: {
+					model: "Show",
+					key: "id",
+				},
+			},
 		},
 		{
 			sequelize,
@@ -48,18 +56,4 @@ export function initMessage(sequelize: Sequelize) {
 			updatedAt: false,
 		},
 	);
-
-	// Define association with Peer
-	Message.belongsTo(Peer, {
-		foreignKey: "peerId",
-		targetKey: "id",
-		onDelete: "SET NULL",
-		onUpdate: "CASCADE",
-		as: "peer",
-	});
-	Peer.hasMany(Message, {
-		foreignKey: "peerId",
-		sourceKey: "id",
-		as: "messages",
-	});
 }

@@ -13,6 +13,7 @@ export class Peer extends Model {
 	declare banned: boolean;
 	declare audioMuted: boolean;
 	declare videoMuted: boolean;
+	declare showId: number | null;
 	declare createdAt: Date;
 	declare updatedAt: Date;
 }
@@ -70,6 +71,14 @@ export function initPeer(sequelize: Sequelize) {
 				type: DataTypes.BOOLEAN,
 				defaultValue: false,
 				allowNull: false,
+			},
+			showId: {
+				type: DataTypes.INTEGER,
+				allowNull: true,
+				references: {
+					model: "Show",
+					key: "id",
+				},
 			},
 		},
 		{
