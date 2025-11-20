@@ -113,7 +113,7 @@
 	}
 </script>
 
-<div class="container is-fluid" in:blur={{ delay: 500, duration: 1000 }}>
+<div class="debug-container" in:blur={{ delay: 500, duration: 1000 }}>
 	<h1 class="title">🔍 Debug Dashboard</h1>
 
 	<!-- Session Statistics Overview -->
@@ -368,8 +368,21 @@
 </div>
 
 <style lang="scss">
-	.container {
+	.debug-container {
+		height: 100vh;
+		overflow-y: auto;
+		overflow-x: hidden;
 		padding: 1rem;
+		box-sizing: border-box;
+		-webkit-overflow-scrolling: touch; // Smooth scrolling on iOS
+
+		@media screen and (max-width: 768px) {
+			padding: 0.75rem;
+		}
+
+		@media screen and (max-width: 480px) {
+			padding: 0.5rem;
+		}
 	}
 
 	.video-preview {
@@ -384,6 +397,11 @@
 		&.is-paused {
 			opacity: 0.5;
 		}
+
+		@media screen and (max-width: 768px) {
+			min-height: 100px;
+			max-height: 150px;
+		}
 	}
 
 	.card.is-active-speaker {
@@ -392,17 +410,81 @@
 
 	.box {
 		padding: 1rem;
+		margin-bottom: 1rem;
+
+		@media screen and (max-width: 768px) {
+			padding: 0.75rem;
+			margin-bottom: 0.75rem;
+		}
+
+		@media screen and (max-width: 480px) {
+			padding: 0.5rem;
+			margin-bottom: 0.5rem;
+		}
 	}
 
 	.subtitle {
 		margin-bottom: 0.75rem !important;
+
+		@media screen and (max-width: 768px) {
+			font-size: 1.1rem !important;
+		}
 	}
 
 	.field {
 		margin-bottom: 1rem;
+
+		@media screen and (max-width: 768px) {
+			margin-bottom: 0.75rem;
+		}
 	}
 
 	.label {
 		margin-bottom: 0.25rem !important;
+	}
+
+	// Mobile-specific improvements
+	@media screen and (max-width: 768px) {
+		.title {
+			font-size: 1.5rem !important;
+			margin-bottom: 1rem !important;
+		}
+
+		.buttons {
+			flex-wrap: wrap;
+			gap: 0.25rem;
+		}
+
+		.button.is-small {
+			font-size: 0.7rem;
+			padding: 0.25rem 0.5rem;
+		}
+
+		.tags .tag {
+			font-size: 0.6rem;
+		}
+
+		.column {
+			padding: 0.5rem;
+		}
+	}
+
+	@media screen and (max-width: 480px) {
+		.columns {
+			margin: 0 !important;
+		}
+
+		.column {
+			padding: 0.25rem;
+		}
+
+		.field.is-grouped {
+			flex-direction: column;
+
+			.control {
+				width: 100%;
+				margin-bottom: 0.5rem;
+			}
+		}
 	}
 </style>
