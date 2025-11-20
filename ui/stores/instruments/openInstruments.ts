@@ -5,10 +5,10 @@ export type InstrumentName = "debug" | "chat" | "participants" | "scene-settings
 
 export const openInstruments = createOpenInstrumentsStore();
 
-export const focusedInstrument = persisted<InstrumentName | undefined>("focused-instrument", undefined);
+export const focusedInstrument = persisted<InstrumentName | undefined>(`${CONFIG.runtime.slug}-focused-instrument`, undefined);
 
 function createOpenInstrumentsStore() {
-	const _innerStore = persisted<Partial<Record<InstrumentName, boolean>>>("open-instruments", {});
+	const _innerStore = persisted<Partial<Record<InstrumentName, boolean>>>(`${CONFIG.runtime.slug}-open-instruments`, {});
 	return {
 		toggle: (instrument: InstrumentName) => {
 			const _value = get(_innerStore) || {};
