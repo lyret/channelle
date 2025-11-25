@@ -1,12 +1,18 @@
 import * as MediaSoup from "mediasoup-client";
-import DeepEqual from "deep-equal";
 import { writable, derived, get, readable } from "svelte/store";
-import { mediaClient, userClient, wsPeerIdStore } from "../_trpcClient";
-import type { Peer, TransportDirection, CustomAppData, MediaTag, ActiveSpeaker } from "~/types/serverSideTypes";
+import { authClient, mediaClient, wsPeerIdStore } from "../_trpcClient";
+import type { TransportDirection, CustomAppData, MediaTag, ActiveSpeaker, MediaSession } from "~/types/serverSideTypes";
+import { currentPeerStore } from "../auth";
 
 type Transport = MediaSoup.types.Transport<CustomAppData>;
 type Consumer = MediaSoup.types.Consumer<CustomAppData>;
 type Producer = MediaSoup.types.Producer<CustomAppData>;
+
+/** Loading state for media room sync operations */
+export const mediaRoomIsLoading = writable<boolean>(false);
+
+/** Error messages from the media room sync operations */
+export const mediaRoomError = writable<string | null>(null);
 
 /**
  * MediaSoup device - initialized when joining media room with router RTP capabilities
@@ -86,7 +92,7 @@ export const consumersStore = writable<Consumer[]>([]);
  * Map of all peers in the room with their metadata
  * Updated periodically through room sync
  */
-export const peersStore = writable<Record<string, Peer>>({});
+export const peersStore = writable<Record<string, MediaSession>>({});
 
 /**
  * Map of all peer sessions with their media availability and stats
@@ -94,22 +100,17 @@ export const peersStore = writable<Record<string, Peer>>({});
  */
 export const sessionsStore = writable<Record<string, any>>({});
 
-/** The current users peer information  */
-export const peerStore = derived([peersStore, wsPeerIdStore], ([$peers, $peerId]) => {
-	return $peers[$peerId] || ({} as Peer);
-});
-
 /**
  * Indicates whether the client has successfully joined the room
  */
-export const hasJoinedRoomStore = derived([peerStore], ([$peer]) => {
+export const hasJoinedRoomStore = derived([currentPeerStore], ([$peer]) => {
 	return Object.keys($peer).length > 0;
 });
 
 /**
  * Indicates whether the client is banned from the room
  */
-export const isBannedFromTheRoom = derived([peerStore], ([$peer]) => {
+export const isBannedFromTheRoom = derived([currentPeerStore], ([$peer]) => {
 	return $peer && $peer.banned;
 });
 
@@ -138,15 +139,6 @@ export const hasSendTransportStore = derived(sendTransport, ($transport) => !!$t
  * True when at least one peer connection is established for receiving
  */
 export const hasRecvTransportStore = derived(recvTransports, ($transports) => Object.keys($transports).length > 0);
-
-// ============================================================================
-// INTERNAL STATE (Not reactive)
-// ============================================================================
-
-// Polling interval for room state synchronization (1 second intervals)
-let _pollingInterval: ReturnType<typeof setInterval> | undefined;
-// Previous peer state for detecting changes during synchronization
-let _previousSyncedPeers: Record<string, any> = {};
 
 // ============================================================================
 // DEBUG UTILITIES
@@ -211,22 +203,20 @@ export function logDebugState(context = "DEBUG") {
 	console.groupEnd();
 }
 
-// ============================================================================
-// PUBLIC API FUNCTIONS
-// ============================================================================
-
 /**
- * Join the media room and initialize WebRTC capabilities
+ * Joins the media room as a member and initialize WebRTC capabilities
+ * and subscribes to data from other clients
  *
  * This is the primary entry point for establishing media connectivity.
  * It initializes the MediaSoup device, establishes server connection,
  * and begins automatic room state synchronization.
  */
-export async function joinMediaRoom() {
+export async function participateInTheMediaRoom() {
+	mediaRoomIsLoading.set(true);
+
 	// Signal that we're a new peer and initialize our
 	// mediasoup-client device, if this is our first time connecting
-	const { peerId, routerRtpCapabilities } = await mediaClient.join.mutate();
-	console.log("[MediaRoom] Joined with peer id", peerId);
+	const { routerRtpCapabilities } = await mediaClient.routerRtpCapabilities.query();
 
 	// Initialize the MediaSoup device
 	try {
@@ -238,258 +228,132 @@ export async function joinMediaRoom() {
 		}
 	} catch (error: any) {
 		if (error.name === "UnsupportedError") {
-			console.error("[MEDIA DEVICE] The browser not supported for video calls");
+			console.error("[Media Device] The browser not supported for video calls");
 			throw error;
 		} else {
-			console.error("[MEDIA DEVICE] The media device could not be initialized");
+			console.error("[Media Device] The media device could not be initialized");
 			throw error;
 		}
 	}
 
-	// Let's poll at 1-second intervals when joined
-	_pollingInterval = setInterval(async () => {
-		try {
-			await syncMediaRoom();
-		} catch (err) {
-			console.error("[MediaRoom] Poll stopped:", err);
-			clearInterval(_pollingInterval);
-		}
-	}, 1000);
-}
+	// authenticate
+	await authClient.authenticate.mutate({ name: "Okänd" });
 
-/**
- * Leave the media room and clean up all WebRTC resources
- *
- * Properly closes all media connections, stops synchronization,
- * and releases browser media resources. Should be called when
- * the user navigates away or closes the application.
- *
- * @example
- * ```typescript
- * await leaveMediaRoom();
- * console.log('Left media room and cleaned up resources');
- * ```
- */
-export async function leaveMediaRoom() {
-	console.log("[MediaRoom] leaving the room");
-
-	// Stop polling
-	if (_pollingInterval) {
-		clearInterval(_pollingInterval);
-		_pollingInterval = undefined;
-	}
-
-	// Close everything on the server-side (transports, producers, consumers)
-	await mediaClient.leave.mutate();
-
-	// Closing the transports closes all producers and consumers. we
-	// don't need to do anything beyond closing the transports, except
-	// to set all our local variables to their initial states
-	const currentRecvTransports = get(recvTransports);
-	const currentSendTransport = get(sendTransport);
-
-	// Close all receive transports
-	Object.values(currentRecvTransports).forEach((transport) => transport.close());
-	currentSendTransport?.close();
-
-	_previousSyncedPeers = {};
-
-	// Reset all stores
-	recvTransports.set({});
-	sendTransport.set(null);
-	videoProducer.set(null);
-	audioProducer.set(null);
-	localMediaStream.set(null);
-	consumersStore.set([]);
-}
-
-/**
- * Synchronize media room state with server
- *
- * Fetches current peer list, session information, and stage UI state
- * from the server. Automatically manages consumer connections for new
- * peers and cleans up resources for departed peers.
- *
- * Called automatically every second when connected to the room.
- * Can also be called manually for immediate synchronization.
- *
- * @private Generally called automatically, but can be used for manual sync
- */
-export async function syncMediaRoom() {
-	const { peers, sessions } = await mediaClient.sync.query();
-
-	// Decide if we need to update tracks list
-	// build list of peers, sorted by join time, removing last
-	// seen time and stats, so we can easily do a deep-equals
-	// comparison. compare this list with the cached list from last poll.
-	const thisPeersList = _sortPeers(peers);
-	const lastPeersList = _sortPeers(_previousSyncedPeers);
-	const consumers = get(consumersStore);
-
-	// If a peer has gone away, we need to close all consumers we have
-	// for that peer
-	if (!DeepEqual(thisPeersList, lastPeersList)) {
-		console.log("[Room] Peer list changed, checking for departed peers");
-		for (const id in _previousSyncedPeers) {
-			if (!peers[id]) {
-				console.log(`[Room] Peer ${id} has left - cleaning up resources`);
-
-				// Close all consumers for this peer
-				const peerConsumers = consumers.filter((consumer) => consumer.appData.peerId === id);
-				console.log(`[Room] Found ${peerConsumers.length} consumers to close for peer ${id}`);
-
-				for (const consumer of peerConsumers) {
-					try {
-						console.log(`[Room] Closing consumer ${consumer.id} for departed peer ${id}`);
-						await closeConsumer(consumer);
-					} catch (error) {
-						console.error(`[Room] Error closing consumer for departed peer ${id}:`, error);
-					}
+	// Subscribe to media events
+	return new Promise<void>((resolve) => {
+		// Start subscription to the media events
+		const { unsubscribe } = mediaClient.events.subscribe(undefined, {
+			onData: async (data) => {
+				if (CONFIG.runtime.debug) {
+					console.log("Media room subscription data:", data);
+				}
+				if (data.event === "initial") {
+					mediaRoomIsLoading.set(false);
+					resolve();
+					return;
 				}
 
-				// Close and remove the transport for this peer
-				const transports = get(recvTransports);
-				if (transports[id]) {
-					console.log(`[Room] Closing transport for departed peer ${id}`);
+				if (data.event === "sessionRemoved") {
+					const session = data.session;
+					const peerId = session.peerId;
+					console.log(`[Media] Peer ${peerId} has stopped participation - cleaning up resources`);
+
+					// Close all consumers for this peer
+					const peerConsumers = get(consumersStore).filter((consumer) => consumer.appData.peerId === peerId);
+					console.log(`[Media] Found ${peerConsumers.length} consumers to close for peer ${peerId}`);
+
+					for (const consumer of peerConsumers) {
+						try {
+							console.log(`[Media] Closing consumer ${consumer.id} for departed peer ${peerId}`);
+							await closeConsumer(consumer);
+						} catch (error) {
+							console.error(`[Media] Error closing consumer for departed peer ${peerId}:`, error);
+						}
+					}
+
+					// Close and remove the transport connected to that peer
+					console.log(`[Media] Closing transport for departed peer ${peerId}`);
 					try {
-						transports[id].close();
-						recvTransports.update((t) => {
-							const updated = { ...t };
-							delete updated[id];
+						recvTransports.update((_transports) => {
+							const updated = { ..._transports };
+							if (updated[peerId]) {
+								updated[peerId].close();
+							}
+							delete updated[peerId];
 							return updated;
 						});
-						console.log(`[Room] Successfully closed transport for peer ${id}`);
 					} catch (error) {
-						console.error(`[Room] Error closing transport for peer ${id}:`, error);
+						console.error(`[Media] Error closing transport for peer ${peerId}:`, error);
 					}
 				}
-			}
-		}
 
-		// Check for new peers
-		for (const id in peers) {
-			if (!_previousSyncedPeers[id]) {
-				console.log(`[Room] New peer ${id} (${peers[id].name}) joined`);
-			}
-		}
-	}
+				// FIXE: does this need to be re-added?
+				// // If a peer has stopped sending media that we are consuming, we
+				// // need to close the consumer
+				// const consumersToClose: Consumer[] = [];
 
-	// If a peer has stopped sending media that we are consuming, we
-	// need to close the consumer
-	const consumersToClose: Consumer[] = [];
+				// consumers.forEach((consumer) => {
+				// 	const { peerId, mediaTag } = consumer.appData;
+				// 	const session = sessions[peerId];
+				// 	const peer = peers[peerId];
 
-	consumers.forEach((consumer) => {
-		const { peerId, mediaTag } = consumer.appData;
-		const session = sessions[peerId];
-		const peer = peers[peerId];
+				// 	// Enhanced logging for consumer validation
+				// 	console.log(`[Room] Validating consumer ${consumer.id} for peer ${peerId} (${mediaTag}):`, {
+				// 		hasSession: !!session,
+				// 		hasSessionMedia: !!(session && session.media),
+				// 		hasMediaTag: !!(session && session.media && session.media[mediaTag]),
+				// 		peerOnline: peer?.online,
+				// 		consumerClosed: consumer.closed,
+				// 	});
 
-		// Enhanced logging for consumer validation
-		console.log(`[Room] Validating consumer ${consumer.id} for peer ${peerId} (${mediaTag}):`, {
-			hasSession: !!session,
-			hasSessionMedia: !!(session && session.media),
-			hasMediaTag: !!(session && session.media && session.media[mediaTag]),
-			peerOnline: peer?.online,
-			consumerClosed: consumer.closed,
+				// 	// Type guard to ensure session exists and peer is still online
+				// 	if (!session || typeof session !== "object" || !peer?.online) {
+				// 		console.log("[Room] Peer " + peerId + " session invalid or offline - marking consumer for closure");
+				// 		consumersToClose.push(consumer);
+				// 		return;
+				// 	}
+
+				// 	// Access media session safely
+				// 	if (!session.media || typeof session.media !== "object") {
+				// 		console.log(`[Room] Peer ${peerId} has no media session - marking consumer for closure`);
+				// 		consumersToClose.push(consumer);
+				// 		return;
+				// 	}
+
+				// 	// Check if the specific mediaTag exists
+				// 	if (!Object.prototype.hasOwnProperty.call(session.media, mediaTag)) {
+				// 		console.log(`[Room] Peer ${peerId} no longer transmitting ${mediaTag} - marking consumer for closure`);
+				// 		consumersToClose.push(consumer);
+				// 		return;
+				// 	}
+
+				// 	// Additional check for consumer health
+				// 	if (consumer.closed || (consumer.track && consumer.track.readyState === "ended")) {
+				// 		console.log(`[Room] Consumer ${consumer.id} is closed or track ended - marking for cleanup`);
+				// 		consumersToClose.push(consumer);
+				// 		return;
+				// 	}
+				// });
+				// // Close consumers that are no longer valid
+				// if (consumersToClose.length > 0) {
+				// 	console.log(`[Room] Closing ${consumersToClose.length} invalid consumers`);
+				// 	for (const consumer of consumersToClose) {
+				// 		try {
+				// 			await closeConsumer(consumer);
+				// 		} catch (error) {
+				// 			console.error("[Room] Error closing invalid consumer:", error);
+				// 		}
+				// 	}
+				// }
+			},
+			onError: (error) => {
+				console.error("Media room subscription error:", error instanceof Error ? error.message : "Unknown subscription error");
+				mediaRoomError.set(error instanceof Error ? error.message : "Unknown subscription error");
+			},
+			onComplete: () => {
+				console.log("Media room subscription completed");
+			},
 		});
-
-		// Type guard to ensure session exists and peer is still online
-		if (!session || typeof session !== "object" || !peer?.online) {
-			console.log("[Room] Peer " + peerId + " session invalid or offline - marking consumer for closure");
-			consumersToClose.push(consumer);
-			return;
-		}
-
-		// Access media session safely
-		if (!session.media || typeof session.media !== "object") {
-			console.log(`[Room] Peer ${peerId} has no media session - marking consumer for closure`);
-			consumersToClose.push(consumer);
-			return;
-		}
-
-		// Check if the specific mediaTag exists
-		if (!Object.prototype.hasOwnProperty.call(session.media, mediaTag)) {
-			console.log(`[Room] Peer ${peerId} no longer transmitting ${mediaTag} - marking consumer for closure`);
-			consumersToClose.push(consumer);
-			return;
-		}
-
-		// Additional check for consumer health
-		if (consumer.closed || (consumer.track && consumer.track.readyState === "ended")) {
-			console.log(`[Room] Consumer ${consumer.id} is closed or track ended - marking for cleanup`);
-			consumersToClose.push(consumer);
-			return;
-		}
-	});
-
-	// Close consumers that are no longer valid
-	if (consumersToClose.length > 0) {
-		console.log(`[Room] Closing ${consumersToClose.length} invalid consumers`);
-		for (const consumer of consumersToClose) {
-			try {
-				await closeConsumer(consumer);
-			} catch (error) {
-				console.error("[Room] Error closing invalid consumer:", error);
-			}
-		}
-	}
-
-	// Update the peers store with full peer information
-	peersStore.set(peers);
-
-	// Update the sessions store with media availability information
-	sessionsStore.set(sessions);
-
-	// Update the last poll sync data
-	_previousSyncedPeers = peers;
-}
-
-/**
- * Updates the name of a peer in the room
- */
-export async function updatePeerName(peerId: string, name: string) {
-	await userClient.update.mutate({
-		id: peerId,
-		name,
-	});
-}
-
-/**
- * Updates the banned status of a peer in the room
- */
-export async function updatePeerBannedStatus(peerId: string, banned: boolean) {
-	await userClient.update.mutate({
-		id: peerId,
-		banned,
-	});
-}
-
-/**
- * Updates the actor status of a peer in the room
- */
-export async function updatePeerActorStatus(peerId: string, actor: boolean) {
-	await userClient.update.mutate({
-		id: peerId,
-		actor,
-	});
-}
-
-/**
- * Updates the manager status of a peer in the room
- */
-export async function updatePeerManagerStatus(peerId: string, manager: boolean) {
-	await userClient.update.mutate({
-		id: peerId,
-		manager,
-	});
-}
-
-/**
- * Updates multiple peer properties at once
- */
-export async function updatePeerProperties(peerId: string, data: { actor?: boolean; manager?: boolean; banned?: boolean }) {
-	await userClient.update.mutate({
-		id: peerId,
-		...data,
 	});
 }
 
@@ -1083,10 +947,6 @@ export async function resumeProducer(producer: Producer) {
 	}
 }
 
-// ============================================================================
-// INTERNAL HELPER FUNCTIONS
-// ============================================================================
-
 /**
  * Create a transport and hook up signaling logic
  * @param direction - Direction of transport ("send" or "recv")
@@ -1201,7 +1061,7 @@ async function _createTransport(direction: TransportDirection, peerId: string): 
 			} else if (direction === "send") {
 				// For send transport, leave the room entirely
 				console.log("[MS] Send transport closed... leaving the room and resetting");
-				leaveMediaRoom();
+				_endMediaParticipation();
 			}
 		}
 	});
@@ -1222,18 +1082,38 @@ function _findConsumerForTrack(peerId: string, mediaTag: MediaTag): Consumer | u
 }
 
 /**
- * Sort peers by join time
- * @param peers - Map of peers to sort
- * @returns Array of peers sorted by join timestamp
- */
-function _sortPeers(peers: Record<string, Peer>): Array<Peer> {
-	return Object.values(peers); // TODO: fix, joinedTS was moved to session!
-}
-
-/**
  * Sleep utility for async delays
  * @param ms - Milliseconds to sleep
  */
 async function _sleep(ms: number) {
 	return new Promise<void>((r) => setTimeout(() => r(), ms));
+}
+/**
+ * Utility function for leaving the media room and cleaning up all WebRTC resources
+ */
+async function _endMediaParticipation() {
+	console.log("[Media] Ending media participation");
+
+	// Close everything on the server-side (transports, producers, consumers)
+	await mediaClient.endSession.mutate();
+
+	// Closing the transports closes all producers and consumers. we
+	// don't need to do anything beyond closing the transports, except
+	// to set all our local variables to their initial states
+	const currentRecvTransports = get(recvTransports);
+	const currentSendTransport = get(sendTransport);
+
+	// Close all receive transports
+	Object.values(currentRecvTransports).forEach((transport) => transport.close());
+	currentSendTransport?.close();
+
+	_previousSyncedSessions = {};
+
+	// Reset all stores
+	recvTransports.set({});
+	sendTransport.set(null);
+	videoProducer.set(null);
+	audioProducer.set(null);
+	localMediaStream.set(null);
+	consumersStore.set([]);
 }

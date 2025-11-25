@@ -12,7 +12,7 @@
 	import FloatingImage from "~/components/home/FloatingImage.svelte";
 	import IconArrowRight from "~/components/icons/Icon-arrow-right.svelte";
 	import PicolCancel from "~/components/picol/icons/Picol-cancel.svelte";
-	import { hasJoinedRoomStore, isBannedFromTheRoom, peerStore } from "~/api/media";
+	import { hasJoinedRoomStore, isBannedFromTheRoom, currentPeerStore } from "~/api";
 
 	onMount(() => {
 		document.querySelectorAll("a, .button").forEach((element) =>
@@ -23,7 +23,7 @@
 	});
 
 	// Determine what should be rendered
-	$: hasEnteredName = $hasJoinedRoomStore && $peerStore.name;
+	$: hasEnteredName = $hasJoinedRoomStore && $currentPeerStore.name;
 	$: needStagePassword = !$isStagePasswordOkStore;
 
 	let howToModalIsOpen = false;

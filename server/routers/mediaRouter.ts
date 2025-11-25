@@ -1,63 +1,61 @@
 import type * as MediaSoup from "mediasoup";
-import type { Transport, Session, CustomAppData, MediaTag, Producer, Consumer, ActiveSpeaker } from "../_types";
+import type { Transport, CustomAppData, MediaTag, Producer, Consumer, ActiveSpeaker, MediaSession } from "../_types";
 import { TRPCError } from "@trpc/server";
 import { trpc, mediaSoupRouter } from "../lib";
 import { z } from "zod";
-import { join, getUsers, retrivePeerDetailsMiddleware } from "./userRouter";
-import { withConfigProcedure } from "./backstageRouter";
 import Emittery from "emittery";
+import { authenticatedPeerProcedure } from "./authRouter";
 
 // Internal event emitter for message updates
 const _mediaEventsEmitter = new Emittery<{
+	sessionRemoved: MediaSession;
+	sessionUpdated: MediaSession;
+	sessionAdded: MediaSession;
 	activeSpeaker: ActiveSpeaker | null;
 }>();
 
 // Get the trcp router constructor and default procedure
-const { router: trcpRouter, procedure: trcpProcedure } = trpc();
+const { router, procedure } = trpc();
+
+// On the server we keep lists of transports, producers, and
+// consumers. whenever we create a transport, producer, or consumer,
+// we save the remote peerId in the object's `appData`. for producers
+// and consumers we also keep track of the client-side "media tag", to
+// correlate tracks.
+
+/** Internal in-memory map of active media communcation sessions */
+const _sessions: Record<string, MediaSession> = {};
+/** Internal in-memory map of active media transports */
+const _transports: Record<string, Transport> = {};
+/** Internal in-memory map of active media producers */
+const _producers: Record<string, Producer> = {};
+/** Internal in-memory map of active media consumers */
+const _consumers: Record<string, Consumer> = {};
 
 /**
- * On the server we keep lists of transports, producers, and
- * consumers. whenever we create a transport, producer, or consumer,
- * we save the remote peerId in the object's `appData`. for producers
- * and consumers we also keep track of the client-side "media tag", to
- * correlate tracks.
- */
-type Room = {
-	sessions: Record<string, Session>;
-	transports: Record<string, Transport>;
-	producers: Record<string, Producer>;
-	consumers: Record<string, Consumer>;
-};
-
-/** Internal state */
-const _room: Room = {
-	// Internals
-	sessions: {},
-	transports: {},
-	producers: {},
-	consumers: {},
-};
-
-/**
- * Peer connection procedure
+ * with Media connection procedure
  * Only allows identified peers to continue, and keeps their media session updated
  */
-const mediaSessionProcedure = withConfigProcedure.use(retrivePeerDetailsMiddleware).use(async ({ ctx, next }) => {
+const mediaSessionProcedure = authenticatedPeerProcedure.use(async ({ ctx, next }) => {
 	// Make sure we have a session for this peer
-	if (!_room.sessions[ctx.peer.id]) {
+	if (!_sessions[ctx.peer.id]) {
 		const now = Date.now();
-		_room.sessions[ctx.peer.id] = {
+		_sessions[ctx.peer.id] = {
 			peerId: ctx.peer.id,
 			joinTs: now,
 			lastSeenTs: now,
 			consumerLayers: {},
 			media: {},
 			stats: {},
+			banned: false,
+			audioMuted: false,
+			videoMuted: false,
 		};
+		_mediaEventsEmitter.emit("sessionAdded", _sessions[ctx.peer.id]);
 	}
 	// Update our most-recently-seem timestamp -- we're not stale!
 	else {
-		_room.sessions[ctx.peer.id].lastSeenTs = Date.now();
+		_sessions[ctx.peer.id].lastSeenTs = Date.now();
 	}
 
 	return next({ ctx });
@@ -67,31 +65,42 @@ const mediaSessionProcedure = withConfigProcedure.use(retrivePeerDetailsMiddlewa
  * Media Router
  * Handles server and client communication for orchastrating peer to peer media transmission
  */
-export const mediaRouter = trcpRouter({
-	/**
-	 * Sync - Real-time room state synchronization
-	 *
-	 * Primary polling endpoint called by clients every second to synchronize
-	 * room state. Returns complete peer information, media session data,
-	 * active speaker detection, and current scene configuration.
-	 *
-	 * This enables real-time updates of:
-	 * - Peer connections and status changes
-	 * - Media session availability
-	 * - Scene settings and visual state
-	 * - Active speaker detection
-	 *
-	 * @returns Complete room state for client synchronization
-	 */
+export const mediaRouter = router({
+	/** Returns all the current media sessions */
+	session: procedure.query(async () => {
+		return _sessions;
+	}),
+	// Retruns the router rtpCapabilities for mediasoup-client device initialization
+	routerRtpCapabilities: procedure.query(async () => {
+		const msRouter = await mediaSoupRouter();
+		return { routerRtpCapabilities: msRouter.rtpCapabilities };
+	}),
+	/** Subscription for the media session events */
+	events: procedure.subscription(async function* ({
+		ctx: { peer },
+	}): AsyncGenerator<{ event: "initial" | "sessionAdded" | "sessionRemoved" | "sessionUpdated"; session: MediaSession }> {
+		console.log(`[Media] Peer ${peer.id} subscribed to the media room`);
 
-	sync: mediaSessionProcedure.query(async ({ ctx: { config } }) => {
-		return {
-			peers: getUsers(),
-			sessions: _room.sessions,
+		yield {
+			event: "initial",
+			session: null as any,
 		};
+
+		for await (const [event, data] of _mediaEventsEmitter.anyEvent()) {
+			switch (event) {
+				case "sessionAdded":
+				case "sessionRemoved":
+				case "sessionUpdated":
+					yield {
+						event: event,
+						session: data as MediaSession,
+					};
+					break;
+			}
+		}
 	}),
 	/** Subscription for the currently active speaker */
-	activeSpeaker: trcpProcedure.subscription(async function* ({ ctx: { peer } }) {
+	activeSpeaker: procedure.subscription(async function* ({ ctx: { peer } }) {
 		console.log(`[Media] Client ${peer.id} subscribed to the currently active speaker`);
 
 		yield null;
@@ -104,49 +113,13 @@ export const mediaRouter = trcpRouter({
 			}
 		}
 	}),
-	// Join
-	// Adds the peer to the room data structure and creates a
-	// transport that the peer will use for receiving media. returns
-	// router rtpCapabilities for mediasoup-client device initialization
-	// Note: bypasses the standard room procedure
-	join: trcpProcedure.mutation(async ({ ctx }) => {
-		if (!ctx.peer?.id) {
-			throw new TRPCError({ code: "BAD_REQUEST", message: "No peer information given" });
-		}
-		const msRouter = await mediaSoupRouter();
-
-		if (_room.sessions[ctx.peer.id]) {
-			console.log("[Media]", ctx.peer.id, "re-started their session possibly due an error or reload");
-			return { peerId: ctx.peer.id, routerRtpCapabilities: msRouter.rtpCapabilities };
-		}
-
-		// Join a user
-		join(ctx.peer.id);
-
-		// Create a new media session
-		const now = Date.now();
-		_room.sessions[ctx.peer.id] = {
-			joinTs: now,
-			lastSeenTs: now,
-			peerId: ctx.peer.id,
-			media: {},
-			consumerLayers: {},
-			stats: {},
-		};
-
-		console.log("[Media]", ctx.peer.id, "started a new session");
-		return { peerId: ctx.peer.id, routerRtpCapabilities: msRouter.rtpCapabilities };
-	}),
-	// Leave
 	// Removes the peer from the room data structure and and closes
-	// all associated mediasoup objects
-	leave: mediaSessionProcedure.mutation(async ({ ctx }) => {
-		const peerId = ctx.peer.id;
-		closeMediaPeer(peerId);
-		console.log("[Media] Peer", peerId, "left");
+	// all associated media soup objects
+	endSession: mediaSessionProcedure.mutation(async ({ ctx }) => {
+		closeMediaPeer(ctx.peer.id);
+		console.log("[Media] Peer", ctx.peer.id, "left");
 		return;
 	}),
-	// Create Transport
 	// Create a mediasoup transport object and send back info needed
 	// to create a transport object on the client side
 	createTransport: mediaSessionProcedure.input(z.object({ direction: z.string() })).mutation(async ({ ctx, input: { direction } }) => {
@@ -154,7 +127,7 @@ export const mediaRouter = trcpRouter({
 
 		try {
 			const transport = await _createWebRtcTransport({ peerId: ctx.peer.id, direction });
-			_room.transports[transport.id] = transport;
+			_transports[transport.id] = transport;
 
 			const { id, iceParameters, iceCandidates, dtlsParameters } = transport;
 			return {
@@ -165,13 +138,12 @@ export const mediaRouter = trcpRouter({
 			throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create transport" });
 		}
 	}),
-	// Connect Transport
 	// Called from inside a client's `transport.on('connect')` event
 	// handler.
 	connectTransport: mediaSessionProcedure
 		.input(z.object({ transportId: z.string(), dtlsParameters: z.custom<MediaSoup.types.DtlsParameters>() }))
 		.mutation(async ({ ctx, input: { transportId, dtlsParameters } }) => {
-			const transport = _room.transports[transportId];
+			const transport = _transports[transportId];
 
 			if (!transport) {
 				throw new TRPCError({ code: "NOT_FOUND", message: `server-side transport ${transportId} not found` });
@@ -182,11 +154,10 @@ export const mediaRouter = trcpRouter({
 			await transport.connect({ dtlsParameters });
 			return { connected: true };
 		}),
-	// Close Transport
 	// Called by a client that wants to close a single transport (for
 	// example, a client that is no longer sending any media).
 	closeTransport: mediaSessionProcedure.input(z.object({ transportId: z.string() })).mutation(async ({ ctx, input: { transportId } }) => {
-		const transport = _room.transports[transportId];
+		const transport = _transports[transportId];
 
 		if (!transport) {
 			throw new TRPCError({ code: "NOT_FOUND", message: `server-side transport ${transportId} not found` });
@@ -197,7 +168,6 @@ export const mediaRouter = trcpRouter({
 		await _closeTransport(transport);
 		return { closed: true };
 	}),
-	// Send Track
 	// Called from inside a client's `transport.on('produce')` event handler.
 	sendTrack: mediaSessionProcedure
 		.input(
@@ -210,7 +180,7 @@ export const mediaRouter = trcpRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input: { transportId, kind, rtpParameters, paused, appData } }) => {
-			const transport = _room.transports[transportId];
+			const transport = _transports[transportId];
 
 			if (!transport) {
 				throw new TRPCError({ code: "NOT_FOUND", message: `server-side transport ${transportId} not found` });
@@ -244,8 +214,8 @@ export const mediaRouter = trcpRouter({
 			// 	audioLevelObserver.addProducer({ producerId: producer.id });
 			// }
 
-			_room.producers[producer.id] = producer;
-			_room.sessions[ctx.peer.id].media[appData.mediaTag] = {
+			_producers[producer.id] = producer;
+			_sessions[ctx.peer.id].media[appData.mediaTag] = {
 				paused,
 				encodings: rtpParameters.encodings,
 			};
@@ -260,7 +230,7 @@ export const mediaRouter = trcpRouter({
 	recvTrack: mediaSessionProcedure
 		.input(z.object({ mediaPeerId: z.string(), mediaTag: z.custom<MediaTag>(), rtpCapabilities: z.custom<MediaSoup.types.RtpCapabilities>() }))
 		.mutation(async ({ ctx, input: { mediaPeerId, mediaTag, rtpCapabilities } }) => {
-			const producer = Object.values(_room.producers).find((p) => p.appData.mediaTag === mediaTag && p.appData.peerId === mediaPeerId);
+			const producer = Object.values(_producers).find((p) => p.appData.mediaTag === mediaTag && p.appData.peerId === mediaPeerId);
 
 			if (!producer) {
 				throw new TRPCError({ code: "NOT_FOUND", message: `server-side producer for ${mediaPeerId}:${mediaTag} not found` });
@@ -272,7 +242,7 @@ export const mediaRouter = trcpRouter({
 				throw new TRPCError({ code: "CONFLICT", message: `server-side producer for ${mediaPeerId}:${mediaTag} not found` });
 			}
 
-			const transport = Object.values(_room.transports).find((t) => t.appData.peerId === ctx.peer.id && t.appData.clientDirection === "recv");
+			const transport = Object.values(_transports).find((t) => t.appData.peerId === ctx.peer.id && t.appData.clientDirection === "recv");
 
 			if (!transport) {
 				throw new TRPCError({ code: "NOT_FOUND", message: `server-side recv transport for ${ctx.peer.id} not found` });
@@ -300,8 +270,8 @@ export const mediaRouter = trcpRouter({
 			// Stick this consumer in our list of consumers to keep track of,
 			// and create a data structure to track the client-relevant state
 			// of this consumer
-			_room.consumers[consumer.id] = consumer;
-			_room.sessions[ctx.peer.id].consumerLayers[consumer.id] = {
+			_consumers[consumer.id] = consumer;
+			_sessions[ctx.peer.id].consumerLayers[consumer.id] = {
 				currentLayer: null,
 				clientSelectedLayer: null,
 			};
@@ -309,8 +279,8 @@ export const mediaRouter = trcpRouter({
 			// Update above data structure when layer changes.
 			consumer.on("layerschange", (layers) => {
 				console.log(`[MS] Consumer layers changed ${mediaPeerId}->${ctx.peer.id}`, mediaTag, layers);
-				if (_room.sessions[ctx.peer.id] && _room.sessions[ctx.peer.id].consumerLayers[consumer.id]) {
-					_room.sessions[ctx.peer.id].consumerLayers[consumer.id].currentLayer = layers && layers.spatialLayer;
+				if (_sessions[ctx.peer.id] && _sessions[ctx.peer.id].consumerLayers[consumer.id]) {
+					_sessions[ctx.peer.id].consumerLayers[consumer.id].currentLayer = layers && layers.spatialLayer;
 				}
 			});
 
@@ -326,7 +296,7 @@ export const mediaRouter = trcpRouter({
 	// Pause Consumer
 	// Called to pause receiving a track for a specific client
 	pauseConsumer: mediaSessionProcedure.input(z.object({ consumerId: z.string() })).mutation(async ({ input: { consumerId } }) => {
-		const consumer = _room.consumers[consumerId];
+		const consumer = _consumers[consumerId];
 
 		if (!consumer) {
 			throw new TRPCError({ code: "NOT_FOUND", message: `server-side consumer ${consumerId} not found` });
@@ -341,7 +311,7 @@ export const mediaRouter = trcpRouter({
 	// Resume Consumer
 	// Called to resume receiving a track for a specific client
 	resumeConsumer: mediaSessionProcedure.input(z.object({ consumerId: z.string() })).mutation(async ({ input: { consumerId } }) => {
-		const consumer = _room.consumers[consumerId];
+		const consumer = _consumers[consumerId];
 
 		if (!consumer) {
 			throw new TRPCError({ code: "NOT_FOUND", message: `server-side consumer ${consumerId} not found` });
@@ -357,7 +327,7 @@ export const mediaRouter = trcpRouter({
 	// Called to stop receiving a track for a specific client. close and
 	// clean up consumer object
 	closeConsumer: mediaSessionProcedure.input(z.object({ consumerId: z.string() })).mutation(async ({ input: { consumerId } }) => {
-		const consumer = _room.consumers[consumerId];
+		const consumer = _consumers[consumerId];
 
 		if (!consumer) {
 			throw new TRPCError({ code: "NOT_FOUND", message: `server-side consumer ${consumerId} not found` });
@@ -373,7 +343,7 @@ export const mediaRouter = trcpRouter({
 	consumerSetLayers: mediaSessionProcedure
 		.input(z.object({ consumerId: z.string(), spatialLayer: z.any() }))
 		.mutation(async ({ input: { consumerId, spatialLayer } }) => {
-			const consumer = _room.consumers[consumerId];
+			const consumer = _consumers[consumerId];
 
 			if (!consumer) {
 				throw new TRPCError({ code: "NOT_FOUND", message: `server-side consumer ${consumerId} not found` });
@@ -388,7 +358,7 @@ export const mediaRouter = trcpRouter({
 	// Pause Producer
 	// Called to stop sending a track from a specific client
 	pauseProducer: mediaSessionProcedure.input(z.object({ producerId: z.string() })).mutation(async ({ ctx, input: { producerId } }) => {
-		const producer = _room.producers[producerId];
+		const producer = _producers[producerId];
 
 		if (!producer) {
 			throw new TRPCError({ code: "NOT_FOUND", message: `server-side producer ${producerId} not found` });
@@ -398,14 +368,14 @@ export const mediaRouter = trcpRouter({
 
 		await producer.pause();
 
-		_room.sessions[ctx.peer.id].media[producer.appData.mediaTag].paused = true;
+		_sessions[ctx.peer.id].media[producer.appData.mediaTag].paused = true;
 
 		return { paused: true };
 	}),
 	// Resume Producer
 	// Called to resume sending a track from a specific client
 	resumeProducer: mediaSessionProcedure.input(z.object({ producerId: z.string() })).mutation(async ({ ctx, input: { producerId } }) => {
-		const producer = _room.producers[producerId];
+		const producer = _producers[producerId];
 
 		if (!producer) {
 			throw new TRPCError({ code: "NOT_FOUND", message: `server-side producer ${producerId} not found` });
@@ -415,14 +385,14 @@ export const mediaRouter = trcpRouter({
 
 		producer.resume();
 
-		_room.sessions[ctx.peer.id].media[producer.appData.mediaTag].paused = false;
+		_sessions[ctx.peer.id].media[producer.appData.mediaTag].paused = false;
 
 		return { resumed: true };
 	}),
 	// Close Producer
 	// Called by a client that is no longer sending a specific track
 	closeProducer: mediaSessionProcedure.input(z.object({ producerId: z.string() })).mutation(async ({ ctx, input: { producerId } }) => {
-		const producer = _room.producers[producerId];
+		const producer = _producers[producerId];
 
 		if (!producer) {
 			throw new TRPCError({ code: "NOT_FOUND", message: `server-side producer ${producerId} not found` });
@@ -441,7 +411,7 @@ export type RoomRouter = typeof mediaRouter;
 /** Intervalled function run to periodically clean up peers that disconnected without sending us a leaving message */
 async function removeStalePeers() {
 	const now = Date.now();
-	for (const [id, peer] of Object.entries(_room.sessions)) {
+	for (const [id, peer] of Object.entries(_sessions)) {
 		if (now - peer.lastSeenTs > 4200) {
 			console.log(`[Media] Removing stale peer ${id}`);
 			closeMediaPeer(id);
@@ -452,16 +422,16 @@ setInterval(removeStalePeers, 2000);
 
 /** Intervalled function to update video statistics that we're sending to peers */
 async function updatePeerStats() {
-	for (const producer of Object.values(_room.producers)) {
+	for (const producer of Object.values(_producers)) {
 		if (producer.kind !== "video") {
 			continue;
 		}
 		try {
 			const stats = await producer.getStats();
 			const peerId = producer.appData.peerId;
-			_room.sessions[peerId].stats[producer.id] = [];
+			_sessions[peerId].stats[producer.id] = [];
 			stats.forEach((s) => {
-				_room.sessions[peerId].stats[producer.id].push({
+				_sessions[peerId].stats[producer.id].push({
 					bitrate: s.bitrate,
 					fractionLost: s.fractionLost,
 					jitter: s.jitter,
@@ -474,14 +444,14 @@ async function updatePeerStats() {
 		}
 	}
 
-	for (const consumer of Object.values(_room.consumers)) {
+	for (const consumer of Object.values(_consumers)) {
 		try {
 			const stats = Array.from((await consumer.getStats()).values()).find((s) => s.type === "outbound-rtp");
 			const peerId = consumer.appData.peerId;
-			if (!stats || !_room.sessions[peerId]) {
+			if (!stats || !_sessions[peerId]) {
 				continue;
 			}
-			_room.sessions[peerId].stats[consumer.id] = {
+			_sessions[peerId].stats[consumer.id] = {
 				bitrate: stats.bitrate,
 				fractionLost: stats.fractionLost,
 				score: stats.score,
@@ -517,9 +487,10 @@ observeActiveSpeakers();
 
 /** Utility function for closing the session and transports related to a given peer */
 export async function closeMediaPeer(peerId: string) {
-	console.log("[MS] closing peer", peerId);
-	delete _room.sessions[peerId];
-	for (const transport of Object.values(_room.transports)) {
+	console.log("[MS] Closing peer", peerId);
+	_mediaEventsEmitter.emit("sessionRemoved", _sessions[peerId]);
+	delete _sessions[peerId];
+	for (const transport of Object.values(_transports)) {
 		if (transport.appData.peerId === peerId) {
 			await _closeTransport(transport);
 		}
@@ -538,7 +509,7 @@ async function _closeTransport(transport: Transport) {
 
 		// so all we need to do, after we call transport.close(), is update
 		// our _room data structure
-		delete _room.transports[transport.id];
+		delete _transports[transport.id];
 	} catch (e) {
 		console.error(e);
 	}
@@ -551,11 +522,11 @@ async function _closeProducer(producer: Producer) {
 		producer.close();
 
 		// Remove this producer from our room.producers list
-		_room.producers = Object.fromEntries(Object.entries(_room.producers).filter(([, p]) => p.id !== producer.id));
+		delete _producers[producer.id];
 
 		// remove this track's info from our room...mediaTag bookkeeping
-		if (_room.sessions[producer.appData.peerId]) {
-			delete _room.sessions[producer.appData.peerId].media[producer.appData.mediaTag];
+		if (_sessions[producer.appData.peerId]) {
+			delete _sessions[producer.appData.peerId].media[producer.appData.mediaTag];
 		}
 	} catch (e) {
 		console.error(e);
@@ -567,12 +538,12 @@ async function _closeConsumer(consumer: Consumer) {
 	console.log("[MS] Closing consumer", consumer.id, consumer.appData);
 	consumer.close();
 
-	// Remove this consumer from our _room.consumers list
-	_room.consumers = Object.fromEntries(Object.entries(_room.consumers).filter(([, c]) => c.id !== consumer.id));
+	// Remove this consumer from our _consumers list
+	delete _consumers[consumer.id];
 
-	// Remove layer info from from our _room...consumerLayers bookkeeping
-	if (_room.sessions[consumer.appData.peerId]) {
-		delete _room.sessions[consumer.appData.peerId].consumerLayers[consumer.id];
+	// Remove layer info from from our _..consumerLayers bookkeeping
+	if (_sessions[consumer.appData.peerId]) {
+		delete _sessions[consumer.appData.peerId].consumerLayers[consumer.id];
 	}
 }
 

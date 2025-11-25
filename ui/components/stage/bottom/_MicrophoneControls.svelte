@@ -2,7 +2,7 @@
 	import { blur } from "svelte/transition";
 	import IconMicOff from "~/components/icons/Icon-mic-off.svelte";
 	import IconMic from "~/components/icons/Icon-mic.svelte";
-	import { peerStore, audioProducer, micPausedStore, localMediaStream, enableAudio, toggleAudioPaused } from "~/api/media";
+	import { currentPeerStore, audioProducer, micPausedStore, localMediaStream, enableAudio, toggleAudioPaused } from "~/api";
 	import { showSceneSettingsStore } from "~/api";
 
 	$: isOn = !!$audioProducer && !$micPausedStore;
@@ -28,7 +28,7 @@
 	}
 </script>
 
-{#if $peerStore.actor || $peerStore.manager || $showSceneSettingsStore.visitorAudioEnabled}
+{#if $currentPeerStore.actor || $currentPeerStore.manager || $showSceneSettingsStore.visitorAudioEnabled}
 	<button type="button" class="button is-small" transition:blur on:click={handleOnClick}>
 		<span class="icon is-size-4" class:has-text-danger={hasError} class:has-text-success={isOn}
 			>{#if isOn}

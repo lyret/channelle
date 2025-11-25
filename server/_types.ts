@@ -65,8 +65,8 @@ export type EffectData = { type: "flowers" | "applause" | "tomato"; number: numb
 
 export type { AppRouter } from "./_router";
 export type { MediaTag, TransportDirection, CustomAppData } from "./lib/mediaSoup";
-export type { Peer, Session } from "./lib/trpc";
-export type { MessageAttributes, ShowAttributes } from "./models";
+export type { MediaSession } from "./lib/trpc";
+export type { MessageAttributes, ShowAttributes, PeerAttributes } from "./models";
 export type {
 	CanLaunchResult,
 	LaunchResult,

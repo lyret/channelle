@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { sendPublicMessage, sendBackstageMessage, canSendBackstageStore } from "~/api/chat";
-	import { peerStore } from "~/api/media";
+	import { currentPeerStore } from "~/api";
 	import PicolArrowFullLeft from "../picol/icons/Picol-arrow-full-left.svelte";
 	import PicolArrowFullUp from "../picol/icons/Picol-arrow-full-up.svelte";
 
@@ -31,7 +31,7 @@
 		loading = true;
 
 		try {
-			const peerName = $peerStore?.name || "Anonym";
+			const peerName = $currentPeerStore?.name || "Anonym";
 
 			if (makeBackstage) {
 				await sendBackstageMessage(inputValue.trim(), peerName);

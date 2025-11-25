@@ -2,7 +2,7 @@
 	import { onMount, onDestroy } from "svelte";
 	import { blur } from "svelte/transition";
 	import { messagesStore, canDeleteMessagesStore, deleteMessage } from "~/api/chat";
-	import { peerStore } from "~/api/media";
+	import { currentPeerStore } from "~/api";
 	import PicoBadgeMinus from "../picol/icons/Picol-badge-minus.svelte";
 
 	export let backstageOnly: boolean = false;
@@ -130,7 +130,7 @@
 				<div class="list-item" transition:blur|local>
 					<div class="list-item-content">
 						<div
-							class:has-text-right={message.peerId === $peerStore?.id}
+							class:has-text-right={message.peerId === $currentPeerStore?.id}
 							class="list-item-description is-family-title is-size-6"
 							class:has-text-link-light={message.backstage}
 							class:has-text-grey-light={!message.backstage}
@@ -141,7 +141,7 @@
 							{/if})
 						</div>
 						<div
-							class:is-underlined={message.peerId === $peerStore?.id}
+							class:is-underlined={message.peerId === $currentPeerStore?.id}
 							class="list-item-title"
 							class:has-text-link={message.backstage}
 							class:has-text-white={!message.backstage}

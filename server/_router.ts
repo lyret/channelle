@@ -7,9 +7,8 @@ import { chatRouter } from "./routers/chatRouter";
 import { effectsRouter } from "./routers/effectsRouter";
 import { showsRouter } from "./routers/showsRouter";
 import { backstageRouter } from "./routers/backstageRouter";
-import { authRouter } from "./routers/authRouter";
+import { authRouter, deauthenticate } from "./routers/authRouter";
 import { launcherRouter } from "./routers/launcherRouter";
-import { leave, userRouter } from "./routers/userRouter";
 
 /**
  * Creates and returns the application router
@@ -22,7 +21,6 @@ export async function createAppRouter() {
 	const routerConfig = {
 		development: developmentRouter,
 		backstage: backstageRouter,
-		users: userRouter,
 		auth: authRouter,
 		shows: showsRouter,
 		launchers: launcherRouter,
@@ -64,7 +62,7 @@ export async function createAppRouter() {
 			res.once("close", () => {
 				console.log("[TRPC] Peer Disconnected:", peerId);
 				closeMediaPeer(peerId);
-				leave(peerId);
+				deauthenticate(peerId);
 			});
 
 			return {

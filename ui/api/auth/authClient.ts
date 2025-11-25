@@ -28,6 +28,26 @@ function okAuthenticationData() {
 }
 
 /**
+ * Updates the name of a givenpeer in the room
+ */
+export async function updatePeerName(peerId: string, name: string) {
+	await authClient.update.mutate({
+		id: peerId,
+		name,
+	});
+}
+
+/**
+ * Updates multiple peer properties at once
+ */
+export async function updatePeerProperties(peerId: string, data: { actor?: boolean; manager?: boolean; banned?: boolean }) {
+	await authClient.update.mutate({
+		id: peerId,
+		...data,
+	});
+}
+
+/**
  * Authenticate with theater password
  */
 export async function authenticateTheater(password: string): Promise<boolean> {
@@ -81,7 +101,7 @@ export async function validateSessionWithServer(): Promise<boolean> {
 	try {
 		isAuthenticating.set(true);
 
-		const result = await authClient.validateSession.query();
+		const result = await authClient.validateAdminAuthentication.query();
 
 		if (result.valid) {
 			okAuthenticationData();

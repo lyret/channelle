@@ -1,6 +1,6 @@
 import type { BackstageConfiguration, EditableShowAttributes } from "../../types/serverSideTypes";
-import { writable, derived } from "svelte/store";
-import { backstageClient } from "../_trpcClient";
+import { writable, derived, type Readable } from "svelte/store";
+import { backstageClient, type RouterOutputTypes } from "../_trpcClient";
 
 /** In-memory local show id of any loaded configuration */
 let _localShowId: number = 0;
@@ -69,6 +69,15 @@ export const showMetadataStore = derived(_localConfigStore, ($config) => ({
 export const showScriptStore = derived(_localConfigStore, ($config) => ({
 	script: $config.script || null,
 }));
+
+/** Current show peers from the database */
+export const showPeersStore = derived<Readable<BackstageConfiguration>, RouterOutputTypes["backstage"]["peers"]>(
+	_localConfigStore,
+	($config, set) => {
+		backstageClient.peers.query({ showId: $config.showId || null }).then((peers) => set(peers));
+	},
+	{},
+);
 
 /** Loading state for backstage configuration sync operations */
 export const configurationIsLoading = writable<boolean>(false);

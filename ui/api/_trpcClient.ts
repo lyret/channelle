@@ -71,8 +71,5 @@ export const effectsClient = appClient.effects;
 /** Client for the Authentication API only */
 export const authClient = appClient.auth;
 
-/** Client for the Users API only */
-export const userClient = appClient.users;
-
 /** Client for the Launchers API only */
 export const launchersClient = appClient.launchers;

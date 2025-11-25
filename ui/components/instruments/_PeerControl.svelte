@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { clickOutside } from "~/directives";
-	import { updatePeerName, updatePeerProperties } from "~/api/media";
 	import IconAward from "../icons/Icon-award.svelte";
 	import IconBriefcase from "../icons/Icon-briefcase.svelte";
 	import IconCircle from "../icons/Icon-circle.svelte";
@@ -12,6 +11,7 @@
 	import IconUnlock from "../icons/Icon-unlock.svelte";
 	import IconVideo from "../icons/Icon-video.svelte";
 	import IconXCircle from "../icons/Icon-x-circle.svelte";
+	import { updatePeerName, updatePeerProperties } from "~/api";
 
 	export let participant: any;
 	export let online: boolean = false;

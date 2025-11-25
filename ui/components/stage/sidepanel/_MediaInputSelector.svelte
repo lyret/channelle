@@ -2,7 +2,7 @@
 	import IconMeh from "~/components/icons/Icon-meh.svelte";
 	import IconMic from "~/components/icons/Icon-mic.svelte";
 	import IconVideo from "~/components/icons/Icon-video.svelte";
-	import { peerStore, updatePeerName } from "~/api/media";
+	import { currentPeerStore, updatePeerName } from "~/api";
 
 	let isLoading = false;
 	let audioDevices: MediaDeviceInfo[] = [];
@@ -32,10 +32,10 @@
 	};
 
 	async function updateName() {
-		const currentName = $peerStore.name;
+		const currentName = $currentPeerStore.name;
 		const newName = window.prompt("Byt namn till...", currentName) || currentName;
 		if (newName && newName !== currentName) {
-			await updatePeerName($peerStore.id, newName);
+			await updatePeerName($currentPeerStore.id, newName);
 		}
 	}
 </script>
@@ -44,7 +44,7 @@
 <!-- CURRENT USER -->
 <button class="button is-fullwidth mb-4 is-rounded" on:click={updateName}>
 	<span class="icon"><IconMeh /></span>
-	<span>{$peerStore?.name} </span>
+	<span>{$currentPeerStore?.name} </span>
 </button>
 <p class="label">Välj din kamera- och mikrofon- ingång</p>
 <div class="control has-icons-left">

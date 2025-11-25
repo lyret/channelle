@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { persisted } from "svelte-persisted-store";
-	import { peerStore } from "~/api/media";
+	import { currentPeerStore } from "~/api";
 	import { showStageChatStore } from "~/stores/stage";
 	import ChatInput from "../../chat/ChatInput.svelte";
 	import ChatList from "../../chat/ChatList.svelte";
@@ -25,7 +25,7 @@
 <div class="instrument">
 	<ChatList backstageOnly={$backstageOnly} />
 
-	{#if $peerStore.actor || $peerStore.manager}
+	{#if $currentPeerStore.actor || $currentPeerStore.manager}
 		<div class="tab-container">
 			<div class="tabs is-fullwidth">
 				<ul>

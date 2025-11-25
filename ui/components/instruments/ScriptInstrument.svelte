@@ -9,7 +9,7 @@
 	import IconItalic from "../icons/Icon-italic.svelte";
 	import IconUnderline from "../icons/Icon-underline.svelte";
 	import IconList from "../icons/Icon-list.svelte";
-	import { isTheaterAuthenticated, peerStore } from "~/api";
+	import { isTheaterAuthenticated, currentPeerStore } from "~/api";
 
 	let element: HTMLElement;
 	let editor: Editor | null = null;
@@ -20,7 +20,7 @@
 	let isInitialized = false;
 	let isLoading = false;
 	$: hasChanges = isInitialized && (editor ? JSON.stringify(editor.getJSON()) !== JSON.stringify(initialContent) : false);
-	$: canEdit = $peerStore.manager || $isTheaterAuthenticated;
+	$: canEdit = $currentPeerStore.manager || $isTheaterAuthenticated;
 	$: canSave = hasChanges && !isLoading;
 
 	onMount(() => {

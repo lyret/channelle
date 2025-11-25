@@ -2,7 +2,7 @@
 	import { blur } from "svelte/transition";
 	import IconVideoOff from "~/components/picol/icons/Picol-video-remove.svelte";
 	import IconVideo from "~/components/picol/icons/Picol-video-run.svelte";
-	import { peerStore, videoProducer, camPausedStore, localMediaStream, enableVideo, toggleVideoPaused } from "~/api/media";
+	import { currentPeerStore, videoProducer, camPausedStore, localMediaStream, enableVideo, toggleVideoPaused } from "~/api";
 	import { showSceneSettingsStore } from "~/api";
 
 	$: isOn = !!$videoProducer && !$camPausedStore;
@@ -28,7 +28,7 @@
 	}
 </script>
 
-{#if $peerStore.actor || $peerStore.manager || $showSceneSettingsStore.visitorVideoEnabled}
+{#if $currentPeerStore.actor || $currentPeerStore.manager || $showSceneSettingsStore.visitorVideoEnabled}
 	<button type="button" class="button is-small" transition:blur on:click={handleClick}>
 		<span class="icon is-size-4" class:has-text-danger={hasError} class:has-text-success={isOn}
 			>{#if isOn}<IconVideo />{:else}<IconVideoOff />{/if}</span

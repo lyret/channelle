@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher } from "svelte";
 	import { get } from "svelte/store";
-	import { peerStore, updatePeerName } from "~/api/media";
+	import { updatePeerName } from "~/api/auth";
 
 	const dispatch = createEventDispatcher<{ submit: void }>();
 

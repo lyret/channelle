@@ -1,13 +1,13 @@
-import type { BackstageConfiguration, EditableShowAttributes, Scene } from "../_types";
+import type { BackstageConfiguration, EditableShowAttributes, PeerAttributes, Scene } from "../_types";
 import Emittery from "emittery";
 import { TRPCError } from "@trpc/server";
 import { SceneSetting } from "../_types";
 import { Show } from "../models/Show";
 import { z } from "zod";
 import { trpc } from "../lib";
-import { authenticateAdminMiddleware } from "./authRouter";
+import { withAuthenticatedAdminMiddleware, withAuthenticatedPeerMiddleware } from "./authRouter";
 import { getGlobalBackstageConfiguration, saveBackstageConfiguration, toBackstageConfiguration } from "../_globalBackstageData";
-import { retrivePeerDetailsMiddleware } from "./userRouter";
+import { Peer } from "../models/Peer";
 
 // Internal event emitter for message updates
 const _updateEmitter = new Emittery<{
@@ -42,7 +42,7 @@ export const withConfigProcedure = procedure
 	.input(
 		z
 			.object({
-				showId: z.number().int().gte(0).optional(),
+				showId: z.number().int().gte(0).nullable().optional(),
 			})
 			.optional(),
 	)
@@ -84,8 +84,8 @@ export const withConfigProcedure = procedure
  * Procedure that validates that the selected show can be edited
  */
 const editConfigProcedure = withConfigProcedure
-	.use(retrivePeerDetailsMiddleware)
-	.use(authenticateAdminMiddleware)
+	.use(withAuthenticatedPeerMiddleware)
+	.use(withAuthenticatedAdminMiddleware)
 	.use(async ({ ctx, next }) => {
 		try {
 			if (!ctx.config.isEditable) {
@@ -136,6 +136,16 @@ export const backstageRouter = trcpRouter({
 				config: update,
 			};
 		}
+	}),
+	/** Returns all peers connected to the selected show id (global in stage mode) */
+	peers: withConfigProcedure.query(async function ({ ctx: { config } }): Promise<Record<string, PeerAttributes>> {
+		const peers = await Peer.findAll({
+			// where: {
+			// 	showId: config.showId || 0,
+			// },
+		});
+
+		return Object.fromEntries(peers.map((peer) => [peer.id, peer]));
 	}),
 
 	/** Updates one or more properties of the configuration */

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from "svelte";
-	import { peerStore } from "~/api/media";
+	import { currentPeerStore } from "~/api";
 
 	const dispatch = createEventDispatcher<{ submit: void }>();
 
@@ -10,7 +10,7 @@
 	}
 </script>
 
-<h1 class="title is-family-default">Välkommen tillbaka {$peerStore.name}!</h1>
+<h1 class="title is-family-default">Välkommen tillbaka {$currentPeerStore.name}!</h1>
 <button class="button is-rounded is-primary mt-4 is-centered" on:click={onClick}>Anslut</button>
 
 <style lang="scss">

@@ -1,12 +1,9 @@
 import "@babel/polyfill";
-import { enableMediaSoupDebugging, enableHotReloadingOnRebuilds } from "./api/development";
+import { enableHotReloadingOnRebuilds } from "./api/development";
 import { subscribeToBackstageConfigurationChanges } from "./api/backstage";
 import { validateSessionWithServer } from "./api/auth";
 
 import Preparation from "~/components/pages/Preparation.svelte";
-
-// Set correct debug output level for MediaSoup
-enableMediaSoupDebugging();
 
 // Enables hot reloading of the debug app when developing
 enableHotReloadingOnRebuilds();
@@ -14,7 +11,7 @@ enableHotReloadingOnRebuilds();
 // Enable configuration synchronization for real-time updates when changes are made
 subscribeToBackstageConfigurationChanges();
 
-// Validate authenticationsession with the server
+// Validate authentication sessions with the server
 validateSessionWithServer();
 
 // Mount the Svelte interface

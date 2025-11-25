@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { blur } from "svelte/transition";
-	import { onMount } from "svelte";
 
-	import { hasJoinedRoomStore, isBannedFromTheRoom, joinMediaRoom, peerStore } from "~/api/media";
+	import { hasJoinedRoomStore, isBannedFromTheRoom, currentPeerStore } from "~/api";
 	import { showMetadataStore, showSceneSettingsStore } from "~/api/backstage";
 
 	import AuthenticateCurtainMessage from "~/components/curtains/AuthenticateCurtainMessage.svelte";
@@ -17,18 +16,6 @@
 
 	import { isStagePasswordOkStore } from "~/stores/stage";
 
-	// Delays the rendering of any content to avoid the "pop-in" effect
-	// on initial rendering due to initial determination of state
-	let determiningState = true;
-	onMount(() => {
-		// Joins the media room
-		joinMediaRoom();
-
-		setTimeout(() => {
-			determiningState = false;
-		}, 400);
-	});
-
 	/** Being a manager is neccessary to access this page */
 	export let lockedToManager = false;
 
@@ -42,14 +29,12 @@
 	export let hasInteractedWithTheDocument = !CONFIG.runtime.production;
 
 	// Determine what should be rendered
-	$: hasEnteredName = $hasJoinedRoomStore && $peerStore.name;
-	$: needsToBeManager = lockedToManager && !($hasJoinedRoomStore && $peerStore.manager);
+	$: hasEnteredName = $hasJoinedRoomStore && $currentPeerStore.name;
+	$: needsToBeManager = lockedToManager && !($hasJoinedRoomStore && $currentPeerStore.manager);
 	$: needsInviteKey = lockedToInviteKey && !$isStagePasswordOkStore;
-	$: renderMessages =
-		!determiningState &&
-		(!$hasJoinedRoomStore || !hasEnteredName || !hasInteractedWithTheDocument || $isBannedFromTheRoom || needsInviteKey || needsToBeManager);
-	$: renderContent = !determiningState && !renderMessages;
-	$: renderCurtains = determiningState || renderMessages || (curtainsAreEnabled && $showSceneSettingsStore.curtains);
+	$: renderMessages = !$hasJoinedRoomStore || !hasEnteredName || !hasInteractedWithTheDocument || $isBannedFromTheRoom || needsInviteKey || needsToBeManager;
+	$: renderContent = !renderMessages;
+	$: renderCurtains = renderMessages || (curtainsAreEnabled && $showSceneSettingsStore.curtains);
 </script>
 
 <!-- Content -->

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { onMount, onDestroy } from "svelte";
 	import { blur } from "svelte/transition";
+	import * as authClient from "~/api/auth/authClient";
 	import * as mediaClient from "~/api/media/mediaClient";
 	import { wsPeerIdStore } from "~/api/_trpcClient";
 	import { SessionStats, PeerMediaStatus, ConnectionStatus } from "~/components/debug";
@@ -10,7 +10,7 @@
 		localMediaStream,
 		consumersStore,
 		peersStore,
-		peerStore,
+		currentPeerStore,
 		sessionsStore,
 		hasJoinedRoomStore,
 		hasLocalCamStore,
@@ -21,7 +21,7 @@
 		currentActiveSpeakerStore,
 		camPausedStore,
 		micPausedStore,
-	} from "~/api/media";
+	} from "~/api";
 
 	// Local state for UI
 
@@ -35,7 +35,7 @@
 	// Reactive statements for essential functionality
 	$: myPeerId = $wsPeerIdStore;
 	$: joined = $hasJoinedRoomStore;
-	$: peer = $peerStore;
+	$: peer = $currentPeerStore;
 	$: hasLocalCam = $hasLocalCamStore;
 	$: hasSendTransport = $hasSendTransportStore;
 	$: hasCamVideo = !!$videoProducer;
@@ -109,14 +109,6 @@
 		});
 	}
 
-	onMount(async () => {
-		await mediaClient.joinMediaRoom();
-	});
-
-	onDestroy(() => {
-		mediaClient.leaveMediaRoom();
-	});
-
 	function getConsumerKey(consumer: any): string {
 		return `${consumer.appData.peerId}-${consumer.appData.mediaTag}`;
 	}
@@ -131,7 +123,7 @@
 
 	async function updatePeerName() {
 		if (targetPeerId && peerNameInput.trim()) {
-			await mediaClient.updatePeerName(targetPeerId, peerNameInput.trim());
+			await authClient.updatePeerName(targetPeerId, peerNameInput.trim());
 			peerNameInput = "";
 			targetPeerId = "";
 		}
@@ -393,10 +385,6 @@
 		<!-- Room Controls -->
 		<div class="field">
 			<label class="label is-small">Room Connection:</label>
-			<div class="buttons are-small">
-				<button class="button is-primary" on:click={mediaClient.joinMediaRoom} disabled={joined}>Join Room</button>
-				<button class="button is-danger" on:click={mediaClient.leaveMediaRoom} disabled={!joined}>Leave Room</button>
-			</div>
 		</div>
 
 		<!-- Media Stream Controls -->

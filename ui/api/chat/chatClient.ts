@@ -1,6 +1,6 @@
 import { writable, derived } from "svelte/store";
 import { chatClient } from "../_trpcClient";
-import { peerStore } from "../media";
+import { currentPeerStore } from "../auth";
 import type { MessageAttributes } from "../../types/serverSideTypes";
 
 // ============================================================================
@@ -144,7 +144,7 @@ export const messagesStore = createMessageStore("all");
  * Messages filtered based on user permissions
  * Non-actors/managers only see public messages
  */
-export const visibleMessagesStore = derived([messagesStore, peerStore], ([$messages, $peer]) => {
+export const visibleMessagesStore = derived([messagesStore, currentPeerStore], ([$messages, $peer]) => {
 	// If user is actor or manager, show all messages
 	if ($peer?.actor || $peer?.manager) {
 		return $messages;
@@ -156,12 +156,12 @@ export const visibleMessagesStore = derived([messagesStore, peerStore], ([$messa
 /**
  * Indicates that the user can send backstage messages
  */
-export const canSendBackstageStore = derived([peerStore], ([$peer]) => $peer?.actor || $peer?.manager);
+export const canSendBackstageStore = derived([currentPeerStore], ([$peer]) => $peer?.actor || $peer?.manager);
 
 /**
  * Indicates that the user can delete messages
  */
-export const canDeleteMessagesStore = derived([peerStore], ([$peer]) => $peer?.manager === true);
+export const canDeleteMessagesStore = derived([currentPeerStore], ([$peer]) => $peer?.manager === true);
 
 // ============================================================================
 // PUBLIC API FUNCTIONS

@@ -23,7 +23,7 @@
 	import IconMinimize from "../../icons/Icon-minimize.svelte";
 	import PicolArrowLeft from "../../picol/icons/Picol-arrow-sans-left.svelte";
 
-	import { peerStore } from "~/api/media";
+	import { currentPeerStore } from "~/api";
 	import { focusedInstrument } from "~/stores/instruments";
 	import { windowSizeStore, windowFullscreenStore } from "~/stores/device";
 
@@ -37,7 +37,7 @@
 <MediaInputSelector />
 
 <!-- Manager Contents -->
-{#if $peerStore.manager || CONFIG.runtime.debug}
+{#if $currentPeerStore.manager || CONFIG.runtime.debug}
 	{#if $focusedInstrument}
 		<button class="button is-fullwidth mb-4 is-small close-button" on:click={() => focusedInstrument.set(undefined)}>
 			<span class="icon is-size-5"><PicolArrowLeft /></span>
@@ -60,7 +60,7 @@
 		</div>
 	{:else}
 		<div class="select-view mb-4" in:blur={{ duration: 100 }}>
-			{#if $peerStore.manager}
+			{#if $currentPeerStore.manager}
 				<div class="mb-4">
 					<Accordion title="Snabba sceninställningar" isOpen={false}>
 						<ForcedSettingsContent />

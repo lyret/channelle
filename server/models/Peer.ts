@@ -6,7 +6,6 @@ export class Peer extends Model {
 	declare id: string;
 	declare joinTs: number;
 	declare lastSeenTs: number;
-	declare online: boolean;
 	declare name: string;
 	declare actor: boolean;
 	declare manager: boolean;
@@ -14,6 +13,7 @@ export class Peer extends Model {
 	declare audioMuted: boolean;
 	declare videoMuted: boolean;
 	declare showId: number | null;
+
 	declare createdAt: Date;
 	declare updatedAt: Date;
 }
@@ -36,11 +36,6 @@ export function initPeer(sequelize: Sequelize) {
 				type: DataTypes.BIGINT,
 				allowNull: false,
 				defaultValue: () => Date.now(),
-			},
-			online: {
-				type: DataTypes.BOOLEAN,
-				defaultValue: false,
-				allowNull: false,
 			},
 			name: {
 				type: DataTypes.STRING,
