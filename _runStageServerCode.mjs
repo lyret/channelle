@@ -41,12 +41,15 @@ export async function runStageServerCode(CONFIG) {
 			}
 
 			// Create subprocess arguments
-			const args = [Path.resolve(process.cwd(), CONFIG.build.serverOutput + "/index.mjs")];
+			const args = [];
 
 			// Enable debugging arguments
 			if (CONFIG.runtime.debug) {
 				args.push("--enable-source-maps");
 			}
+
+			// Add the script path
+			args.push(Path.resolve(process.cwd(), CONFIG.build.serverOutput + "/index.mjs"));
 
 			// Spawn the stage-server
 			RUNNING_STAGE_SERVER = ChildProcess.spawn("node", args);

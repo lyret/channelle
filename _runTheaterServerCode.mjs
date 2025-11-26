@@ -38,12 +38,15 @@ export async function runTheaterServerCode(CONFIG) {
 			console.log("\n🎭", Chalk.white.bgMagenta("[THEATER-SERVER]"), Chalk.bold("Launching\n"));
 
 			// Create subprocess arguments
-			const args = [Path.resolve(process.cwd(), CONFIG.build.serverOutput + "/index.mjs")];
+			const args = [];
 
 			// Enable debugging arguments
 			if (CONFIG.runtime.debug) {
 				args.push("--enable-source-maps");
 			}
+
+			// Add the script path
+			args.push(Path.resolve(process.cwd(), CONFIG.build.serverOutput + "/index.mjs"));
 
 			// Spawn the theater-server process
 			RUNNING_THEATER_SERVER = ChildProcess.spawn("node", args);

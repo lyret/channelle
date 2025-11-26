@@ -113,11 +113,11 @@ export async function createConfiguration() {
 	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Production Mode", production);
 
 	// If VERBOSE is enabled more detailed console outputs will be given, for debugging purposes
-	const verbose = cli.verbose !== undefined ? cli.production : env.VERBOSE && env.VERBOSE != "false";
+	const verbose = cli.verbose !== undefined ? cli.verbose : env.VERBOSE === "true" || false;
 	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Verbose Output", verbose);
 
 	// If DEBUG is enabled the nodeJS application will be launched with support for an external debugger
-	const debug = cli.debug !== undefined ? cli.debug : env.DEBUG != "false" || false;
+	const debug = cli.debug !== undefined ? cli.debug : env.DEBUG === "true" || false;
 	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Debug", debug);
 
 	// The PORT option sets the network interface port for the server to bind to.

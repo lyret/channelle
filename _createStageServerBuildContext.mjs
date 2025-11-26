@@ -14,7 +14,7 @@ export async function createStageServerBuildContext(CONFIG, callback) {
 		write: true,
 		minify: CONFIG.runtime.production,
 		metafile: true,
-		sourcemap: CONFIG.runtime.debug,
+		sourcemap: CONFIG.runtime.debug ? "inline" : false,
 		format: "esm",
 		platform: "node",
 		packages: "external",
