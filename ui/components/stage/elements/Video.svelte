@@ -89,9 +89,6 @@
 	</div>
 {:else if stream}
 	<div class="window">
-		<h1 class="title has-text-white">
-			{peer?.name}
-		</h1>
 		<video use:srcObject={stream} controls={false} autoplay={true} playsinline={true} muted={isLocalPeer || !streamHasAudio}></video>
 		{#if $debugModeStore}
 			<DebugPanel {peerId} compact={true} />
@@ -105,7 +102,7 @@
 {:else}
 	<div class="window text-window">
 		<h1 class="title has-text-white">
-			{peer?.name || "Waiting..."}
+			{peer?.name}
 		</h1>
 		{#if $debugModeStore}
 			<DebugPanel {peerId} compact={true} />

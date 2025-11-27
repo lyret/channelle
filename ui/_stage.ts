@@ -16,12 +16,14 @@ authenticate();
 subscribeToBackstageConfigurationChanges();
 
 // Enable media session synchronization for real-time multimedia communication
-participateInTheMediaRoom().then(() => {
-	// Mount the Svelte interface after the media room is ready
-	new Stage({
-		target: document.body,
-		props: {},
+participateInTheMediaRoom()
+	.then(() => {
+		// Mount the Svelte interface after the media room is ready
+		new Stage({
+			target: document.body,
+			props: {},
+		});
 	})
-}).catch((error : any) => {
-	console.error("Error before mounting the page component:", error);
-});
+	.catch((error: any) => {
+		console.error("Error before mounting the page component:", error);
+	});

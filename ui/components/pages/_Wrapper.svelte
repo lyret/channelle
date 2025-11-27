@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { blur } from "svelte/transition";
 
-	import { hasAutenticated, isBannedFromTheRoom, currentPeerStore } from "~/api";
+	import { hasAutenticated, currentPeerIsBannedStore, currentPeerStore } from "~/api";
 	import { showMetadataStore, showSceneSettingsStore } from "~/api/backstage";
 
 	import AuthenticateCurtainMessage from "~/components/curtains/AuthenticateCurtainMessage.svelte";
@@ -32,7 +32,8 @@
 	$: hasEnteredName = $hasAutenticated && $currentPeerStore.name;
 	$: needsToBeManager = lockedToManager && !($hasAutenticated && $currentPeerStore.manager);
 	$: needsInviteKey = lockedToInviteKey && !$isStagePasswordOkStore;
-	$: renderMessages = !$hasAutenticated || !hasEnteredName || !hasInteractedWithTheDocument || $isBannedFromTheRoom || needsInviteKey || needsToBeManager;
+	$: renderMessages =
+		!$hasAutenticated || !hasEnteredName || !hasInteractedWithTheDocument || $currentPeerIsBannedStore || needsInviteKey || needsToBeManager;
 	$: renderContent = !renderMessages;
 	$: renderCurtains = renderMessages || (curtainsAreEnabled && $showSceneSettingsStore.curtains);
 </script>
@@ -41,7 +42,6 @@
 {#if renderContent && $$slots.default}
 	<slot></slot>
 {/if}
-
 
 <!-- Curtains -->
 {#if renderCurtains}
@@ -54,7 +54,7 @@
 		<div class="menu" in:blur={{ duration: 1000 }} out:blur={{ duration: 500 }}>
 			<img class="logo" src={logoSrc} alt="Channelle" />
 			{#if $showMetadataStore.name}<h1 class="title is-family-title">{$showMetadataStore.name}</h1>{/if}
-			{#if $isBannedFromTheRoom}
+			{#if $currentPeerIsBannedStore}
 				<BlockedCurtainMessage />
 			{:else if $hasAutenticated && !hasEnteredName}
 				<AuthenticateCurtainMessage on:submit={() => (hasInteractedWithTheDocument = true)} />

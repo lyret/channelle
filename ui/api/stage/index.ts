@@ -66,7 +66,7 @@ export {
 // MEDIA ROOM PARTICIPATION
 // ============================================================================
 
-export { participateInTheMediaRoom, leaveMediaRoom, getMediaRoomStatus, isParticipating } from "./mediaRoom";
+export { leaveMediaRoom, getMediaRoomStatus, isParticipating } from "./mediaRoom";
 
 // ============================================================================
 // LOCAL MEDIA CONTROL

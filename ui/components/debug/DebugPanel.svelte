@@ -1,14 +1,7 @@
 <script lang="ts">
-	import {
-		wsPeerIdStore,
-		sessionsStore,
-		consumersStore,
-		currentActiveSpeakerStore,
-		localMediaStreamStore,
-		videoProducerStore,
-		audioProducerStore,
-	} from "~/api";
+	import { wsPeerIdStore } from "~/api";
 	import { showPeersStore } from "~/api/backstage";
+	import { sessionsStore as roomSessionsStore, activeSpeakerStore as roomActiveSpeakerStore, roomState } from "~/api/stageNew";
 	import PeerMediaStatus from "./PeerMediaStatus.svelte";
 	import ConnectionStatus from "./ConnectionStatus.svelte";
 
@@ -16,9 +9,9 @@
 	export let compact: boolean = true;
 
 	$: peer = $showPeersStore[peerId];
-	$: session = $sessionsStore[peerId];
-	$: consumers = $consumersStore;
-	$: activeSpeaker = $currentActiveSpeakerStore?.peerId;
+	$: session = $roomSessionsStore[peerId];
+	$: consumers = Array.from($roomState.consumers.values());
+	$: activeSpeaker = $roomActiveSpeakerStore?.peerId;
 	$: myPeerId = $wsPeerIdStore;
 	$: isLocalPeer = peerId === myPeerId;
 
@@ -27,10 +20,10 @@
 	$: hasAudioConsumer = consumers.find((c) => c.appData.peerId === peerId && c.appData.mediaTag === "mic-audio");
 
 	// For local peer, check producers instead of consumers
-	$: hasLocalVideo = ($localMediaStreamStore?.getVideoTracks().length || 0) > 0;
-	$: hasLocalAudio = ($localMediaStreamStore?.getAudioTracks().length || 0) > 0;
-	$: hasVideoProducer = !!$videoProducerStore;
-	$: hasAudioProducer = !!$audioProducerStore;
+	$: hasLocalVideo = ($roomState.localStream?.getVideoTracks().length || 0) > 0;
+	$: hasLocalAudio = ($roomState.localStream?.getAudioTracks().length || 0) > 0;
+	$: hasVideoProducer = $roomState.producers.has("cam-video");
+	$: hasAudioProducer = $roomState.producers.has("mic-audio");
 
 	function getConsumerStatus(consumer: any) {
 		if (!consumer) return "No Consumer";

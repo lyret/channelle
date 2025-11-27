@@ -12,7 +12,7 @@
 	import FloatingImage from "~/components/home/FloatingImage.svelte";
 	import IconArrowRight from "~/components/icons/Icon-arrow-right.svelte";
 	import PicolCancel from "~/components/picol/icons/Picol-cancel.svelte";
-	import { hasAutenticated, isBannedFromTheRoom, currentPeerStore } from "~/api";
+	import { hasAutenticated, currentPeerIsBannedStore, currentPeerStore } from "~/api";
 
 	onMount(() => {
 		document.querySelectorAll("a, .button").forEach((element) =>
@@ -63,11 +63,12 @@
 					<button
 						class="button main"
 						on:click={() => {
-							if (!$isBannedFromTheRoom) {
+							if (!$currentPeerIsBannedStore) {
 								window.location.href = "/stage";
 							}
 						}}
-						><span class="is-family-secondary" class:is-strikethrough={$isBannedFromTheRoom}>{hasEnteredName ? "GÅ TILLBAKA IN" : "BESÖK"}</span
+						><span class="is-family-secondary" class:is-strikethrough={$currentPeerIsBannedStore}
+							>{hasEnteredName ? "GÅ TILLBAKA IN" : "BESÖK"}</span
 						></button
 					>
 				{/if}

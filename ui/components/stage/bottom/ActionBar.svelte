@@ -2,48 +2,21 @@
 	import { blur } from "svelte/transition";
 	import CameraControls from "./_CameraControls.svelte";
 	import MicrophoneControls from "./_MicrophoneControls.svelte";
-	import { joinRoom, leaveRoom, peerStreamsStore, sessionsStore, isLoadingStore } from "~/api/stageNew";
-	import { wsPeerIdStore } from "~/api/_trpcClient";
-	import { currentPeerStore } from "~/api/auth";
+	import { isLoadingStore, sessionsStore, peerStreamsStore } from "~/api/stageNew";
 	import { showStageChatStore, showStageSettingsStore } from "~/stores/stage";
 	import IconSettings from "~/components/icons/Icon-settings.svelte";
 	import IconMessage from "~/components/icons/Icon-message-circle.svelte";
 	import IconUsers from "~/components/icons/Icon-users.svelte";
-	import IconLogOut from "~/components/icons/Icon-log-out.svelte";
 
 	// Get reactive values
-	$: myPeerId = $wsPeerIdStore;
+
 	$: sessions = $sessionsStore;
 	$: streams = $peerStreamsStore;
 	$: isLoading = $isLoadingStore;
-	$: currentPeer = $currentPeerStore;
 
 	// Count connected peers
 	$: connectedPeers = Object.keys(sessions).length;
 	$: activeStreams = Object.keys(streams).length;
-
-	// Room connection state
-	let isConnected = false;
-	let isConnecting = false;
-
-	async function handleRoomToggle() {
-		if (isConnecting) return;
-
-		try {
-			isConnecting = true;
-			if (isConnected) {
-				await leaveRoom();
-				isConnected = false;
-			} else {
-				await joinRoom();
-				isConnected = true;
-			}
-		} catch (error) {
-			console.error("[ActionBar] Error toggling room connection:", error);
-		} finally {
-			isConnecting = false;
-		}
-	}
 
 	function toggleChat() {
 		$showStageChatStore = !$showStageChatStore;
@@ -108,25 +81,6 @@
 					<span class="is-hidden-mobile">Settings</span>
 				</button>
 			</div>
-			{#if currentPeer?.manager}
-				<div class="level-item">
-					<button
-						type="button"
-						class="button is-small is-danger"
-						class:is-loading={isConnecting}
-						disabled={isConnecting}
-						on:click={handleRoomToggle}
-						title={isConnected ? "Leave room" : "Join room"}
-					>
-						<span class="icon is-size-4">
-							<IconLogOut />
-						</span>
-						<span class="is-hidden-mobile">
-							{isConnected ? "Leave" : "Join"}
-						</span>
-					</button>
-				</div>
-			{/if}
 		</div>
 	</div>
 </div>

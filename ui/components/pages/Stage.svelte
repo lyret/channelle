@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { blur, fly } from "svelte/transition";
-	import { onMount, onDestroy } from "svelte";
 
 	import Wrapper from "./_Wrapper.svelte";
 	import ActionBar from "~/components/stage/bottom/ActionBar.svelte";
@@ -11,8 +10,7 @@
 	import Video from "~/components/stage/elements/Video.svelte";
 
 	// Import new simplified API
-	import { joinRoom, leaveRoom, peerStreamsStore, sessionsStore, isLoadingStore, errorStore } from "~/api/stageNew";
-
+	import { isLoadingStore, errorStore } from "~/api";
 	import { calculatedStageLayoutStore } from "~/stores/stage";
 	import { showStageChatStore, showStageSettingsStore } from "~/stores/stage";
 
@@ -30,41 +28,9 @@
 			grid-template-rows: repeat(${height}, 1fr);
 		`;
 
-	// Auto-join room on mount
-	let hasJoined = false;
-
-	onMount(async () => {
-		try {
-			console.log("[StageNew] Auto-joining room on mount");
-			await joinRoom();
-			hasJoined = true;
-		} catch (error) {
-			console.error("[StageNew] Failed to auto-join room:", error);
-		}
-	});
-
-	// Clean up on destroy
-	onDestroy(async () => {
-		if (hasJoined) {
-			try {
-				console.log("[StageNew] Leaving room on destroy");
-				await leaveRoom();
-			} catch (error) {
-				console.error("[StageNew] Failed to leave room:", error);
-			}
-		}
-	});
-
 	// Get reactive values
 	$: isLoading = $isLoadingStore;
 	$: error = $errorStore;
-	$: sessions = $sessionsStore;
-	$: streams = $peerStreamsStore;
-
-	// Helper to check if we have media for a peer
-	function hasMediaForPeer(peerId: string): boolean {
-		return !!streams[peerId] || !!sessions[peerId];
-	}
 </script>
 
 <Wrapper lockedToInviteKey={true} curtainsAreEnabled={true}>
@@ -91,15 +57,9 @@
 				<div class={`windows window-cols-${width} window-rows-${height}`} style={windowsLayoutStyle}>
 					{#if $calculatedStageLayoutStore.isAutoLayout}
 						{#each $calculatedStageLayoutStore.videoLeftovers as cell (cell.peerId)}
-							{#if hasMediaForPeer(cell.peerId)}
-								<div class="window">
-									<Video peerId={cell.peerId} />
-								</div>
-							{:else}
-								<div class="window empty-window">
-									<span class="has-text-white-ter">Waiting for {cell.peerId.slice(0, 8)}...</span>
-								</div>
-							{/if}
+							<div class="window">
+								<Video peerId={cell.peerId} />
+							</div>
 						{/each}
 					{:else}
 						{#each matrix as row, rowIndex (rowIndex)}
@@ -109,15 +69,7 @@
 										<StageChat />
 									</div>
 								{:else if cell.type == "actor"}
-									{#if hasMediaForPeer(cell.peerId)}
-										<div class="window">
-											<Video peerId={cell.peerId} />
-										</div>
-									{:else}
-										<div class="window empty-window">
-											<span class="has-text-white-ter">Waiting for peer...</span>
-										</div>
-									{/if}
+									<Video peerId={cell.peerId} />
 								{:else}
 									<div class="window"></div>
 								{/if}
@@ -143,9 +95,7 @@
 		<!-- AUDIO ELEMENTS -->
 		<!-- Audio is now handled internally by AudioSimple component via peerStreamsStore -->
 		{#each $calculatedStageLayoutStore.audioLeftovers as cell (cell.peerId)}
-			{#if hasMediaForPeer(cell.peerId)}
-				<Audio peerId={cell.peerId} />
-			{/if}
+			<Audio peerId={cell.peerId} />
 		{/each}
 
 		<!-- FOOTER -->

@@ -9,8 +9,7 @@
 
 export {
 	// Room connection
-	joinRoom,
-	leaveRoom,
+	participateInTheMediaRoom,
 
 	// Local media control
 	enableCamera,
@@ -27,14 +26,13 @@ export {
 
 	// Utility functions
 	getMediaStream,
+
+	// Debug access to internal state
+	roomState,
 } from "./roomManager";
 
 // ============================================================================
 // RE-EXPORT TYPES
 // ============================================================================
 
-export type {
-	MediaTag,
-	ActiveSpeaker,
-	MediaSession,
-} from "~/types/serverSideTypes";
+export type { MediaTag, ActiveSpeaker, MediaSession } from "~/types/serverSideTypes";

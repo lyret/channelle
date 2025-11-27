@@ -1,28 +1,24 @@
 <script lang="ts">
 	import { blur } from "svelte/transition";
 
-	import * as stageClient from "~/api/stage";
 	import { updatePeer } from "~/api/peers";
-	import { wsPeerIdStore } from "~/api/_trpcClient";
+	import { wsPeerIdStore, stageClient as trpcStageClient } from "~/api/_trpcClient";
 	import { SessionStats, PeerMediaStatus, ConnectionStatus } from "~/components/debug";
 
-	// Import all the stores from roomClient
+	// Import from new roomManager API
 	import {
-		localMediaStreamStore,
-		consumersStore,
-		showPeersStore,
-		currentPeerStore,
-		sessionsStore,
-		hasAutenticated,
-		hasLocalCamStore,
-		hasSendTransportStore,
-		recvTransports,
-		videoProducerStore,
-		audioProducerStore,
-		currentActiveSpeakerStore,
-		camPausedStore,
-		micPausedStore,
-	} from "~/api";
+		participateInTheMediaRoom,
+		enableCamera,
+		disableCamera,
+		enableMicrophone,
+		disableMicrophone,
+		sessionsStore as roomSessionsStore,
+		activeSpeakerStore as roomActiveSpeakerStore,
+		roomState,
+	} from "~/api/stageNew";
+
+	// Import remaining stores from existing API
+	import { showPeersStore, currentPeerStore, hasAutenticated } from "~/api";
 
 	// Local state for UI
 
@@ -37,30 +33,30 @@
 	$: myPeerId = $wsPeerIdStore;
 	$: joined = $hasAutenticated;
 	$: peer = $currentPeerStore;
-	$: hasLocalCam = $hasLocalCamStore;
-	$: hasSendTransport = $hasSendTransportStore;
-	$: hasCamVideo = !!$videoProducerStore;
-	$: hasCamAudio = !!$audioProducerStore;
-	$: activeSpeaker = $currentActiveSpeakerStore?.peerId || "None";
-	$: consumers = $consumersStore;
+	$: hasLocalCam = !!$roomState.localStream;
+	$: hasSendTransport = !!$roomState.sendTransport;
+	$: hasCamVideo = $roomState.producers.has("cam-video");
+	$: hasCamAudio = $roomState.producers.has("mic-audio");
+	$: activeSpeaker = $roomActiveSpeakerStore?.peerId || "None";
+	$: consumers = Array.from($roomState.consumers.values());
 	$: peers = $showPeersStore;
-	$: sessions = $sessionsStore;
+	$: sessions = $roomSessionsStore;
 	$: peersList = Object.entries(peers).map(([peerId, info]) => ({
 		peerId,
 		...info,
-		hasTransport: $recvTransports[peerId] !== undefined,
+		hasTransport: $roomState.recvTransports.has(peerId),
 		session: sessions[peerId],
 	}));
 
-	// Paused states
-	$: camVideoPaused = $camPausedStore;
-	$: camAudioPaused = $micPausedStore;
+	// Paused states - derive from producers
+	$: camVideoPaused = $roomState.producers.get("cam-video")?.paused || false;
+	$: camAudioPaused = $roomState.producers.get("mic-audio")?.paused || false;
 
 	// Update video elements when streams change
-	$: if (localCamVideo && $localMediaStreamStore) {
-		localCamVideo.srcObject = $localMediaStreamStore;
+	$: if (localCamVideo && $roomState.localStream) {
+		localCamVideo.srcObject = $roomState.localStream;
 		localCamVideo.play().catch((e) => console.error("Error playing local camera:", e));
-	} else if (localCamVideo && !$localMediaStreamStore) {
+	} else if (localCamVideo && !$roomState.localStream) {
 		localCamVideo.srcObject = null;
 	}
 
@@ -241,9 +237,11 @@
 									class="button is-small is-warning"
 									on:click={async () => {
 										if (consumer.paused) {
-											await stageClient.resumeConsumer(consumer);
+											await consumer.resume();
+											await trpcStageClient.resumeConsumer.mutate({ consumerId: consumer.id });
 										} else {
-											await stageClient.pauseConsumer(consumer);
+											await consumer.pause();
+											await trpcStageClient.pauseConsumer.mutate({ consumerId: consumer.id });
 										}
 									}}
 								>
@@ -251,7 +249,10 @@
 								</button>
 								<button
 									class="button is-small is-danger"
-									on:click={() => stageClient.unsubscribeFromTrack(consumer.appData.peerId, consumer.appData.mediaTag)}
+									on:click={async () => {
+										consumer.close();
+										await trpcStageClient.closeConsumer.mutate({ consumerId: consumer.id });
+									}}
 								>
 									Close
 								</button>
@@ -288,9 +289,11 @@
 										class="button is-small is-warning"
 										on:click={async () => {
 											if (consumer.paused) {
-												await stageClient.resumeConsumer(consumer);
+												await consumer.resume();
+												await trpcStageClient.resumeConsumer.mutate({ consumerId: consumer.id });
 											} else {
-												await stageClient.pauseConsumer(consumer);
+												await consumer.pause();
+												await trpcStageClient.pauseConsumer.mutate({ consumerId: consumer.id });
 											}
 										}}
 									>
@@ -298,7 +301,10 @@
 									</button>
 									<button
 										class="button is-small is-danger"
-										on:click={() => stageClient.unsubscribeFromTrack(consumer.appData.peerId, consumer.appData.mediaTag)}
+										on:click={async () => {
+											consumer.close();
+											await trpcStageClient.closeConsumer.mutate({ consumerId: consumer.id });
+										}}
 									>
 										Close
 									</button>
@@ -392,11 +398,25 @@
 		<div class="field">
 			<span class="label is-small">Media Stream Controls</span>
 			<div class="buttons are-small">
-				<button class="button is-info" on:click={() => stageClient.startLocalMediaStream(false, true)} disabled={hasLocalCam}>Video Only</button>
-				<button class="button is-info" on:click={() => stageClient.startLocalMediaStream(true, false)} disabled={hasLocalCam}>Audio Only</button>
-				<button class="button is-info" on:click={() => stageClient.startLocalMediaStream(true, true)} disabled={hasLocalCam}>Audio + Video</button>
-				<button class="button is-success" on:click={stageClient.sendMediaStreams} disabled={!hasLocalCam || !joined}>Send Streams</button>
-				<button class="button is-danger" on:click={stageClient.closeMediaStreams} disabled={!hasSendTransport}>Stop Sending</button>
+				<button class="button is-info" on:click={() => enableCamera()} disabled={hasLocalCam}>Video Only</button>
+				<button class="button is-info" on:click={() => enableMicrophone()} disabled={hasLocalCam}>Audio Only</button>
+				<button
+					class="button is-info"
+					on:click={async () => {
+						await enableCamera();
+						await enableMicrophone();
+					}}
+					disabled={hasLocalCam}>Audio + Video</button
+				>
+				<button class="button is-success" on:click={() => participateInTheMediaRoom()} disabled={!hasLocalCam || !joined}>Join Room</button>
+				<button
+					class="button is-danger"
+					on:click={async () => {
+						await disableCamera();
+						await disableMicrophone();
+					}}
+					disabled={!hasSendTransport}>Stop Sending</button
+				>
 			</div>
 		</div>
 
@@ -404,10 +424,40 @@
 		<div class="field">
 			<span class="label is-small">Producer Controls</span>
 			<div class="buttons are-small">
-				<button class="button is-warning" on:click={() => stageClient.toggleVideoPaused()} disabled={!hasCamVideo}>
+				<button
+					class="button is-warning"
+					on:click={async () => {
+						const producer = $roomState.producers.get("cam-video");
+						if (producer) {
+							if (producer.paused) {
+								await producer.resume();
+								await trpcStageClient.resumeProducer.mutate({ producerId: producer.id });
+							} else {
+								await producer.pause();
+								await trpcStageClient.pauseProducer.mutate({ producerId: producer.id });
+							}
+						}
+					}}
+					disabled={!hasCamVideo}
+				>
 					{camVideoPaused ? "Resume Video Producer" : "Pause Video Producer"}
 				</button>
-				<button class="button is-warning" on:click={() => stageClient.toggleAudioPaused()} disabled={!hasCamAudio}>
+				<button
+					class="button is-warning"
+					on:click={async () => {
+						const producer = $roomState.producers.get("mic-audio");
+						if (producer) {
+							if (producer.paused) {
+								await producer.resume();
+								await trpcStageClient.resumeProducer.mutate({ producerId: producer.id });
+							} else {
+								await producer.pause();
+								await trpcStageClient.pauseProducer.mutate({ producerId: producer.id });
+							}
+						}
+					}}
+					disabled={!hasCamAudio}
+				>
 					{camAudioPaused ? "Resume Audio Producer" : "Pause Audio Producer"}
 				</button>
 			</div>
@@ -417,9 +467,40 @@
 		<div class="field">
 			<span class="label is-small">Consumer Controls</span>
 			<div class="buttons are-small">
-				<button class="button is-warning" on:click={stageClient.resumeAllConsumers} disabled={consumers.length === 0}>Resume All Consumers</button>
-				<button class="button is-warning" on:click={stageClient.pauseAllConsumers} disabled={consumers.length === 0}>Pause All Consumers</button>
-				<button class="button is-danger" on:click={stageClient.closeAllConsumers} disabled={consumers.length === 0}>Close All Consumers</button>
+				<button
+					class="button is-warning"
+					on:click={async () => {
+						for (const consumer of consumers) {
+							if (consumer.paused) {
+								await consumer.resume();
+								await trpcStageClient.resumeConsumer.mutate({ consumerId: consumer.id });
+							}
+						}
+					}}
+					disabled={consumers.length === 0}>Resume All Consumers</button
+				>
+				<button
+					class="button is-warning"
+					on:click={async () => {
+						for (const consumer of consumers) {
+							if (!consumer.paused) {
+								await consumer.pause();
+								await trpcStageClient.pauseConsumer.mutate({ consumerId: consumer.id });
+							}
+						}
+					}}
+					disabled={consumers.length === 0}>Pause All Consumers</button
+				>
+				<button
+					class="button is-danger"
+					on:click={async () => {
+						for (const consumer of consumers) {
+							consumer.close();
+							await trpcStageClient.closeConsumer.mutate({ consumerId: consumer.id });
+						}
+					}}
+					disabled={consumers.length === 0}>Close All Consumers</button
+				>
 			</div>
 		</div>
 	</div>

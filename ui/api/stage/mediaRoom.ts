@@ -15,42 +15,6 @@ import type { MediaTag } from "./types";
 let _previousSyncedSessions: Record<string, any> = {};
 
 /**
- * Join the media room and start syncing with the server
- * @returns Success or error result
- */
-export async function participateInTheMediaRoom(): Promise<{ success: true } | { success: false; error: string }> {
-	console.log("[Stage] Participating in media room");
-
-	try {
-		// Get router RTP capabilities from server
-		const { routerRtpCapabilities } = await stageClient.routerRtpCapabilities.query();
-		console.log("[Stage] Got router RTP capabilities");
-
-		// Create and initialize MediaSoup device
-		const state = getState();
-		let device = state.device;
-		if (!device) {
-			device = new MediaSoup.Device();
-			await device.load({ routerRtpCapabilities });
-			setDevice(device);
-			console.log("[Stage] MediaSoup device initialized");
-		}
-
-		// Start syncing with the media room
-		console.log("[Stage] Starting media room sync");
-		setLoading(true);
-		setError(null);
-
-		return { success: true };
-	} catch (error) {
-		console.error("[Stage] Failed to participate in media room:", error);
-		setLoading(false);
-		setError((error as Error).message);
-		return { success: false, error: (error as Error).message };
-	}
-}
-
-/**
  * Process sync data from the media room
  * @param data - Sync data from server
  */

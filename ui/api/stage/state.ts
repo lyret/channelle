@@ -87,7 +87,7 @@ export function getState(): MediaState {
  * Update state partially
  */
 export function updateState(updates: Partial<MediaState>): void {
-	mediaStateStore.update(state => ({ ...state, ...updates }));
+	mediaStateStore.update((state) => ({ ...state, ...updates }));
 }
 
 /**
@@ -105,58 +105,58 @@ export function resetState(): void {
  * Set loading state
  */
 export function setLoading(isLoading: boolean): void {
-	mediaStateStore.update(state => ({ ...state, isLoading }));
+	mediaStateStore.update((state) => ({ ...state, isLoading }));
 }
 
 /**
  * Set error message
  */
 export function setError(error: string | null): void {
-	mediaStateStore.update(state => ({ ...state, error }));
+	mediaStateStore.update((state) => ({ ...state, error }));
 }
 
 /**
  * Set MediaSoup device
  */
 export function setDevice(device: Device | null): void {
-	mediaStateStore.update(state => ({ ...state, device }));
+	mediaStateStore.update((state) => ({ ...state, device }));
 }
 
 /**
  * Set local media stream
  */
 export function setLocalStream(localStream: MediaStream | null): void {
-	mediaStateStore.update(state => ({ ...state, localStream }));
+	mediaStateStore.update((state) => ({ ...state, localStream }));
 }
 
 /**
  * Set camera paused state
  */
 export function setCamPaused(camPaused: boolean): void {
-	mediaStateStore.update(state => ({ ...state, camPaused }));
+	mediaStateStore.update((state) => ({ ...state, camPaused }));
 }
 
 /**
  * Set microphone paused state
  */
 export function setMicPaused(micPaused: boolean): void {
-	mediaStateStore.update(state => ({ ...state, micPaused }));
+	mediaStateStore.update((state) => ({ ...state, micPaused }));
 }
 
 /**
  * Set send transport
  */
 export function setSendTransport(sendTransport: Transport | null): void {
-	mediaStateStore.update(state => ({ ...state, sendTransport }));
+	mediaStateStore.update((state) => ({ ...state, sendTransport }));
 }
 
 /**
  * Update receive transports
  */
 export function updateRecvTransports(updater: (transports: Record<string, Transport>) => Record<string, Transport>): void {
-	mediaStateStore.update(state => ({
+	mediaStateStore.update((state) => ({
 		...state,
-		recvTransports: updater(state.recvTransports)
+		recvTransports: updater(state.recvTransports),
 	}));
 }
 
@@ -164,7 +164,7 @@ export function updateRecvTransports(updater: (transports: Record<string, Transp
  * Set receive transport for a peer
  */
 export function setRecvTransport(peerId: string, transport: Transport | null): void {
-	mediaStateStore.update(state => {
+	mediaStateStore.update((state) => {
 		const recvTransports = { ...state.recvTransports };
 		if (transport) {
 			recvTransports[peerId] = transport;
@@ -179,23 +179,23 @@ export function setRecvTransport(peerId: string, transport: Transport | null): v
  * Set video producer
  */
 export function setVideoProducer(videoProducer: Producer | null): void {
-	mediaStateStore.update(state => ({ ...state, videoProducer }));
+	mediaStateStore.update((state) => ({ ...state, videoProducer }));
 }
 
 /**
  * Set audio producer
  */
 export function setAudioProducer(audioProducer: Producer | null): void {
-	mediaStateStore.update(state => ({ ...state, audioProducer }));
+	mediaStateStore.update((state) => ({ ...state, audioProducer }));
 }
 
 /**
  * Update consumers list
  */
 export function updateConsumers(updater: (consumers: Consumer[]) => Consumer[]): void {
-	mediaStateStore.update(state => ({
+	mediaStateStore.update((state) => ({
 		...state,
-		consumers: updater(state.consumers)
+		consumers: updater(state.consumers),
 	}));
 }
 
@@ -203,9 +203,9 @@ export function updateConsumers(updater: (consumers: Consumer[]) => Consumer[]):
  * Add a consumer
  */
 export function addConsumer(consumer: Consumer): void {
-	mediaStateStore.update(state => ({
+	mediaStateStore.update((state) => ({
 		...state,
-		consumers: [...state.consumers, consumer]
+		consumers: [...state.consumers, consumer],
 	}));
 }
 
@@ -213,9 +213,9 @@ export function addConsumer(consumer: Consumer): void {
  * Remove a consumer
  */
 export function removeConsumer(consumerId: string): void {
-	mediaStateStore.update(state => ({
+	mediaStateStore.update((state) => ({
 		...state,
-		consumers: state.consumers.filter(c => c.id !== consumerId)
+		consumers: state.consumers.filter((c) => c.id !== consumerId),
 	}));
 }
 
@@ -223,7 +223,7 @@ export function removeConsumer(consumerId: string): void {
  * Set sessions
  */
 export function setSessions(sessions: Record<string, any>): void {
-	mediaStateStore.update(state => ({ ...state, sessions }));
+	mediaStateStore.update((state) => ({ ...state, sessions }));
 }
 
 // ============================================================================
@@ -243,10 +243,7 @@ export function getRecvTransport(peerId: string): Transport | undefined {
  */
 export function findConsumer(peerId: string, mediaTag: string): Consumer | undefined {
 	const state = getState();
-	return state.consumers.find(c =>
-		c.appData.peerId === peerId &&
-		c.appData.mediaTag === mediaTag
-	);
+	return state.consumers.find((c) => c.appData.peerId === peerId && c.appData.mediaTag === mediaTag);
 }
 
 /**
@@ -254,7 +251,7 @@ export function findConsumer(peerId: string, mediaTag: string): Consumer | undef
  */
 export function getConsumersByPeer(peerId: string): Consumer[] {
 	const state = getState();
-	return state.consumers.filter(c => c.appData.peerId === peerId);
+	return state.consumers.filter((c) => c.appData.peerId === peerId);
 }
 
 /**
@@ -292,122 +289,77 @@ export function getLocalAudioTrack(): MediaStreamTrack | null {
 /**
  * Loading state store
  */
-export const mediaRoomIsLoading = derived(
-	mediaStateStore,
-	$state => $state.isLoading
-);
+export const mediaRoomIsLoading = derived(mediaStateStore, ($state) => $state.isLoading);
 
 /**
  * Error message store
  */
-export const mediaRoomError = derived(
-	mediaStateStore,
-	$state => $state.error
-);
+export const mediaRoomError = derived(mediaStateStore, ($state) => $state.error);
 
 /**
  * Device store
  */
-export const deviceStore = derived(
-	mediaStateStore,
-	$state => $state.device
-);
+export const deviceStore = derived(mediaStateStore, ($state) => $state.device);
 
 /**
  * Local media stream store
  */
-export const localMediaStreamStore = derived(
-	mediaStateStore,
-	$state => $state.localStream
-);
+export const localMediaStreamStore = derived(mediaStateStore, ($state) => $state.localStream);
 
 /**
  * Camera paused state
  */
-export const camPausedStore = derived(
-	mediaStateStore,
-	$state => $state.camPaused
-);
+export const camPausedStore = derived(mediaStateStore, ($state) => $state.camPaused);
 
 /**
  * Microphone paused state
  */
-export const micPausedStore = derived(
-	mediaStateStore,
-	$state => $state.micPaused
-);
+export const micPausedStore = derived(mediaStateStore, ($state) => $state.micPaused);
 
 /**
  * Send transport store
  */
-export const sendTransportStore = derived(
-	mediaStateStore,
-	$state => $state.sendTransport
-);
+export const sendTransportStore = derived(mediaStateStore, ($state) => $state.sendTransport);
 
 /**
  * Receive transports store
  */
-export const recvTransports = derived(
-	mediaStateStore,
-	$state => $state.recvTransports
-);
+export const recvTransports = derived(mediaStateStore, ($state) => $state.recvTransports);
 
 /**
  * Video producer store
  */
-export const videoProducerStore = derived(
-	mediaStateStore,
-	$state => $state.videoProducer
-);
+export const videoProducerStore = derived(mediaStateStore, ($state) => $state.videoProducer);
 
 /**
  * Audio producer store
  */
-export const audioProducerStore = derived(
-	mediaStateStore,
-	$state => $state.audioProducer
-);
+export const audioProducerStore = derived(mediaStateStore, ($state) => $state.audioProducer);
 
 /**
  * Consumers store
  */
-export const consumersStore = derived(
-	mediaStateStore,
-	$state => $state.consumers
-);
+export const consumersStore = derived(mediaStateStore, ($state) => $state.consumers);
 
 /**
  * Sessions store
  */
-export const sessionsStore = derived(
-	mediaStateStore,
-	$state => $state.sessions
-);
+export const sessionsStore = derived(mediaStateStore, ($state) => $state.sessions);
 
 /**
  * Has local camera/media stream
  */
-export const hasLocalCamStore = derived(
-	mediaStateStore,
-	$state => !!$state.localStream
-);
+export const hasLocalCamStore = derived(mediaStateStore, ($state) => !!$state.localStream);
 
 /**
  * Has send transport
  */
-export const hasSendTransportStore = derived(
-	mediaStateStore,
-	$state => !!$state.sendTransport
-);
+export const hasSendTransportStore = derived(mediaStateStore, ($state) => !!$state.sendTransport);
 
 /**
  * Has receive transports
  */
-export const hasRecvTransportStore = derived(
-	mediaStateStore,
-	$state => Object.keys($state.recvTransports).length > 0
-);
+export const hasRecvTransportStore = derived(mediaStateStore, ($state) => Object.keys($state.recvTransports).length > 0);
 
 // ============================================================================
 // ACTIVE SPEAKER (separate subscription)
@@ -430,20 +382,6 @@ export const currentActiveSpeakerStore = readable<ActiveSpeaker | null>(null, (s
 // AUTH-RELATED DERIVED STORES
 // ============================================================================
 
-/**
- * Indicates whether the client has successfully joined the room
- */
-export const hasAutenticated = derived([currentPeerStore], ([$peer]) => {
-	return Object.keys($peer).length > 0;
-});
-
-/**
- * Indicates whether the client is banned from the room
- */
-export const isBannedFromTheRoom = derived([currentPeerStore], ([$peer]) => {
-	return $peer && $peer.banned;
-});
-
 // ============================================================================
 // CLEANUP
 // ============================================================================
@@ -456,13 +394,13 @@ export function cleanupMediaState(): void {
 
 	// Close all transports
 	state.sendTransport?.close();
-	Object.values(state.recvTransports).forEach(transport => transport.close());
+	Object.values(state.recvTransports).forEach((transport) => transport.close());
 
 	// Stop local stream tracks
-	state.localStream?.getTracks().forEach(track => track.stop());
+	state.localStream?.getTracks().forEach((track) => track.stop());
 
 	// Close all consumers
-	state.consumers.forEach(consumer => consumer.close());
+	state.consumers.forEach((consumer) => consumer.close());
 
 	// Reset state
 	resetState();

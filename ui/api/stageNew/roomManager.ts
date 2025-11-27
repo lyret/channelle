@@ -153,17 +153,11 @@ export const isLoadingStore = derived(roomState, ($state) => $state.isLoading);
  */
 export const errorStore = derived(roomState, ($state) => $state.error);
 
-// ============================================================================
-// ROOM CONNECTION
-// ============================================================================
-
-let roomUnsubscribe: (() => void) | null = null;
-
 /**
  * Join the media room and start processing events
  */
-export async function joinRoom(): Promise<void> {
-	console.log("[RoomManager] Joining room");
+export async function participateInTheMediaRoom(): Promise<{ success: true } | { success: false; error: string }> {
+	console.log("[Stage] Joining room");
 
 	// Update state
 	roomState.update((s) => ({ ...s, isLoading: true, error: null }));
@@ -176,15 +170,15 @@ export async function joinRoom(): Promise<void> {
 			const device = new MediaSoup.Device();
 			await device.load({ routerRtpCapabilities });
 			roomState.update((s) => ({ ...s, device }));
-			console.log("[RoomManager] Device initialized");
+			console.log("[MS] Device initialized");
 		}
 
 		// Start the media session on the server
 		await stageClient.startSession.mutate();
-		console.log("[RoomManager] Started media session");
+		console.log("[Stage] Started media session");
 
-		// Subscribe to room events
-		roomUnsubscribe = stageClient.room.subscribe(undefined, {
+		// Subscribe to media room events
+		stageClient.room.subscribe(undefined, {
 			onData: async (event) => {
 				await processRoomEvent(event);
 			},
@@ -192,75 +186,20 @@ export async function joinRoom(): Promise<void> {
 				console.error("[RoomManager] Room subscription error:", error);
 				roomState.update((s) => ({ ...s, error: error.message, isLoading: false }));
 			},
-		}).unsubscribe;
+		});
 
 		roomState.update((s) => ({ ...s, isConnected: true, isLoading: false }));
-		console.log("[RoomManager] Connected to room");
+		console.log("[Stage] Connected to room");
+		return { success: true };
 	} catch (error) {
-		console.error("[RoomManager] Failed to join room:", error);
+		console.error("[Stage] Failed to join media room:", error);
 		roomState.update((s) => ({
 			...s,
 			error: (error as Error).message,
 			isLoading: false,
 		}));
-		throw error;
+		return { success: false, error: (error as Error).message };
 	}
-}
-
-/**
- * Leave the room and cleanup
- */
-export async function leaveRoom(): Promise<void> {
-	console.log("[RoomManager] Leaving room");
-
-	// Unsubscribe from room events
-	if (roomUnsubscribe) {
-		roomUnsubscribe();
-		roomUnsubscribe = null;
-	}
-
-	// Close all transports
-	const state = get(roomState);
-
-	if (state.sendTransport) {
-		state.sendTransport.close();
-	}
-
-	for (const transport of state.recvTransports.values()) {
-		transport.close();
-	}
-
-	// Stop local stream
-	if (state.localStream) {
-		state.localStream.getTracks().forEach((track) => track.stop());
-	}
-
-	// End the media session on the server
-	try {
-		await stageClient.endSession.mutate();
-		console.log("[RoomManager] Ended media session");
-	} catch (error) {
-		console.error("[RoomManager] Error ending session:", error);
-	}
-
-	// Reset state
-	roomState.set({
-		isConnected: false,
-		isLoading: false,
-		error: null,
-		device: state.device, // Keep device for reuse
-		sessions: {},
-		localStream: null,
-		camEnabled: false,
-		micEnabled: false,
-		sendTransport: null,
-		recvTransports: new Map(),
-		producers: new Map(),
-		consumers: new Map(),
-		activeSpeaker: null,
-	});
-
-	console.log("[RoomManager] Left room");
 }
 
 // ============================================================================
