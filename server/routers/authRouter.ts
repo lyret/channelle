@@ -33,8 +33,7 @@ export async function authenticate(peerId: string, givenPeer?: Peer): Promise<vo
 export function deauthenticate(peerId: string): void {
 	if (!onlineSessions[peerId]) {
 		return;
-	}
-	else {
+	} else {
 		const peer = onlineSessions[peerId];
 		delete onlineSessions[peerId];
 		peerEmitter.emit("onlineStatusChanged", peer);
@@ -137,11 +136,10 @@ export const authRouter = trcpRouter({
 			let peer = await Peer.findByPk(ctx.peer.id);
 			if (!peer) {
 				try {
-
 					// Determine the current show id
 					const showId = CONFIG.runtime.theater ? input.showId : getGlobalBackstageConfiguration().showId;
 
-					if (!showId) {
+					if (!showId && CONFIG.runtime.theater) {
 						throw new Error("No show id given");
 					}
 
@@ -155,9 +153,7 @@ export const authRouter = trcpRouter({
 						audioMuted: false,
 						videoMuted: false,
 					});
-					emitPeerCreated(peer);
-				}
-				catch(error) {
+				} catch (error) {
 					console.error(`[Auth] Failed to create a new peer ${ctx.peer.id}: ${error.message}`);
 				}
 				console.log("[Auth]", ctx.peer.id, "joined as new peer");
