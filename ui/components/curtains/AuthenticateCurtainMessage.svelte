@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher } from "svelte";
 	import { get } from "svelte/store";
-	import { updatePeerName } from "~/api/auth";
+	import { updatePeer, currentPeerStore } from "~/api";
 
 	const dispatch = createEventDispatcher<{ submit: void }>();
 
@@ -13,7 +13,7 @@
 		e.preventDefault();
 		loading = true;
 
-		await updatePeerName(get(peerStore).id, name);
+		await updatePeer(get(currentPeerStore).id, { name : name });
 		dispatch("submit");
 	}
 </script>

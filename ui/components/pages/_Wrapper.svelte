@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { blur } from "svelte/transition";
 
-	import { hasJoinedRoomStore, isBannedFromTheRoom, currentPeerStore } from "~/api";
+	import { hasAutenticated, isBannedFromTheRoom, currentPeerStore } from "~/api";
 	import { showMetadataStore, showSceneSettingsStore } from "~/api/backstage";
 
 	import AuthenticateCurtainMessage from "~/components/curtains/AuthenticateCurtainMessage.svelte";
@@ -29,10 +29,10 @@
 	export let hasInteractedWithTheDocument = !CONFIG.runtime.production;
 
 	// Determine what should be rendered
-	$: hasEnteredName = $hasJoinedRoomStore && $currentPeerStore.name;
-	$: needsToBeManager = lockedToManager && !($hasJoinedRoomStore && $currentPeerStore.manager);
+	$: hasEnteredName = $hasAutenticated && $currentPeerStore.name;
+	$: needsToBeManager = lockedToManager && !($hasAutenticated && $currentPeerStore.manager);
 	$: needsInviteKey = lockedToInviteKey && !$isStagePasswordOkStore;
-	$: renderMessages = !$hasJoinedRoomStore || !hasEnteredName || !hasInteractedWithTheDocument || $isBannedFromTheRoom || needsInviteKey || needsToBeManager;
+	$: renderMessages = !$hasAutenticated || !hasEnteredName || !hasInteractedWithTheDocument || $isBannedFromTheRoom || needsInviteKey || needsToBeManager;
 	$: renderContent = !renderMessages;
 	$: renderCurtains = renderMessages || (curtainsAreEnabled && $showSceneSettingsStore.curtains);
 </script>
@@ -41,6 +41,7 @@
 {#if renderContent && $$slots.default}
 	<slot></slot>
 {/if}
+
 
 <!-- Curtains -->
 {#if renderCurtains}
@@ -55,11 +56,11 @@
 			{#if $showMetadataStore.name}<h1 class="title is-family-title">{$showMetadataStore.name}</h1>{/if}
 			{#if $isBannedFromTheRoom}
 				<BlockedCurtainMessage />
-			{:else if $hasJoinedRoomStore && !hasEnteredName}
+			{:else if $hasAutenticated && !hasEnteredName}
 				<AuthenticateCurtainMessage on:submit={() => (hasInteractedWithTheDocument = true)} />
-			{:else if $hasJoinedRoomStore && !hasInteractedWithTheDocument}
+			{:else if $hasAutenticated && !hasInteractedWithTheDocument}
 				<ContinueCurtainMessage on:submit={() => (hasInteractedWithTheDocument = true)} />
-			{:else if !$hasJoinedRoomStore}
+			{:else if !$hasAutenticated}
 				<LoaderCurtainMessage label="Ansluter..." />
 			{:else if needsToBeManager}
 				<BlockedCurtainMessage message="Sidan är endast för tekniker" />

@@ -1,6 +1,6 @@
 import type * as MediaSoup from "mediasoup";
 import type { CustomAppData, TransportDirection } from "./lib/mediaSoup";
-import type { ShowAttributes } from "./models";
+import type { ShowAttributes, PeerAttributes } from "./models";
 
 // TODO: Create a types folder maybe ?
 
@@ -48,6 +48,8 @@ export type EditableShowAttributes = Omit<
 	"id" | "online" | "createdAt" | "updatedAt" | "lastOnlineAt" | "nrOfTimesShown" | "nrOfTimes" | "nrOfTimesRehersed" | "url"
 >;
 
+export type ClientPeerAttributes = Omit<PeerAttributes, "createdAt" | "updatedAt"> & { createdAt: string, updatedAt: string, online: boolean };
+
 /**
  * The backstage configuration type is the fields of a show database object that effects
  * the functionality and behavior of the stage and is changable from the backstage and preparations ui
@@ -66,7 +68,7 @@ export type EffectData = { type: "flowers" | "applause" | "tomato"; number: numb
 export type { AppRouter } from "./_router";
 export type { MediaTag, TransportDirection, CustomAppData } from "./lib/mediaSoup";
 export type { MediaSession } from "./lib/trpc";
-export type { MessageAttributes, ShowAttributes, PeerAttributes } from "./models";
+export type { MessageAttributes, ShowAttributes } from "./models";
 export type {
 	CanLaunchResult,
 	LaunchResult,

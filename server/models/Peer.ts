@@ -1,18 +1,25 @@
+import Emittery from "emittery";
 import { Model, DataTypes } from "sequelize";
 import type { Sequelize } from "sequelize";
 
+// Public event emitter for model updates
+export const peerEmitter = new Emittery<{
+	created: Peer;
+	updated: Peer;
+	onlineStatusChanged: Peer;
+}>();
+
 /** Peer model. */
 export class Peer extends Model {
+	declare showId: number | null;
 	declare id: string;
-	declare joinTs: number;
-	declare lastSeenTs: number;
 	declare name: string;
 	declare actor: boolean;
 	declare manager: boolean;
 	declare banned: boolean;
 	declare audioMuted: boolean;
 	declare videoMuted: boolean;
-	declare showId: number | null;
+	declare online: boolean;
 
 	declare createdAt: Date;
 	declare updatedAt: Date;
@@ -26,16 +33,6 @@ export function initPeer(sequelize: Sequelize) {
 				type: DataTypes.STRING,
 				primaryKey: true,
 				allowNull: false,
-			},
-			joinTs: {
-				type: DataTypes.BIGINT,
-				allowNull: false,
-				defaultValue: () => Date.now(),
-			},
-			lastSeenTs: {
-				type: DataTypes.BIGINT,
-				allowNull: false,
-				defaultValue: () => Date.now(),
 			},
 			name: {
 				type: DataTypes.STRING,
@@ -83,4 +80,11 @@ export function initPeer(sequelize: Sequelize) {
 			timestamps: true,
 		},
 	);
+
+	Peer.afterCreate(async (peer: Peer) => {
+		await peerEmitter.emit("created", peer);
+	});
+	Peer.afterUpdate(async (peer: Peer) => {
+		await peerEmitter.emit("updated", peer);
+	});
 }

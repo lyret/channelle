@@ -3,12 +3,11 @@
 	import SceneSelectorControl from "./_SceneSelectorControl.svelte";
 	import Accordion from "../Accordion.svelte";
 	import ForcedSettingsContent from "./_ForcedSettingsContent.svelte";
-	import { peersStore } from "~/api/media";
-	import { updateConfigurationSettings, showSelectedSceneStore } from "~/api/backstage";
+	import { updateConfigurationSettings, showSelectedSceneStore, showPeersStore } from "~/api/backstage";
 
 	export let hideForcedSettings: boolean = false;
 
-	$: peers = Object.values($peersStore || {}).filter((p) => (p.actor || p.manager) && !p.banned);
+	$: peers = Object.values($showPeersStore || {}).filter((p) => (p.actor || p.manager) && !p.banned);
 
 	// Track expanded states for each scene
 	let expandedScenes: Record<string, boolean> = {};

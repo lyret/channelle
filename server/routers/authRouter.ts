@@ -1,21 +1,17 @@
 import type { AdminSession } from "../lib";
-import Emittery from "emittery";
 import { TRPCError } from "@trpc/server";
 import { trpc } from "../lib";
 import { z } from "zod";
-import { Peer } from "../models/Peer";
-
-// Internal event emitter for peer updates
-const _peersEmitter = new Emittery<{
-	created: Peer;
-	updated: Peer;
-}>();
+import { Peer, peerEmitter } from "../models/Peer";
+import { getGlobalBackstageConfiguration } from "../_globalBackstageData";
 
 // Get the trpc router constructor and default procedure
 const { router: trcpRouter, procedure, middleware } = trpc();
 
-/** In-memory authentication session storage */
-export const _onlineSessions: Record<string, Peer> = {};
+/** In-memory online peer session storage */
+export const onlineSessions: Record<string, Peer> = {};
+
+/** In-memory authenticated admin session storage */
 export const _adminSessions: Record<string, AdminSession> = {};
 
 /** Session expiration time: 8 hours in milliseconds */
@@ -23,10 +19,11 @@ const SESSION_EXPIRATION_TIME = 8 * 60 * 60 * 1000;
 
 /** Marks a known user as online */
 export async function authenticate(peerId: string, givenPeer?: Peer): Promise<void> {
-	if (!_onlineSessions[peerId]) {
+	if (!onlineSessions[peerId]) {
 		const peer = givenPeer || (await Peer.findByPk(peerId));
-		_onlineSessions[peerId] = peer;
-		console.log(`[Auth] Login successful for peer ${peerId}. Active sessions: ${Object.keys(_onlineSessions).length}`);
+		onlineSessions[peerId] = peer;
+		peerEmitter.emit("onlineStatusChanged", peer);
+		console.log(`[Auth] Login successful for peer ${peerId}. Active sessions: ${Object.keys(onlineSessions).length}`);
 	}
 	if (_adminSessions[peerId]) {
 		_adminSessions[peerId].lastSeenTs = Date.now();
@@ -34,8 +31,15 @@ export async function authenticate(peerId: string, givenPeer?: Peer): Promise<vo
 }
 /** Marks a known user as offline */
 export function deauthenticate(peerId: string): void {
-	delete _onlineSessions[peerId];
-	console.log(`[Auth] Logout successful for peer ${peerId}. Active sessions: ${Object.keys(_onlineSessions).length}`);
+	if (!onlineSessions[peerId]) {
+		return;
+	}
+	else {
+		const peer = onlineSessions[peerId];
+		delete onlineSessions[peerId];
+		peerEmitter.emit("onlineStatusChanged", peer);
+		console.log(`[Auth] Logout successful for peer ${peerId}. Active sessions: ${Object.keys(onlineSessions).length}`);
+	}
 }
 
 /**
@@ -48,7 +52,7 @@ export const withAuthenticatedPeerMiddleware = middleware(async ({ ctx, next }) 
 		throw new TRPCError({ code: "BAD_REQUEST", message: "No peer id given in request" });
 	}
 
-	const peer = _onlineSessions[ctx.peer.id];
+	const peer = onlineSessions[ctx.peer.id];
 
 	if (!peer) {
 		throw new TRPCError({ code: "BAD_REQUEST", message: "The given peer is not online, please authenticate" });
@@ -107,8 +111,9 @@ export const authRouter = trcpRouter({
 	authenticate: procedure
 		.input(
 			z.object({
-				name: z.string().nonempty(),
+				name: z.string(),
 				teatherPassword: z.string().optional(),
+				showId: z.number().int().gte(0).nullable().optional(),
 			}),
 		)
 		.mutation(async ({ input, ctx }) => {
@@ -131,18 +136,30 @@ export const authRouter = trcpRouter({
 			// Check if the peer exists in the database and create a new one if not
 			let peer = await Peer.findByPk(ctx.peer.id);
 			if (!peer) {
-				peer = await Peer.create({
-					id: ctx.peer.id,
-					name: input.name,
-					showId: 1, // FIXME: always 1
-					actor: false,
-					manager: !CONFIG.runtime.production, // When developing, all new peers become managers
-					banned: false,
-					audioMuted: false,
-					videoMuted: false,
-					online: false,
-				});
-				_peersEmitter.emit("created", peer);
+				try {
+
+					// Determine the current show id
+					const showId = CONFIG.runtime.theater ? input.showId : getGlobalBackstageConfiguration().showId;
+
+					if (!showId) {
+						throw new Error("No show id given");
+					}
+
+					peer = await Peer.create({
+						id: ctx.peer.id,
+						name: input.name,
+						showId: showId,
+						actor: false,
+						manager: !CONFIG.runtime.production, // When developing, all new peers become managers
+						banned: false,
+						audioMuted: false,
+						videoMuted: false,
+					});
+					emitPeerCreated(peer);
+				}
+				catch(error) {
+					console.error(`[Auth] Failed to create a new peer ${ctx.peer.id}: ${error.message}`);
+				}
 				console.log("[Auth]", ctx.peer.id, "joined as new peer");
 			}
 
@@ -179,7 +196,7 @@ export const authRouter = trcpRouter({
 	 * Invalidate (logout) all sessions and go offline
 	 */
 	deauthenticate: procedure.mutation(async ({ ctx }) => {
-		if (!_onlineSessions[ctx.peer.id]) {
+		if (!onlineSessions[ctx.peer.id]) {
 			return {
 				valid: false,
 				message: "Session not found",
@@ -192,64 +209,6 @@ export const authRouter = trcpRouter({
 			valid: false,
 		};
 	}),
-
-	// Update user information
-	update: authenticatedPeerProcedure
-		.input(
-			z.object({
-				id: z.string(),
-				name: z.string().optional(),
-				actor: z.boolean().optional(),
-				manager: z.boolean().optional(),
-				banned: z.boolean().optional(),
-			}),
-		)
-		.mutation(async ({ ctx, input: { id, name, actor, manager, banned } }) => {
-			// Make sure that the peer in context is either the same as being updated or a manager
-			if (!(ctx.peer.id == id || ctx.peer.manager)) {
-				throw new TRPCError({ code: "UNAUTHORIZED", message: "Unauthorized" });
-			}
-
-			// Find the peer in database
-			const peer = await Peer.findByPk(id);
-			if (!peer) {
-				throw new TRPCError({ code: "NOT_FOUND", message: "Peer with given id not found" });
-			}
-
-			// Prepare update object
-			const updates: any = {};
-
-			// Update peer's name
-			if (name !== undefined) {
-				updates.name = name;
-			}
-
-			// Make sure that the peer in context is a manager for role updates
-			if (ctx.peer.manager) {
-				// Update peer's actor status
-				if (actor !== undefined) {
-					updates.actor = actor;
-				}
-
-				// Update peer's manager status
-				if (manager !== undefined) {
-					updates.manager = manager;
-				}
-
-				// Update peer's banned status
-				if (banned !== undefined) {
-					updates.banned = banned;
-				}
-			}
-
-			// Update the peer in database and the in-memory session storage
-			const updatedPeer = await peer.update(updates);
-			_peersEmitter.emit("updated", updatedPeer);
-			if (_onlineSessions[peer.id]) {
-				_onlineSessions[peer.id] = peer;
-			}
-			return;
-		}),
 });
 
 /** Authentication Router Type */

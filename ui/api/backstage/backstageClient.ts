@@ -1,6 +1,6 @@
-import type { BackstageConfiguration, EditableShowAttributes } from "../../types/serverSideTypes";
-import { writable, derived, type Readable } from "svelte/store";
-import { backstageClient, type RouterOutputTypes } from "../_trpcClient";
+import type { BackstageConfiguration, EditableShowAttributes, ClientPeerAttributes } from "../../types/serverSideTypes";
+import { writable, derived } from "svelte/store";
+import { backstageClient, peersClient } from "../_trpcClient";
 
 /** In-memory local show id of any loaded configuration */
 let _localShowId: number = 0;
@@ -23,27 +23,44 @@ const _localConfigStore = writable<BackstageConfiguration>({
 	selectedScene: null,
 });
 
+/** Contains a registry of all peers belonging to the loaded show configuration */
+const _localPeers = writable<Record<string, ClientPeerAttributes>>({});
+
 // PUBLIC DERIVED STORES OF CONFIGURATION DATA
 
 /** Current show password from configuration */
 export const showPasswordStore = derived(_localConfigStore, ($config) => $config.password);
 
 /** Current actual scene settings from configuration after taking selected scene and overrides into account */
-export const showSceneSettingsStore = derived(_localConfigStore, ($config) => ({
-	curtains:
-		$config.curtainsOverride == 2 ? false : $config.curtainsOverride == 1 || ($config.curtainsOverride == 0 && $config.selectedScene?.curtains) || true,
-	chatEnabled: $config.chatEnabledOverride == 1 || ($config.chatEnabledOverride == 0 && $config.selectedScene?.chatEnabled) || false,
-	gratitudeEffects:
-		$config.gratitudeEffectsEnabledOverride == 1 ||
-		($config.gratitudeEffectsEnabledOverride == 0 && $config.selectedScene?.gratitudeEffectsEnabled) ||
-		false,
-	criticalEffects:
-		$config.criticalEffectsEnabledOverride == 1 || ($config.criticalEffectsEnabledOverride == 0 && $config.selectedScene?.criticalEffectsEnabled) || false,
-	visitorAudioEnabled:
-		$config.visitorAudioEnabledOverride == 1 || ($config.visitorAudioEnabledOverride == 0 && $config.selectedScene?.visitorAudioEnabled) || false,
-	visitorVideoEnabled:
-		$config.visitorVideoEnabledOverride == 1 || ($config.visitorVideoEnabledOverride == 0 && $config.selectedScene?.visitorVideoEnabled) || false,
-}));
+export const showSceneSettingsStore = derived(_localConfigStore, ($config) => {
+	let curtains = true;
+	if ($config.curtainsOverride == 1) {
+		curtains = true;
+	} else if ($config.curtainsOverride == 2) {
+		curtains = false;
+	} else if ($config.curtainsOverride == 0) {
+		if (!$config.selectedScene) {
+			curtains = true;
+		} else {
+			curtains = $config.selectedScene.curtains;
+		}
+	}
+
+	return {
+		curtains: curtains,
+		chatEnabled: $config.chatEnabledOverride == 1 || ($config.chatEnabledOverride == 0 && $config.selectedScene?.chatEnabled) || false,
+		gratitudeEffects:
+			$config.gratitudeEffectsEnabledOverride == 1 ||
+			($config.gratitudeEffectsEnabledOverride == 0 && $config.selectedScene?.gratitudeEffectsEnabled) ||
+			false,
+		criticalEffects:
+			$config.criticalEffectsEnabledOverride == 1 || ($config.criticalEffectsEnabledOverride == 0 && $config.selectedScene?.criticalEffectsEnabled) || false,
+		visitorAudioEnabled:
+			$config.visitorAudioEnabledOverride == 1 || ($config.visitorAudioEnabledOverride == 0 && $config.selectedScene?.visitorAudioEnabled) || false,
+		visitorVideoEnabled:
+			$config.visitorVideoEnabledOverride == 1 || ($config.visitorVideoEnabledOverride == 0 && $config.selectedScene?.visitorVideoEnabled) || false,
+	}
+});
 
 /** Current actually override value for settings from the configuration */
 export const showSceneOverridesStore = derived(_localConfigStore, ($config) => ({
@@ -71,10 +88,10 @@ export const showScriptStore = derived(_localConfigStore, ($config) => ({
 }));
 
 /** Current show peers from the database */
-export const showPeersStore = derived<Readable<BackstageConfiguration>, RouterOutputTypes["backstage"]["peers"]>(
-	_localConfigStore,
-	($config, set) => {
-		backstageClient.peers.query({ showId: $config.showId || null }).then((peers) => set(peers));
+export const showPeersStore = derived(
+	_localPeers,
+	($localPeers) => {
+		return $localPeers;
 	},
 	{},
 );
@@ -151,6 +168,32 @@ export async function subscribeToBackstageConfigurationChanges(): Promise<void> 
 				},
 				onComplete: () => {
 					console.log("Configuration subscription completed");
+				},
+			},
+		);
+
+		// Start subscription to all peers belonging to the loaded show configuration
+		peersClient.peers.subscribe(
+			{ showId: showId },
+			{
+				onData: (data) => {
+					if (CONFIG.runtime.debug) {
+						console.log("Peers subscription data:", { data });
+					}
+					if (data.event == "initial") {
+						_localPeers.set(data.peers);
+					} else {
+						_localPeers.update((record) => {
+							record[data.peer.id] = data.peer;
+							return record;
+						});
+					}
+				},
+				onError: (error) => {
+					console.error("Peers subscription error:", error instanceof Error ? error.message : "Unknown peer synchronization error");
+				},
+				onComplete: () => {
+					console.log("Peers subscription completed");
 				},
 			},
 		);

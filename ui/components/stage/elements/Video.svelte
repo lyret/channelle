@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { peersStore, consumersStore, sessionsStore, subscribeToTrack } from "~/api/media";
-	import { localMediaStream } from "~/api/media";
+	import { consumersStore, sessionsStore, localMediaStreamStore, subscribeToTrack } from "~/api/stage";
+	import { showPeersStore } from "~/api/backstage";
 	import { wsPeerIdStore } from "~/api/_trpcClient";
 	import { DebugPanel } from "~/components/debug";
 	import { debugModeStore } from "~/stores/debugMode";
@@ -9,7 +9,6 @@
 
 	// Component state
 	let videoElement: HTMLVideoElement;
-	let lastStreamId: string | null = null;
 	let reconnectionAttempts = 0;
 	let lastConsumerCount = 0;
 	const debugInfo = {
@@ -20,13 +19,13 @@
 		videoElementUpdates: 0,
 	};
 
-	$: peer = $peersStore[peerId];
+	$: peer = $showPeersStore[peerId];
 	$: session = $sessionsStore[peerId];
 	$: myPeerId = $wsPeerIdStore;
 	$: isLocalPeer = peerId === myPeerId;
 
 	// Make stream reactive to all dependencies
-	$: stream = findStream(peerId, isLocalPeer, $localMediaStream, $consumersStore);
+	$: stream = findStream(peerId, isLocalPeer, $localMediaStreamStore, $consumersStore);
 
 	// Enhanced consumer monitoring
 	$: {
@@ -57,11 +56,11 @@
 	$: {
 		if (isLocalPeer) {
 			console.log(`[Video] Local media stream details for ${peerId}:`, {
-				hasStream: !!$localMediaStream,
-				streamId: $localMediaStream?.id,
-				tracks: $localMediaStream?.getTracks().length || 0,
-				videoTracks: $localMediaStream?.getVideoTracks().map((t) => ({ id: t.id, state: t.readyState, enabled: t.enabled })) || [],
-				audioTracks: $localMediaStream?.getAudioTracks().map((t) => ({ id: t.id, state: t.readyState, enabled: t.enabled })) || [],
+				hasStream: !!$localMediaStreamStore,
+				streamId: $localMediaStreamStore?.id,
+				tracks: $localMediaStreamStore?.getTracks().length || 0,
+				videoTracks: $localMediaStreamStore?.getVideoTracks().map((t) => ({ id: t.id, state: t.readyState, enabled: t.enabled })) || [],
+				audioTracks: $localMediaStreamStore?.getAudioTracks().map((t) => ({ id: t.id, state: t.readyState, enabled: t.enabled })) || [],
 			});
 		}
 	}
@@ -322,7 +321,7 @@
 {:else}
 	<div class="window text-window">
 		<h1 class="title has-text-white">
-			{peer?.name || "Unknown Peer"}
+			{peer?.name || "?"}
 		</h1>
 		{#if $debugModeStore}
 			<DebugPanel {peerId} compact={true} />

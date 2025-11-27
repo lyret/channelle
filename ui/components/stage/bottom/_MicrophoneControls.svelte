@@ -2,11 +2,11 @@
 	import { blur } from "svelte/transition";
 	import IconMicOff from "~/components/icons/Icon-mic-off.svelte";
 	import IconMic from "~/components/icons/Icon-mic.svelte";
-	import { currentPeerStore, audioProducer, micPausedStore, localMediaStream, enableAudio, toggleAudioPaused } from "~/api";
+	import { currentPeerStore, audioProducerStore, micPausedStore, localMediaStreamStore, enableAudio, toggleAudioPaused } from "~/api";
 	import { showSceneSettingsStore } from "~/api";
 
-	$: isOn = !!$audioProducer && !$micPausedStore;
-	$: hasLocalStream = !!$localMediaStream;
+	$: isOn = !!$audioProducerStore && !$micPausedStore;
+	$: hasLocalStream = !!$localMediaStreamStore;
 	let errorMessage = "";
 	$: hasError = !!errorMessage;
 
@@ -15,7 +15,7 @@
 	async function handleOnClick() {
 		try {
 			errorMessage = "";
-			if (!hasLocalStream || !$localMediaStream?.getAudioTracks().length) {
+			if (!hasLocalStream || !$localMediaStreamStore?.getAudioTracks().length) {
 				await enableAudio();
 			} else if (!isOn) {
 				await toggleAudioPaused(false);

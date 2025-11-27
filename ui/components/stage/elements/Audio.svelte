@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { consumersStore, sessionsStore, subscribeToTrack } from "~/api/media";
+	import { consumersStore, sessionsStore, subscribeToTrack } from "~/api/stage";
 
 	export let peerId: string;
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { localMediaStream, videoProducer, audioProducer } from "~/api/media";
+	import { localMediaStreamStore, videoProducerStore, audioProducerStore } from "~/api/stage";
 	import { wsPeerIdStore } from "~/api/_trpcClient";
 
 	export let peerId: string;
@@ -25,10 +25,10 @@
 	}
 
 	function getLocalMediaStatus() {
-		const hasVideo = ($localMediaStream?.getVideoTracks().length || 0) > 0;
-		const hasAudio = ($localMediaStream?.getAudioTracks().length || 0) > 0;
-		const videoStatus = $videoProducer ? "Producing" : hasVideo ? "Ready" : "Not available";
-		const audioStatus = $audioProducer ? "Producing" : hasAudio ? "Ready" : "Not available";
+		const hasVideo = ($localMediaStreamStore?.getVideoTracks().length || 0) > 0;
+		const hasAudio = ($localMediaStreamStore?.getAudioTracks().length || 0) > 0;
+		const videoStatus = $videoProducerStore ? "Producing" : hasVideo ? "Ready" : "Not available";
+		const audioStatus = $audioProducerStore ? "Producing" : hasAudio ? "Ready" : "Not available";
 
 		return { hasVideo, hasAudio, videoStatus, audioStatus };
 	}

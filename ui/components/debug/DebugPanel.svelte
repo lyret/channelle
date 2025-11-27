@@ -1,13 +1,21 @@
 <script lang="ts">
-	import { peersStore, sessionsStore, consumersStore, currentActiveSpeakerStore, localMediaStream, videoProducer, audioProducer } from "~/api/media";
-	import { wsPeerIdStore } from "~/api/_trpcClient";
+	import {
+		wsPeerIdStore,
+		sessionsStore,
+		consumersStore,
+		currentActiveSpeakerStore,
+		localMediaStreamStore,
+		videoProducerStore,
+		audioProducerStore,
+	} from "~/api";
+	import { showPeersStore } from "~/api/backstage";
 	import PeerMediaStatus from "./PeerMediaStatus.svelte";
 	import ConnectionStatus from "./ConnectionStatus.svelte";
 
 	export let peerId: string;
 	export let compact: boolean = true;
 
-	$: peer = $peersStore[peerId];
+	$: peer = $showPeersStore[peerId];
 	$: session = $sessionsStore[peerId];
 	$: consumers = $consumersStore;
 	$: activeSpeaker = $currentActiveSpeakerStore?.peerId;
@@ -19,10 +27,10 @@
 	$: hasAudioConsumer = consumers.find((c) => c.appData.peerId === peerId && c.appData.mediaTag === "mic-audio");
 
 	// For local peer, check producers instead of consumers
-	$: hasLocalVideo = ($localMediaStream?.getVideoTracks().length || 0) > 0;
-	$: hasLocalAudio = ($localMediaStream?.getAudioTracks().length || 0) > 0;
-	$: hasVideoProducer = !!$videoProducer;
-	$: hasAudioProducer = !!$audioProducer;
+	$: hasLocalVideo = ($localMediaStreamStore?.getVideoTracks().length || 0) > 0;
+	$: hasLocalAudio = ($localMediaStreamStore?.getAudioTracks().length || 0) > 0;
+	$: hasVideoProducer = !!$videoProducerStore;
+	$: hasAudioProducer = !!$audioProducerStore;
 
 	function getConsumerStatus(consumer: any) {
 		if (!consumer) return "No Consumer";

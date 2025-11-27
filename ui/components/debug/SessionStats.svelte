@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { consumersStore, peersStore, sessionsStore, currentActiveSpeakerStore, hasJoinedRoomStore, deviceStore } from "~/api/media";
+	import { consumersStore, sessionsStore, currentActiveSpeakerStore, hasAutenticated, deviceStore } from "~/api/stage";
+	import { showPeersStore } from "~/api/backstage";
 
 	$: consumers = $consumersStore;
-	$: peers = $peersStore;
+	$: peers = $showPeersStore;
 	$: sessions = $sessionsStore;
 	$: activeSpeaker = $currentActiveSpeakerStore?.peerId;
-	$: hasJoined = $hasJoinedRoomStore;
+	$: hasJoined = $hasAutenticated;
 	$: device = $deviceStore;
 
 	$: peersList = Object.entries(peers).map(([peerId, info]) => ({

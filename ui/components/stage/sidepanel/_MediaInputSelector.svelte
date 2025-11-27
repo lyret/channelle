@@ -2,7 +2,8 @@
 	import IconMeh from "~/components/icons/Icon-meh.svelte";
 	import IconMic from "~/components/icons/Icon-mic.svelte";
 	import IconVideo from "~/components/icons/Icon-video.svelte";
-	import { currentPeerStore, updatePeerName } from "~/api";
+	import { currentPeerStore } from "~/api";
+	import { updatePeer } from "~/api/peers";
 
 	let isLoading = false;
 	let audioDevices: MediaDeviceInfo[] = [];
@@ -35,7 +36,7 @@
 		const currentName = $currentPeerStore.name;
 		const newName = window.prompt("Byt namn till...", currentName) || currentName;
 		if (newName && newName !== currentName) {
-			await updatePeerName($currentPeerStore.id, newName);
+			await updatePeer($currentPeerStore.id, { name: newName});
 		}
 	}
 </script>

@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { peersStore } from "~/api/media";
+	import { showPeersStore } from "~/api/backstage";
 	import PeerControl from "./_PeerControl.svelte";
 
-	$: peers = Object.values($peersStore).filter((p) => p.name && !p.banned);
+	$: peers = Object.values($showPeersStore).filter((p) => p.name && !p.banned);
 	$: managers = peers.filter((p) => p.manager);
 	$: actors = peers.filter((p) => p.actor && !p.manager);
 	$: visitors = peers.filter((p) => !p.manager && !p.actor && !p.banned);

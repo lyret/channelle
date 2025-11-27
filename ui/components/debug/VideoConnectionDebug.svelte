@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getDebugState, logDebugState } from "~/api/media";
+	import { getDebugState, logDebugState } from "~/api/stage";
 	import { onMount, onDestroy } from "svelte";
 
 	export let peerId: string | null = null; // If null, shows all peers

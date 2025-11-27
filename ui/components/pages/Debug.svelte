@@ -1,23 +1,24 @@
 <script lang="ts">
 	import { blur } from "svelte/transition";
-	import * as authClient from "~/api/auth/authClient";
-	import * as mediaClient from "~/api/media/mediaClient";
+
+	import * as stageClient from "~/api/stage";
+	import { updatePeer } from "~/api/peers";
 	import { wsPeerIdStore } from "~/api/_trpcClient";
 	import { SessionStats, PeerMediaStatus, ConnectionStatus } from "~/components/debug";
 
 	// Import all the stores from roomClient
 	import {
-		localMediaStream,
+		localMediaStreamStore,
 		consumersStore,
-		peersStore,
+		showPeersStore,
 		currentPeerStore,
 		sessionsStore,
-		hasJoinedRoomStore,
+		hasAutenticated,
 		hasLocalCamStore,
 		hasSendTransportStore,
 		recvTransports,
-		videoProducer,
-		audioProducer,
+		videoProducerStore,
+		audioProducerStore,
 		currentActiveSpeakerStore,
 		camPausedStore,
 		micPausedStore,
@@ -34,15 +35,15 @@
 
 	// Reactive statements for essential functionality
 	$: myPeerId = $wsPeerIdStore;
-	$: joined = $hasJoinedRoomStore;
+	$: joined = $hasAutenticated;
 	$: peer = $currentPeerStore;
 	$: hasLocalCam = $hasLocalCamStore;
 	$: hasSendTransport = $hasSendTransportStore;
-	$: hasCamVideo = !!$videoProducer;
-	$: hasCamAudio = !!$audioProducer;
+	$: hasCamVideo = !!$videoProducerStore;
+	$: hasCamAudio = !!$audioProducerStore;
 	$: activeSpeaker = $currentActiveSpeakerStore?.peerId || "None";
 	$: consumers = $consumersStore;
-	$: peers = $peersStore;
+	$: peers = $showPeersStore;
 	$: sessions = $sessionsStore;
 	$: peersList = Object.entries(peers).map(([peerId, info]) => ({
 		peerId,
@@ -56,10 +57,10 @@
 	$: camAudioPaused = $micPausedStore;
 
 	// Update video elements when streams change
-	$: if (localCamVideo && $localMediaStream) {
-		localCamVideo.srcObject = $localMediaStream;
+	$: if (localCamVideo && $localMediaStreamStore) {
+		localCamVideo.srcObject = $localMediaStreamStore;
 		localCamVideo.play().catch((e) => console.error("Error playing local camera:", e));
-	} else if (localCamVideo && !$localMediaStream) {
+	} else if (localCamVideo && !$localMediaStreamStore) {
 		localCamVideo.srcObject = null;
 	}
 
@@ -123,7 +124,7 @@
 
 	async function updatePeerName() {
 		if (targetPeerId && peerNameInput.trim()) {
-			await authClient.updatePeerName(targetPeerId, peerNameInput.trim());
+			await updatePeer(targetPeerId, { name: peerNameInput.trim() });
 			peerNameInput = "";
 			targetPeerId = "";
 		}
@@ -240,9 +241,9 @@
 									class="button is-small is-warning"
 									on:click={async () => {
 										if (consumer.paused) {
-											await mediaClient.resumeConsumer(consumer);
+											await stageClient.resumeConsumer(consumer);
 										} else {
-											await mediaClient.pauseConsumer(consumer);
+											await stageClient.pauseConsumer(consumer);
 										}
 									}}
 								>
@@ -250,7 +251,7 @@
 								</button>
 								<button
 									class="button is-small is-danger"
-									on:click={() => mediaClient.unsubscribeFromTrack(consumer.appData.peerId, consumer.appData.mediaTag)}
+									on:click={() => stageClient.unsubscribeFromTrack(consumer.appData.peerId, consumer.appData.mediaTag)}
 								>
 									Close
 								</button>
@@ -287,9 +288,9 @@
 										class="button is-small is-warning"
 										on:click={async () => {
 											if (consumer.paused) {
-												await mediaClient.resumeConsumer(consumer);
+												await stageClient.resumeConsumer(consumer);
 											} else {
-												await mediaClient.pauseConsumer(consumer);
+												await stageClient.pauseConsumer(consumer);
 											}
 										}}
 									>
@@ -297,7 +298,7 @@
 									</button>
 									<button
 										class="button is-small is-danger"
-										on:click={() => mediaClient.unsubscribeFromTrack(consumer.appData.peerId, consumer.appData.mediaTag)}
+										on:click={() => stageClient.unsubscribeFromTrack(consumer.appData.peerId, consumer.appData.mediaTag)}
 									>
 										Close
 									</button>
@@ -391,11 +392,11 @@
 		<div class="field">
 			<span class="label is-small">Media Stream Controls</span>
 			<div class="buttons are-small">
-				<button class="button is-info" on:click={() => mediaClient.startLocalMediaStream(false, true)} disabled={hasLocalCam}>Video Only</button>
-				<button class="button is-info" on:click={() => mediaClient.startLocalMediaStream(true, false)} disabled={hasLocalCam}>Audio Only</button>
-				<button class="button is-info" on:click={() => mediaClient.startLocalMediaStream(true, true)} disabled={hasLocalCam}>Audio + Video</button>
-				<button class="button is-success" on:click={mediaClient.sendMediaStreams} disabled={!hasLocalCam || !joined}>Send Streams</button>
-				<button class="button is-danger" on:click={mediaClient.closeMediaStreams} disabled={!hasSendTransport}>Stop Sending</button>
+				<button class="button is-info" on:click={() => stageClient.startLocalMediaStream(false, true)} disabled={hasLocalCam}>Video Only</button>
+				<button class="button is-info" on:click={() => stageClient.startLocalMediaStream(true, false)} disabled={hasLocalCam}>Audio Only</button>
+				<button class="button is-info" on:click={() => stageClient.startLocalMediaStream(true, true)} disabled={hasLocalCam}>Audio + Video</button>
+				<button class="button is-success" on:click={stageClient.sendMediaStreams} disabled={!hasLocalCam || !joined}>Send Streams</button>
+				<button class="button is-danger" on:click={stageClient.closeMediaStreams} disabled={!hasSendTransport}>Stop Sending</button>
 			</div>
 		</div>
 
@@ -403,10 +404,10 @@
 		<div class="field">
 			<span class="label is-small">Producer Controls</span>
 			<div class="buttons are-small">
-				<button class="button is-warning" on:click={() => mediaClient.toggleVideoPaused()} disabled={!hasCamVideo}>
+				<button class="button is-warning" on:click={() => stageClient.toggleVideoPaused()} disabled={!hasCamVideo}>
 					{camVideoPaused ? "Resume Video Producer" : "Pause Video Producer"}
 				</button>
-				<button class="button is-warning" on:click={() => mediaClient.toggleAudioPaused()} disabled={!hasCamAudio}>
+				<button class="button is-warning" on:click={() => stageClient.toggleAudioPaused()} disabled={!hasCamAudio}>
 					{camAudioPaused ? "Resume Audio Producer" : "Pause Audio Producer"}
 				</button>
 			</div>
@@ -416,9 +417,9 @@
 		<div class="field">
 			<span class="label is-small">Consumer Controls</span>
 			<div class="buttons are-small">
-				<button class="button is-warning" on:click={mediaClient.resumeAllConsumers} disabled={consumers.length === 0}>Resume All Consumers</button>
-				<button class="button is-warning" on:click={mediaClient.pauseAllConsumers} disabled={consumers.length === 0}>Pause All Consumers</button>
-				<button class="button is-danger" on:click={mediaClient.closeAllConsumers} disabled={consumers.length === 0}>Close All Consumers</button>
+				<button class="button is-warning" on:click={stageClient.resumeAllConsumers} disabled={consumers.length === 0}>Resume All Consumers</button>
+				<button class="button is-warning" on:click={stageClient.pauseAllConsumers} disabled={consumers.length === 0}>Pause All Consumers</button>
+				<button class="button is-danger" on:click={stageClient.closeAllConsumers} disabled={consumers.length === 0}>Close All Consumers</button>
 			</div>
 		</div>
 	</div>

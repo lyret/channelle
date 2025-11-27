@@ -1,4 +1,4 @@
-import { writable, get } from "svelte/store";
+import { writable } from "svelte/store";
 import { authClient } from "../_trpcClient";
 
 /** Store for authentication state */
@@ -28,29 +28,9 @@ function okAuthenticationData() {
 }
 
 /**
- * Updates the name of a givenpeer in the room
- */
-export async function updatePeerName(peerId: string, name: string) {
-	await authClient.update.mutate({
-		id: peerId,
-		name,
-	});
-}
-
-/**
- * Updates multiple peer properties at once
- */
-export async function updatePeerProperties(peerId: string, data: { actor?: boolean; manager?: boolean; banned?: boolean }) {
-	await authClient.update.mutate({
-		id: peerId,
-		...data,
-	});
-}
-
-/**
  * Authenticate with theater password
  */
-export async function authenticateTheater(password: string): Promise<boolean> {
+export async function authenticateTheater(password: string, name: string = "Admin"): Promise<boolean> {
 	if (!password.trim()) {
 		authError.set("Password is required");
 		return false;
@@ -61,7 +41,8 @@ export async function authenticateTheater(password: string): Promise<boolean> {
 
 	try {
 		const result = await authClient.authenticate.mutate({
-			password: password.trim(),
+			name: name,
+			teatherPassword: password.trim(),
 		});
 
 		if (result.success) {
@@ -79,6 +60,11 @@ export async function authenticateTheater(password: string): Promise<boolean> {
 	} finally {
 		isAuthenticating.set(false);
 	}
+}
+
+/** Authenticate with username */
+export async function authenticate(name: string = "") {
+	await authClient.authenticate.mutate({ name });
 }
 
 /**

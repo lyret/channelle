@@ -1,13 +1,14 @@
 import { applyWSSHandler } from "@trpc/server/adapters/ws";
 import type { Peer } from "./lib";
 import { trpc, ws } from "./lib";
-import { closeMediaPeer, mediaRouter } from "./routers/mediaRouter";
+import { closeMediaPeer, stageRouter } from "./routers/stageRouter";
 import { developmentRouter } from "./routers/developmentRouter";
 import { chatRouter } from "./routers/chatRouter";
 import { effectsRouter } from "./routers/effectsRouter";
 import { showsRouter } from "./routers/showsRouter";
 import { backstageRouter } from "./routers/backstageRouter";
 import { authRouter, deauthenticate } from "./routers/authRouter";
+import { peersRouter } from "./routers/peersRouter";
 import { launcherRouter } from "./routers/launcherRouter";
 
 /**
@@ -22,10 +23,11 @@ export async function createAppRouter() {
 		development: developmentRouter,
 		backstage: backstageRouter,
 		auth: authRouter,
+		peers: peersRouter,
 		shows: showsRouter,
 		launchers: launcherRouter,
 		chat: chatRouter,
-		media: mediaRouter,
+		media: stageRouter,
 		effects: effectsRouter,
 	};
 

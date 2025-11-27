@@ -1,7 +1,7 @@
 import type { TRPCRootObject, TRPCRuntimeConfigOptions } from "@trpc/server";
 import type { MediaTag } from "./mediaSoup";
-import { initTRPC } from "@trpc/server";
 import type { Peer } from "../models/Peer";
+import { initTRPC } from "@trpc/server";
 
 let _trcp: TRPCRootObject<Context, object, TRPCRuntimeConfigOptions<object, object>> | undefined;
 
@@ -20,12 +20,10 @@ export function trpc(): TRPCRootObject<Context, object, TRPCRuntimeConfigOptions
 
 /** Information for a peer containing webrtc and trpc data that is unique for each connected session */
 export type MediaSession = {
-	peerId: string;
-	banned: boolean;
-	audioMuted: boolean;
-	videoMuted: boolean;
+	peer: Peer;
 	joinTs: number;
 	lastSeenTs: number;
+	online: boolean;
 	media: Partial<Record<MediaTag, any>>;
 	stats: any;
 	consumerLayers: any;

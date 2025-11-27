@@ -1,4 +1,4 @@
-import type { BackstageConfiguration, EditableShowAttributes, PeerAttributes, Scene } from "../_types";
+import type { BackstageConfiguration, EditableShowAttributes, Scene } from "../_types";
 import Emittery from "emittery";
 import { TRPCError } from "@trpc/server";
 import { SceneSetting } from "../_types";
@@ -7,7 +7,6 @@ import { z } from "zod";
 import { trpc } from "../lib";
 import { withAuthenticatedAdminMiddleware, withAuthenticatedPeerMiddleware } from "./authRouter";
 import { getGlobalBackstageConfiguration, saveBackstageConfiguration, toBackstageConfiguration } from "../_globalBackstageData";
-import { Peer } from "../models/Peer";
 
 // Internal event emitter for message updates
 const _updateEmitter = new Emittery<{
@@ -33,7 +32,7 @@ const _editableShowAttributesSchema = z.object({
 }) satisfies z.ZodType<EditableShowAttributes>;
 
 // Get the trpc router constructor and default procedure
-const { router: trcpRouter, procedure } = trpc();
+const { router, procedure } = trpc();
 
 /**
  * Procedure that validates the a configuration is selected and add it to the context
@@ -117,10 +116,10 @@ const editConfigProcedure = withConfigProcedure
 	});
 
 /**
- * Configuration Router - Unified stage configuration management
+ * Configuration Router
  * Handles all stage configuration including scenes, settings, passwords, and show metadata
  */
-export const backstageRouter = trcpRouter({
+export const backstageRouter = router({
 	/** Subscription for backstage configuration per show id (global in stage mode) with automatic updates */
 	configuration: withConfigProcedure.subscription(async function* ({ ctx: { config, peer } }) {
 		console.log(`[Backstage] Client ${peer.id} subscribed to configuration: ${config.name}`);
@@ -136,16 +135,6 @@ export const backstageRouter = trcpRouter({
 				config: update,
 			};
 		}
-	}),
-	/** Returns all peers connected to the selected show id (global in stage mode) */
-	peers: withConfigProcedure.query(async function ({ ctx: { config } }): Promise<Record<string, PeerAttributes>> {
-		const peers = await Peer.findAll({
-			// where: {
-			// 	showId: config.showId || 0,
-			// },
-		});
-
-		return Object.fromEntries(peers.map((peer) => [peer.id, peer]));
 	}),
 
 	/** Updates one or more properties of the configuration */

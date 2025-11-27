@@ -1,5 +1,5 @@
 import { derived, type Readable } from "svelte/store";
-import { consumersStore } from "~/api/media";
+import { consumersStore } from "~/api/stage";
 import { showSelectedSceneStore } from "~/api/backstage";
 import type { StageLayout } from "~/types/serverSideTypes";
 

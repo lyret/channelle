@@ -2,11 +2,11 @@
 	import { blur } from "svelte/transition";
 	import IconVideoOff from "~/components/picol/icons/Picol-video-remove.svelte";
 	import IconVideo from "~/components/picol/icons/Picol-video-run.svelte";
-	import { currentPeerStore, videoProducer, camPausedStore, localMediaStream, enableVideo, toggleVideoPaused } from "~/api";
+	import { currentPeerStore, videoProducerStore, camPausedStore, localMediaStreamStore, startVideo, toggleVideoPaused } from "~/api";
 	import { showSceneSettingsStore } from "~/api";
 
-	$: isOn = !!$videoProducer && !$camPausedStore;
-	$: hasLocalStream = !!$localMediaStream;
+	$: isOn = !!$videoProducerStore && !$camPausedStore;
+	$: hasLocalStream = !!$localMediaStreamStore;
 	let errorMessage = "";
 	$: hasError = !!errorMessage;
 
@@ -15,8 +15,8 @@
 	async function handleClick() {
 		try {
 			errorMessage = "";
-			if (!hasLocalStream || !$localMediaStream?.getVideoTracks().length) {
-				await enableVideo();
+			if (!hasLocalStream || !$localMediaStreamStore?.getVideoTracks().length) {
+				await startVideo();
 			} else if (!isOn) {
 				await toggleVideoPaused(false);
 			} else {

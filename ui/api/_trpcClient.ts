@@ -50,8 +50,8 @@ export const appClient = createTRPCClient<AppRouter>({
 	],
 });
 
-/** Client for the Media API only (room router on server) */
-export const mediaClient = appClient.media;
+/** Client for the Stage API only (stage router on server) */
+export const stageClient = appClient.media;
 
 /** Client for the backstage API only */
 export const backstageClient = appClient.backstage;
@@ -70,6 +70,9 @@ export const effectsClient = appClient.effects;
 
 /** Client for the Authentication API only */
 export const authClient = appClient.auth;
+
+/** Client for the Peers API only */
+export const peersClient = appClient.peers;
 
 /** Client for the Launchers API only */
 export const launchersClient = appClient.launchers;

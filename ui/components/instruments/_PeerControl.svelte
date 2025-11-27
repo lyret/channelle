@@ -11,7 +11,7 @@
 	import IconUnlock from "../icons/Icon-unlock.svelte";
 	import IconVideo from "../icons/Icon-video.svelte";
 	import IconXCircle from "../icons/Icon-x-circle.svelte";
-	import { updatePeerName, updatePeerProperties } from "~/api";
+	import { updatePeer } from "~/api/peers";
 
 	export let participant: any;
 	export let online: boolean = false;
@@ -21,7 +21,7 @@
 	async function doUpdate(participant: any, data: any, ask?: string) {
 		loading = true;
 		if (!ask || confirm(ask)) {
-			await updatePeerProperties(participant.id, data);
+			await updatePeer(participant.id, data);
 		}
 		loading = false;
 	}
@@ -30,7 +30,7 @@
 		loading = true;
 		const newName = prompt("Skriv nytt namn", participant.name);
 		if (newName && newName !== participant.name) {
-			await updatePeerName(participant.id, newName);
+			await updatePeer(participant.id, { name: newName });
 		}
 		loading = false;
 	}

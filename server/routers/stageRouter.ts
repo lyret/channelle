@@ -6,8 +6,8 @@ import { z } from "zod";
 import Emittery from "emittery";
 import { authenticatedPeerProcedure } from "./authRouter";
 
-// Internal event emitter for message updates
-const _mediaEventsEmitter = new Emittery<{
+// Internal event emitter for media updates
+const _updateEmitter = new Emittery<{
 	sessionRemoved: MediaSession;
 	sessionUpdated: MediaSession;
 	sessionAdded: MediaSession;
@@ -41,17 +41,14 @@ const mediaSessionProcedure = authenticatedPeerProcedure.use(async ({ ctx, next 
 	if (!_sessions[ctx.peer.id]) {
 		const now = Date.now();
 		_sessions[ctx.peer.id] = {
-			peerId: ctx.peer.id,
+			peer: ctx.peer,
 			joinTs: now,
 			lastSeenTs: now,
 			consumerLayers: {},
 			media: {},
 			stats: {},
-			banned: false,
-			audioMuted: false,
-			videoMuted: false,
 		};
-		_mediaEventsEmitter.emit("sessionAdded", _sessions[ctx.peer.id]);
+		_updateEmitter.emit("sessionAdded", _sessions[ctx.peer.id]);
 	}
 	// Update our most-recently-seem timestamp -- we're not stale!
 	else {
@@ -62,31 +59,22 @@ const mediaSessionProcedure = authenticatedPeerProcedure.use(async ({ ctx, next 
 });
 
 /**
- * Media Router
+ * Stage Router
  * Handles server and client communication for orchastrating peer to peer media transmission
  */
-export const mediaRouter = router({
-	/** Returns all the current media sessions */
-	session: procedure.query(async () => {
-		return _sessions;
-	}),
-	// Retruns the router rtpCapabilities for mediasoup-client device initialization
-	routerRtpCapabilities: procedure.query(async () => {
-		const msRouter = await mediaSoupRouter();
-		return { routerRtpCapabilities: msRouter.rtpCapabilities };
-	}),
-	/** Subscription for the media session events */
-	events: procedure.subscription(async function* ({
+export const stageRouter = router({
+	/** Subscription for stage media room per show id (global in stage mode) with automatic updates */
+	room: procedure.subscription(async function* ({
 		ctx: { peer },
 	}): AsyncGenerator<{ event: "initial" | "sessionAdded" | "sessionRemoved" | "sessionUpdated"; session: MediaSession }> {
-		console.log(`[Media] Peer ${peer.id} subscribed to the media room`);
+		console.log(`[Stage] Peer ${peer.id} subscribed to the media room`);
 
 		yield {
 			event: "initial",
 			session: null as any,
 		};
 
-		for await (const [event, data] of _mediaEventsEmitter.anyEvent()) {
+		for await (const [event, data] of _updateEmitter.anyEvent()) {
 			switch (event) {
 				case "sessionAdded":
 				case "sessionRemoved":
@@ -99,13 +87,18 @@ export const mediaRouter = router({
 			}
 		}
 	}),
+	// Retruns the router rtpCapabilities for mediasoup-client device initialization
+	routerRtpCapabilities: procedure.query(async () => {
+		const msRouter = await mediaSoupRouter();
+		return { routerRtpCapabilities: msRouter.rtpCapabilities };
+	}),
 	/** Subscription for the currently active speaker */
 	activeSpeaker: procedure.subscription(async function* ({ ctx: { peer } }) {
-		console.log(`[Media] Client ${peer.id} subscribed to the currently active speaker`);
+		console.log(`[Stage] Client ${peer.id} subscribed to the currently active speaker`);
 
 		yield null;
 
-		for await (const activeSpeaker of _mediaEventsEmitter.events("activeSpeaker")) {
+		for await (const activeSpeaker of _updateEmitter.events("activeSpeaker")) {
 			if (!activeSpeaker) {
 				yield null;
 			} else {
@@ -113,11 +106,16 @@ export const mediaRouter = router({
 			}
 		}
 	}),
+	// Adds the peer from the room data structure and enables it to send and receive media
+	startSession: procedure.mutation(async ({ ctx }) => {
+		console.log("[Stage] Peer", ctx.peer.id, "joined");
+		return;
+	}),
 	// Removes the peer from the room data structure and and closes
 	// all associated media soup objects
 	endSession: mediaSessionProcedure.mutation(async ({ ctx }) => {
 		closeMediaPeer(ctx.peer.id);
-		console.log("[Media] Peer", ctx.peer.id, "left");
+		console.log("[Stage] Peer", ctx.peer.id, "left");
 		return;
 	}),
 	// Create a mediasoup transport object and send back info needed
@@ -405,18 +403,18 @@ export const mediaRouter = router({
 	}),
 });
 
-/** Room Router Definition */
-export type RoomRouter = typeof mediaRouter;
+/** Stage Router Definition */
+export type StageRouter = typeof stageRouter;
 
 /** Intervalled function run to periodically clean up peers that disconnected without sending us a leaving message */
 async function removeStalePeers() {
-	const now = Date.now();
-	for (const [id, peer] of Object.entries(_sessions)) {
-		if (now - peer.lastSeenTs > 4200) {
-			console.log(`[Media] Removing stale peer ${id}`);
-			closeMediaPeer(id);
-		}
-	}
+	// const now = Date.now();
+	// for (const [id, peer] of Object.entries(_sessions)) {
+	// 	if (now - peer.lastSeenTs > 4200) {
+	// 		console.log(`[Stage] Removing stale peer ${id}`);
+	// 		closeMediaPeer(id);
+	// 	}
+	// }
 }
 setInterval(removeStalePeers, 2000);
 
@@ -472,7 +470,7 @@ async function observeActiveSpeakers() {
 	audioLevelObserver.on("volumes", (volumes) => {
 		const { producer, volume } = volumes[0];
 		console.log("[MS] Audio-level volumes event", producer.appData.peerId, volume);
-		_mediaEventsEmitter.emit("activeSpeaker", {
+		_updateEmitter.emit("activeSpeaker", {
 			producerId: producer.id,
 			volume,
 			peerId: (producer.appData as CustomAppData).peerId,
@@ -480,7 +478,7 @@ async function observeActiveSpeakers() {
 	});
 	audioLevelObserver.on("silence", () => {
 		console.log("[MS] Audio-level silence event");
-		_mediaEventsEmitter.emit("activeSpeaker", null);
+		_updateEmitter.emit("activeSpeaker", null);
 	});
 }
 observeActiveSpeakers();
@@ -488,7 +486,7 @@ observeActiveSpeakers();
 /** Utility function for closing the session and transports related to a given peer */
 export async function closeMediaPeer(peerId: string) {
 	console.log("[MS] Closing peer", peerId);
-	_mediaEventsEmitter.emit("sessionRemoved", _sessions[peerId]);
+	_updateEmitter.emit("sessionRemoved", _sessions[peerId]);
 	delete _sessions[peerId];
 	for (const transport of Object.values(_transports)) {
 		if (transport.appData.peerId === peerId) {
