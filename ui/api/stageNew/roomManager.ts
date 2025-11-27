@@ -339,13 +339,36 @@ async function handleInitialState(event: any): Promise<void> {
 				}
 			});
 
-			transport.on("connectionstatechange", (state) => {
-				console.log(`[RoomManager] Recv transport ${transport.id} connection state changed to:`, state);
-			});
+			// Access the internal RTCPeerConnection for real state monitoring
+			try {
+				// @ts-ignore - accessing internal handler
+				const handler = transport._handler;
+				if (handler && handler._pc) {
+					const pc = handler._pc;
+					console.log(`[RoomManager] Recv transport initial state:`, pc.connectionState || pc.iceConnectionState);
 
-			transport.on("icegatheringstatechange", (state) => {
-				console.log(`[RoomManager] Recv transport ${transport.id} ICE gathering state changed to:`, state);
-			});
+					pc.addEventListener("connectionstatechange", () => {
+						console.log(`[RoomManager] Recv transport RTCPeerConnection state:`, pc.connectionState);
+						if (pc.connectionState === "failed") {
+							console.error(`[RoomManager] Recv transport failed - connectivity issue, removing...`);
+							roomState.update((s) => {
+								const recvTransports = new Map(s.recvTransports);
+								recvTransports.delete("shared");
+								return { ...s, recvTransports };
+							});
+						}
+					});
+
+					pc.addEventListener("iceconnectionstatechange", () => {
+						console.log(`[RoomManager] Recv transport ICE state:`, pc.iceConnectionState);
+						if (pc.iceConnectionState === "failed") {
+							console.error(`[RoomManager] Recv transport ICE failed - cannot connect to server`);
+						}
+					});
+				}
+			} catch (e) {
+				console.warn("[RoomManager] Cannot access RTCPeerConnection for recv transport monitoring");
+			}
 
 			// Store shared transport
 			roomState.update((s) => {
@@ -458,16 +481,32 @@ async function createSendTransport(): Promise<void> {
 		}
 	});
 
-	transport.on("connectionstatechange", (state) => {
-		console.log(`[RoomManager] Send transport ${transport.id} connection state changed to:`, state);
-		if (state === "failed") {
-			console.error(`[RoomManager] Send transport ${transport.id} failed - may need ICE restart`);
-		}
-	});
+	// Access the internal RTCPeerConnection for real state monitoring
+	try {
+		// @ts-ignore - accessing internal handler
+		const handler = transport._handler;
+		if (handler && handler._pc) {
+			const pc = handler._pc;
+			console.log(`[RoomManager] Send transport initial state:`, pc.connectionState || pc.iceConnectionState);
 
-	transport.on("icegatheringstatechange", (state) => {
-		console.log(`[RoomManager] Send transport ${transport.id} ICE gathering state changed to:`, state);
-	});
+			pc.addEventListener("connectionstatechange", () => {
+				console.log(`[RoomManager] Send transport RTCPeerConnection state:`, pc.connectionState);
+				if (pc.connectionState === "failed") {
+					console.error(`[RoomManager] Send transport failed - connectivity issue, recreating...`);
+					roomState.update((s) => ({ ...s, sendTransport: null }));
+				}
+			});
+
+			pc.addEventListener("iceconnectionstatechange", () => {
+				console.log(`[RoomManager] Send transport ICE state:`, pc.iceConnectionState);
+				if (pc.iceConnectionState === "failed") {
+					console.error(`[RoomManager] Send transport ICE failed - network issue`);
+				}
+			});
+		}
+	} catch (e) {
+		console.warn("[RoomManager] Cannot access RTCPeerConnection for send transport monitoring");
+	}
 
 	transport.on("produce", async ({ kind, rtpParameters, appData }, callback, errback) => {
 		try {
@@ -717,12 +756,36 @@ async function subscribeToTrack(peerId: string, mediaTag: MediaTag): Promise<voi
 			}
 		});
 
-		transport.on("connectionstatechange", (state) => {
-			console.log(`[RoomManager] Consumer transport ${transport.id} connection state changed to:`, state);
-			if (state === "failed") {
-				console.error(`[RoomManager] Consumer transport ${transport.id} failed - check NAT/firewall settings`);
+		// Access the internal RTCPeerConnection for real state monitoring
+		try {
+			// @ts-ignore - accessing internal handler
+			const handler = transport._handler;
+			if (handler && handler._pc) {
+				const pc = handler._pc;
+				console.log(`[RoomManager] Consumer transport initial state:`, pc.connectionState || pc.iceConnectionState);
+
+				pc.addEventListener("connectionstatechange", () => {
+					console.log(`[RoomManager] Consumer transport RTCPeerConnection state:`, pc.connectionState);
+					if (pc.connectionState === "failed") {
+						console.error(`[RoomManager] Consumer transport failed - network issue, removing...`);
+						roomState.update((s) => {
+							const recvTransports = new Map(s.recvTransports);
+							recvTransports.delete("shared");
+							return { ...s, recvTransports };
+						});
+					}
+				});
+
+				pc.addEventListener("iceconnectionstatechange", () => {
+					console.log(`[RoomManager] Consumer transport ICE state:`, pc.iceConnectionState);
+					if (pc.iceConnectionState === "failed") {
+						console.error(`[RoomManager] Consumer transport ICE failed - check NAT/firewall`);
+					}
+				});
 			}
-		});
+		} catch (e) {
+			console.warn("[RoomManager] Cannot access RTCPeerConnection for consumer transport monitoring");
+		}
 
 		// Store shared transport
 		roomState.update((s) => {

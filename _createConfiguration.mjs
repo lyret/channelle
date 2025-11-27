@@ -35,6 +35,7 @@ export async function createConfiguration() {
 			local: Boolean,
 			lan: Boolean,
 			wan: Boolean,
+			wanIp: String,
 			build: Boolean,
 			watch: Boolean,
 			start: Boolean,
@@ -205,11 +206,17 @@ export async function createConfiguration() {
 
 	if (start) {
 		if (wan) {
-			// Get the public IP of this server
-			const publicIP = await publicIpv4({ version: 4, timeout: 10000 }).catch((error) => {
-				console.error("💥 Failed to get a public IP:", error);
-				return undefined;
-			});
+			// Get the public IP of this server - use WAN_IP env var if set, otherwise auto-detect
+			let publicIP;
+			if (process.env.WAN_IP || cli.wanIp) {
+				publicIP = cli.wanIp || process.env.WAN_IP;
+				console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Using WAN_IP:", publicIP);
+			} else {
+				publicIP = await publicIpv4({ version: 4, timeout: 10000 }).catch((error) => {
+					console.error("💥 Failed to get a public IP:", error);
+					return undefined;
+				});
+			}
 
 			// Add listening infos for WAN,
 			webRTCTransportListenInfos.push({
