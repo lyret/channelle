@@ -310,9 +310,33 @@ async function handleInitialState(event: any): Promise<void> {
 		await createSendTransport();
 	}
 
-	if (event.needsRecvTransport?.length > 0) {
-		for (const peerId of event.needsRecvTransport) {
-			await createRecvTransport(peerId);
+	if (event.needsRecvTransport) {
+		// Create shared recv transport if we don't have one
+		const state = get(roomState);
+		if (!state.recvTransports.has("shared")) {
+			console.log("[RoomManager] Creating shared recv transport");
+			const transportOptions = await stageClient.createTransport.mutate({ direction: "recv" });
+			const transport = state.device!.createRecvTransport(transportOptions.transportOptions);
+
+			// Handle transport events
+			transport.on("connect", async ({ dtlsParameters }, callback, errback) => {
+				try {
+					await stageClient.connectTransport.mutate({
+						transportId: transport.id,
+						dtlsParameters,
+					});
+					callback();
+				} catch (error) {
+					errback(error as Error);
+				}
+			});
+
+			// Store shared transport
+			roomState.update((s) => {
+				const recvTransports = new Map(s.recvTransports);
+				recvTransports.set("shared", transport);
+				return { ...s, recvTransports };
+			});
 		}
 	}
 
@@ -430,44 +454,12 @@ async function createSendTransport(): Promise<void> {
 }
 
 /**
- * Create receive transport for remote media
+ * Create receive transport for remote media (not used anymore, kept for reference)
  */
 async function createRecvTransport(peerId: string): Promise<Transport> {
-	console.log(`[RoomManager] Creating recv transport for ${peerId}`);
-
-	const state = get(roomState);
-	if (!state.device) throw new Error("Device not initialized");
-
-	// Check if we already have a transport for this peer
-	if (state.recvTransports.has(peerId)) {
-		return state.recvTransports.get(peerId)!;
-	}
-
-	const transportOptions = await stageClient.createTransport.mutate({ direction: "recv" });
-	const transport = state.device.createRecvTransport(transportOptions.transportOptions);
-
-	// Handle transport events
-	transport.on("connect", async ({ dtlsParameters }, callback, errback) => {
-		try {
-			await stageClient.connectTransport.mutate({
-				transportId: transport.id,
-				dtlsParameters,
-			});
-			callback();
-		} catch (error) {
-			errback(error as Error);
-		}
-	});
-
-	// Store transport
-	roomState.update((s) => {
-		const recvTransports = new Map(s.recvTransports);
-		recvTransports.set(peerId, transport);
-		return { ...s, recvTransports };
-	});
-
-	console.log(`[RoomManager] Recv transport created for ${peerId}`);
-	return transport;
+	// We now use a single shared recv transport for all consumers
+	// This function is deprecated
+	throw new Error("Use shared recv transport instead");
 }
 
 // ============================================================================
@@ -662,10 +654,32 @@ async function subscribeToTrack(peerId: string, mediaTag: MediaTag): Promise<voi
 		return;
 	}
 
-	// Ensure we have a recv transport for this peer
-	let transport = state.recvTransports.get(peerId);
+	// We use a single recv transport for all consumers
+	let transport = state.recvTransports.get("shared");
 	if (!transport) {
-		transport = await createRecvTransport(peerId);
+		console.log("[RoomManager] Creating shared recv transport");
+		const transportOptions = await stageClient.createTransport.mutate({ direction: "recv" });
+		transport = state.device.createRecvTransport(transportOptions.transportOptions);
+
+		// Handle transport events
+		transport.on("connect", async ({ dtlsParameters }, callback, errback) => {
+			try {
+				await stageClient.connectTransport.mutate({
+					transportId: transport.id,
+					dtlsParameters,
+				});
+				callback();
+			} catch (error) {
+				errback(error as Error);
+			}
+		});
+
+		// Store shared transport
+		roomState.update((s) => {
+			const recvTransports = new Map(s.recvTransports);
+			recvTransports.set("shared", transport);
+			return { ...s, recvTransports };
+		});
 	}
 
 	console.log(`[RoomManager] Using transport ${transport.id} for ${peerId}`);
@@ -702,23 +716,51 @@ async function subscribeToTrack(peerId: string, mediaTag: MediaTag): Promise<voi
 		paused: consumer.paused,
 		track: consumer.track ? "present" : "missing",
 		trackState: consumer.track?.readyState,
+		kind: consumer.kind,
 	});
 
-	// Store consumer
+	// Store consumer immediately
 	roomState.update((s) => {
 		const consumers = new Map(s.consumers);
 		consumers.set(consumer.id, consumer);
 		return { ...s, consumers };
 	});
 
-	// Resume if paused
-	if (consumer.paused) {
-		console.log(`[RoomManager] Resuming consumer ${consumer.id}`);
+	// Handle consumer events
+	consumer.on("transportclose", () => {
+		console.log(`[RoomManager] Consumer ${consumer.id} transport closed`);
+		roomState.update((s) => {
+			const consumers = new Map(s.consumers);
+			consumers.delete(consumer.id);
+			return { ...s, consumers };
+		});
+	});
+
+	consumer.on("producerclose", () => {
+		console.log(`[RoomManager] Consumer ${consumer.id} producer closed`);
+		roomState.update((s) => {
+			const consumers = new Map(s.consumers);
+			consumers.delete(consumer.id);
+			return { ...s, consumers };
+		});
+	});
+
+	// Always resume the consumer - server creates them paused
+	console.log(`[RoomManager] Resuming consumer ${consumer.id}`);
+	try {
+		// Resume on server first
 		await stageClient.resumeConsumer.mutate({ consumerId: consumer.id });
+		// Then resume locally
 		await consumer.resume();
+		console.log(`[RoomManager] Consumer ${consumer.id} resumed successfully`);
+	} catch (error) {
+		console.error(`[RoomManager] Failed to resume consumer ${consumer.id}:`, error);
 	}
 
-	console.log(`[RoomManager] Successfully subscribed to ${peerId}'s ${mediaTag}, track state:`, consumer.track?.readyState);
+	// Force update to trigger re-render
+	roomState.update((s) => ({ ...s }));
+
+	console.log(`[RoomManager] Successfully subscribed to ${peerId}'s ${mediaTag}, final track state:`, consumer.track?.readyState);
 }
 
 // ============================================================================
