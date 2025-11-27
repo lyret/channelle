@@ -2,15 +2,13 @@
  * Media room participation and synchronization
  * Handles joining the media room and maintaining sync with server
  */
-import { get } from "svelte/store";
 import * as MediaSoup from "mediasoup-client";
-import { deviceStore, mediaRoomIsLoading, mediaRoomError, sessionsStore, sendTransportStore, consumersStore } from "./stores";
+import { get } from "svelte/store";
+import { getState, setDevice, setLoading, setError, setSessions, findConsumer, getConsumersByPeer } from "./state";
 import { stageClient, wsPeerIdStore } from "../_trpcClient";
-import { currentPeerStore } from "../auth";
 import { subscribeToTrack, unsubscribeFromTrack, closeConsumer } from "./consumer";
 import { createTransport } from "./transport";
 import { _sendMediaStreams } from "./localMedia";
-import { findConsumerForTrack } from "./utils";
 import type { MediaTag } from "./types";
 
 // Store previous synced sessions for comparison
@@ -25,55 +23,29 @@ export async function participateInTheMediaRoom(): Promise<{ success: true } | {
 
 	try {
 		// Get router RTP capabilities from server
-		const routerRtpCapabilities = await stageClient.getRouterRtpCapabilities.query();
+		const { routerRtpCapabilities } = await stageClient.routerRtpCapabilities.query();
 		console.log("[Stage] Got router RTP capabilities");
 
 		// Create and initialize MediaSoup device
-		let device = get(deviceStore);
+		const state = getState();
+		let device = state.device;
 		if (!device) {
 			device = new MediaSoup.Device();
 			await device.load({ routerRtpCapabilities });
-			deviceStore.set(device);
+			setDevice(device);
 			console.log("[Stage] MediaSoup device initialized");
 		}
 
 		// Start syncing with the media room
 		console.log("[Stage] Starting media room sync");
-		mediaRoomIsLoading.set(true);
-		mediaRoomError.set(null);
-
-		const { unsubscribe } = stageClient.syncMediaRoom.subscribe(undefined, {
-			onData: async (data) => {
-				if (!data) {
-					console.warn("[Stage] Received null sync data");
-					return;
-				}
-
-				mediaRoomIsLoading.set(false);
-				mediaRoomError.set(null);
-
-				// Process sync data
-				await processSyncData(data);
-			},
-			onError: (error) => {
-				console.error("[Stage] Media room sync error:", error);
-				mediaRoomIsLoading.set(false);
-				mediaRoomError.set(error.message);
-			},
-			onComplete: () => {
-				console.log("[Stage] Media room sync completed");
-				mediaRoomIsLoading.set(false);
-			},
-		});
-
-		// Store unsubscribe function for cleanup
-		(window as any).__mediaRoomUnsubscribe = unsubscribe;
+		setLoading(true);
+		setError(null);
 
 		return { success: true };
 	} catch (error) {
 		console.error("[Stage] Failed to participate in media room:", error);
-		mediaRoomIsLoading.set(false);
-		mediaRoomError.set((error as Error).message);
+		setLoading(false);
+		setError((error as Error).message);
 		return { success: false, error: (error as Error).message };
 	}
 }
@@ -87,18 +59,19 @@ async function processSyncData(data: any): Promise<void> {
 
 	// Update sessions store
 	if (data.sessions) {
-		sessionsStore.set(data.sessions);
+		setSessions(data.sessions);
 		await handleSessionChanges(data.sessions, myPeerId);
 	}
 
 	// Handle transport requests
-	if (data.needsSendTransport && !get(sendTransportStore)) {
+	const state = getState();
+	if (data.needsSendTransport && !state.sendTransport) {
 		console.log("[Stage] Server requested send transport creation");
 		await createTransport("send");
 	}
 
 	// Handle producer requests
-	if (data.needsProducers && get(sendTransportStore)) {
+	if (data.needsProducers && state.sendTransport) {
 		console.log("[Stage] Server requested producers");
 		await _sendMediaStreams();
 	}
@@ -157,10 +130,10 @@ async function handleNewPeer(peerId: string, session: any): Promise<void> {
 	// Subscribe to their media if available
 	if (session.hasMedia) {
 		if (session.videoAvailable) {
-			await subscribeToTrack(peerId, "video");
+			await subscribeToTrack(peerId, "video" as MediaTag);
 		}
 		if (session.audioAvailable) {
-			await subscribeToTrack(peerId, "audio");
+			await subscribeToTrack(peerId, "audio" as MediaTag);
 		}
 	}
 }
@@ -175,18 +148,18 @@ async function handleUpdatedPeer(peerId: string, session: any, previousSession: 
 	// Check video availability changes
 	if (session.videoAvailable !== previousSession.videoAvailable) {
 		if (session.videoAvailable) {
-			await subscribeToTrack(peerId, "video");
+			await subscribeToTrack(peerId, "video" as MediaTag);
 		} else {
-			await unsubscribeFromTrack(peerId, "video");
+			await unsubscribeFromTrack(peerId, "video" as MediaTag);
 		}
 	}
 
 	// Check audio availability changes
 	if (session.audioAvailable !== previousSession.audioAvailable) {
 		if (session.audioAvailable) {
-			await subscribeToTrack(peerId, "audio");
+			await subscribeToTrack(peerId, "audio" as MediaTag);
 		} else {
-			await unsubscribeFromTrack(peerId, "audio");
+			await unsubscribeFromTrack(peerId, "audio" as MediaTag);
 		}
 	}
 }
@@ -197,12 +170,11 @@ async function handleUpdatedPeer(peerId: string, session: any, previousSession: 
  */
 async function handleDisconnectedPeer(peerId: string): Promise<void> {
 	// Unsubscribe from all their tracks
-	await unsubscribeFromTrack(peerId, "video");
-	await unsubscribeFromTrack(peerId, "audio");
+	await unsubscribeFromTrack(peerId, "video" as MediaTag);
+	await unsubscribeFromTrack(peerId, "audio" as MediaTag);
 
 	// Close any remaining consumers for this peer
-	const consumers = get(consumersStore);
-	const peerConsumers = consumers.filter((c) => c.appData.peerId === peerId);
+	const peerConsumers = getConsumersByPeer(peerId);
 
 	for (const consumer of peerConsumers) {
 		await closeConsumer(consumer);
@@ -214,7 +186,8 @@ async function handleDisconnectedPeer(peerId: string): Promise<void> {
  * @param serverConsumers - Consumer data from server
  */
 async function handleConsumerUpdates(serverConsumers: any[]): Promise<void> {
-	const localConsumers = get(consumersStore);
+	const state = getState();
+	const localConsumers = state.consumers;
 
 	// Find and close consumers that no longer exist on server
 	for (const consumer of localConsumers) {
@@ -269,9 +242,9 @@ export async function leaveMediaRoom(): Promise<void> {
 	}
 
 	// Reset stores
-	mediaRoomIsLoading.set(false);
-	mediaRoomError.set(null);
-	sessionsStore.set({});
+	setLoading(false);
+	setError(null);
+	setSessions({});
 	_previousSyncedSessions = {};
 }
 
@@ -280,9 +253,10 @@ export async function leaveMediaRoom(): Promise<void> {
  * @returns Object with loading state and error
  */
 export function getMediaRoomStatus(): { isLoading: boolean; error: string | null } {
+	const state = getState();
 	return {
-		isLoading: get(mediaRoomIsLoading),
-		error: get(mediaRoomError),
+		isLoading: state.isLoading,
+		error: state.error,
 	};
 }
 

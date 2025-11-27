@@ -3,10 +3,20 @@
  * Handles getUserMedia, local stream control, and media track management
  */
 import { get } from "svelte/store";
-import { localMediaStreamStore, camPausedStore, micPausedStore, sendTransportStore, videoProducerStore, audioProducerStore, deviceStore } from "./stores";
+import {
+	getState,
+	setLocalStream,
+	setCamPaused,
+	setMicPaused,
+	setVideoProducer,
+	setAudioProducer,
+	setSendTransport,
+	getLocalVideoTrack,
+	getLocalAudioTrack,
+} from "./state";
 import { stageClient, wsPeerIdStore } from "../_trpcClient";
 import { currentPeerStore } from "../auth";
-import { getMediaConstraints, stopStreamTracks, getVideoTrack, getAudioTrack } from "./utils";
+import { getMediaConstraints, stopStreamTracks } from "./utils";
 import type { Producer, Transport } from "./types";
 import type { CustomAppData, MediaTag } from "~/types/serverSideTypes";
 
@@ -17,10 +27,11 @@ import type { CustomAppData, MediaTag } from "~/types/serverSideTypes";
 async function _startLocalVideoStreamFromDevice(): Promise<void> {
 	console.log("[Stage] Starting local video stream from device");
 
-	// Get any existing stream and tracks
-	const existingStream = get(localMediaStreamStore);
-	const existingAudioTrack = existingStream ? getAudioTrack(existingStream) : null;
-	const existingVideoTrack = existingStream ? getVideoTrack(existingStream) : null;
+	// Get current state
+	const state = getState();
+	const existingStream = state.localStream;
+	const existingAudioTrack = existingStream ? getLocalAudioTrack() : null;
+	const existingVideoTrack = existingStream ? getLocalVideoTrack() : null;
 
 	// Get user media with both audio and video
 	const userMedia = getMediaConstraints(true, true);
@@ -36,7 +47,7 @@ async function _startLocalVideoStreamFromDevice(): Promise<void> {
 		if (existingStream && newVideoTrack) {
 			existingStream.addTrack(newVideoTrack);
 		} else {
-			localMediaStreamStore.set(stream);
+			setLocalStream(stream);
 		}
 	}
 	// If we have existing video track but no audio, get audio only
@@ -50,7 +61,7 @@ async function _startLocalVideoStreamFromDevice(): Promise<void> {
 		if (existingStream && newAudioTrack) {
 			existingStream.addTrack(newAudioTrack);
 		} else {
-			localMediaStreamStore.set(stream);
+			setLocalStream(stream);
 		}
 	}
 	// If we have both, keep the existing stream
@@ -60,11 +71,11 @@ async function _startLocalVideoStreamFromDevice(): Promise<void> {
 	// If we have neither, get both
 	else {
 		const stream = await navigator.mediaDevices.getUserMedia(userMedia);
-		localMediaStreamStore.set(stream);
+		setLocalStream(stream);
 	}
 
 	// Ensure we have the stream set
-	const finalStream = get(localMediaStreamStore);
+	const finalStream = getState().localStream;
 	if (!finalStream) {
 		throw new Error("Failed to get user media stream");
 	}
@@ -74,10 +85,10 @@ async function _startLocalVideoStreamFromDevice(): Promise<void> {
 	const hasAudio = finalStream.getAudioTracks().length > 0;
 
 	if (!hasVideo) {
-		camPausedStore.set(true);
+		setCamPaused(true);
 	}
 	if (!hasAudio) {
-		micPausedStore.set(true);
+		setMicPaused(true);
 	}
 }
 
@@ -91,7 +102,8 @@ export async function startVideo(): Promise<void> {
 	await _startLocalVideoStreamFromDevice();
 
 	// If we have a send transport, start sending media
-	if (get(sendTransportStore)) {
+	const state = getState();
+	if (state.sendTransport) {
 		await _sendMediaStreams();
 	}
 
@@ -108,13 +120,14 @@ export async function enableAudio(): Promise<void> {
 	// Get or create local media stream with audio
 	await _startLocalVideoStreamFromDevice();
 
-	const stream = get(localMediaStreamStore);
+	const state = getState();
+	const stream = state.localStream;
 	if (!stream) return;
 
 	const hasStream = stream !== null;
 	const videoTracks = stream.getVideoTracks();
 	const audioTracks = stream.getAudioTracks();
-	const hasAudioProducer = get(audioProducerStore) !== null;
+	const hasAudioProducer = state.audioProducer !== null;
 
 	// If we don't have audio tracks yet, we need to get them
 	if (hasStream && audioTracks.length === 0) {
@@ -135,13 +148,14 @@ export async function enableAudio(): Promise<void> {
  */
 export async function disableVideo(): Promise<void> {
 	console.log("[Stage] Disabling video");
-	const stream = get(localMediaStreamStore);
-	const producer = get(videoProducerStore);
+	const state = getState();
+	const stream = state.localStream;
+	const producer = state.videoProducer;
 
 	// Close the video producer if it exists
 	if (producer) {
 		producer.close();
-		videoProducerStore.set(null);
+		setVideoProducer(null);
 		await stageClient.closeProducer.mutate({ producerId: producer.id });
 	}
 
@@ -151,7 +165,7 @@ export async function disableVideo(): Promise<void> {
 		videoTracks.forEach((track) => track.stop());
 	}
 
-	camPausedStore.set(true);
+	setCamPaused(true);
 	await stageClient.updateMyMediaAvailability.mutate({ video: false });
 }
 
@@ -160,13 +174,14 @@ export async function disableVideo(): Promise<void> {
  */
 export async function disableAudio(): Promise<void> {
 	console.log("[Stage] Disabling audio");
-	const stream = get(localMediaStreamStore);
-	const producer = get(audioProducerStore);
+	const state = getState();
+	const stream = state.localStream;
+	const producer = state.audioProducer;
 
 	// Close the audio producer if it exists
 	if (producer) {
 		producer.close();
-		audioProducerStore.set(null);
+		setAudioProducer(null);
 		await stageClient.closeProducer.mutate({ producerId: producer.id });
 	}
 
@@ -176,7 +191,7 @@ export async function disableAudio(): Promise<void> {
 		audioTracks.forEach((track) => track.stop());
 	}
 
-	micPausedStore.set(true);
+	setMicPaused(true);
 	await stageClient.updateMyMediaAvailability.mutate({ audio: false });
 }
 
@@ -187,10 +202,11 @@ export async function disableAudio(): Promise<void> {
 async function _sendMediaStreams(): Promise<void> {
 	console.log("[Stage] Sending media streams");
 
-	const stream = get(localMediaStreamStore);
+	const state = getState();
+	const stream = state.localStream;
 	if (!stream) return;
 
-	let transport = get(sendTransportStore);
+	const transport = state.sendTransport;
 	if (!transport) {
 		throw new Error("No send transport available");
 	}
@@ -200,7 +216,7 @@ async function _sendMediaStreams(): Promise<void> {
 	const audioTracks = stream.getAudioTracks();
 
 	// Produce video if we have a video track and no existing video producer
-	if (videoTracks.length > 0 && !get(videoProducerStore)) {
+	if (videoTracks.length > 0 && !state.videoProducer) {
 		console.log("[Stage] Producing video track");
 		const videoTrack = videoTracks[0];
 
@@ -214,8 +230,8 @@ async function _sendMediaStreams(): Promise<void> {
 			appData: { mediaTag: "video" as MediaTag, peerId: myPeerId },
 		});
 
-		videoProducerStore.set(producer);
-		camPausedStore.set(false);
+		setVideoProducer(producer);
+		setCamPaused(false);
 
 		// Notify server about the new producer
 		await stageClient.produce.mutate({
@@ -227,7 +243,7 @@ async function _sendMediaStreams(): Promise<void> {
 	}
 
 	// Produce audio if we have an audio track and no existing audio producer
-	if (audioTracks.length > 0 && !get(audioProducerStore)) {
+	if (audioTracks.length > 0 && !state.audioProducer) {
 		console.log("[Stage] Producing audio track");
 		const audioTrack = audioTracks[0];
 
@@ -236,8 +252,8 @@ async function _sendMediaStreams(): Promise<void> {
 			appData: { mediaTag: "audio" as MediaTag, peerId: myPeerId },
 		});
 
-		audioProducerStore.set(producer);
-		micPausedStore.set(false);
+		setAudioProducer(producer);
+		setMicPaused(false);
 
 		// Notify server about the new producer
 		await stageClient.produce.mutate({
@@ -254,11 +270,12 @@ async function _sendMediaStreams(): Promise<void> {
  * @param paused - Optional explicit pause state, otherwise toggles current state
  */
 export async function toggleVideoPaused(paused?: boolean): Promise<void> {
-	const currentPaused = get(camPausedStore);
+	const state = getState();
+	const currentPaused = state.camPaused;
 	const newPaused = paused !== undefined ? paused : !currentPaused;
 
 	console.log(`[Stage] Toggling video paused: ${currentPaused} -> ${newPaused}`);
-	const producer = get(videoProducerStore);
+	const producer = state.videoProducer;
 
 	if (producer) {
 		if (newPaused) {
@@ -266,7 +283,7 @@ export async function toggleVideoPaused(paused?: boolean): Promise<void> {
 		} else {
 			await producer.resume();
 		}
-		camPausedStore.set(newPaused);
+		setCamPaused(newPaused);
 	}
 }
 
@@ -275,11 +292,12 @@ export async function toggleVideoPaused(paused?: boolean): Promise<void> {
  * @param paused - Optional explicit pause state, otherwise toggles current state
  */
 export async function toggleAudioPaused(paused?: boolean): Promise<void> {
-	const currentPaused = get(micPausedStore);
+	const state = getState();
+	const currentPaused = state.micPaused;
 	const newPaused = paused !== undefined ? paused : !currentPaused;
 
 	console.log(`[Stage] Toggling audio paused: ${currentPaused} -> ${newPaused}`);
-	const producer = get(audioProducerStore);
+	const producer = state.audioProducer;
 
 	if (producer) {
 		if (newPaused) {
@@ -287,7 +305,7 @@ export async function toggleAudioPaused(paused?: boolean): Promise<void> {
 		} else {
 			await producer.resume();
 		}
-		micPausedStore.set(newPaused);
+		setMicPaused(newPaused);
 	}
 }
 
@@ -296,29 +314,30 @@ export async function toggleAudioPaused(paused?: boolean): Promise<void> {
  */
 export async function closeMediaStreams(): Promise<void> {
 	console.log("[Stage] Closing media streams");
-	const stream = get(localMediaStreamStore);
-	const transport = get(sendTransportStore);
+	const state = getState();
+	const stream = state.localStream;
+	const transport = state.sendTransport;
 
 	// Stop all tracks in the local stream
 	if (stream) {
 		stopStreamTracks(stream);
-		localMediaStreamStore.set(null);
+		setLocalStream(null);
 	}
 
 	// Close the send transport
 	if (transport) {
 		await stageClient.closeTransport.mutate({ transportId: transport.id });
 		transport.close();
-		sendTransportStore.set(null);
+		setSendTransport(null);
 	}
 
 	// Reset producers
-	videoProducerStore.set(null);
-	audioProducerStore.set(null);
+	setVideoProducer(null);
+	setAudioProducer(null);
 
 	// Reset pause states
-	camPausedStore.set(false);
-	micPausedStore.set(false);
+	setCamPaused(false);
+	setMicPaused(false);
 }
 
 // Export for use in mediaRoom module

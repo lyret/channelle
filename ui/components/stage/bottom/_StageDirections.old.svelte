@@ -1,24 +1,13 @@
 <script lang="ts">
 	import { slide } from "svelte/transition";
 	import IconAlertTriangle from "~/components/icons/Icon-alert-triangle.svelte";
-	import { peerStreamsStore } from "~/api/stageNew";
-	import { wsPeerIdStore } from "~/api/_trpcClient";
-	import { currentPeerStore } from "~/api/auth";
-	import { showSceneSettingsStore } from "~/api/backstage";
+	import { videoProducerStore, audioProducerStore, camPausedStore, micPausedStore, currentPeerStore } from "~/api";
+	import { showSceneSettingsStore } from "~/api";
 
-	// Get local stream to check media status
-	$: myPeerId = $wsPeerIdStore;
-	$: localStream = $peerStreamsStore[myPeerId];
-
-	// Check if camera and microphone are on
-	$: isCameraOn = localStream?.getVideoTracks().some(track => track.enabled) || false;
-	$: isMicOn = localStream?.getAudioTracks().some(track => track.enabled) || false;
-
-	// Check if user is an actor and on stage
-	$: isActor = $currentPeerStore?.actor || false;
-	$: isOnStage = isActor && !$showSceneSettingsStore?.curtains;
-
-	// Determine if warnings should be shown
+	$: isCameraOn = !!$videoProducerStore && !$camPausedStore;
+	$: isMicOn = !!$audioProducerStore && !$micPausedStore;
+	$: isActor = $currentPeerStore.actor;
+	$: isOnStage = isActor && !$showSceneSettingsStore.curtains;
 	$: isCameraOffStage = isOnStage && !isCameraOn;
 	$: isMicOffStage = isOnStage && !isMicOn;
 	$: visible = isCameraOffStage || isMicOffStage;

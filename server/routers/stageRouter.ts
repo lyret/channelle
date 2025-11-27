@@ -11,6 +11,12 @@ const _updateEmitter = new Emittery<{
 	sessionRemoved: MediaSession;
 	sessionUpdated: MediaSession;
 	sessionAdded: MediaSession;
+	producerAdded: Producer;
+	producerRemoved: Producer;
+	producerPaused: Producer;
+	producerResumed: Producer;
+	consumerAdded: Consumer;
+	consumerRemoved: Consumer;
 	activeSpeaker: ActiveSpeaker | null;
 }>();
 
@@ -64,24 +70,119 @@ const mediaSessionProcedure = authenticatedPeerProcedure.use(async ({ ctx, next 
  */
 export const stageRouter = router({
 	/** Subscription for stage media room per show id (global in stage mode) with automatic updates */
-	room: procedure.subscription(async function* ({
-		ctx: { peer },
-	}): AsyncGenerator<{ event: "initial" | "sessionAdded" | "sessionRemoved" | "sessionUpdated"; session: MediaSession }> {
+	room: procedure.subscription(async function* ({ ctx: { peer } }): AsyncGenerator<{
+		type: "initial" | "sessionChange" | "producerChange" | "consumerNeeded" | "consumerClosed" | "transportNeeded" | "activeSpeaker" | "error";
+		sessions?: Record<string, MediaSession>;
+		producers?: Record<string, { peerId: string; mediaTag: MediaTag; paused: boolean }>;
+		consumers?: Array<{ peerId: string; mediaTag: MediaTag; consumerId?: string }>;
+		needsSendTransport?: boolean;
+		needsRecvTransport?: string[];
+		activeSpeaker?: ActiveSpeaker | null;
+		error?: string;
+	}> {
 		console.log(`[Stage] Peer ${peer.id} subscribed to the media room`);
 
+		// Send initial state
+		const currentSessions: Record<string, MediaSession> = {};
+		const currentProducers: Record<string, { peerId: string; mediaTag: MediaTag; paused: boolean }> = {};
+		const availableConsumers: Array<{ peerId: string; mediaTag: MediaTag }> = [];
+
+		// Gather current state
+		for (const [peerId, session] of Object.entries(_sessions)) {
+			currentSessions[peerId] = session;
+			// Find producers for this peer
+			for (const [producerId, producer] of Object.entries(_producers)) {
+				if (producer.appData.peerId === peerId) {
+					currentProducers[producerId] = {
+						peerId: peerId,
+						mediaTag: producer.appData.mediaTag as MediaTag,
+						paused: producer.paused,
+					};
+					// Other peers can consume this
+					if (peerId !== peer.id && !producer.paused) {
+						availableConsumers.push({
+							peerId: peerId,
+							mediaTag: producer.appData.mediaTag as MediaTag,
+						});
+					}
+				}
+			}
+		}
+
+		// Check what transports this peer needs
+		const needsSendTransport = !Object.values(_transports).some((t) => t.appData.peerId === peer.id && t.appData.clientDirection === "send");
+		const peersNeedingRecvTransport: string[] = [];
+
+		for (const consumer of availableConsumers) {
+			const hasRecvTransport = Object.values(_transports).some(
+				(t) => t.appData.peerId === peer.id && t.appData.clientDirection === "recv" && t.appData.producerPeerId === consumer.peerId,
+			);
+			if (!hasRecvTransport && !peersNeedingRecvTransport.includes(consumer.peerId)) {
+				peersNeedingRecvTransport.push(consumer.peerId);
+			}
+		}
+
 		yield {
-			event: "initial",
-			session: null as any,
+			type: "initial",
+			sessions: currentSessions,
+			producers: currentProducers,
+			consumers: availableConsumers,
+			needsSendTransport,
+			needsRecvTransport: peersNeedingRecvTransport,
 		};
 
+		// Listen for all events
 		for await (const [event, data] of _updateEmitter.anyEvent()) {
 			switch (event) {
 				case "sessionAdded":
 				case "sessionRemoved":
 				case "sessionUpdated":
+					// Re-gather all sessions for simplicity
+					const sessions: Record<string, MediaSession> = {};
+					for (const [id, session] of Object.entries(_sessions)) {
+						sessions[id] = session;
+					}
 					yield {
-						event: event,
-						session: data as MediaSession,
+						type: "sessionChange",
+						sessions,
+					};
+					break;
+
+				case "producerAdded":
+				case "producerRemoved":
+				case "producerPaused":
+				case "producerResumed":
+					// Gather producer info
+					const producers: Record<string, { peerId: string; mediaTag: MediaTag; paused: boolean }> = {};
+					const consumers: Array<{ peerId: string; mediaTag: MediaTag }> = [];
+
+					for (const [producerId, producer] of Object.entries(_producers)) {
+						producers[producerId] = {
+							peerId: producer.appData.peerId as string,
+							mediaTag: producer.appData.mediaTag as MediaTag,
+							paused: producer.paused,
+						};
+
+						// If this producer is from another peer and not paused, current peer might want to consume it
+						if (producer.appData.peerId !== peer.id && !producer.paused) {
+							consumers.push({
+								peerId: producer.appData.peerId as string,
+								mediaTag: producer.appData.mediaTag as MediaTag,
+							});
+						}
+					}
+
+					yield {
+						type: "producerChange",
+						producers,
+						consumers,
+					};
+					break;
+
+				case "activeSpeaker":
+					yield {
+						type: "activeSpeaker",
+						activeSpeaker: data,
 					};
 					break;
 			}
@@ -218,6 +319,11 @@ export const stageRouter = router({
 				encodings: rtpParameters.encodings,
 			};
 
+			// Emit producer added event
+			_updateEmitter.emit("producerAdded", producer);
+			// Also emit session updated so clients know about media change
+			_updateEmitter.emit("sessionUpdated", _sessions[ctx.peer.id]);
+
 			return { id: producer.id };
 		}),
 	// Receive Track
@@ -282,6 +388,11 @@ export const stageRouter = router({
 				}
 			});
 
+			console.log("[MS] Created consumer", consumer.id, "currentLayers", consumer.currentLayers, "for", ctx.peer.id, consumer.appData);
+
+			// Emit consumer added event
+			_updateEmitter.emit("consumerAdded", consumer);
+
 			return {
 				producerId: producer.id,
 				id: consumer.id,
@@ -333,6 +444,9 @@ export const stageRouter = router({
 
 		await _closeConsumer(consumer);
 
+		// Emit consumer removed event
+		_updateEmitter.emit("consumerRemoved", consumer);
+
 		return { closed: true };
 	}),
 	// Consumer Set Layers
@@ -368,6 +482,11 @@ export const stageRouter = router({
 
 		_sessions[ctx.peer.id].media[producer.appData.mediaTag].paused = true;
 
+		// Emit producer paused event
+		_updateEmitter.emit("producerPaused", producer);
+		// Also emit session updated so clients know about media change
+		_updateEmitter.emit("sessionUpdated", _sessions[ctx.peer.id]);
+
 		return { paused: true };
 	}),
 	// Resume Producer
@@ -385,6 +504,11 @@ export const stageRouter = router({
 
 		_sessions[ctx.peer.id].media[producer.appData.mediaTag].paused = false;
 
+		// Emit producer resumed event
+		_updateEmitter.emit("producerResumed", producer);
+		// Also emit session updated so clients know about media change
+		_updateEmitter.emit("sessionUpdated", _sessions[ctx.peer.id]);
+
 		return { resumed: true };
 	}),
 	// Close Producer
@@ -399,6 +523,12 @@ export const stageRouter = router({
 		console.log("[MS] Closed producer", ctx.peer.id, producer.appData);
 
 		await _closeProducer(producer);
+		// Update session media before emitting events
+		if (_sessions[ctx.peer.id] && _sessions[ctx.peer.id].media[producer.appData.mediaTag]) {
+			delete _sessions[ctx.peer.id].media[producer.appData.mediaTag];
+		}
+		_updateEmitter.emit("producerRemoved", producer);
+		_updateEmitter.emit("sessionUpdated", _sessions[ctx.peer.id]);
 		return { closed: true };
 	}),
 });

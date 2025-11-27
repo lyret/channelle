@@ -2,11 +2,10 @@
  * Transport management for stage media streaming
  * Handles WebRTC transport creation and lifecycle
  */
-import { get } from "svelte/store";
 import * as MediaSoup from "mediasoup-client";
-import { deviceStore, sendTransportStore, recvTransports, videoProducerStore, audioProducerStore, consumersStore } from "./stores";
+import { getState, setSendTransport, setRecvTransport, setVideoProducer, setAudioProducer, updateConsumers, getConsumersByPeer } from "./state";
 import { stageClient } from "../_trpcClient";
-import type { Transport, Device, TransportDirection, CustomAppData, MediaTag } from "./types";
+import type { Transport, TransportDirection, CustomAppData } from "./types";
 
 /**
  * Create a WebRTC transport for sending or receiving media
@@ -17,24 +16,24 @@ import type { Transport, Device, TransportDirection, CustomAppData, MediaTag } f
 export async function createTransport(direction: TransportDirection, peerId?: string): Promise<Transport> {
 	console.log(`[Stage] Creating ${direction} transport${peerId ? ` for peer ${peerId}` : ""}`);
 
-	const device = get(deviceStore);
-	if (!device) {
+	const state = getState();
+	if (!state.device) {
 		throw new Error("MediaSoup device not initialized");
 	}
 
 	// Check if transport already exists
-	if (direction === "send" && get(sendTransportStore)) {
+	if (direction === "send" && state.sendTransport) {
 		console.log("[Stage] Send transport already exists");
-		return get(sendTransportStore)!;
+		return state.sendTransport;
 	}
 
 	let transport: Transport;
 	const transportOptions = await stageClient.createWebRtcTransport.mutate({ direction });
 
 	if (direction === "send") {
-		transport = await device.createSendTransport(transportOptions);
+		transport = await state.device.createSendTransport(transportOptions);
 	} else {
-		transport = await device.createRecvTransport(transportOptions);
+		transport = await state.device.createRecvTransport(transportOptions);
 	}
 
 	// Set up transport event handlers
@@ -85,14 +84,11 @@ export async function createTransport(direction: TransportDirection, peerId?: st
 		});
 
 		// Store the send transport
-		sendTransportStore.set(transport);
+		setSendTransport(transport);
 	} else {
 		// For receive transports, store by peer ID
 		if (peerId) {
-			recvTransports.update(transports => ({
-				...transports,
-				[peerId]: transport
-			}));
+			setRecvTransport(peerId, transport);
 		}
 	}
 
@@ -153,34 +149,27 @@ function handleTransportFailure(transport: Transport, direction: TransportDirect
 
 	if (direction === "send") {
 		// Clear send transport and producers
-		sendTransportStore.set(null);
-		videoProducerStore.set(null);
-		audioProducerStore.set(null);
+		setSendTransport(null);
+		setVideoProducer(null);
+		setAudioProducer(null);
 	} else {
 		// Find and remove the failed receive transport
-		const transports = get(recvTransports);
-		const peerId = Object.keys(transports).find(id => transports[id] === transport);
+		const state = getState();
+		const peerId = Object.keys(state.recvTransports).find((id) => state.recvTransports[id] === transport);
 
 		if (peerId) {
 			// Remove associated consumers
-			const consumers = get(consumersStore);
-			const peerConsumers = consumers.filter(c => c.appData.peerId === peerId);
+			const peerConsumers = getConsumersByPeer(peerId);
 
-			peerConsumers.forEach(consumer => {
+			peerConsumers.forEach((consumer) => {
 				consumer.close();
 			});
 
 			// Update consumers store
-			consumersStore.update(consumers =>
-				consumers.filter(c => c.appData.peerId !== peerId)
-			);
+			updateConsumers((consumers) => consumers.filter((c) => c.appData.peerId !== peerId));
 
 			// Remove transport
-			recvTransports.update(transports => {
-				const updated = { ...transports };
-				delete updated[peerId];
-				return updated;
-			});
+			setRecvTransport(peerId, null);
 		}
 	}
 }
@@ -195,8 +184,9 @@ function handleTransportClosed(transport: Transport, direction: TransportDirecti
 
 	if (direction === "send") {
 		// Clear send transport and producers
-		const videoProducer = get(videoProducerStore);
-		const audioProducer = get(audioProducerStore);
+		const state = getState();
+		const videoProducer = state.videoProducer;
+		const audioProducer = state.audioProducer;
 
 		if (videoProducer && !videoProducer.closed) {
 			videoProducer.close();
@@ -205,35 +195,27 @@ function handleTransportClosed(transport: Transport, direction: TransportDirecti
 			audioProducer.close();
 		}
 
-		sendTransportStore.set(null);
-		videoProducerStore.set(null);
-		audioProducerStore.set(null);
+		setSendTransport(null);
+		setVideoProducer(null);
+		setAudioProducer(null);
 	} else {
 		// Handle receive transport closure
-		const transports = get(recvTransports);
-		const peerId = Object.keys(transports).find(id => transports[id] === transport);
+		const state = getState();
+		const peerId = Object.keys(state.recvTransports).find((id) => state.recvTransports[id] === transport);
 
 		if (peerId) {
 			// Close all consumers for this peer
-			const consumers = get(consumersStore);
-			const peerConsumers = consumers.filter(c => c.appData.peerId === peerId);
+			const peerConsumers = getConsumersByPeer(peerId);
 
-			peerConsumers.forEach(consumer => {
+			peerConsumers.forEach((consumer) => {
 				if (!consumer.closed) {
 					consumer.close();
 				}
 			});
 
 			// Update stores
-			consumersStore.update(consumers =>
-				consumers.filter(c => c.appData.peerId !== peerId)
-			);
-
-			recvTransports.update(transports => {
-				const updated = { ...transports };
-				delete updated[peerId];
-				return updated;
-			});
+			updateConsumers((consumers) => consumers.filter((c) => c.appData.peerId !== peerId));
+			setRecvTransport(peerId, null);
 		}
 	}
 }
@@ -258,55 +240,16 @@ export async function closeTransport(transport: Transport, direction: TransportD
 
 	// Update stores
 	if (direction === "send") {
-		sendTransportStore.set(null);
-		videoProducerStore.set(null);
-		audioProducerStore.set(null);
+		setSendTransport(null);
+		setVideoProducer(null);
+		setAudioProducer(null);
 	} else {
 		// Find and remove from receive transports
-		const transports = get(recvTransports);
-		const peerId = Object.keys(transports).find(id => transports[id] === transport);
+		const state = getState();
+		const peerId = Object.keys(state.recvTransports).find((id) => state.recvTransports[id] === transport);
 
 		if (peerId) {
-			recvTransports.update(transports => {
-				const updated = { ...transports };
-				delete updated[peerId];
-				return updated;
-			});
+			setRecvTransport(peerId, null);
 		}
-	}
-}
-
-/**
- * Get transport statistics
- * @param transport - Transport to get stats for
- * @returns Transport statistics
- */
-export async function getTransportStats(transport: Transport): Promise<RTCStatsReport | null> {
-	try {
-		const stats = await transport.getStats();
-		return stats;
-	} catch (error) {
-		console.error(`[Stage] Error getting transport stats:`, error);
-		return null;
-	}
-}
-
-/**
- * Restart ICE for a transport
- * @param transport - Transport to restart ICE for
- */
-export async function restartTransportIce(transport: Transport): Promise<void> {
-	console.log(`[Stage] Restarting ICE for transport ${transport.id}`);
-
-	try {
-		const iceParameters = await stageClient.restartIce.mutate({
-			transportId: transport.id
-		});
-
-		await transport.restartIce({ iceParameters });
-		console.log(`[Stage] ICE restarted successfully for transport ${transport.id}`);
-	} catch (error) {
-		console.error(`[Stage] Failed to restart ICE:`, error);
-		throw error;
 	}
 }

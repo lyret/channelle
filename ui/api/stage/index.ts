@@ -6,42 +6,61 @@
  */
 
 // ============================================================================
-// STORES
+// STATE MANAGEMENT
 // ============================================================================
 
 export {
-	// Loading and error state
+	// State access functions
+	getState,
+	updateState,
+	resetState,
+	cleanupMediaState,
+
+	// State setters
+	setLoading,
+	setError,
+	setDevice,
+	setLocalStream,
+	setCamPaused,
+	setMicPaused,
+	setSendTransport,
+	setRecvTransport,
+	updateRecvTransports,
+	setVideoProducer,
+	setAudioProducer,
+	updateConsumers,
+	addConsumer,
+	removeConsumer,
+	setSessions,
+
+	// State getters
+	getRecvTransport,
+	findConsumer,
+	getConsumersByPeer,
+	hasActiveProducers,
+	getLocalVideoTrack,
+	getLocalAudioTrack,
+
+	// Derived stores (for Svelte components)
 	mediaRoomIsLoading,
 	mediaRoomError,
-
-	// MediaSoup device
 	deviceStore,
-
-	// Local media controls
+	localMediaStreamStore,
 	camPausedStore,
 	micPausedStore,
-	localMediaStreamStore,
-
-	// Transports
-	recvTransports,
 	sendTransportStore,
-
-	// Producers and consumers
+	recvTransports,
 	videoProducerStore,
 	audioProducerStore,
 	consumersStore,
-
-	// Session and room state
 	sessionsStore,
-	currentActiveSpeakerStore,
-
-	// Derived stores
-	hasAutenticated,
-	isBannedFromTheRoom,
 	hasLocalCamStore,
 	hasSendTransportStore,
 	hasRecvTransportStore,
-} from "./stores";
+	currentActiveSpeakerStore,
+	hasAutenticated,
+	isBannedFromTheRoom,
+} from "./state";
 
 // ============================================================================
 // MEDIA ROOM PARTICIPATION
@@ -59,24 +78,7 @@ export { startVideo, enableAudio, disableVideo, disableAudio, toggleVideoPaused,
 // CONSUMER MANAGEMENT
 // ============================================================================
 
-export {
-	subscribeToTrack,
-	unsubscribeFromTrack,
-	pauseConsumer,
-	resumeConsumer,
-	closeConsumer,
-	pauseAllConsumers,
-	resumeAllConsumers,
-	closeAllConsumers,
-	pauseProducer,
-	resumeProducer,
-} from "./consumer";
-
-// ============================================================================
-// DEBUG UTILITIES
-// ============================================================================
-
-export { getDebugState, logDebugState, getTrackStats } from "./debug";
+export { subscribeToTrack, unsubscribeFromTrack, closeConsumer } from "./consumer";
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -103,28 +105,16 @@ export type {
 	ConsumerParameters,
 	ProducerOptions,
 	PeerSession,
-	DebugState,
-	TrackStats,
 } from "./types";
 
 // ============================================================================
 // UTILITY FUNCTIONS (for advanced use cases)
 // ============================================================================
 
-export {
-	findConsumerForTrack,
-	sleep,
-	endMediaParticipation,
-	checkStreamTracks,
-	stopStreamTracks,
-	getVideoTrack,
-	getAudioTrack,
-	isConsumerActive,
-	getMediaConstraints,
-} from "./utils";
+export { sleep, endMediaParticipation, checkStreamTracks, stopStreamTracks, isConsumerActive, getMediaConstraints } from "./utils";
 
 // ============================================================================
 // TRANSPORT MANAGEMENT (for advanced use cases)
 // ============================================================================
 
-export { createTransport, closeTransport, getTransportStats, restartTransportIce } from "./transport";
+export { createTransport, closeTransport } from "./transport";

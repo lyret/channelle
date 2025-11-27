@@ -2,46 +2,84 @@
 	import { blur } from "svelte/transition";
 	import IconVideoOff from "~/components/picol/icons/Picol-video-remove.svelte";
 	import IconVideo from "~/components/picol/icons/Picol-video-run.svelte";
-	import { currentPeerStore, videoProducerStore, camPausedStore, localMediaStreamStore, startVideo, toggleVideoPaused } from "~/api";
-	import { showSceneSettingsStore } from "~/api";
-
-	$: isOn = !!$videoProducerStore && !$camPausedStore;
-	$: hasLocalStream = !!$localMediaStreamStore;
-	let errorMessage = "";
-	$: hasError = !!errorMessage;
+	import { enableCamera, disableCamera, peerStreamsStore } from "~/api/stageNew";
+	import { wsPeerIdStore } from "~/api/_trpcClient";
+	import { currentPeerStore } from "~/api/auth";
+	import { showSceneSettingsStore } from "~/api/backstage";
 
 	export let minimal: boolean = false;
 
+	// Track camera state locally
+	let isCameraOn = false;
+	let isProcessing = false;
+	let errorMessage = "";
+
+	// Get local stream to check if we have video
+	$: myPeerId = $wsPeerIdStore;
+	$: localStream = $peerStreamsStore[myPeerId];
+	$: hasVideoTrack = localStream?.getVideoTracks().length > 0;
+
+	// Update camera state based on stream
+	$: if (hasVideoTrack !== undefined) {
+		isCameraOn = hasVideoTrack;
+	}
+
+	$: hasError = !!errorMessage;
+
 	async function handleClick() {
+		if (isProcessing) return;
+
 		try {
+			isProcessing = true;
 			errorMessage = "";
-			if (!hasLocalStream || !$localMediaStreamStore?.getVideoTracks().length) {
-				await startVideo();
-			} else if (!isOn) {
-				await toggleVideoPaused(false);
+
+			if (isCameraOn) {
+				// Turn off camera
+				await disableCamera();
+				isCameraOn = false;
 			} else {
-				await toggleVideoPaused(true);
+				// Turn on camera
+				await enableCamera();
+				isCameraOn = true;
 			}
 		} catch (error: any) {
-			errorMessage = error.message || "Fel";
+			console.error("[CameraControlsNew] Error toggling camera:", error);
+			errorMessage = error.message || "Camera error";
+			// Reset state on error
+			isCameraOn = hasVideoTrack;
+		} finally {
+			isProcessing = false;
 		}
 	}
 </script>
 
 {#if $currentPeerStore.actor || $currentPeerStore.manager || $showSceneSettingsStore.visitorVideoEnabled}
-	<button type="button" class="button is-small" transition:blur on:click={handleClick}>
-		<span class="icon is-size-4" class:has-text-danger={hasError} class:has-text-success={isOn}
-			>{#if isOn}<IconVideo />{:else}<IconVideoOff />{/if}</span
-		>
+	<button
+		type="button"
+		class="button is-small"
+		class:is-loading={isProcessing}
+		disabled={isProcessing}
+		transition:blur
+		on:click={handleClick}
+	>
+		<span class="icon is-size-4" class:has-text-danger={hasError} class:has-text-success={isCameraOn}>
+			{#if isCameraOn}
+				<IconVideo />
+			{:else}
+				<IconVideoOff />
+			{/if}
+		</span>
 		{#if !minimal}
-			<span
-				>Kamera:
+			<span>
+				Camera:
 				{#if errorMessage}
 					{errorMessage}
-				{:else if isOn}
-					på
+				{:else if isProcessing}
+					...
+				{:else if isCameraOn}
+					On
 				{:else}
-					av
+					Off
 				{/if}
 			</span>
 		{/if}
@@ -55,5 +93,40 @@
 		padding: 12px;
 		background-color: var(--channelle-menu-bg-color);
 		color: var(--channelle-menu-text-color);
+		position: relative;
+
+		&:disabled {
+			opacity: 0.7;
+			cursor: not-allowed;
+		}
+
+		&.is-loading {
+			color: transparent;
+			pointer-events: none;
+
+			&::after {
+				animation: spinAround 500ms infinite linear;
+				border: 2px solid var(--channelle-menu-text-color);
+				border-radius: 9999px;
+				border-right-color: transparent;
+				border-top-color: transparent;
+				content: "";
+				display: block;
+				height: 1em;
+				position: absolute;
+				width: 1em;
+				inset-block-start: calc(50% - (1em * 0.5));
+				inset-inline-start: calc(50% - (1em * 0.5));
+			}
+		}
+	}
+
+	@keyframes spinAround {
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(359deg);
+		}
 	}
 </style>
