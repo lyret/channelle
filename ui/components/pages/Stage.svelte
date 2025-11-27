@@ -7,8 +7,8 @@
 	import ChatSidepanel from "~/components/stage/sidepanel/ChatSidePanel.svelte";
 	import OptionsSidePanel from "~/components/stage/sidepanel/OptionsSidePanel.svelte";
 	import StageChat from "~/components/stage/elements/Chat.svelte";
-	import AudioSimple from "~/components/stage/elements/AudioSimple.svelte";
-	import VideoSimple from "~/components/stage/elements/VideoSimple.svelte";
+	import Audio from "~/components/stage/elements/Audio.svelte";
+	import Video from "~/components/stage/elements/Video.svelte";
 
 	// Import new simplified API
 	import { joinRoom, leaveRoom, peerStreamsStore, sessionsStore, isLoadingStore, errorStore } from "~/api/stageNew";
@@ -93,7 +93,7 @@
 						{#each $calculatedStageLayoutStore.videoLeftovers as cell (cell.peerId)}
 							{#if hasMediaForPeer(cell.peerId)}
 								<div class="window">
-									<VideoSimple peerId={cell.peerId} />
+									<Video peerId={cell.peerId} />
 								</div>
 							{:else}
 								<div class="window empty-window">
@@ -111,7 +111,7 @@
 								{:else if cell.type == "actor"}
 									{#if hasMediaForPeer(cell.peerId)}
 										<div class="window">
-											<VideoSimple peerId={cell.peerId} />
+											<Video peerId={cell.peerId} />
 										</div>
 									{:else}
 										<div class="window empty-window">
@@ -144,7 +144,7 @@
 		<!-- Audio is now handled internally by AudioSimple component via peerStreamsStore -->
 		{#each $calculatedStageLayoutStore.audioLeftovers as cell (cell.peerId)}
 			{#if hasMediaForPeer(cell.peerId)}
-				<AudioSimple peerId={cell.peerId} />
+				<Audio peerId={cell.peerId} />
 			{/if}
 		{/each}
 

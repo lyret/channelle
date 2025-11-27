@@ -254,10 +254,10 @@ export const stageRouter = router({
 			}
 
 			console.log(`[MS] Connecting a ${transport.appData.clientDirection} transport ${transportId} for ${ctx.peer.id} to ${transport.appData.peerId}`);
-			console.log(`[MS] Transport state before connect:`, transport.connectionState);
+			console.log("[MS] Transport state before connect:", transport.getStats());
 
 			await transport.connect({ dtlsParameters });
-			console.log(`[MS] Transport ${transportId} connected successfully, state:`, transport.connectionState);
+			console.log(`[MS] Transport ${transportId} connected successfully, state:`, transport.getStats());
 			return { connected: true };
 		}),
 	// Called by a client that wants to close a single transport (for

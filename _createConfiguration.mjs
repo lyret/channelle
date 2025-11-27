@@ -210,7 +210,6 @@ export async function createConfiguration() {
 			let publicIP;
 			if (process.env.WAN_IP || cli.wanIp) {
 				publicIP = cli.wanIp || process.env.WAN_IP;
-				console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Using WAN_IP:", publicIP);
 			} else {
 				publicIP = await publicIpv4({ version: 4, timeout: 10000 }).catch((error) => {
 					console.error("💥 Failed to get a public IP:", error);
