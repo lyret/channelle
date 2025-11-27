@@ -1,101 +1,155 @@
 <script lang="ts">
+	import { windowSizeStore } from "~/stores/device";
+	import { onMount } from "svelte";
 	import { blur } from "svelte/transition";
-	import CameraControls from "./_CameraControls.svelte";
-	import MicrophoneControls from "./_MicrophoneControls.svelte";
-	import { isLoadingStore, sessionsStore, peerStreamsStore } from "~/api/stageNew";
+	import { createEffectsStore } from "~/stores/effects";
+	import { showSceneSettingsStore } from "~/api";
 	import { showStageChatStore, showStageSettingsStore } from "~/stores/stage";
-	import IconSettings from "~/components/icons/Icon-settings.svelte";
-	import IconMessage from "~/components/icons/Icon-message-circle.svelte";
-	import IconUsers from "~/components/icons/Icon-users.svelte";
+	import { windowFullscreenStore } from "~/stores/device";
+	import IconMaximize from "../../icons/Icon-maximize.svelte";
+	import IconMessageCircle from "../../icons/Icon-message-circle.svelte";
+	import IconMinimize from "../../icons/Icon-minimize.svelte";
+	import IconToggleLeft from "../../icons/Icon-toggle-left.svelte";
+	import IconToggleRight from "../../icons/Icon-toggle-right.svelte";
+	import CameraControls from "./_CameraControls.svelte";
+	import StageDirections from "./_StageDirections.svelte";
+	import MicrophoneControls from "./_MicrophoneControls.svelte";
 
-	// Get reactive values
+	const fullscreen = windowFullscreenStore();
+	const windowSize = windowSizeStore();
+	$: isMobile = $windowSize.width <= 842;
+	const effects = createEffectsStore();
 
-	$: sessions = $sessionsStore;
-	$: streams = $peerStreamsStore;
-	$: isLoading = $isLoadingStore;
+	// Make sure effects are rendered
+	onMount(() => {
+		const stop = effects.subscribe(() => {});
 
-	// Count connected peers
-	$: connectedPeers = Object.keys(sessions).length;
-	$: activeStreams = Object.keys(streams).length;
+		return () => {
+			stop();
+		};
+	});
 
-	function toggleChat() {
-		$showStageChatStore = !$showStageChatStore;
-		if ($showStageChatStore) {
-			$showStageSettingsStore = false;
-		}
-	}
-
-	function toggleSettings() {
-		$showStageSettingsStore = !$showStageSettingsStore;
-		if ($showStageSettingsStore) {
-			$showStageChatStore = false;
-		}
-	}
+	// Class list of all buttons in the action bar
+	const btnClassList = "button is-small";
+	const effectBtnClassList = "button effect is-small is-danger is-rounded is-light is-outlined is-warning";
+	const criticalEffectBtnClassList = "button effect is-small is-danger is-rounded";
+	const iconClassList = "icon is-size-4";
 </script>
 
-<div class="action-bar" transition:blur>
-	<div class="level is-mobile">
-		<!-- Left side - Media controls -->
-		<div class="level-left">
-			<div class="level-item">
-				<CameraControls minimal={false} />
-			</div>
-			<div class="level-item">
-				<MicrophoneControls minimal={false} />
-			</div>
-		</div>
+<div class="bar">
+	<!-- STATUS -->
+	<span class="block is-hidden-mobile"><StageDirections /></span>
+	<!-- DESKTOP SPACER -->
+	{#if !isMobile}
+		<div class="spacer" />
+	{/if}
+	<!-- GRATITUDE EFFECTS -->
+	{#if $showSceneSettingsStore.gratitudeEffects}
+		<button class={effectBtnClassList} transition:blur on:click={() => effects.set({ type: "applause", number: 1 })}>
+			<span class={iconClassList}>👏</span></button
+		>
+		<button class={effectBtnClassList} transition:blur on:click={() => effects.set({ type: "flowers", number: 1 })}>
+			<span class={iconClassList}>🌹</span></button
+		>
+	{/if}
+	<!-- CRITICAL EFFECTS -->
+	{#if $showSceneSettingsStore.criticalEffects}
+		<button class={criticalEffectBtnClassList} transition:blur on:click={() => effects.set({ type: "tomato", number: 1 })}>
+			<span class={iconClassList}>🍅</span></button
+		>
+	{/if}
+	{#if $showSceneSettingsStore.gratitudeEffects || $showSceneSettingsStore.criticalEffects}
+		<div class="spacer" />
+	{/if}
+	<!-- VIDEO -->
+	<CameraControls minimal={isMobile} />
 
-		<!-- Center - Status info -->
-		<div class="level-item has-text-centered is-hidden-mobile">
-			<div class="status-info">
-				<span class="icon-text">
-					<span class="icon">
-						<IconUsers />
-					</span>
-					<span>{connectedPeers} peers</span>
-				</span>
-				{#if activeStreams > 0}
-					<span class="tag is-success is-light ml-2">{activeStreams} active</span>
-				{/if}
-				{#if isLoading}
-					<span class="tag is-warning is-light ml-2">Loading...</span>
-				{/if}
-			</div>
-		</div>
-
-		<!-- Right side - UI controls -->
-		<div class="level-right">
-			<div class="level-item">
-				<button type="button" class="button is-small" class:is-active={$showStageChatStore} on:click={toggleChat} title="Toggle chat">
-					<span class="icon is-size-4">
-						<IconMessage />
-					</span>
-					<span class="is-hidden-mobile">Chat</span>
-				</button>
-			</div>
-			<div class="level-item">
-				<button type="button" class="button is-small" class:is-active={$showStageSettingsStore} on:click={toggleSettings} title="Toggle settings">
-					<span class="icon is-size-4">
-						<IconSettings />
-					</span>
-					<span class="is-hidden-mobile">Settings</span>
-				</button>
-			</div>
-		</div>
-	</div>
+	<!-- AUDIO -->
+	<MicrophoneControls minimal={isMobile} />
+	<!-- SPACER -->
+	<div class="spacer is-hidden-mobile" />
+	<!-- CHAT -->
+	{#if $showSceneSettingsStore.chatEnabled}
+		<button
+			class={btnClassList}
+			transition:blur
+			class:active={$showStageChatStore}
+			on:click={() => {
+				showStageChatStore.set(!$showStageChatStore);
+				showStageSettingsStore.set(false);
+			}}
+		>
+			<span class={iconClassList}><IconMessageCircle /></span>
+			{#if !isMobile}
+				<span>Chat</span>
+			{/if}
+		</button>
+	{/if}
+	<div class="small-spacer" />
+	<!-- SETTINGS -->
+	<button
+		class={btnClassList}
+		transition:blur
+		class:active={$showStageSettingsStore}
+		on:click={() => {
+			showStageSettingsStore.set(!$showStageSettingsStore);
+			showStageChatStore.set(false);
+		}}
+	>
+		<span class={iconClassList}>
+			{#if $showStageSettingsStore}
+				<IconToggleRight />
+			{:else}
+				<IconToggleLeft />
+			{/if}
+		</span>
+		{#if !isMobile}
+			<span>Alternativ</span>
+		{/if}
+	</button>
+	<!-- FULLSCREEN -->
+	{#if !isMobile}
+		<div class="small-spacer" />
+		<button
+			type="button"
+			class={btnClassList}
+			class:active={$fullscreen}
+			transition:blur
+			on:click={() => {
+				fullscreen.toggle();
+			}}
+		>
+			{#if $fullscreen}
+				<span class={iconClassList}><IconMinimize /></span>
+			{:else}
+				<span class={iconClassList}><IconMaximize /></span>
+			{/if}
+		</button>
+	{/if}
 </div>
 
 <style lang="scss">
-	.action-bar {
+	.bar {
+		padding: 0;
 		width: 100%;
-		padding: 0 1rem;
-		background-color: var(--channelle-menu-bg-color);
-		border-top: 1px solid rgba(255, 255, 255, 0.1);
-	}
+		display: flex;
+		flex-direction: row;
+		justify-content: space-around;
+		height: 48px;
+		box-sizing: border-box;
 
-	.level {
-		margin: 0;
-		min-height: 52px;
+		@include mobile {
+			justify-content: space-between;
+		}
+	}
+	.block {
+		text-align: center;
+	}
+	.small-spacer {
+		flex-grow: 0.05;
+	}
+	.spacer {
+		flex-grow: 0.4;
 	}
 
 	.button {
@@ -104,63 +158,13 @@
 		padding: 12px;
 		background-color: var(--channelle-menu-bg-color);
 		color: var(--channelle-menu-text-color);
-		transition: background-color 0.2s;
-
-		&:hover {
-			background-color: rgba(255, 255, 255, 0.1);
-		}
-
-		&.is-active {
-			background-color: rgba(255, 255, 255, 0.15);
-			color: var(--channelle-primary-color, #00d1b2);
-		}
-
-		&:disabled {
-			opacity: 0.5;
-			cursor: not-allowed;
-		}
-
-		&.is-danger {
-			&:hover {
-				background-color: rgba(241, 70, 104, 0.2);
-				color: #f14668;
-			}
-		}
+		box-sizing: border-box;
 	}
-
-	.status-info {
-		display: flex;
-		align-items: center;
-		color: var(--channelle-menu-text-color);
-		font-size: 0.9rem;
-
-		.icon-text {
-			display: flex;
-			align-items: center;
-			gap: 0.25rem;
-		}
-
-		.tag {
-			font-size: 0.75rem;
-		}
+	.button.active {
+		font-weight: 900;
+		font-size: 1.1em;
 	}
-
-	@include mobile {
-		.action-bar {
-			padding: 0.5rem;
-		}
-
-		.level {
-			flex-wrap: wrap;
-		}
-
-		.level-left,
-		.level-right {
-			flex-basis: 100%;
-		}
-
-		.button {
-			padding: 8px;
-		}
+	.button.effect {
+		width: 50px;
 	}
 </style>

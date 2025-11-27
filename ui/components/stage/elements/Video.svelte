@@ -102,7 +102,7 @@
 {:else}
 	<div class="window text-window">
 		<h1 class="title has-text-white">
-			{peer?.name}
+			{peer?.name || ""}
 		</h1>
 		{#if $debugModeStore}
 			<DebugPanel {peerId} compact={true} />

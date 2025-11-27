@@ -44,8 +44,8 @@
 	<div class="level is-mobile">
 		<div class="level-item">
 			<button
-				class="button is-info"
-				class:is-light={$showSceneOverridesStore.curtainsOverride !== 0}
+				class="button"
+				class:is-warning={$showSceneOverridesStore.curtainsOverride === 0}
 				class:is-loading={isLoading}
 				disabled={isLoading}
 				on:click={() => handleUpdate({ curtainsOverride: 0 })}
@@ -95,7 +95,7 @@
 		<div class="level-item">
 			<button
 				class="button"
-				class:is-dark={$showSceneOverridesStore.chatEnabledOverride !== 0}
+				class:is-warning={$showSceneOverridesStore.chatEnabledOverride === 0}
 				class:is-loading={isLoading}
 				disabled={isLoading}
 				on:click={() => handleUpdate({ chatEnabledOverride: 0 })}
@@ -145,7 +145,7 @@
 		<div class="level-item">
 			<button
 				class="button"
-				class:is-dark={$showSceneOverridesStore.visitorVideoEnabledOverride !== 0}
+				class:is-warning={$showSceneOverridesStore.visitorVideoEnabledOverride === 0}
 				class:is-loading={isLoading}
 				disabled={isLoading}
 				on:click={() => handleUpdate({ visitorVideoEnabledOverride: 0 })}
@@ -195,7 +195,7 @@
 		<div class="level-item">
 			<button
 				class="button"
-				class:is-dark={$showSceneOverridesStore.visitorAudioEnabledOverride !== 0}
+				class:is-warning={$showSceneOverridesStore.visitorAudioEnabledOverride === 0}
 				class:is-loading={isLoading}
 				disabled={isLoading}
 				on:click={() => handleUpdate({ visitorAudioEnabledOverride: 0 })}
@@ -245,7 +245,7 @@
 		<div class="level-item">
 			<button
 				class="button"
-				class:is-dark={$showSceneOverridesStore.gratitudeEffectsEnabledOverride !== 0}
+				class:is-warning={$showSceneOverridesStore.gratitudeEffectsEnabledOverride === 0}
 				class:is-loading={isLoading}
 				disabled={isLoading}
 				on:click={() => handleUpdate({ gratitudeEffectsEnabledOverride: 0 })}
@@ -296,7 +296,7 @@
 		<div class="level-item">
 			<button
 				class="button"
-				class:is-dark={$showSceneOverridesStore.criticalEffectsEnabledOverride !== 0}
+				class:is-warning={$showSceneOverridesStore.criticalEffectsEnabledOverride === 0}
 				class:is-loading={isLoading}
 				disabled={isLoading}
 				on:click={() => handleUpdate({ criticalEffectsEnabledOverride: 0 })}

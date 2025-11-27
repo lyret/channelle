@@ -5,7 +5,7 @@ export type InstrumentName = "debug" | "chat" | "participants" | "scene-settings
 
 export const openInstruments = createOpenInstrumentsStore();
 
-export const focusedInstrument = persisted<InstrumentName | undefined>(`${CONFIG.runtime.slug}-focused-instrument`, undefined);
+export const focusedInstrument = persisted<InstrumentName | "">(`${CONFIG.runtime.slug}-focused-instrument`, "");
 
 function createOpenInstrumentsStore() {
 	const _innerStore = persisted<Partial<Record<InstrumentName, boolean>>>(`${CONFIG.runtime.slug}-open-instruments`, {});

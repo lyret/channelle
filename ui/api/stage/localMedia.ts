@@ -15,10 +15,8 @@ import {
 	getLocalAudioTrack,
 } from "./state";
 import { stageClient, wsPeerIdStore } from "../_trpcClient";
-import { currentPeerStore } from "../auth";
 import { getMediaConstraints, stopStreamTracks } from "./utils";
-import type { Producer, Transport } from "./types";
-import type { CustomAppData, MediaTag } from "~/types/serverSideTypes";
+import type { MediaTag } from "~/types/serverSideTypes";
 
 /**
  * Start local video stream from device
@@ -98,6 +96,15 @@ async function _startLocalVideoStreamFromDevice(): Promise<void> {
 export async function startVideo(): Promise<void> {
 	console.log("[Stage] Starting video");
 
+	// Clean up any existing video producer first
+	const existingState = getState();
+	if (existingState.videoProducer) {
+		console.log("[Stage] Cleaning up existing video producer before starting new one");
+		await disableVideo();
+		// Small delay to ensure cleanup propagates
+		await new Promise((resolve) => setTimeout(resolve, 100));
+	}
+
 	// Start local media stream
 	await _startLocalVideoStreamFromDevice();
 
@@ -107,8 +114,7 @@ export async function startVideo(): Promise<void> {
 		await _sendMediaStreams();
 	}
 
-	// Update server with media availability
-	await stageClient.updateMyMediaAvailability.mutate({ video: true });
+	// Video is now available
 }
 
 /**
@@ -116,6 +122,15 @@ export async function startVideo(): Promise<void> {
  */
 export async function enableAudio(): Promise<void> {
 	console.log("[Stage] Enabling audio");
+
+	// Clean up any existing audio producer first
+	const existingState = getState();
+	if (existingState.audioProducer) {
+		console.log("[Stage] Cleaning up existing audio producer before starting new one");
+		await disableAudio();
+		// Small delay to ensure cleanup propagates
+		await new Promise((resolve) => setTimeout(resolve, 100));
+	}
 
 	// Get or create local media stream with audio
 	await _startLocalVideoStreamFromDevice();
@@ -125,7 +140,6 @@ export async function enableAudio(): Promise<void> {
 	if (!stream) return;
 
 	const hasStream = stream !== null;
-	const videoTracks = stream.getVideoTracks();
 	const audioTracks = stream.getAudioTracks();
 	const hasAudioProducer = state.audioProducer !== null;
 
@@ -139,8 +153,7 @@ export async function enableAudio(): Promise<void> {
 		await _sendMediaStreams();
 	}
 
-	// Update server with media availability
-	await stageClient.updateMyMediaAvailability.mutate({ audio: true });
+	// Audio is now available
 }
 
 /**
@@ -154,19 +167,27 @@ export async function disableVideo(): Promise<void> {
 
 	// Close the video producer if it exists
 	if (producer) {
+		try {
+			// Notify server first to trigger consumer cleanup on remote clients
+			await stageClient.closeProducer.mutate({ producerId: producer.id });
+		} catch (error) {
+			console.error("[Stage] Failed to close producer on server:", error);
+		}
+		// Then close locally
 		producer.close();
 		setVideoProducer(null);
-		await stageClient.closeProducer.mutate({ producerId: producer.id });
 	}
 
-	// Stop video tracks
+	// Stop and remove video tracks from stream
 	if (stream) {
 		const videoTracks = stream.getVideoTracks();
-		videoTracks.forEach((track) => track.stop());
+		videoTracks.forEach((track) => {
+			track.stop();
+			stream.removeTrack(track);
+		});
 	}
 
 	setCamPaused(true);
-	await stageClient.updateMyMediaAvailability.mutate({ video: false });
 }
 
 /**
@@ -180,19 +201,27 @@ export async function disableAudio(): Promise<void> {
 
 	// Close the audio producer if it exists
 	if (producer) {
+		try {
+			// Notify server first to trigger consumer cleanup on remote clients
+			await stageClient.closeProducer.mutate({ producerId: producer.id });
+		} catch (error) {
+			console.error("[Stage] Failed to close producer on server:", error);
+		}
+		// Then close locally
 		producer.close();
 		setAudioProducer(null);
-		await stageClient.closeProducer.mutate({ producerId: producer.id });
 	}
 
-	// Stop audio tracks
+	// Stop and remove audio tracks from stream
 	if (stream) {
 		const audioTracks = stream.getAudioTracks();
-		audioTracks.forEach((track) => track.stop());
+		audioTracks.forEach((track) => {
+			track.stop();
+			stream.removeTrack(track);
+		});
 	}
 
 	setMicPaused(true);
-	await stageClient.updateMyMediaAvailability.mutate({ audio: false });
 }
 
 /**
@@ -206,8 +235,18 @@ async function _sendMediaStreams(): Promise<void> {
 	const stream = state.localStream;
 	if (!stream) return;
 
-	const transport = state.sendTransport;
+	let transport = state.sendTransport;
+
+	// Check if transport is still valid
+	if (transport && transport.closed) {
+		console.log("[Stage] Send transport is closed, clearing it");
+		setSendTransport(null);
+		transport = null;
+	}
+
 	if (!transport) {
+		console.log("[Stage] No valid send transport, need to create one");
+		// The transport should be created by the room manager
 		throw new Error("No send transport available");
 	}
 
@@ -220,26 +259,43 @@ async function _sendMediaStreams(): Promise<void> {
 		console.log("[Stage] Producing video track");
 		const videoTrack = videoTracks[0];
 
-		const producer = await transport.produce({
-			track: videoTrack,
-			// Set encoding parameters for better quality
-			encodings: [
-				{ maxBitrate: 1000000, scaleResolutionDownBy: 1 },
-				{ maxBitrate: 500000, scaleResolutionDownBy: 2 },
-			],
-			appData: { mediaTag: "video" as MediaTag, peerId: myPeerId },
-		});
+		try {
+			const producer = await transport.produce({
+				track: videoTrack,
+				// Set encoding parameters for better quality
+				encodings: [
+					{ maxBitrate: 1000000, scaleResolutionDownBy: 1 },
+					{ maxBitrate: 500000, scaleResolutionDownBy: 2 },
+				],
+				appData: { mediaTag: "cam-video" as MediaTag, peerId: myPeerId },
+			});
 
-		setVideoProducer(producer);
-		setCamPaused(false);
+			setVideoProducer(producer);
+			setCamPaused(false);
 
-		// Notify server about the new producer
-		await stageClient.produce.mutate({
-			transportId: transport.id,
-			kind: producer.kind,
-			rtpParameters: producer.rtpParameters,
-			appData: producer.appData,
-		});
+			// Handle producer events
+			producer.on("transportclose", () => {
+				console.log("[Stage] Video producer transport closed");
+				setVideoProducer(null);
+			});
+
+			producer.on("trackended", () => {
+				console.log("[Stage] Video producer track ended");
+				disableVideo().catch(console.error);
+			});
+
+			// Notify server about the new producer
+			await stageClient.sendTrack.mutate({
+				transportId: transport.id,
+				kind: producer.kind,
+				rtpParameters: producer.rtpParameters,
+				appData: producer.appData,
+				paused: false,
+			});
+		} catch (error) {
+			console.error("[Stage] Failed to produce video:", error);
+			throw error;
+		}
 	}
 
 	// Produce audio if we have an audio track and no existing audio producer
@@ -247,21 +303,38 @@ async function _sendMediaStreams(): Promise<void> {
 		console.log("[Stage] Producing audio track");
 		const audioTrack = audioTracks[0];
 
-		const producer = await transport.produce({
-			track: audioTrack,
-			appData: { mediaTag: "audio" as MediaTag, peerId: myPeerId },
-		});
+		try {
+			const producer = await transport.produce({
+				track: audioTrack,
+				appData: { mediaTag: "mic-audio" as MediaTag, peerId: myPeerId },
+			});
 
-		setAudioProducer(producer);
-		setMicPaused(false);
+			setAudioProducer(producer);
+			setMicPaused(false);
 
-		// Notify server about the new producer
-		await stageClient.produce.mutate({
-			transportId: transport.id,
-			kind: producer.kind,
-			rtpParameters: producer.rtpParameters,
-			appData: producer.appData,
-		});
+			// Handle producer events
+			producer.on("transportclose", () => {
+				console.log("[Stage] Audio producer transport closed");
+				setAudioProducer(null);
+			});
+
+			producer.on("trackended", () => {
+				console.log("[Stage] Audio producer track ended");
+				disableAudio().catch(console.error);
+			});
+
+			// Notify server about the new producer
+			await stageClient.sendTrack.mutate({
+				transportId: transport.id,
+				kind: producer.kind,
+				rtpParameters: producer.rtpParameters,
+				appData: producer.appData,
+				paused: false,
+			});
+		} catch (error) {
+			console.error("[Stage] Failed to produce audio:", error);
+			throw error;
+		}
 	}
 }
 

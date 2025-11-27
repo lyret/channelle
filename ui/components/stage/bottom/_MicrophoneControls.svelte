@@ -54,14 +54,7 @@
 </script>
 
 {#if $currentPeerStore.actor || $currentPeerStore.manager || $showSceneSettingsStore.visitorAudioEnabled}
-	<button
-		type="button"
-		class="button is-small"
-		class:is-loading={isProcessing}
-		disabled={isProcessing}
-		transition:blur
-		on:click={handleClick}
-	>
+	<button type="button" class="button is-small" class:is-loading={isProcessing} disabled={isProcessing} transition:blur on:click={handleClick}>
 		<span class="icon is-size-4" class:has-text-danger={hasError} class:has-text-success={isMicOn}>
 			{#if isMicOn}
 				<IconMic />

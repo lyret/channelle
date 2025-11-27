@@ -53,6 +53,7 @@ const mediaSessionProcedure = authenticatedPeerProcedure.use(async ({ ctx, next 
 			consumerLayers: {},
 			media: {},
 			stats: {},
+			online: true,
 		};
 		_updateEmitter.emit("sessionAdded", _sessions[ctx.peer.id]);
 	}
@@ -75,6 +76,7 @@ export const stageRouter = router({
 		sessions?: Record<string, MediaSession>;
 		producers?: Record<string, { peerId: string; mediaTag: MediaTag; paused: boolean }>;
 		consumers?: Array<{ peerId: string; mediaTag: MediaTag; consumerId?: string }>;
+		removedProducers?: Array<{ peerId: string; mediaTag: MediaTag }>;
 		needsSendTransport?: boolean;
 		needsRecvTransport?: string[];
 		activeSpeaker?: ActiveSpeaker | null;
@@ -114,9 +116,7 @@ export const stageRouter = router({
 		const peersNeedingRecvTransport: string[] = [];
 
 		for (const consumer of availableConsumers) {
-			const hasRecvTransport = Object.values(_transports).some(
-				(t) => t.appData.peerId === peer.id && t.appData.clientDirection === "recv" && t.appData.producerPeerId === consumer.peerId,
-			);
+			const hasRecvTransport = Object.values(_transports).some((t) => t.appData.peerId === peer.id && t.appData.clientDirection === "recv");
 			if (!hasRecvTransport && !peersNeedingRecvTransport.includes(consumer.peerId)) {
 				peersNeedingRecvTransport.push(consumer.peerId);
 			}
@@ -136,7 +136,7 @@ export const stageRouter = router({
 			switch (event) {
 				case "sessionAdded":
 				case "sessionRemoved":
-				case "sessionUpdated":
+				case "sessionUpdated": {
 					// Re-gather all sessions for simplicity
 					const sessions: Record<string, MediaSession> = {};
 					for (const [id, session] of Object.entries(_sessions)) {
@@ -147,14 +147,21 @@ export const stageRouter = router({
 						sessions,
 					};
 					break;
+				}
 
 				case "producerAdded":
 				case "producerRemoved":
 				case "producerPaused":
-				case "producerResumed":
+				case "producerResumed": {
 					// Gather producer info
 					const producers: Record<string, { peerId: string; mediaTag: MediaTag; paused: boolean }> = {};
 					const consumers: Array<{ peerId: string; mediaTag: MediaTag }> = [];
+					const removedProducers: Array<{ peerId: string; mediaTag: MediaTag }> = [];
+
+					// For producer removed events, include info about what was removed
+					if (event === "producerRemoved" && data) {
+						removedProducers.push(data as unknown as { peerId: string; mediaTag: MediaTag });
+					}
 
 					for (const [producerId, producer] of Object.entries(_producers)) {
 						producers[producerId] = {
@@ -176,15 +183,18 @@ export const stageRouter = router({
 						type: "producerChange",
 						producers,
 						consumers,
+						removedProducers,
 					};
 					break;
+				}
 
-				case "activeSpeaker":
+				case "activeSpeaker": {
 					yield {
 						type: "activeSpeaker",
-						activeSpeaker: data,
+						activeSpeaker: data as ActiveSpeaker,
 					};
 					break;
+				}
 			}
 		}
 	}),
@@ -231,7 +241,7 @@ export const stageRouter = router({
 			const { id, iceParameters, iceCandidates, dtlsParameters } = transport;
 			console.log(`[MS] Transport ${id} created with ${iceCandidates.length} ICE candidates for ${ctx.peer.id}`);
 			console.log(
-				`[MS] ICE candidates:`,
+				"[MS] ICE candidates:",
 				iceCandidates.map((c) => ({ protocol: c.protocol, ip: c.ip, port: c.port })),
 			);
 			return {
@@ -369,7 +379,7 @@ export const stageRouter = router({
 				throw new TRPCError({ code: "NOT_FOUND", message: `server-side recv transport for ${ctx.peer.id} not found` });
 			}
 
-			console.log(`[MS] Using recv transport ${transport.id} for consumer, transport state:`, transport.connectionState);
+			console.log(`[MS] Using recv transport ${transport.id} for consumer`);
 
 			const consumer = await transport.consume({
 				producerId: producer.id,
@@ -412,7 +422,6 @@ export const stageRouter = router({
 				paused: consumer.paused,
 				producerPaused: consumer.producerPaused,
 				kind: consumer.kind,
-				transportState: transport.connectionState,
 			});
 
 			// Emit consumer added event
@@ -545,7 +554,7 @@ export const stageRouter = router({
 			throw new TRPCError({ code: "NOT_FOUND", message: `server-side producer ${producerId} not found` });
 		}
 
-		console.log("[MS] Closed producer", ctx.peer.id, producer.appData);
+		console.log("[MS] Closing producer", ctx.peer.id, producer.appData);
 
 		await _closeProducer(producer);
 		// Update session media before emitting events
@@ -672,6 +681,12 @@ async function _closeTransport(transport: Transport) {
 async function _closeProducer(producer: Producer) {
 	console.log("[MS] Closing producer", producer.id, producer.appData);
 	try {
+		// Store producer info before closing for the event
+		const producerInfo = {
+			peerId: producer.appData.peerId as string,
+			mediaTag: producer.appData.mediaTag as MediaTag,
+		};
+
 		producer.close();
 
 		// Remove this producer from our room.producers list
@@ -681,6 +696,9 @@ async function _closeProducer(producer: Producer) {
 		if (_sessions[producer.appData.peerId]) {
 			delete _sessions[producer.appData.peerId].media[producer.appData.mediaTag];
 		}
+
+		// Emit event with removed producer info (pass the info, not the closed producer)
+		_updateEmitter.emit("producerRemoved", producerInfo as any);
 	} catch (e) {
 		console.error(e);
 	}
@@ -705,7 +723,7 @@ async function _createWebRtcTransport({ peerId, direction }): Promise<Transport>
 	const { listenInfos, initialAvailableOutgoingBitrate } = CONFIG.mediasoup.webRTCTransport;
 
 	console.log(
-		`[MS] Creating WebRTC transport with listenInfos:`,
+		"[MS] Creating WebRTC transport with listenInfos:",
 		listenInfos.map((info) => ({
 			protocol: info.protocol,
 			ip: info.ip,
@@ -716,7 +734,7 @@ async function _createWebRtcTransport({ peerId, direction }): Promise<Transport>
 
 	const _router = await mediaSoupRouter();
 	const transport = await _router.createWebRtcTransport({
-		listenInfos: listenInfos,
+		listenInfos,
 		enableUdp: true,
 		enableTcp: true,
 		preferUdp: true,

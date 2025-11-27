@@ -222,7 +222,7 @@ async function processRoomEvent(event: any): Promise<void> {
 			break;
 
 		case "producerChange":
-			await handleProducerChange(event.producers, event.consumers);
+			await handleProducerChange(event.producers, event.consumers, event.removedProducers);
 			break;
 
 		case "activeSpeaker":
@@ -255,12 +255,17 @@ async function handleInitialState(event: any): Promise<void> {
 		if (!state.recvTransports.has("shared")) {
 			console.log("[RoomManager] Creating shared recv transport");
 			const transportOptions = await stageClient.createTransport.mutate({ direction: "recv" });
+			const device = state.device;
+			if (!device) {
+				console.error("[RoomManager] Cannot create transport: device not initialized");
+				return;
+			}
 			console.log("[RoomManager] Recv transport options:", {
 				id: transportOptions.transportOptions.id,
 				iceCandidates: transportOptions.transportOptions.iceCandidates,
 				iceParameters: transportOptions.transportOptions.iceParameters,
 			});
-			const transport = state.device!.createRecvTransport(transportOptions.transportOptions);
+			const transport = device.createRecvTransport(transportOptions.transportOptions);
 
 			// Handle transport events
 			transport.on("connect", async ({ dtlsParameters }, callback, errback) => {
@@ -280,16 +285,16 @@ async function handleInitialState(event: any): Promise<void> {
 
 			// Access the internal RTCPeerConnection for real state monitoring
 			try {
-				// @ts-ignore - accessing internal handler
+				// @ts-expect-error - accessing internal handler
 				const handler = transport._handler;
 				if (handler && handler._pc) {
 					const pc = handler._pc;
-					console.log(`[RoomManager] Recv transport initial state:`, pc.connectionState || pc.iceConnectionState);
+					console.log("[RoomManager] Recv transport initial state:", pc.connectionState || pc.iceConnectionState);
 
 					pc.addEventListener("connectionstatechange", () => {
-						console.log(`[RoomManager] Recv transport RTCPeerConnection state:`, pc.connectionState);
+						console.log("[RoomManager] Recv transport RTCPeerConnection state:", pc.connectionState);
 						if (pc.connectionState === "failed") {
-							console.error(`[RoomManager] Recv transport failed - connectivity issue, removing...`);
+							console.error("[RoomManager] Recv transport failed - connectivity issue, removing...");
 							roomState.update((s) => {
 								const recvTransports = new Map(s.recvTransports);
 								recvTransports.delete("shared");
@@ -299,13 +304,13 @@ async function handleInitialState(event: any): Promise<void> {
 					});
 
 					pc.addEventListener("iceconnectionstatechange", () => {
-						console.log(`[RoomManager] Recv transport ICE state:`, pc.iceConnectionState);
+						console.log("[RoomManager] Recv transport ICE state:", pc.iceConnectionState);
 						if (pc.iceConnectionState === "failed") {
-							console.error(`[RoomManager] Recv transport ICE failed - cannot connect to server`);
+							console.error("[RoomManager] Recv transport ICE failed - cannot connect to server");
 						}
 					});
 				}
-			} catch (e) {
+			} catch {
 				console.warn("[RoomManager] Cannot access RTCPeerConnection for recv transport monitoring");
 			}
 
@@ -337,8 +342,38 @@ function handleSessionChange(sessions: Record<string, MediaSession>): void {
 /**
  * Handle producer changes
  */
-async function handleProducerChange(producers: any, consumers: any[]): Promise<void> {
-	console.log("[RoomManager] Producer change", { producers, consumers });
+async function handleProducerChange(producers: any, consumers: any[], removedProducers?: any[]): Promise<void> {
+	console.log("[RoomManager] Producer change", { producers, consumers, removedProducers });
+
+	// Handle removed producers first - close corresponding consumers
+	if (removedProducers && removedProducers.length > 0) {
+		const state = get(roomState);
+
+		for (const { peerId, mediaTag } of removedProducers) {
+			console.log(`[RoomManager] Producer removed for ${peerId}'s ${mediaTag}, closing consumers`);
+
+			// Find and close all consumers for this producer
+			const consumersToRemove: string[] = [];
+			for (const [consumerId, consumer] of state.consumers.entries()) {
+				if (consumer.appData.peerId === peerId && consumer.appData.mediaTag === mediaTag) {
+					console.log(`[RoomManager] Closing consumer ${consumerId} for ${peerId}'s ${mediaTag}`);
+					consumer.close();
+					consumersToRemove.push(consumerId);
+				}
+			}
+
+			// Remove from state
+			if (consumersToRemove.length > 0) {
+				roomState.update((s) => {
+					const consumers = new Map(s.consumers);
+					for (const consumerId of consumersToRemove) {
+						consumers.delete(consumerId);
+					}
+					return { ...s, consumers };
+				});
+			}
+		}
+	}
 
 	// Auto-subscribe to new consumers
 	if (consumers?.length > 0) {
@@ -422,14 +457,14 @@ async function createSendTransport(): Promise<void> {
 
 	// Access the internal RTCPeerConnection for real state monitoring
 	try {
-		// @ts-ignore - accessing internal handler
+		// @ts-expect-error - accessing internal handler
 		const handler = transport._handler;
 		if (handler && handler._pc) {
 			const pc = handler._pc;
-			console.log(`[RoomManager] Send transport initial state:`, pc.connectionState || pc.iceConnectionState);
+			console.log("[RoomManager] Send transport initial state:", pc.connectionState || pc.iceConnectionState);
 
 			pc.addEventListener("connectionstatechange", () => {
-				console.log(`[RoomManager] Send transport RTCPeerConnection state:`, pc.connectionState);
+				console.log("[RoomManager] Send transport RTCPeerConnection state:", pc.connectionState);
 				if (pc.connectionState === "failed") {
 					console.error(`[RoomManager] Send transport failed - connectivity issue, recreating...`);
 					roomState.update((s) => ({ ...s, sendTransport: null }));
@@ -437,13 +472,13 @@ async function createSendTransport(): Promise<void> {
 			});
 
 			pc.addEventListener("iceconnectionstatechange", () => {
-				console.log(`[RoomManager] Send transport ICE state:`, pc.iceConnectionState);
+				console.log("[RoomManager] Send transport ICE state:", pc.iceConnectionState);
 				if (pc.iceConnectionState === "failed") {
-					console.error(`[RoomManager] Send transport ICE failed - network issue`);
+					console.error("[RoomManager] Send transport failed - network issue");
 				}
 			});
 		}
-	} catch (e) {
+	} catch {
 		console.warn("[RoomManager] Cannot access RTCPeerConnection for send transport monitoring");
 	}
 
@@ -469,7 +504,7 @@ async function createSendTransport(): Promise<void> {
 /**
  * Create receive transport for remote media (not used anymore, kept for reference)
  */
-async function createRecvTransport(peerId: string): Promise<Transport> {
+async function _createRecvTransport(): Promise<void> {
 	// We now use a single shared recv transport for all consumers
 	// This function is deprecated
 	throw new Error("Use shared recv transport instead");
@@ -486,6 +521,12 @@ export async function enableCamera(): Promise<void> {
 	console.log("[RoomManager] Enabling camera");
 
 	const state = get(roomState);
+
+	// Clean up any existing camera producer first
+	if (state.producers.has("cam-video")) {
+		console.log("[RoomManager] Cleaning up existing camera producer");
+		await disableCamera();
+	}
 
 	// Ensure device is initialized first
 	if (!state.device) {
@@ -515,7 +556,7 @@ export async function enableCamera(): Promise<void> {
 	// Create producer
 	const producer = await currentState.sendTransport!.produce({
 		track: videoTrack,
-		appData: { mediaTag: "cam-video" as MediaTag },
+		appData: { mediaTag: "cam-video" as MediaTag, peerId: get(wsPeerIdStore) },
 	});
 
 	// Update state
@@ -545,6 +586,15 @@ export async function disableCamera(): Promise<void> {
 	const producer = state.producers.get("cam-video");
 
 	if (producer) {
+		// Notify server to close the producer
+		try {
+			await stageClient.closeProducer.mutate({ producerId: producer.id });
+			console.log("[RoomManager] Notified server to close producer");
+		} catch (error) {
+			console.error("[RoomManager] Failed to notify server about producer closure:", error);
+		}
+
+		// Close producer locally
 		producer.close();
 
 		// Stop the track
@@ -574,6 +624,12 @@ export async function enableMicrophone(): Promise<void> {
 
 	const state = get(roomState);
 
+	// Clean up any existing microphone producer first
+	if (state.producers.has("mic-audio")) {
+		console.log("[RoomManager] Cleaning up existing microphone producer");
+		await disableMicrophone();
+	}
+
 	// Ensure device is initialized first
 	if (!state.device) {
 		console.log("[RoomManager] Device not initialized, initializing now");
@@ -602,7 +658,7 @@ export async function enableMicrophone(): Promise<void> {
 	// Create producer
 	const producer = await currentState.sendTransport!.produce({
 		track: audioTrack,
-		appData: { mediaTag: "mic-audio" as MediaTag },
+		appData: { mediaTag: "mic-audio" as MediaTag, peerId: get(wsPeerIdStore) },
 	});
 
 	// Update state
@@ -632,6 +688,15 @@ export async function disableMicrophone(): Promise<void> {
 	const producer = state.producers.get("mic-audio");
 
 	if (producer) {
+		// Notify server to close the producer
+		try {
+			await stageClient.closeProducer.mutate({ producerId: producer.id });
+			console.log("[RoomManager] Notified server to close producer");
+		} catch (error) {
+			console.error("[RoomManager] Failed to notify server about producer closure:", error);
+		}
+
+		// Close producer locally
 		producer.close();
 
 		// Stop the track
@@ -667,6 +732,29 @@ async function subscribeToTrack(peerId: string, mediaTag: MediaTag): Promise<voi
 		return;
 	}
 
+	// Clean up any existing consumer for this peer/mediaTag combination first
+	const existingConsumers: string[] = [];
+	for (const [consumerId, consumer] of state.consumers.entries()) {
+		if (consumer.appData.peerId === peerId && consumer.appData.mediaTag === mediaTag) {
+			console.log(`[RoomManager] Found existing consumer ${consumerId} for ${peerId}'s ${mediaTag}, closing it first`);
+			consumer.close();
+			existingConsumers.push(consumerId);
+		}
+	}
+
+	// Remove from state if any were found
+	if (existingConsumers.length > 0) {
+		roomState.update((s) => {
+			const consumers = new Map(s.consumers);
+			for (const consumerId of existingConsumers) {
+				consumers.delete(consumerId);
+			}
+			return { ...s, consumers };
+		});
+		// Small delay to ensure cleanup
+		await new Promise((resolve) => setTimeout(resolve, 50));
+	}
+
 	// We use a single recv transport for all consumers
 	let transport = state.recvTransports.get("shared");
 	if (!transport) {
@@ -697,16 +785,16 @@ async function subscribeToTrack(peerId: string, mediaTag: MediaTag): Promise<voi
 
 		// Access the internal RTCPeerConnection for real state monitoring
 		try {
-			// @ts-ignore - accessing internal handler
+			// @ts-expect-error - accessing internal handler
 			const handler = transport._handler;
 			if (handler && handler._pc) {
 				const pc = handler._pc;
-				console.log(`[RoomManager] Consumer transport initial state:`, pc.connectionState || pc.iceConnectionState);
+				console.log("[RoomManager] Consumer transport initial state:", pc.connectionState || pc.iceConnectionState);
 
 				pc.addEventListener("connectionstatechange", () => {
-					console.log(`[RoomManager] Consumer transport RTCPeerConnection state:`, pc.connectionState);
+					console.log("[RoomManager] Consumer transport RTCPeerConnection state:", pc.connectionState);
 					if (pc.connectionState === "failed") {
-						console.error(`[RoomManager] Consumer transport failed - network issue, removing...`);
+						console.error("[RoomManager] Consumer transport failed - network issue, removing...");
 						roomState.update((s) => {
 							const recvTransports = new Map(s.recvTransports);
 							recvTransports.delete("shared");
@@ -716,13 +804,13 @@ async function subscribeToTrack(peerId: string, mediaTag: MediaTag): Promise<voi
 				});
 
 				pc.addEventListener("iceconnectionstatechange", () => {
-					console.log(`[RoomManager] Consumer transport ICE state:`, pc.iceConnectionState);
+					console.log("[RoomManager] Consumer transport ICE state:", pc.iceConnectionState);
 					if (pc.iceConnectionState === "failed") {
-						console.error(`[RoomManager] Consumer transport ICE failed - check NAT/firewall`);
+						console.error("[RoomManager] Consumer transport ICE failed - check NAT/firewall");
 					}
 				});
 			}
-		} catch (e) {
+		} catch {
 			console.warn("[RoomManager] Cannot access RTCPeerConnection for consumer transport monitoring");
 		}
 
@@ -732,6 +820,11 @@ async function subscribeToTrack(peerId: string, mediaTag: MediaTag): Promise<voi
 			recvTransports.set("shared", transport);
 			return { ...s, recvTransports };
 		});
+	}
+
+	if (!transport) {
+		console.error("[RoomManager] No transport available for consuming");
+		return;
 	}
 
 	console.log(`[RoomManager] Using transport ${transport.id} for ${peerId}`);
@@ -788,8 +881,9 @@ async function subscribeToTrack(peerId: string, mediaTag: MediaTag): Promise<voi
 		});
 	});
 
-	consumer.on("producerclose", () => {
-		console.log(`[RoomManager] Consumer ${consumer.id} producer closed`);
+	consumer.on("@producerclose" as any, () => {
+		console.log(`[RoomManager] Consumer ${consumer.id} producer closed, removing consumer`);
+		consumer.close();
 		roomState.update((s) => {
 			const consumers = new Map(s.consumers);
 			consumers.delete(consumer.id);

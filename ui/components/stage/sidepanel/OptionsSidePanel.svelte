@@ -35,11 +35,20 @@
 <!-- Common Contents -->
 <img src={logoSrc} class="logo" />
 <MediaInputSelector />
+{#if $currentPeerStore.manager}
+	<p class="label">Snabbval för dig som tekniker</p>
+	<div class="mb-4">
+		<Accordion title="Sceninställningar" isOpen={false}>
+			<ForcedSettingsContent />
+		</Accordion>
+	</div>
+{/if}
 
 <!-- Manager Contents -->
-{#if $currentPeerStore.manager || CONFIG.runtime.debug}
+{#if $currentPeerStore.manager}
+	<p class="label">Kontrollpanel</p>
 	{#if $focusedInstrument}
-		<button class="button is-fullwidth mb-4 is-small close-button" on:click={() => focusedInstrument.set(undefined)}>
+		<button class="button is-fullwidth mb-4 is-small close-button" on:click={() => focusedInstrument.set("")}>
 			<span class="icon is-size-5"><PicolArrowLeft /></span>
 			<span>Visa alla instrument</span>
 		</button>
@@ -60,68 +69,55 @@
 		</div>
 	{:else}
 		<div class="select-view mb-4" in:blur={{ duration: 100 }}>
-			{#if $currentPeerStore.manager}
-				<div class="mb-4">
-					<Accordion title="Snabba sceninställningar" isOpen={false}>
-						<ForcedSettingsContent />
-					</Accordion>
-				</div>
-
-				<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "debug")}
-					><span class="icon is-size-5"><IconActivity /></span>
-					<span>Avancerad information</span></button
+			<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "debug")}
+				><span class="icon is-size-5"><IconActivity /></span>
+				<span>Debug information</span></button
+			>
+			<hr />
+			<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "scene-settings")}
+				><span class="icon is-size-5"><IconScenes /></span>
+				<span>Sceninställningar</span></button
+			>
+			<hr />
+			<!-- Fullscreen button for mobile -->
+			{#if isMobile}
+				<button
+					class="button is-fullwidth mb-4 is-small"
+					class:is-primary={$fullscreen}
+					on:click={() => {
+						fullscreen.toggle();
+					}}
 				>
+					<span class="icon is-size-5">
+						{#if $fullscreen}
+							<IconMinimize />
+						{:else}
+							<IconMaximize />
+						{/if}
+					</span>
+					<span>{$fullscreen ? "Avsluta fullskärm" : "Fullskärm"}</span>
+				</button>
 				<hr />
-				<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "scene-settings")}
-					><span class="icon is-size-5"><IconScenes /></span>
-					<span>Sceninställningar</span></button
-				>
-				<hr />
-				<!-- Fullscreen button for mobile -->
-				{#if isMobile}
-					<button
-						class="button is-fullwidth mb-4 is-small"
-						class:is-primary={$fullscreen}
-						on:click={() => {
-							fullscreen.toggle();
-						}}
-					>
-						<span class="icon is-size-5">
-							{#if $fullscreen}
-								<IconMinimize />
-							{:else}
-								<IconMaximize />
-							{/if}
-						</span>
-						<span>{$fullscreen ? "Avsluta fullskärm" : "Fullskärm"}</span>
-					</button>
-					<hr />
-				{/if}
-				<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "access")}
-					><span class="icon is-size-5"><IconAccess /></span>
-					<span>Tillgång</span></button
-				>
-				<hr />
-				<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "participants")}
-					><span class="icon is-size-5"><IconUsers /></span>
-					<span>Deltagare</span></button
-				>
-				<hr />
-				<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "script")}
-					><span class="icon is-size-5"><IconScript /></span>
-					<span>Manuskript</span></button
-				>
-				<hr />
-				<a class="button is-fullwidth is-small" href="/backstage" target="_blank">
-					<span class="icon is-size-5"><IconExternalLink /></span>
-					<span>Öppna Backstage</span>
-				</a>
-			{:else if CONFIG.runtime.debug}
-				<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "debug")}
-					><span class="icon is-size-5"><IconActivity /></span>
-					<span>Debug Tools</span></button
-				>
 			{/if}
+			<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "access")}
+				><span class="icon is-size-5"><IconAccess /></span>
+				<span>Tillgång</span></button
+			>
+			<hr />
+			<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "participants")}
+				><span class="icon is-size-5"><IconUsers /></span>
+				<span>Deltagare</span></button
+			>
+			<hr />
+			<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "script")}
+				><span class="icon is-size-5"><IconScript /></span>
+				<span>Manuskript</span></button
+			>
+			<hr />
+			<a class="button is-fullwidth is-small" href="/backstage" target="_blank">
+				<span class="icon is-size-5"><IconExternalLink /></span>
+				<span>Öppna Backstage</span>
+			</a>
 		</div>
 	{/if}
 {/if}
@@ -139,5 +135,9 @@
 	.close-button {
 		justify-content: start;
 		border-width: 0;
+	}
+	.label {
+		text-align: center;
+		font-weight: 400;
 	}
 </style>

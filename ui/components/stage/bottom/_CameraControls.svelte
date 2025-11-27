@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { blur } from "svelte/transition";
-	import IconVideoOff from "~/components/picol/icons/Picol-video-remove.svelte";
-	import IconVideo from "~/components/picol/icons/Picol-video-run.svelte";
+	import IconVideoOff from "~/components/icons/Icon-camera-off.svelte";
+	import IconVideo from "~/components/icons/Icon-camera.svelte";
 	import { enableCamera, disableCamera, peerStreamsStore } from "~/api/stageNew";
 	import { wsPeerIdStore } from "~/api/_trpcClient";
 	import { currentPeerStore } from "~/api/auth";
@@ -54,14 +54,7 @@
 </script>
 
 {#if $currentPeerStore.actor || $currentPeerStore.manager || $showSceneSettingsStore.visitorVideoEnabled}
-	<button
-		type="button"
-		class="button is-small"
-		class:is-loading={isProcessing}
-		disabled={isProcessing}
-		transition:blur
-		on:click={handleClick}
-	>
+	<button type="button" class="button is-small" class:is-loading={isProcessing} disabled={isProcessing} transition:blur on:click={handleClick}>
 		<span class="icon is-size-4" class:has-text-danger={hasError} class:has-text-success={isCameraOn}>
 			{#if isCameraOn}
 				<IconVideo />

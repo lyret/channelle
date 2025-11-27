@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { updateConfigurationSettings, showMetadataStore } from "~/api/backstage/backstageClient";
+	import { currentPeerStore } from "~/api";
 	import IconSave from "../icons/Icon-save.svelte";
 	import IconX from "../icons/Icon-x.svelte";
 
@@ -27,7 +28,7 @@
 	const descriptionMaxLength = 1000;
 	const nomenclatureMaxLength = 100;
 
-	const canEdit = CONFIG.runtime.theater;
+	const canEdit = $currentPeerStore.manager;
 	$: hasChanges = nameInput !== originalName || descriptionInput !== originalDescription || nomenclatureInput !== originalNomenclature;
 	$: canSave = hasChanges && nameInput.trim().length > 0 && !isLoading;
 
