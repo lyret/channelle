@@ -14,12 +14,41 @@
 
 	$: selected = selectedLayout?.name == layout.name;
 
-	function onChange(e: any, cell: any) {
+	// Get the actual peer ID from selectedLayout if this scene is selected, otherwise use the local layout
+	function getActualPeerId(rowIndex: number, cellIndex: number) {
+		if (selected && selectedLayout?.layout?.[rowIndex]?.[cellIndex]) {
+			const cell = selectedLayout.layout[rowIndex][cellIndex];
+			if (cell.type === "actor") {
+				return cell.peerId;
+			}
+		}
+		const localCell = layout.layout[rowIndex]?.[cellIndex];
+		if (localCell?.type === "actor") {
+			return localCell.peerId;
+		}
+		return "-1";
+	}
+
+	function onChange(e: any, rowIndex: number, cellIndex: number) {
 		e.stopPropagation();
-		cell.peerId = (e.target as any).value;
-		dispatch("update", layout);
+		const newPeerId = (e.target as any).value;
+
+		// Create a deep copy of the layout to avoid mutating the prop
+		const updatedLayout = {
+			...layout,
+			layout: layout.layout.map((row, rIdx) =>
+				row.map((cell, cIdx) => {
+					if (rIdx === rowIndex && cIdx === cellIndex && cell.type === "actor") {
+						return { ...cell, peerId: newPeerId };
+					}
+					return cell;
+				}),
+			),
+		};
+
+		dispatch("update", updatedLayout);
 		if (selected) {
-			dispatch("select", layout);
+			dispatch("select", updatedLayout);
 		}
 	}
 
@@ -90,10 +119,15 @@
 											</div>
 										{:else if cell.type == "actor"}
 											<div class="cell-content actor-cell">
-												<select class="actor-select" on:change={(e) => onChange(e, cell)} on:click={(e) => e.stopPropagation()}>
-													<option value={-1}>Välj en aktör</option>
+												<select
+													class="actor-select"
+													value={getActualPeerId(rowIndex, cellIndex)}
+													on:change={(e) => onChange(e, rowIndex, cellIndex)}
+													on:click={(e) => e.stopPropagation()}
+												>
+													<option value="-1">Välj en aktör</option>
 													{#each peers as peer (peer.id)}
-														<option value={peer.id} selected={cell.peerId == peer.id.toString()}>
+														<option value={peer.id}>
 															{peer.name}
 														</option>
 													{/each}

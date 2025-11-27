@@ -12,7 +12,7 @@ enableHotReloadingOnRebuilds();
 // Authenticate as online
 authenticate();
 
-// Enable media session synchronization for real-time multimedia communication
+// Enable configuration synchronization for real-time updates when changes are made
 subscribeToBackstageConfigurationChanges();
 
 // Enable media session synchronization for real-time multimedia communication

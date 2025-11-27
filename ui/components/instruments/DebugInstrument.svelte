@@ -3,14 +3,14 @@
 </script>
 
 <div class="debug-instrument">
-	<h1 class="title is-5 mb-4">🔍 Debug Tools</h1>
+	<h1 class="title mb-4">Diagnostik</h1>
 
 	<div class="field">
 		<label class="checkbox">
 			<input type="checkbox" bind:checked={$debugModeStore} />
-			<span class="ml-2">Show debug overlays on videos</span>
+			<span class="ml-2">Visa debug-information över videos</span>
 		</label>
-		<p class="help is-size-7 mt-1">When enabled, diagnostic information will appear on video elements</p>
+		<p class="help is-size-7 mt-1">Visar diagnostikisk användbar information över video elementen på scenen</p>
 	</div>
 
 	<div class="field">
@@ -18,9 +18,9 @@
 			<span class="icon is-small">
 				<i class="fas fa-external-link-alt"></i>
 			</span>
-			<span>Open Debug Dashboard</span>
+			<span>Diagnosera ytterligare problem</span>
 		</a>
-		<p class="help is-size-7 mt-1">Opens the full debug interface in a new tab</p>
+		<p class="help is-size-7 mt-1">Öppnar /debug sidan i en ny flik</p>
 	</div>
 </div>
 

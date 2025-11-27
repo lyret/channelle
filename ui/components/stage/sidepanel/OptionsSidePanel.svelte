@@ -71,7 +71,7 @@
 		<div class="select-view mb-4" in:blur={{ duration: 100 }}>
 			<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "debug")}
 				><span class="icon is-size-5"><IconActivity /></span>
-				<span>Debug information</span></button
+				<span>Diagnostik</span></button
 			>
 			<hr />
 			<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "scene-settings")}

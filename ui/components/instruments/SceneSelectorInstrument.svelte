@@ -12,16 +12,24 @@
 	// Track expanded states for each scene
 	let expandedScenes: Record<string, boolean> = {};
 
+	// Track modified layouts for each scene
+	let modifiedLayouts: Record<string, Scene> = {};
+
+	// Sync the selected scene from the server to modifiedLayouts
+	$: if ($showSelectedSceneStore) {
+		modifiedLayouts[$showSelectedSceneStore.name] = $showSelectedSceneStore;
+	}
+
 	let errorMessage: string = "";
 
 	const auto: Scene = {
-		name: "Automatisk",
+		name: "Alla",
 		chatEnabled: true,
 		curtains: false,
 		gratitudeEffectsEnabled: false,
 		criticalEffectsEnabled: false,
 		visitorAudioEnabled: false,
-		visitorVideoEnabled: false,
+		visitorVideoEnabled: true,
 		layout: [],
 	};
 	const empty: Scene = {
@@ -99,7 +107,9 @@
 
 	async function handleSceneSelect(event: CustomEvent<Scene>) {
 		errorMessage = "";
-		const result = await updateConfigurationSettings({ selectedScene: event.detail });
+		// Use the modified layout if it exists, otherwise use the original
+		const sceneToSelect = modifiedLayouts[event.detail.name] || event.detail;
+		const result = await updateConfigurationSettings({ selectedScene: sceneToSelect });
 
 		if (!result.success) {
 			handleError(result.error || "Failed to update scene");
@@ -107,6 +117,11 @@
 			// Collapse all expanded scenes after successful selection
 			expandedScenes = {};
 		}
+	}
+
+	function handleSceneUpdate(event: CustomEvent<Scene>) {
+		// Store the modified layout
+		modifiedLayouts[event.detail.name] = event.detail;
 	}
 
 	// TODO: Theming
@@ -176,46 +191,52 @@
 			<label class="label">Välj aktiv scen</label>
 			<div class="scene-controls">
 				<SceneSelectorControl
-					layout={auto}
+					layout={modifiedLayouts[auto.name] || auto}
 					{peers}
 					selectedLayout={$showSelectedSceneStore}
 					bind:expanded={expandedScenes[auto.name]}
 					on:select={handleSceneSelect}
+					on:update={handleSceneUpdate}
 				/>
 				<SceneSelectorControl
-					layout={empty}
+					layout={modifiedLayouts[empty.name] || empty}
 					{peers}
 					selectedLayout={$showSelectedSceneStore}
 					bind:expanded={expandedScenes[empty.name]}
 					on:select={handleSceneSelect}
+					on:update={handleSceneUpdate}
 				/>
 				<SceneSelectorControl
-					layout={oneXOne}
+					layout={modifiedLayouts[oneXOne.name] || oneXOne}
 					{peers}
 					selectedLayout={$showSelectedSceneStore}
 					bind:expanded={expandedScenes[oneXOne.name]}
 					on:select={handleSceneSelect}
+					on:update={handleSceneUpdate}
 				/>
 				<SceneSelectorControl
-					layout={oneXTwo}
+					layout={modifiedLayouts[oneXTwo.name] || oneXTwo}
 					{peers}
 					selectedLayout={$showSelectedSceneStore}
 					bind:expanded={expandedScenes[oneXTwo.name]}
 					on:select={handleSceneSelect}
+					on:update={handleSceneUpdate}
 				/>
 				<SceneSelectorControl
-					layout={chat}
+					layout={modifiedLayouts[chat.name] || chat}
 					{peers}
 					selectedLayout={$showSelectedSceneStore}
 					bind:expanded={expandedScenes[chat.name]}
 					on:select={handleSceneSelect}
+					on:update={handleSceneUpdate}
 				/>
 				<SceneSelectorControl
-					layout={twoXTwo}
+					layout={modifiedLayouts[twoXTwo.name] || twoXTwo}
 					{peers}
 					selectedLayout={$showSelectedSceneStore}
 					bind:expanded={expandedScenes[twoXTwo.name]}
 					on:select={handleSceneSelect}
+					on:update={handleSceneUpdate}
 				/>
 			</div>
 		</div>

@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { createEventDispatcher } from "svelte";
-	import { showSceneOverridesStore, updateConfigurationSettings, automateOverridenSettings } from "~/api/backstage/backstageClient";
+	import {
+		showSceneOverridesStore,
+		showSceneSettingsStore,
+		updateConfigurationSettings,
+		automateOverridenSettings,
+		showSelectedSceneStore,
+	} from "~/api/backstage/backstageClient";
 	import type { EditableShowAttributes } from "~/types/serverSideTypes";
 
 	let isLoading = false;
@@ -147,7 +153,7 @@
 				class="button"
 				class:is-warning={$showSceneOverridesStore.visitorVideoEnabledOverride === 0}
 				class:is-loading={isLoading}
-				disabled={isLoading}
+				disabled={isLoading || !$showSelectedSceneStore?.visitorVideoEnabled}
 				on:click={() => handleUpdate({ visitorVideoEnabledOverride: 0 })}
 			>
 				Automatiskt
@@ -158,7 +164,7 @@
 				class="button is-danger"
 				class:is-light={$showSceneOverridesStore.visitorVideoEnabledOverride !== 2}
 				class:is-loading={isLoading}
-				disabled={isLoading}
+				disabled={isLoading || !$showSelectedSceneStore?.visitorVideoEnabled}
 				on:click={() => handleUpdate({ visitorVideoEnabledOverride: 2 })}
 			>
 				Nej
@@ -169,7 +175,7 @@
 				class="button is-success"
 				class:is-light={$showSceneOverridesStore.visitorVideoEnabledOverride !== 1}
 				class:is-loading={isLoading}
-				disabled={isLoading}
+				disabled={isLoading || !$showSelectedSceneStore?.visitorVideoEnabled}
 				on:click={() => handleUpdate({ visitorVideoEnabledOverride: 1 })}
 			>
 				Ja
@@ -178,7 +184,9 @@
 	</div>
 	<div class="help-section">
 		<p class="help">
-			{#if $showSceneOverridesStore.visitorVideoEnabledOverride === 0}
+			{#if !$showSelectedSceneStore?.visitorVideoEnabled}
+				<b>OBS: Fungerar endast där scen-layouten tillåter det (exempelvis "alla")</b>
+			{:else if $showSceneOverridesStore.visitorVideoEnabledOverride === 0}
 				Publikens video är tillåten beroende på scen
 			{:else if $showSceneOverridesStore.visitorVideoEnabledOverride === 1}
 				<b>Video från publiken är alltid tillåtet</b>

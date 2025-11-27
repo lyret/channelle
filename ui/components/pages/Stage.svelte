@@ -9,8 +9,6 @@
 	import Audio from "~/components/stage/elements/Audio.svelte";
 	import Video from "~/components/stage/elements/Video.svelte";
 
-	// Import new simplified API
-	import { isLoadingStore, errorStore } from "~/api";
 	import { calculatedStageLayoutStore } from "~/stores/stage";
 	import { showStageChatStore, showStageSettingsStore } from "~/stores/stage";
 
@@ -27,40 +25,22 @@
 			grid-template-columns: repeat(${width}, 1fr);
 			grid-template-rows: repeat(${height}, 1fr);
 		`;
-
-	// Get reactive values
-	$: isLoading = $isLoadingStore;
-	$: error = $errorStore;
 </script>
 
 <Wrapper lockedToInviteKey={true} curtainsAreEnabled={true}>
 	<main in:blur={{ delay: 500, duration: 1000 }}>
-		<!-- Show error if any -->
-		{#if error}
-			<div class="notification is-danger is-light" style="margin: 1rem;">
-				<button class="delete" on:click={() => ($errorStore = null)}></button>
-				<strong>Connection Error:</strong>
-				{error}
-			</div>
-		{/if}
-
-		<!-- Show loading state -->
-		{#if isLoading}
-			<div class="has-text-centered" style="padding: 2rem;">
-				<span class="loader"></span>
-				<p class="has-text-white-ter mt-2">Connecting to media room...</p>
-			</div>
-		{/if}
-
 		<div class="contents">
 			<div class="windows-wrapper">
 				<div class={`windows window-cols-${width} window-rows-${height}`} style={windowsLayoutStyle}>
 					{#if $calculatedStageLayoutStore.isAutoLayout}
-						{#each $calculatedStageLayoutStore.videoLeftovers as cell (cell.peerId)}
-							<div class="window">
+						{#if $calculatedStageLayoutStore.videoLeftovers.length > 0}
+							{#each $calculatedStageLayoutStore.videoLeftovers as cell (cell.peerId)}
 								<Video peerId={cell.peerId} />
+							{/each}
+						{:else}
+							<div class="window empty-window">
 							</div>
-						{/each}
+						{/if}
 					{:else}
 						{#each matrix as row, rowIndex (rowIndex)}
 							{#each row as cell, cellIndex (`${rowIndex}-${cellIndex}`)}

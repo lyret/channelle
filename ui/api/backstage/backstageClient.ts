@@ -54,12 +54,15 @@ export const showSceneSettingsStore = derived(_localConfigStore, ($config) => {
 			($config.gratitudeEffectsEnabledOverride == 0 && $config.selectedScene?.gratitudeEffectsEnabled) ||
 			false,
 		criticalEffects:
-			$config.criticalEffectsEnabledOverride == 1 || ($config.criticalEffectsEnabledOverride == 0 && $config.selectedScene?.criticalEffectsEnabled) || false,
+			$config.criticalEffectsEnabledOverride == 1 ||
+			($config.criticalEffectsEnabledOverride == 0 && $config.selectedScene?.criticalEffectsEnabled) ||
+			false,
 		visitorAudioEnabled:
 			$config.visitorAudioEnabledOverride == 1 || ($config.visitorAudioEnabledOverride == 0 && $config.selectedScene?.visitorAudioEnabled) || false,
-		visitorVideoEnabled:
-			$config.visitorVideoEnabledOverride == 1 || ($config.visitorVideoEnabledOverride == 0 && $config.selectedScene?.visitorVideoEnabled) || false,
-	}
+		visitorVideoEnabled: $config.selectedScene?.visitorVideoEnabled
+			? $config.visitorVideoEnabledOverride == 1 || $config.visitorVideoEnabledOverride == 0
+			: false,
+	};
 });
 
 /** Current actually override value for settings from the configuration */

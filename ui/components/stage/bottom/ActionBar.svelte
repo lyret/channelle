@@ -41,7 +41,7 @@
 	<span class="block is-hidden-mobile"><StageDirections /></span>
 	<!-- DESKTOP SPACER -->
 	{#if !isMobile}
-		<div class="spacer" />
+		<div class="small-spacer is-hidden-mobile" />
 	{/if}
 	<!-- GRATITUDE EFFECTS -->
 	{#if $showSceneSettingsStore.gratitudeEffects}
@@ -126,6 +126,7 @@
 			{/if}
 		</button>
 	{/if}
+	<div class="small-spacer is-hidden-mobile" />
 </div>
 
 <style lang="scss">
