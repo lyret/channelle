@@ -316,19 +316,35 @@ async function handleInitialState(event: any): Promise<void> {
 		if (!state.recvTransports.has("shared")) {
 			console.log("[RoomManager] Creating shared recv transport");
 			const transportOptions = await stageClient.createTransport.mutate({ direction: "recv" });
+			console.log("[RoomManager] Recv transport options:", {
+				id: transportOptions.transportOptions.id,
+				iceCandidates: transportOptions.transportOptions.iceCandidates,
+				iceParameters: transportOptions.transportOptions.iceParameters,
+			});
 			const transport = state.device!.createRecvTransport(transportOptions.transportOptions);
 
 			// Handle transport events
 			transport.on("connect", async ({ dtlsParameters }, callback, errback) => {
+				console.log(`[RoomManager] Recv transport ${transport.id} connecting...`);
 				try {
 					await stageClient.connectTransport.mutate({
 						transportId: transport.id,
 						dtlsParameters,
 					});
+					console.log(`[RoomManager] Recv transport ${transport.id} connected successfully`);
 					callback();
 				} catch (error) {
+					console.error(`[RoomManager] Recv transport ${transport.id} connection failed:`, error);
 					errback(error as Error);
 				}
+			});
+
+			transport.on("connectionstatechange", (state) => {
+				console.log(`[RoomManager] Recv transport ${transport.id} connection state changed to:`, state);
+			});
+
+			transport.on("icegatheringstatechange", (state) => {
+				console.log(`[RoomManager] Recv transport ${transport.id} ICE gathering state changed to:`, state);
 			});
 
 			// Store shared transport
@@ -419,19 +435,38 @@ async function createSendTransport(): Promise<void> {
 	if (state.sendTransport) return;
 
 	const transportOptions = await stageClient.createTransport.mutate({ direction: "send" });
+	console.log("[RoomManager] Send transport options:", {
+		id: transportOptions.transportOptions.id,
+		iceCandidates: transportOptions.transportOptions.iceCandidates,
+		iceParameters: transportOptions.transportOptions.iceParameters,
+	});
 	const transport = state.device.createSendTransport(transportOptions.transportOptions);
 
 	// Handle transport events
 	transport.on("connect", async ({ dtlsParameters }, callback, errback) => {
+		console.log(`[RoomManager] Send transport ${transport.id} connecting...`);
 		try {
 			await stageClient.connectTransport.mutate({
 				transportId: transport.id,
 				dtlsParameters,
 			});
+			console.log(`[RoomManager] Send transport ${transport.id} connected successfully`);
 			callback();
 		} catch (error) {
+			console.error(`[RoomManager] Send transport ${transport.id} connection failed:`, error);
 			errback(error as Error);
 		}
+	});
+
+	transport.on("connectionstatechange", (state) => {
+		console.log(`[RoomManager] Send transport ${transport.id} connection state changed to:`, state);
+		if (state === "failed") {
+			console.error(`[RoomManager] Send transport ${transport.id} failed - may need ICE restart`);
+		}
+	});
+
+	transport.on("icegatheringstatechange", (state) => {
+		console.log(`[RoomManager] Send transport ${transport.id} ICE gathering state changed to:`, state);
 	});
 
 	transport.on("produce", async ({ kind, rtpParameters, appData }, callback, errback) => {
@@ -657,20 +692,35 @@ async function subscribeToTrack(peerId: string, mediaTag: MediaTag): Promise<voi
 	// We use a single recv transport for all consumers
 	let transport = state.recvTransports.get("shared");
 	if (!transport) {
-		console.log("[RoomManager] Creating shared recv transport");
+		console.log("[RoomManager] Creating shared recv transport for consumer");
 		const transportOptions = await stageClient.createTransport.mutate({ direction: "recv" });
+		console.log("[RoomManager] Consumer recv transport options:", {
+			id: transportOptions.transportOptions.id,
+			iceCandidates: transportOptions.transportOptions.iceCandidates,
+			iceParameters: transportOptions.transportOptions.iceParameters,
+		});
 		transport = state.device.createRecvTransport(transportOptions.transportOptions);
 
 		// Handle transport events
 		transport.on("connect", async ({ dtlsParameters }, callback, errback) => {
+			console.log(`[RoomManager] Consumer transport ${transport.id} connecting...`);
 			try {
 				await stageClient.connectTransport.mutate({
 					transportId: transport.id,
 					dtlsParameters,
 				});
+				console.log(`[RoomManager] Consumer transport ${transport.id} connected successfully`);
 				callback();
 			} catch (error) {
+				console.error(`[RoomManager] Consumer transport ${transport.id} connection failed:`, error);
 				errback(error as Error);
+			}
+		});
+
+		transport.on("connectionstatechange", (state) => {
+			console.log(`[RoomManager] Consumer transport ${transport.id} connection state changed to:`, state);
+			if (state === "failed") {
+				console.error(`[RoomManager] Consumer transport ${transport.id} failed - check NAT/firewall settings`);
 			}
 		});
 

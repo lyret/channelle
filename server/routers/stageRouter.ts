@@ -229,6 +229,11 @@ export const stageRouter = router({
 			_transports[transport.id] = transport;
 
 			const { id, iceParameters, iceCandidates, dtlsParameters } = transport;
+			console.log(`[MS] Transport ${id} created with ${iceCandidates.length} ICE candidates for ${ctx.peer.id}`);
+			console.log(
+				`[MS] ICE candidates:`,
+				iceCandidates.map((c) => ({ protocol: c.protocol, ip: c.ip, port: c.port })),
+			);
 			return {
 				transportOptions: { id, iceParameters, iceCandidates, dtlsParameters },
 			};
@@ -248,9 +253,11 @@ export const stageRouter = router({
 				throw new TRPCError({ code: "NOT_FOUND", message: `server-side transport ${transportId} not found` });
 			}
 
-			console.log(`[MS] Connecting a ${transport.appData.clientDirection} transport for ${ctx.peer.id} to ${transport.appData.peerId}`);
+			console.log(`[MS] Connecting a ${transport.appData.clientDirection} transport ${transportId} for ${ctx.peer.id} to ${transport.appData.peerId}`);
+			console.log(`[MS] Transport state before connect:`, transport.connectionState);
 
 			await transport.connect({ dtlsParameters });
+			console.log(`[MS] Transport ${transportId} connected successfully, state:`, transport.connectionState);
 			return { connected: true };
 		}),
 	// Called by a client that wants to close a single transport (for
@@ -334,9 +341,15 @@ export const stageRouter = router({
 	recvTrack: mediaSessionProcedure
 		.input(z.object({ mediaPeerId: z.string(), mediaTag: z.custom<MediaTag>(), rtpCapabilities: z.custom<MediaSoup.types.RtpCapabilities>() }))
 		.mutation(async ({ ctx, input: { mediaPeerId, mediaTag, rtpCapabilities } }) => {
+			console.log(`[MS] recvTrack called - peer ${ctx.peer.id} requesting ${mediaTag} from ${mediaPeerId}`);
+
 			const producer = Object.values(_producers).find((p) => p.appData.mediaTag === mediaTag && p.appData.peerId === mediaPeerId);
 
 			if (!producer) {
+				console.error(
+					`[MS] Producer not found for ${mediaPeerId}:${mediaTag}, available producers:`,
+					Object.values(_producers).map((p) => ({ peerId: p.appData.peerId, mediaTag: p.appData.mediaTag, id: p.id })),
+				);
 				throw new TRPCError({ code: "NOT_FOUND", message: `server-side producer for ${mediaPeerId}:${mediaTag} not found` });
 			}
 
@@ -349,8 +362,14 @@ export const stageRouter = router({
 			const transport = Object.values(_transports).find((t) => t.appData.peerId === ctx.peer.id && t.appData.clientDirection === "recv");
 
 			if (!transport) {
+				console.error(
+					`[MS] Recv transport not found for ${ctx.peer.id}, available transports:`,
+					Object.values(_transports).map((t) => ({ peerId: t.appData.peerId, direction: t.appData.clientDirection, id: t.id })),
+				);
 				throw new TRPCError({ code: "NOT_FOUND", message: `server-side recv transport for ${ctx.peer.id} not found` });
 			}
+
+			console.log(`[MS] Using recv transport ${transport.id} for consumer, transport state:`, transport.connectionState);
 
 			const consumer = await transport.consume({
 				producerId: producer.id,
@@ -389,6 +408,12 @@ export const stageRouter = router({
 			});
 
 			console.log("[MS] Created consumer", consumer.id, "currentLayers", consumer.currentLayers, "for", ctx.peer.id, consumer.appData);
+			console.log(`[MS] Consumer ${consumer.id} details:`, {
+				paused: consumer.paused,
+				producerPaused: consumer.producerPaused,
+				kind: consumer.kind,
+				transportState: transport.connectionState,
+			});
 
 			// Emit consumer added event
 			_updateEmitter.emit("consumerAdded", consumer);
@@ -678,6 +703,16 @@ async function _closeConsumer(consumer: Consumer) {
 /** Utility function to create a WebRTC Transport */
 async function _createWebRtcTransport({ peerId, direction }): Promise<Transport> {
 	const { listenInfos, initialAvailableOutgoingBitrate } = CONFIG.mediasoup.webRTCTransport;
+
+	console.log(
+		`[MS] Creating WebRTC transport with listenInfos:`,
+		listenInfos.map((info) => ({
+			protocol: info.protocol,
+			ip: info.ip,
+			announcedIp: info.announcedIp,
+			port: info.port,
+		})),
+	);
 
 	const _router = await mediaSoupRouter();
 	const transport = await _router.createWebRtcTransport({
