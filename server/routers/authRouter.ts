@@ -148,7 +148,7 @@ export const authRouter = trcpRouter({
 						name: input.name,
 						showId: showId,
 						actor: false,
-						manager: !CONFIG.runtime.production, // When developing, all new peers become managers
+						manager: !CONFIG.runtime.production || CONFIG.runtime.debug, // When developing, all new peers become managers
 						banned: false,
 						audioMuted: false,
 						videoMuted: false,
