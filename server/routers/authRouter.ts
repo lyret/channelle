@@ -126,10 +126,19 @@ export const authRouter = trcpRouter({
 			if (!peer) {
 				try {
 					// Determine the current show id
-					const showId = CONFIG.runtime.theater ? input.showId : getGlobalBackstageConfiguration().showId;
-
-					if (!showId && CONFIG.runtime.theater) {
-						throw new Error("No show id given");
+					// Admin peers authenticated with theater password get showId -1 (all shows)
+					let showId: number | null;
+					if (CONFIG.runtime.theater) {
+						if (input.teatherPassword && input.teatherPassword === CONFIG.theater.password) {
+							showId = -1; // Admin peer belongs to all shows
+						} else {
+							showId = input.showId;
+							if (!showId) {
+								throw new Error("No show id given");
+							}
+						}
+					} else {
+						showId = getGlobalBackstageConfiguration().showId;
 					}
 
 					peer = await Peer.create({

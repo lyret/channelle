@@ -67,10 +67,8 @@ export function initPeer(sequelize: Sequelize) {
 			showId: {
 				type: DataTypes.INTEGER,
 				allowNull: true,
-				references: {
-					model: "Show",
-					key: "id",
-				},
+				// No foreign key constraint to allow -1 for global admin peers
+				// -1 indicates the peer belongs to all shows (theater mode admins)
 			},
 		},
 		{

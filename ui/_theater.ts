@@ -9,9 +9,6 @@ enableHotReloadingOnRebuilds();
 // Initialize all required services in sequence before rendering
 async function initialize() {
 	try {
-		// Authenticate as online
-		await authenticate();
-
 		// Authenticate as admin
 		await validateSessionWithServer();
 

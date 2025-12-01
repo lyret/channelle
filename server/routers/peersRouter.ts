@@ -1,6 +1,7 @@
 import type { PeerAttributes } from "../models";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { Op } from "sequelize";
 import { trpc } from "../lib";
 import { Peer, peerEmitter } from "../models/Peer";
 import { withConfigProcedure } from "./backstageRouter";
@@ -22,10 +23,17 @@ export const peersRouter = router({
 	/** Subscription for all peers per show id (global in stage mode) with automatic updates */
 	peers: withConfigProcedure.subscription(async function* ({
 		ctx: { config },
-	}): AsyncGenerator<{ event: "initial"; peers: Record<string, PeerAttributes & { online: boolean }> } | { event: "created"; peer: PeerAttributes & { online: boolean } } | { event: "updated"; peer: PeerAttributes & { online: boolean } }> {
+	}): AsyncGenerator<
+		| { event: "initial"; peers: Record<string, PeerAttributes & { online: boolean }> }
+		| { event: "created"; peer: PeerAttributes & { online: boolean } }
+		| { event: "updated"; peer: PeerAttributes & { online: boolean } }
+	> {
 		const peers = await Peer.findAll({
 			where: {
-				showId: config.showId,
+				[Op.or]: [
+					{ showId: config.showId },
+					{ showId: -1 }, // Include global admin peers
+				],
 			},
 		});
 
@@ -35,7 +43,7 @@ export const peersRouter = router({
 		};
 
 		for await (const [event, peer] of peerEmitter.anyEvent()) {
-			if (peer.showId !== config.showId) {
+			if (peer.showId !== config.showId && peer.showId !== -1) {
 				continue;
 			}
 			yield {

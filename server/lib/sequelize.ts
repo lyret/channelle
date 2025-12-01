@@ -51,17 +51,11 @@ export async function sequelize(): Promise<Sequelize> {
  */
 function setupModelAssociations() {
 	// Peer <-> Show associations
-	Peer.belongsTo(Show, {
-		foreignKey: "showId",
-		targetKey: "id",
-		onDelete: "CASCADE",
-		onUpdate: "CASCADE",
-		as: "show",
-	});
 	Show.hasMany(Peer, {
 		foreignKey: "showId",
 		sourceKey: "id",
 		as: "peers",
+		constraints: false, // Allow -1 for global admin peers
 	});
 
 	// Message <-> Peer associations
