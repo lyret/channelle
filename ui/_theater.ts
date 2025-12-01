@@ -1,14 +1,29 @@
 import "@babel/polyfill";
 import Theater from "~/components/pages/Theater.svelte";
-import { validateSessionWithServer } from "./api/auth";
+import { enableHotReloadingOnRebuilds } from "./api/development";
+import { authenticate, validateSessionWithServer } from "./api/auth";
 
-// Validate authenticationsession with the server
-validateSessionWithServer();
+// Enables hot reloading of the debug app when developing
+enableHotReloadingOnRebuilds();
 
-// Mount the Svelte interface
-const theaterComponent = new Theater({
-	target: document.body,
-	props: {},
-});
+// Initialize all required services in sequence before rendering
+async function initialize() {
+	try {
+		// Authenticate as online
+		await authenticate();
 
-export default theaterComponent;
+		// Authenticate as admin
+		await validateSessionWithServer();
+
+		// Mount the Svelte interface after everything is ready
+		new Theater({
+			target: document.body,
+			props: {},
+		});
+	} catch (error) {
+		console.error("Error initializing:", error);
+	}
+}
+
+// Start the initialization
+initialize();

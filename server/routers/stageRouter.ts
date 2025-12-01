@@ -232,18 +232,12 @@ export const stageRouter = router({
 	// Create a mediasoup transport object and send back info needed
 	// to create a transport object on the client side
 	createTransport: mediaSessionProcedure.input(z.object({ direction: z.string() })).mutation(async ({ ctx, input: { direction } }) => {
-		console.log(`[MS] Creating a ${direction} transport for peer ${ctx.peer.id}`);
-
 		try {
 			const transport = await _createWebRtcTransport({ peerId: ctx.peer.id, direction });
 			_transports[transport.id] = transport;
 
 			const { id, iceParameters, iceCandidates, dtlsParameters } = transport;
-			console.log(`[MS] Transport ${id} created with ${iceCandidates.length} ICE candidates for ${ctx.peer.id}`);
-			console.log(
-				"[MS] ICE candidates:",
-				iceCandidates.map((c) => ({ protocol: c.protocol, ip: c.ip, port: c.port })),
-			);
+			console.log(`[MS] Created a ${direction}-transport ${id} with ${iceCandidates.length} ICE candidates for ${ctx.peer.id}`);
 			return {
 				transportOptions: { id, iceParameters, iceCandidates, dtlsParameters },
 			};
@@ -721,16 +715,6 @@ async function _closeConsumer(consumer: Consumer) {
 /** Utility function to create a WebRTC Transport */
 async function _createWebRtcTransport({ peerId, direction }): Promise<Transport> {
 	const { listenInfos, initialAvailableOutgoingBitrate } = CONFIG.mediasoup.webRTCTransport;
-
-	console.log(
-		"[MS] Creating WebRTC transport with listenInfos:",
-		listenInfos.map((info) => ({
-			protocol: info.protocol,
-			ip: info.ip,
-			announcedIp: info.announcedIp,
-			port: info.port,
-		})),
-	);
 
 	const _router = await mediaSoupRouter();
 	const transport = await _router.createWebRtcTransport({

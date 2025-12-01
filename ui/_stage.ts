@@ -9,21 +9,25 @@ enableMediaSoupDebugging();
 // Enables hot reloading of the debug app when developing
 enableHotReloadingOnRebuilds();
 
-// Authenticate as online
-authenticate();
+// Initialize all required services in sequence
+async function initializeStage() {
+	try {
+		// Authenticate as online
+		await authenticate();
+		// Enable configuration synchronization for real-time updates when changes are made
+		await subscribeToBackstageConfigurationChanges();
+		// Enable media session synchronization for real-time multimedia communication
+		await participateInTheMediaRoom();
 
-// Enable configuration synchronization for real-time updates when changes are made
-subscribeToBackstageConfigurationChanges();
-
-// Enable media session synchronization for real-time multimedia communication
-participateInTheMediaRoom()
-	.then(() => {
-		// Mount the Svelte interface after the media room is ready
+		// Mount the Svelte interface after everything is ready
 		new Stage({
 			target: document.body,
 			props: {},
 		});
-	})
-	.catch((error: any) => {
-		console.error("Error before mounting the page component:", error);
-	});
+	} catch (error) {
+		console.error("Error initializing:", error);
+	}
+}
+
+// Start the initialization
+initializeStage();

@@ -4,42 +4,80 @@ import { z } from "zod";
 import { trpc, sequelize } from "../lib";
 import { Message } from "../models/Message";
 import type { MessageAttributes } from "../models";
+import { Show } from "../models/Show";
+import { withAuthenticatedPeerMiddleware } from "./authRouter";
 
 // Get the trcp router constructor and default procedure
-const { router: trcpRouter, procedure: trcpProcedure } = trpc();
+const { router, procedure } = trpc();
 
 // Internal event emitter for message updates
+// Uses showId as event name (0 for stage mode)
 const _messageEmitter = new Emittery<{
-	newMessage: MessageAttributes;
-	newPublicMessage: MessageAttributes;
-	newBackstageMessage: MessageAttributes;
+	[id: number]: MessageAttributes;
 }>();
 
 // Chat connection procedure
-// Procedure that ensures the peer context exists
-const chatProcedure = trcpProcedure.use(async ({ ctx, next }) => {
-	if (!ctx.peer?.id) {
-		throw new TRPCError({
-			code: "BAD_REQUEST",
-			message: "No peer information given",
+// Procedure that ensures the peer context exists and handles showId
+const chatProcedure = procedure
+	.input(
+		z
+			.object({
+				showId: z.number().int().gte(0).nullable().optional(),
+			})
+			.optional(),
+	)
+	.use(async ({ ctx, input, next }) => {
+		if (!ctx.peer?.id) {
+			throw new TRPCError({
+				code: "BAD_REQUEST",
+				message: "No peer information given",
+			});
+		}
+
+		// In theater mode, validate showId exists
+		let validatedShowId: number | null = null;
+		if (CONFIG.runtime.theater) {
+			if (!input?.showId) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Show ID is required in theater mode",
+				});
+			}
+			// Verify the show exists
+			const show = await Show.findByPk(input.showId);
+			if (!show) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Selected show not found",
+				});
+			}
+			validatedShowId = input.showId;
+		}
+		// In stage mode, showId is always null
+
+		return next({
+			ctx: {
+				...ctx,
+				showId: validatedShowId,
+			},
 		});
-	}
-	return next();
-});
+	});
 
 /**
  * Chat Router
  * Handles chat messages including backstage messages
  */
-export const chatRouter = trcpRouter({
+export const chatRouter = router({
 	// Subscribe to all messages
 	messages: chatProcedure.subscription(async function* ({ ctx }) {
 		// Yield initial messages
-		const initialMessages = await _getInitialMessages();
+		const initialMessages = await _getInitialMessages(ctx.showId);
 		yield tracked("initial", initialMessages);
 
-		// Listen for new messages
-		for await (const message of _messageEmitter.events("newMessage")) {
+		// Listen for new messages on the showId channel
+		const eventKey = ctx.showId || 0;
+		for await (const message of _messageEmitter.events(eventKey)) {
+			// Additional filter by message type (all messages)
 			yield tracked(String(message.id), message);
 		}
 	}),
@@ -47,24 +85,32 @@ export const chatRouter = trcpRouter({
 	// Subscribe to public messages only (backstage: false)
 	publicMessages: chatProcedure.subscription(async function* ({ ctx }) {
 		// Yield initial public messages
-		const initialMessages = await _getInitialMessages({ backstage: false });
+		const initialMessages = await _getInitialMessages(ctx.showId, { backstage: false });
 		yield tracked("initial", initialMessages);
 
-		// Listen for new public messages
-		for await (const message of _messageEmitter.events("newPublicMessage")) {
-			yield tracked(String(message.id), message);
+		// Listen for new messages on the showId channel
+		const eventKey = ctx.showId || 0;
+		for await (const message of _messageEmitter.events(eventKey)) {
+			// Filter by message type (public only)
+			if (!message.backstage) {
+				yield tracked(String(message.id), message);
+			}
 		}
 	}),
 
 	// Subscribe to backstage messages only
 	backstageMessages: chatProcedure.subscription(async function* ({ ctx }) {
 		// Yield initial backstage messages
-		const initialMessages = await _getInitialMessages({ backstage: true });
+		const initialMessages = await _getInitialMessages(ctx.showId, { backstage: true });
 		yield tracked("initial", initialMessages);
 
-		// Listen for new backstage messages
-		for await (const message of _messageEmitter.events("newBackstageMessage")) {
-			yield tracked(String(message.id), message);
+		// Listen for new messages on the showId channel
+		const eventKey = ctx.showId || 0;
+		for await (const message of _messageEmitter.events(eventKey)) {
+			// Filter by message type (backstage only)
+			if (message.backstage) {
+				yield tracked(String(message.id), message);
+			}
 		}
 	}),
 
@@ -84,6 +130,7 @@ export const chatRouter = trcpRouter({
 				backstage: input.backstage,
 				peerId: ctx.peer.id,
 				peerName: input.peerName || ctx.peer?.name || "?",
+				showId: ctx.showId,
 			});
 
 			// Emit the new message
@@ -92,6 +139,7 @@ export const chatRouter = trcpRouter({
 
 	// Delete a message (managers only)
 	delete: chatProcedure
+		.use(withAuthenticatedPeerMiddleware)
 		.input(
 			z.object({
 				messageId: z.number(),
@@ -127,25 +175,29 @@ export type ChatRouter = typeof chatRouter;
 async function _emitMessage(message: Message) {
 	const messageData = message.toJSON() as MessageAttributes;
 
-	// Emit to all messages channel
-	_messageEmitter.emit("newMessage", messageData);
-
-	// Emit to specific channels based on message type
-	if (message.backstage) {
-		_messageEmitter.emit("newBackstageMessage", messageData);
-	} else {
-		_messageEmitter.emit("newPublicMessage", messageData);
-	}
+	// Emit to the showId channel (0 for stage mode)
+	const eventKey = message.showId || 0;
+	_messageEmitter.emit(eventKey, messageData);
 }
 
 /**
  * Utility function to get initial messages based on a filter, for when the user first subscribes to a chat
  */
-async function _getInitialMessages(filter?: { backstage?: boolean }) {
+async function _getInitialMessages(showId: number | null | undefined, filter?: { backstage?: boolean }) {
 	// Ensure database connection
 	await sequelize();
 
-	const whereClause = filter?.backstage !== undefined ? { backstage: filter.backstage } : {};
+	const whereClause: any = {};
+
+	// Add showId filter
+	if (showId !== undefined) {
+		whereClause.showId = showId;
+	}
+
+	// Add backstage filter if provided
+	if (filter?.backstage !== undefined) {
+		whereClause.backstage = filter.backstage;
+	}
 
 	const messages = await Message.findAll({
 		where: whereClause,

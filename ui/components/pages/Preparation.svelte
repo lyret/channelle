@@ -43,7 +43,7 @@
 				<a href="/" class="button is-danger">Tillbaka till teatern</a>
 			</div>
 		{:else if currentShow}
-			<ConfigurationInstruments showParticipants={false} showMediaLibrary={false} />
+			<ConfigurationInstruments showParticipants={true} showMediaLibrary={false} />
 		{/if}
 	</div>
 </TheaterWrapper>

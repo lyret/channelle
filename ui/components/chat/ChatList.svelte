@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from "svelte";
 	import { blur } from "svelte/transition";
-	import { messagesStore, canDeleteMessagesStore, deleteMessage } from "~/api/chat";
+	import { messagesStore, canDeleteMessagesStore, deleteMessage, startChatSubscription, unsubscribeFromMessages } from "~/api/chat";
 	import { currentPeerStore } from "~/api";
 	import PicoBadgeMinus from "../picol/icons/Picol-badge-minus.svelte";
 
@@ -15,6 +15,9 @@
 
 	// Initialize chat when component mounts
 	onMount(async () => {
+		// Start the chat subscription
+		await startChatSubscription();
+
 		// Set up scroll handling
 		if (ref) {
 			ref.addEventListener("scroll", handleScroll);
@@ -30,6 +33,8 @@
 		if (ref) {
 			ref.removeEventListener("scroll", handleScroll);
 		}
+		// Unsubscribe from messages
+		unsubscribeFromMessages();
 	});
 
 	function handleScroll() {
@@ -59,14 +64,22 @@
 
 	// Format time for display
 	function formatTime(date: Date | string): string {
-		const d = typeof date === "string" ? new Date(date) : date;
-		const hours = d.getHours().toString().padStart(2, "0");
-		const minutes = d.getMinutes().toString().padStart(2, "0");
-		return `${hours}:${minutes}`;
+		try {
+			const d = typeof date === "string" ? new Date(date) : date;
+			const hours = d.getHours().toString().padStart(2, "0");
+			const minutes = d.getMinutes().toString().padStart(2, "0");
+			return `${hours}:${minutes}`;
+		} catch (error) {
+			console.error("[Chat] Error formatting time:", error);
+			return "";
+		}
 	}
 
+	// Filter messages based on backstageOnly prop
+	$: filteredMessages = backstageOnly ? $messagesStore.filter((msg) => msg.backstage) : $messagesStore;
+
 	// Auto-scroll when new messages arrive
-	$: handleNewMessages($messagesStore);
+	$: handleNewMessages(filteredMessages);
 
 	function handleNewMessages(messages: any[]) {
 		if (!messages || !ref) return;
@@ -113,37 +126,34 @@
 
 <div class="list-container" bind:this={ref} class:has-unread={hasUnread}>
 	<div class="list">
-		{#if !$messagesStore || $messagesStore.length === 0}
-			<div class="list-item">
-				<div class="list-item-content">
-					<div class="list-item-title is-family-title is-size-4 has-text-grey-light">
-						{#if backstageOnly}
-							Inga backstage-meddelanden än...
-						{:else}
-							Här kommer chattmeddelanden att dyka upp...
-						{/if}
-					</div>
-				</div>
+		{#if !filteredMessages || filteredMessages.length === 0}
+			<div class="is-size-4 has-text-grey-light">
+				{#if backstageOnly}
+					Inga backstage-meddelanden ännu...
+				{:else}
+					Här kommer chattmeddelanden att dyka upp...
+				{/if}
 			</div>
 		{:else}
-			{#each $messagesStore as message (message.id)}
+			{#each filteredMessages as message (message.id)}
 				<div class="list-item" transition:blur|local>
 					<div class="list-item-content">
 						<div
 							class:has-text-right={message.peerId === $currentPeerStore?.id}
-							class="list-item-description is-family-title is-size-6"
-							class:has-text-link-light={message.backstage}
+							class="list-item-description is-size-6"
+							class:has-text-warning-light={message.backstage}
 							class:has-text-grey-light={!message.backstage}
 						>
-							{message.peerName || "Anonym"} ({formatTime(message.createdAt)}
+							{message.peerName || "Anonym"}
+							{formatTime(message.createdAt)}
 							{#if message.backstage}
-								<span class="tag is-small is-link ml-1">backstage</span>
-							{/if})
+								<span class="tag is-small is-warning ml-1">backstage</span>
+							{/if}
 						</div>
 						<div
-							class:is-underlined={message.peerId === $currentPeerStore?.id}
 							class="list-item-title"
-							class:has-text-link={message.backstage}
+							class:pl-4={message.peerId === $currentPeerStore?.id}
+							class:has-text-warning={message.backstage}
 							class:has-text-white={!message.backstage}
 						>
 							{message.message}
@@ -152,10 +162,12 @@
 					{#if $canDeleteMessagesStore}
 						<div class="list-item-controls">
 							<div class="buttons is-right">
-								<button class="button is-small is-dark is-danger" on:click={() => deleteMessage(message.id)} title="Ta bort meddelande">
-									<span class="icon">
-										<PicoBadgeMinus />
-									</span>
+								<button
+									class="button icon is-rounded is-small is-dark is-danger"
+									on:click={() => deleteMessage(message.id)}
+									title="Ta bort meddelande"
+								>
+									X
 								</button>
 							</div>
 						</div>

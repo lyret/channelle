@@ -3,7 +3,7 @@ import { writable, derived } from "svelte/store";
 import { backstageClient, peersClient } from "../_trpcClient";
 
 /** In-memory local show id of any loaded configuration */
-let _localShowId: number = 0;
+let _localShowId: number | null = null;
 
 /** Contains the currently loaded/displayed backstage configuration from the server */
 const _localConfigStore = writable<BackstageConfiguration>({
@@ -90,6 +90,15 @@ export const showScriptStore = derived(_localConfigStore, ($config) => ({
 	script: $config.script || null,
 }));
 
+/** Current show ID (null in stage mode) */
+export const showIdStore = derived(_localConfigStore, ($config) => $config.showId);
+
+/** Get current show ID for API calls */
+export function getCurrentShowId(): number | null {
+	return _localShowId;
+}
+
+/** Currently synchronized peers in this show */
 /** Current show peers from the database */
 export const showPeersStore = derived(
 	_localPeers,
@@ -108,7 +117,7 @@ export const configurationError = writable<string | null>(null);
 /** Updates the given configuration properties */
 export async function updateConfigurationSettings(update: Partial<EditableShowAttributes>) {
 	try {
-		await backstageClient.updateProperties.mutate({ showId: _localShowId, update: update });
+		await backstageClient.updateProperties.mutate({ showId: _localShowId || undefined, update: update });
 		return { success: true };
 	} catch (error) {
 		const errorMessage = error instanceof Error ? error.message : "Failed to update configuration properties";
@@ -119,7 +128,7 @@ export async function updateConfigurationSettings(update: Partial<EditableShowAt
 /** Reset all overrididen settings to automatic */
 export async function automateOverridenSettings() {
 	try {
-		await backstageClient.automateOverridenSettings.mutate({ showId: _localShowId });
+		await backstageClient.automateOverridenSettings.mutate({ showId: _localShowId || undefined });
 		return { success: true };
 	} catch (error) {
 		const errorMessage = error instanceof Error ? error.message : "Failed to reset settings";
@@ -149,6 +158,7 @@ export async function subscribeToBackstageConfigurationChanges(): Promise<void> 
 				throw new Error("Invalid show id selected in URL");
 			}
 			showId = parseInt(showIdParam);
+			_localShowId = showId;
 		}
 
 		// Start subscription to backstage configuration changes
@@ -160,7 +170,7 @@ export async function subscribeToBackstageConfigurationChanges(): Promise<void> 
 						console.log("Configuration subscription data:", { data });
 					}
 					_localConfigStore.set(data.config);
-					_localShowId = data.config.showId || 0;
+					_localShowId = data.config.showId;
 					if (data.type == "initial") {
 						configurationIsLoading.set(false);
 					}

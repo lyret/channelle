@@ -9,16 +9,28 @@ enableMediaSoupDebugging();
 // Enables hot reloading of the debug app when developing
 enableHotReloadingOnRebuilds();
 
-// Authenticate as online
-authenticate();
+// Initialize all required services in sequence
+async function initializeBackstage() {
+	try {
+		// Authenticate as online
+		await authenticate();
 
-// Enable configuration synchronization for real-time updates when changes are made
-subscribeToBackstageConfigurationChanges();
+		// Enable configuration synchronization for real-time updates when changes are made
+		await subscribeToBackstageConfigurationChanges();
 
-// Mount the Svelte interface
-const backstageComponent = new Backstage({
-	target: document.body,
-	props: {},
-});
+		// Mount the Svelte interface after everything is ready
+		const backstageComponent = new Backstage({
+			target: document.body,
+			props: {},
+		});
+
+		return backstageComponent;
+	} catch (error) {
+		console.error("Error initializing:", error);
+	}
+}
+
+// Start the initialization
+const backstageComponent = initializeBackstage();
 
 export default backstageComponent;

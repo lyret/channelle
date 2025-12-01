@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { updateConfigurationSettings, showMetadataStore } from "~/api/backstage/backstageClient";
-	import { currentPeerStore } from "~/api";
 	import IconSave from "../icons/Icon-save.svelte";
 	import IconX from "../icons/Icon-x.svelte";
 
@@ -28,7 +27,6 @@
 	const descriptionMaxLength = 1000;
 	const nomenclatureMaxLength = 100;
 
-	const canEdit = $currentPeerStore.manager;
 	$: hasChanges = nameInput !== originalName || descriptionInput !== originalDescription || nomenclatureInput !== originalNomenclature;
 	$: canSave = hasChanges && nameInput.trim().length > 0 && !isLoading;
 
@@ -180,7 +178,7 @@
 					bind:value={nameInput}
 					on:keydown={handleKeydown}
 					placeholder={namePlaceholder}
-					disabled={isLoading || !canEdit}
+					disabled={isLoading}
 					maxlength={nameMaxLength}
 				/>
 			</div>
@@ -205,7 +203,7 @@
 					bind:value={nomenclatureInput}
 					on:keydown={handleKeydown}
 					placeholder="t.ex. föreställningen, föreläsningen, grejen"
-					disabled={isLoading || !canEdit}
+					disabled={isLoading}
 					maxlength={nomenclatureMaxLength}
 					list="nomenclature-suggestions"
 				/>
@@ -235,39 +233,36 @@
 					bind:value={descriptionInput}
 					on:keydown={handleKeydown}
 					placeholder={descriptionPlaceholder}
-					disabled={isLoading || !canEdit}
+					disabled={isLoading}
 					rows="4"
 					maxlength={descriptionMaxLength}
 				/>
 			</div>
 			<div class="help-section">
-				<p class="help">{canEdit ? "" : "Skrivskyddad i sceneläge"}</p>
 				<p class="help character-count" class:is-warning={descriptionCharCount > descriptionMaxLength * 0.9}>
 					{descriptionCharCount}/{descriptionMaxLength} tecken
 				</p>
 			</div>
 		</div>
 
-		{#if canEdit}
-			<div class="field is-grouped">
-				<div class="control">
-					<button class="button is-success" class:is-loading={isLoading} disabled={!canSave} on:click={saveChanges}>
-						<span class="icon">
-							<IconSave />
-						</span>
-						<span>Spara</span>
-					</button>
-				</div>
-				<div class="control">
-					<button class="button" disabled={!hasChanges || isLoading} on:click={resetForm}>
-						<span class="icon">
-							<IconX />
-						</span>
-						<span>Återställ</span>
-					</button>
-				</div>
+		<div class="field is-grouped">
+			<div class="control">
+				<button class="button is-success" class:is-loading={isLoading} disabled={!canSave} on:click={saveChanges}>
+					<span class="icon">
+						<IconSave />
+					</span>
+					<span>Spara</span>
+				</button>
 			</div>
-		{/if}
+			<div class="control">
+				<button class="button" disabled={!hasChanges || isLoading} on:click={resetForm}>
+					<span class="icon">
+						<IconX />
+					</span>
+					<span>Återställ</span>
+				</button>
+			</div>
+		</div>
 	</div>
 </div>
 

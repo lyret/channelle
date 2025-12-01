@@ -85,7 +85,6 @@
 				bind:value={inputValue}
 				placeholder={makeBackstage ? "Skriv ett backstage-meddelande" : "Skriv ett chattmeddelande"}
 				on:keydown={handleKeyDown}
-				{disabled}
 			/>
 		</div>
 		<div class="control">
@@ -96,7 +95,7 @@
 				{disabled}
 				class:is-loading={loading}
 				class:is-primary={!loading && !disabled && !makeBackstage}
-				class:is-link={!loading && !disabled && makeBackstage}
+				class:is-warning={!loading && !disabled && makeBackstage}
 			>
 				{#if disabled && !inputValue.trim()}
 					<span class="icon"><PicolArrowFullLeft /></span>

@@ -21,7 +21,7 @@
 					</a>
 				</li>
 				<li class:is-active={$backstageOnly}>
-					<a class:has-text-link={$backstageOnly} on:click={() => ($backstageOnly = true)}>
+					<a class:has-text-warning={$backstageOnly} on:click={() => ($backstageOnly = true)}>
 						<span class="icon is-small"><IconStar /></span>
 						<span>Backstage</span>
 					</a>

@@ -121,17 +121,6 @@ export const authRouter = trcpRouter({
 				_adminSessions[ctx.peer.id].lastSeenTs = Date.now();
 			}
 
-			// Verify given password, needed in theater mode to become an admin
-			if (CONFIG.runtime.theater) {
-				if (input.teatherPassword && input.teatherPassword !== CONFIG.theater.password) {
-					console.log(`[Auth] Admin Authentication failed for peer ${ctx.peer.id}: Invalid theater password`);
-					return {
-						valid: false,
-						message: "Invalid theater password",
-					};
-				}
-			}
-
 			// Check if the peer exists in the database and create a new one if not
 			let peer = await Peer.findByPk(ctx.peer.id);
 			if (!peer) {
@@ -145,7 +134,7 @@ export const authRouter = trcpRouter({
 
 					peer = await Peer.create({
 						id: ctx.peer.id,
-						name: input.name,
+						name: input.name || (CONFIG.runtime.theater ? "Admin " + ctx.peer.id : ""),
 						showId: showId,
 						actor: false,
 						manager: !CONFIG.runtime.production || CONFIG.runtime.debug, // When developing, all new peers become managers
@@ -157,6 +146,24 @@ export const authRouter = trcpRouter({
 					console.error(`[Auth] Failed to create a new peer ${ctx.peer.id}: ${error.message}`);
 				}
 				console.log("[Auth]", ctx.peer.id, "joined as new peer");
+			}
+
+			// Verify given password, needed in theater mode to become an admin
+			if (CONFIG.runtime.theater) {
+				if (input.teatherPassword && input.teatherPassword !== CONFIG.theater.password) {
+					console.log(`[Auth] Admin Authentication failed for peer ${ctx.peer.id}: Invalid theater password`);
+					return {
+						valid: false,
+						message: "Invalid theater password",
+					};
+				}
+
+				// Become an admin
+				_adminSessions[peer.id] = {
+					peerId: peer.id,
+					joinTs: Date.now(),
+					lastSeenTs: Date.now(),
+				};
 			}
 
 			// Authenticate
@@ -173,7 +180,6 @@ export const authRouter = trcpRouter({
 	validateAdminAuthentication: procedure.query(async ({ ctx }) => {
 		_cleanupExpiredAdminSessions();
 		const session = _adminSessions[ctx.peer.id];
-
 		if (!session) {
 			console.log(`[Auth] Admin validation failed for peer ${ctx.peer.id}: Invalid or expired session`);
 			return {
