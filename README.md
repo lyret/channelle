@@ -22,6 +22,8 @@ Channelle enables artists, cultural workers, and activists to create autonomous 
 - **Show & scene management**: Structure performances with predefined layouts and settings
 - **Professional WebRTC streaming**: One-to-many broadcasting with selective forwarding
 
+<p style="text-align: center;"><img src="./ui/assets/documentation/screenshot.png" alt="screenshot from betatesting" border="0"></p>
+
 ## Requirements
 
 - Node.js version 21 or higher
