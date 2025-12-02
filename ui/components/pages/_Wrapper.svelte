@@ -25,6 +25,9 @@
 	/** If true shows a simple message to catch the first interaction with the document before rendering the content */
 	export let hasInteractedWithTheDocument = false;
 
+	/** If true, the curtains will not be rendered */
+	export let disableCurtains = false;
+
 	// Determine what should be rendered
 	$: hasEnteredName = $hasAutenticated && $currentPeerStore.name;
 	$: needsToBeManager = lockedToManager && !($hasAutenticated && $currentPeerStore.manager);
@@ -40,7 +43,9 @@
 {/if}
 
 <!-- Curtains -->
-<Curtains forcedToBeClosed={renderMessages} />
+{#if !disableCurtains}
+	<Curtains forcedToBeClosed={renderMessages} />
+{/if}
 
 {#if renderMessages}
 	<div class="overlay">
