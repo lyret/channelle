@@ -2,13 +2,36 @@
 	import { onMount } from "svelte";
 	import { showSceneSettingsStore } from "~/api";
 
+	// Forces the curtains to be closed if needed from the parent component
+	export let forcedToBeClosed = false;
+
 	// Track animation and rendering state
 	let animationState: "idle" | "opening" | "closing" = "idle";
 	let currentState: "open" | "closed" | "unknown" = "unknown";
 
+	$: {
+		if (forcedToBeClosed) {
+			if (currentState === "unknown") {
+				animationState = "closing";
+				currentState = "closed";
+			} else {
+				currentState = "unknown";
+				animationState = "idle";
+			}
+		} else {
+			if ((currentState === "closed" || currentState === "unknown") && !$showSceneSettingsStore.curtains) {
+				animationState = "opening";
+			}
+		}
+	}
+
 	onMount(() => {
 		showSceneSettingsStore.subscribe(({ curtains }) => {
-			const open = !curtains;
+			let open = !curtains;
+			if (forcedToBeClosed) {
+				open = false;
+				return;
+			}
 			if (currentState === "unknown") {
 				animationState = "idle";
 				if (open) {
@@ -118,7 +141,7 @@
 		transform: translate(-50%, -50%);
 		width: 100%;
 		max-width: calc(((100vh - 60px) / 10) * 16);
-		aspect-ratio: 16/10;
+		aspect-ratio: 14/10;
 		pointer-events: none;
 		z-index: 9990;
 		overflow: hidden;

@@ -74,6 +74,18 @@ $background: #000;
 // widescreen: from 1216px to 1407px
 // fullhd: from 1408px
 
+/* Define CSS variables */
+:root {
+	/* Bulma scheme colors in RGB for transparency support */
+	--bulma-scheme-main-rgb: 0, 0, 0;
+
+	/* Channelle theme colors */
+	--channelle-main-bg-color: #000000;
+	--channelle-main-text-color: #ffffff;
+	--channelle-menu-bg-color: #000000;
+	--channelle-menu-text-color: #ffffff;
+}
+
 .has-main-background {
 	background-color: var(--channelle-main-bg-color);
 }
@@ -135,4 +147,9 @@ html {
 	touch-action: none;
 	overscroll-behavior-y: none;
 	height: 100%;
+}
+
+/* Ensure confetti effects appear above curtains */
+canvas.confetti-canvas {
+	z-index: 9992 !important;
 }

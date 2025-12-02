@@ -2,16 +2,16 @@
 	import { blur } from "svelte/transition";
 
 	import { hasAutenticated, currentPeerIsBannedStore, currentPeerStore } from "~/api";
-	import { showMetadataStore, showSceneSettingsStore } from "~/api/backstage";
 
-	import AuthenticateCurtainMessage from "~/components/curtains/AuthenticateCurtainMessage.svelte";
 	import BlockedCurtainMessage from "~/components/curtains/BlockedCurtainMessage.svelte";
-	import ContinueCurtainMessage from "~/components/curtains/ContinueCurtainMessage.svelte";
 	import LoaderCurtainMessage from "~/components/curtains/LoadingCurtainMessage.svelte";
 	import ProblemCurtainMessage from "~/components/curtains/ProblemCurtainMessage.svelte";
 	import PasswordCurtainMessage from "~/components/curtains/PasswordCurtainMessage.svelte";
+	import Entrance from "~/components/curtains/Entrance.svelte";
 	import Curtains from "~/components/curtains/Curtains.svelte";
+	import FloatingImage from "~/components/home/FloatingImage.svelte";
 
+	import rosesSrc from "~/assets/images/roses.gif";
 	import logoSrc from "~/assets/images/masks.gif";
 
 	import { isStagePasswordOkStore } from "~/stores/stage";
@@ -19,14 +19,11 @@
 	/** Being a manager is neccessary to access this page */
 	export let lockedToManager = false;
 
-	/** The curtains will be shown on this page if triggered remotly */
-	export let curtainsAreEnabled = false;
-
 	/** Entering the Invite key is neccessary to access this page */
 	export let lockedToInviteKey = false;
 
 	/** If true shows a simple message to catch the first interaction with the document before rendering the content */
-	export let hasInteractedWithTheDocument = !CONFIG.runtime.production;
+	export let hasInteractedWithTheDocument = false;
 
 	// Determine what should be rendered
 	$: hasEnteredName = $hasAutenticated && $currentPeerStore.name;
@@ -35,7 +32,6 @@
 	$: renderMessages =
 		!$hasAutenticated || !hasEnteredName || !hasInteractedWithTheDocument || $currentPeerIsBannedStore || needsInviteKey || needsToBeManager;
 	$: renderContent = !renderMessages;
-	$: renderCurtains = renderMessages || (curtainsAreEnabled && $showSceneSettingsStore.curtains);
 </script>
 
 <!-- Content -->
@@ -44,32 +40,35 @@
 {/if}
 
 <!-- Curtains -->
-{#if renderCurtains}
-	<Curtains />
-{/if}
+<Curtains forcedToBeClosed={renderMessages} />
 
-<!-- TODO: re-add Curtain Messages -->
 {#if renderMessages}
 	<div class="overlay">
-		<div class="menu" in:blur={{ duration: 1000 }} out:blur={{ duration: 500 }}>
-			<img class="logo" src={logoSrc} alt="Channelle" />
-			{#if $showMetadataStore.name}<h1 class="title is-family-title">{$showMetadataStore.name}</h1>{/if}
-			{#if $currentPeerIsBannedStore}
-				<BlockedCurtainMessage />
-			{:else if $hasAutenticated && !hasEnteredName}
-				<AuthenticateCurtainMessage on:submit={() => (hasInteractedWithTheDocument = true)} />
-			{:else if $hasAutenticated && !hasInteractedWithTheDocument}
-				<ContinueCurtainMessage on:submit={() => (hasInteractedWithTheDocument = true)} />
-			{:else if !$hasAutenticated}
-				<LoaderCurtainMessage label="Ansluter..." />
-			{:else if needsToBeManager}
-				<BlockedCurtainMessage message="Sidan är endast för tekniker" />
-			{:else if needsInviteKey}
-				<PasswordCurtainMessage />
-			{:else}
-				<ProblemCurtainMessage />
-			{/if}
-		</div>
+		{#if $hasAutenticated && (!hasEnteredName || !hasInteractedWithTheDocument)}
+			<FloatingImage src={rosesSrc} alt="two roses shining" zIndex={9993} />
+			<FloatingImage src={rosesSrc} alt="two roses shining" zIndex={9993} />
+			<FloatingImage src={rosesSrc} alt="two roses shining" zIndex={9993} />
+			<FloatingImage src={rosesSrc} alt="two roses shining" zIndex={9993} />
+			<div class="menu" in:blur={{ duration: 1000 }} out:blur={{ duration: 500 }}>
+				<img class="logo" src={logoSrc} alt="Online Teater" />
+				<Entrance on:submit={() => (hasInteractedWithTheDocument = true)} />
+			</div>
+		{:else}
+			<div class="menu" in:blur={{ duration: 1000 }} out:blur={{ duration: 500 }}>
+				<img class="logo" src={logoSrc} alt="Online Teater" />
+				{#if $currentPeerIsBannedStore}
+					<BlockedCurtainMessage />
+				{:else if !$hasAutenticated}
+					<LoaderCurtainMessage label="Ansluter..." />
+				{:else if needsToBeManager}
+					<BlockedCurtainMessage message="Sidan är endast för tekniker" />
+				{:else if needsInviteKey}
+					<PasswordCurtainMessage />
+				{:else}
+					<ProblemCurtainMessage />
+				{/if}
+			</div>
+		{/if}
 	</div>
 {/if}
 
@@ -86,6 +85,8 @@
 	}
 
 	.menu {
+		position: relative;
+		z-index: 9993 !important;
 		width: 40%;
 		max-width: 600px;
 		display: flex;
@@ -96,10 +97,16 @@
 		align-items: center;
 		text-align: center;
 		padding: 24px;
-		background-color: rgba(var(--bulma-scheme-main-rgb), 1);
-		backdrop-filter: blur(5px);
-		-webkit-backdrop-filter: blur(5px);
+		background-color: rgba(var(--bulma-scheme-main-rgb), 0.8);
+		backdrop-filter: blur(10px);
+		-webkit-backdrop-filter: blur(10px);
 		color: var(--channelle-menu-text-color);
+
+		.logo {
+			max-width: 120px;
+			margin-bottom: 1rem;
+			animation: float 3s ease-in-out infinite;
+		}
 
 		/* Global styles for all curtain message components */
 		:global(.button) {
@@ -142,7 +149,7 @@
 		}
 	}
 	.overlay {
-		z-index: 9999;
+		z-index: 9990;
 		position: fixed;
 		top: 0;
 		left: 0;
@@ -155,5 +162,10 @@
 		align-items: center;
 		align-content: center;
 		overflow: none;
+	}
+
+	/* Global style to ensure confetti effects appear above curtains */
+	:global(canvas) {
+		z-index: 9992 !important;
 	}
 </style>

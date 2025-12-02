@@ -8,7 +8,6 @@
 	import StageChat from "~/components/stage/elements/Chat.svelte";
 	import Audio from "~/components/stage/elements/Audio.svelte";
 	import Video from "~/components/stage/elements/Video.svelte";
-	import Curtains from "~/components/curtains/Curtains.svelte";
 
 	import { calculatedStageLayoutStore } from "~/stores/stage";
 	import { showStageChatStore, showStageSettingsStore } from "~/stores/stage";
@@ -28,11 +27,10 @@
 		`;
 </script>
 
-<Wrapper lockedToInviteKey={true} curtainsAreEnabled={false}>
+<Wrapper lockedToInviteKey={true}>
 	<main in:blur={{ delay: 500, duration: 1000 }}>
 		<div class="contents">
 			<div class="windows-wrapper">
-				<Curtains />
 				<div class={`windows window-cols-${width} window-rows-${height}`} style={windowsLayoutStyle}>
 					{#if $calculatedStageLayoutStore.isAutoLayout}
 						{#if $calculatedStageLayoutStore.videoLeftovers.length > 0}

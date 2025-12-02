@@ -30,12 +30,7 @@
         left: ${y}vw;
         transform: rotate(${rotation}deg) scale(${scale});
         z-index: ${zIndex};
+        position: fixed;
+		transition: all 1500ms;
     `}
 />
-
-<style lang="scss">
-	img {
-		position: fixed;
-		transition: all 1500ms;
-	}
-</style>
