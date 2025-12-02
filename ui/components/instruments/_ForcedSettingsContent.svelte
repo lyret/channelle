@@ -61,7 +61,7 @@
 		</div>
 		<div class="level-item">
 			<button
-				class="button is-danger"
+				class="button is-success"
 				class:is-light={$showSceneOverridesStore.curtainsOverride !== 2}
 				class:is-loading={isLoading}
 				disabled={isLoading}
@@ -72,7 +72,7 @@
 		</div>
 		<div class="level-item">
 			<button
-				class="button is-success"
+				class="button is-danger"
 				class:is-light={$showSceneOverridesStore.curtainsOverride !== 1}
 				class:is-loading={isLoading}
 				disabled={isLoading}

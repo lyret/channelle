@@ -157,7 +157,7 @@
 		border-radius: 0;
 		border: none;
 		padding: 12px;
-		background-color: var(--channelle-menu-bg-color);
+		background-color: rgba(var(--bulma-scheme-main-rgb), 0.85);
 		color: var(--channelle-menu-text-color);
 		box-sizing: border-box;
 	}

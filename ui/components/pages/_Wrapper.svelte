@@ -96,8 +96,33 @@
 		align-items: center;
 		text-align: center;
 		padding: 24px;
-		background-color: var(--channelle-menu-bg-color);
+		background-color: rgba(var(--bulma-scheme-main-rgb), 1);
+		backdrop-filter: blur(5px);
+		-webkit-backdrop-filter: blur(5px);
 		color: var(--channelle-menu-text-color);
+
+		/* Global styles for all curtain message components */
+		:global(.button) {
+			color: var(--channelle-menu-text-color);
+			background-color: rgba(var(--bulma-scheme-main-rgb), 0.85);
+			border: none;
+			text-decoration: underline;
+		}
+
+		:global(.input) {
+			color: var(--channelle-menu-text-color);
+			background: rgba(var(--bulma-scheme-main-rgb), 0.1);
+			border: none;
+			box-shadow: none;
+			border-bottom: 2px solid rgba(var(--bulma-scheme-main-rgb), 0.5);
+		}
+
+		:global(.progress) {
+			--bulma-progress-value-background-color: var(--channelle-menu-text-color);
+			--bulma-progress-bar-background-color: rgba(var(--bulma-scheme-main-rgb), 0.85);
+			color: var(--channelle-main-text-color);
+			background: rgba(var(--bulma-scheme-main-rgb), 0.2);
+		}
 
 		.title {
 			font-size: 32px;

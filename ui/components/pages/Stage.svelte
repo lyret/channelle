@@ -8,6 +8,7 @@
 	import StageChat from "~/components/stage/elements/Chat.svelte";
 	import Audio from "~/components/stage/elements/Audio.svelte";
 	import Video from "~/components/stage/elements/Video.svelte";
+	import Curtains from "~/components/curtains/Curtains.svelte";
 
 	import { calculatedStageLayoutStore } from "~/stores/stage";
 	import { showStageChatStore, showStageSettingsStore } from "~/stores/stage";
@@ -27,10 +28,11 @@
 		`;
 </script>
 
-<Wrapper lockedToInviteKey={true} curtainsAreEnabled={true}>
+<Wrapper lockedToInviteKey={true} curtainsAreEnabled={false}>
 	<main in:blur={{ delay: 500, duration: 1000 }}>
 		<div class="contents">
 			<div class="windows-wrapper">
+				<Curtains />
 				<div class={`windows window-cols-${width} window-rows-${height}`} style={windowsLayoutStyle}>
 					{#if $calculatedStageLayoutStore.isAutoLayout}
 						{#if $calculatedStageLayoutStore.videoLeftovers.length > 0}
@@ -38,8 +40,7 @@
 								<Video peerId={cell.peerId} />
 							{/each}
 						{:else}
-							<div class="window empty-window">
-							</div>
+							<div class="window empty-window"></div>
 						{/if}
 					{:else}
 						{#each matrix as row, rowIndex (rowIndex)}
@@ -157,12 +158,14 @@
 		z-index: 100;
 		-webkit-backdrop-filter: blur(10px);
 		backdrop-filter: blur(10px);
-		background-color: var(--channelle-menu-bg-color);
+		background-color: rgba(var(--bulma-scheme-main-rgb), 0.85);
 		color: var(--channelle-menu-text-color);
 	}
 
 	.footer {
-		background-color: var(--channelle-main-bg-color);
+		background-color: rgba(var(--bulma-scheme-main-rgb), 0.85);
+		backdrop-filter: blur(10px);
+		-webkit-backdrop-filter: blur(10px);
 		margin: 0;
 		padding: 8px 0px;
 		width: 100%;
@@ -193,6 +196,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		position: relative;
 	}
 
 	.windows {

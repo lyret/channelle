@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { showPeersStore } from "~/api/backstage";
+	import { showPeersStore, currentPeerStore } from "~/api";
 	import PeerControl from "./_PeerControl.svelte";
 
 	$: peers = Object.values($showPeersStore).filter((p) => p.name && !p.banned);
@@ -53,26 +53,26 @@
 <div class="list">
 	{#if blocked.length && filter == "Blockerade deltagare"}
 		{#each blocked as peer (peer.id)}
-			<PeerControl participant={peer} online={peer.online} />
+			<PeerControl {peer} isCurrentPeer={peer.id == $currentPeerStore.id} />
 		{/each}
 	{:else if online.length && filter == "Deltagare online"}
 		{#each online as peer (peer.id)}
-			<PeerControl participant={peer} online={peer.online} />
+			<PeerControl {peer} isCurrentPeer={peer.id == $currentPeerStore.id} />
 		{/each}
 	{:else}
 		{#if managers.length && (filter == "Deltagare" || filter == "Tekniker")}
 			{#each managers as peer (peer.id)}
-				<PeerControl participant={peer} online={peer.online} />
+				<PeerControl {peer} isCurrentPeer={peer.id == $currentPeerStore.id} />
 			{/each}
 		{/if}
 		{#if actors.length && (filter == "Deltagare" || filter == "Skådespelare")}
 			{#each actors as peer (peer.id)}
-				<PeerControl participant={peer} online={peer.online} />
+				<PeerControl {peer} isCurrentPeer={peer.id == $currentPeerStore.id} />
 			{/each}
 		{/if}
 		{#if visitors.length && filter != "Tekniker" && filter != "Skådespelare"}
 			{#each visitors as peer (peer.id)}
-				<PeerControl participant={peer} online={peer.online} />
+				<PeerControl {peer} isCurrentPeer={peer.id == $currentPeerStore.id} />
 			{/each}
 		{/if}
 	{/if}

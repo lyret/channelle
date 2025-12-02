@@ -13,12 +13,12 @@
 		e.preventDefault();
 		loading = true;
 
-		await updatePeer(get(currentPeerStore).id, { name : name });
+		await updatePeer(get(currentPeerStore).id, { name: name });
 		dispatch("submit");
 	}
 </script>
 
-<p class="label">Ange ditt namn för att fortsätta</p>
+<p class="label">Skriv in ditt namn för att fortsätta</p>
 <form on:submit={onSubmit} class="form">
 	<input type="text" class="input is-rounded is-centered" bind:value={name} placeholder="Skriv ditt namn här" class:is-disabled={loading} />
 	<input type="submit" class="button is-rounded is-primary mt-4 is-centered" class:is-loading={loading} disabled={!name} value="Anslut" />
