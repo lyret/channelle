@@ -53,8 +53,18 @@ export async function restify(): Promise<Restify.Server> {
 			.forEach(([file, url]) => {
 				// Use the default entry point from config to determine root path mapping
 				const defaultEntryPoint = `/${CONFIG.build.defaultInterfaceEntryPoint.split(".")[0]}`;
+				if (url == defaultEntryPoint) {
+					_restify.get(
+						"/",
+						Restify.plugins.serveStatic({
+							file: file,
+							directory: staticPath,
+							maxAge: CONFIG.runtime.production ? 3600 : 0,
+						}),
+					);
+				}
 				_restify.get(
-					url == defaultEntryPoint ? "/" : url,
+					url,
 					Restify.plugins.serveStatic({
 						file: file,
 						directory: staticPath,

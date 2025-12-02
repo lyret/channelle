@@ -296,9 +296,9 @@ export async function createConfiguration() {
 			/** The directory to use for interface builds */
 			interfaceOutput: theater ? ".dist/theater-interface" : ".dist/stage-interface",
 			/** The default interface entry point file */
-			defaultInterfaceEntryPoint: theater ? "theater.html" : "home.html",
+			defaultInterfaceEntryPoint: theater ? "theater.html" : "stage.html",
 			/** The files to use as build inputs for the stage-interface, relative to the 'stage-interface' folder. */
-			stageInterfaceInputs: ["home.html", "debug.html", "stage.html", "backstage.html", "_home.ts", "_debug.ts", "_stage.ts", "_backstage.ts"],
+			stageInterfaceInputs: ["debug.html", "stage.html", "backstage.html", "_debug.ts", "_stage.ts", "_backstage.ts"],
 			/** The files to use as build inputs for the theater-interface, relative to the 'theater-interface' folder. */
 			theaterInterfaceInputs: ["theater.html", "_theater.ts", "preparation.html", "_preparation.ts"],
 		},
