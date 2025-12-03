@@ -172,7 +172,13 @@
 </script>
 
 <div class="scene-selector-instrument">
-	<h1 class="title">Sceninställningar</h1>
+	{#if !hideForcedSettings}
+		<Accordion title="Ange tvingande inställningar" isOpen={false}>
+			<ForcedSettingsContent on:error={(e) => handleError(e.detail)} />
+		</Accordion>
+	{/if}
+
+	<h1 class="title">Aktiv scen</h1>
 
 	{#if errorMessage}
 		<div class="notification is-danger is-light">
@@ -181,12 +187,6 @@
 	{/if}
 
 	<div class="scene-content">
-		{#if !hideForcedSettings}
-			<Accordion title="Ange tvingande inställningar" isOpen={false}>
-				<ForcedSettingsContent on:error={(e) => handleError(e.detail)} />
-			</Accordion>
-		{/if}
-
 		<div class="field">
 			<label class="label">Välj aktiv scen</label>
 			<div class="scene-controls">

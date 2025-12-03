@@ -76,7 +76,7 @@
 			<hr />
 			<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "scene-settings")}
 				><span class="icon is-size-5"><IconScenes /></span>
-				<span>Sceninställningar</span></button
+				<span>Aktiv scen</span></button
 			>
 			<hr />
 			<!-- Fullscreen button for mobile -->
