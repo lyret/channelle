@@ -93,17 +93,20 @@
 	{#if active}
 		<div class="accordion-content">
 			<!-- COPY INVITE LINK -->
-			<button class="dropdown-item" on:click={() => copyInviteLink(peer.id)}>
-				<span class="icon is-small"><IconCopy /></span> Kopiera inbjudningslänk
-			</button>
+			{#if !CONFIG.runtime.theater}
+				<button class="dropdown-item" on:click={() => copyInviteLink(peer.id)}>
+					<span class="icon is-small"><IconCopy /></span> Kopiera inbjudningslänk
+				</button>
+			{/if}
 			<!-- MAKE ACTOR -->
 			{#if peer.actor && !peer.manager}
 				<!-- svelte-ignore a11y-click-events-have-key-events -->
 				<!-- svelte-ignore a11y-missing-attribute -->
 				<!-- svelte-ignore a11y-no-static-element-interactions -->
 				<a class="dropdown-item" on:click={() => doUpdate(peer, { actor: false, manager: false }, `Ta bort "${peer.name}" som skådespelare?`)}>
-					<span class="icon"><IconXCircle /> Inte en skådespelare </span></a
-				>
+					<span class="icon"><IconXCircle /></span>
+					Inte en skådespelare
+				</a>
 			{:else if !peer.manager}
 				<!-- svelte-ignore a11y-click-events-have-key-events -->
 				<!-- svelte-ignore a11y-missing-attribute -->

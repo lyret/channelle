@@ -5,7 +5,7 @@ import { Op } from "sequelize";
 import { trpc } from "../lib";
 import { Peer, peerEmitter } from "../models/Peer";
 import { withConfigProcedure } from "./backstageRouter";
-import { withAuthenticatedPeerMiddleware, onlineSessions } from "./authRouter";
+import { withAuthenticatedPeerMiddleware, withAuthenticatedAdminMiddleware, onlineSessions } from "./authRouter";
 
 // Get the trpc router constructor and default procedure
 const { router, procedure } = trpc();
@@ -48,9 +48,12 @@ export const peersRouter = router({
 				continue;
 			}
 			yield {
-				event: event,
+				event: event as "created" | "updated" | "onlineStatusChanged",
 				peer: { ...peer.toJSON(), online: !!onlineSessions[peer.id] },
-			};
+			} as
+				| { event: "created"; peer: PeerAttributes & { online: boolean } }
+				| { event: "updated"; peer: PeerAttributes & { online: boolean } }
+				| { event: "onlineStatusChanged"; peer: PeerAttributes & { online: boolean } };
 		}
 	}),
 
@@ -115,6 +118,38 @@ export const peersRouter = router({
 			}
 
 			return updatedPeer;
+		}),
+
+	/**
+	 * Create a new peer
+	 */
+	createPeer: withConfigProcedure
+		.use(withAuthenticatedPeerMiddleware)
+		.use(withAuthenticatedAdminMiddleware)
+		.input(
+			z.object({
+				name: z.string(),
+				actor: z.boolean().default(true),
+				manager: z.boolean().default(false),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			// Generate a unique peer ID
+			const peerId = "111-111-1111".replace(/[018]/g, () => (crypto.getRandomValues(new Uint8Array(1))[0] & 15).toString(16));
+
+			// Create the new peer
+			const peer = await Peer.create({
+				id: peerId,
+				name: input.name,
+				showId: ctx.config.showId,
+				actor: input.actor,
+				manager: input.manager,
+				banned: false,
+				audioMuted: false,
+				videoMuted: false,
+			});
+
+			return peer;
 		}),
 });
 

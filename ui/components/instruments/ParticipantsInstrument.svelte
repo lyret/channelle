@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { showPeersStore, currentPeerStore } from "~/api";
+	import { createPeer } from "~/api/peers";
 	import PeerControl from "./_PeerControl.svelte";
+	import PicolPlus from "../picol/icons/Picol-plus.svelte";
 
 	$: peers = Object.values($showPeersStore).filter((p) => p.name && !p.banned);
 	$: managers = peers.filter((p) => p.manager);
@@ -10,6 +12,25 @@
 	$: online = peers.filter((p) => p.online);
 
 	let filter: string = "Deltagare";
+	let createError = "";
+
+	async function handleCreateActor() {
+		const newPeerName = prompt("Ange namn för ny skådespelare:");
+
+		if (!newPeerName || !newPeerName.trim()) {
+			return;
+		}
+
+		createError = "";
+
+		const result = await createPeer(newPeerName.trim(), true, false);
+
+		if (result.success) {
+			// The new peer will appear automatically via the subscription
+		} else {
+			createError = result.error || "Kunde inte skapa skådespelare";
+		}
+	}
 </script>
 
 <div class="radios is-size-7">
@@ -23,12 +44,10 @@
 			Tekniker
 		</label>
 	{/if}
-	{#if actors.length}
-		<label class="radio has-text-link">
-			<input type="radio" name="filter" bind:group={filter} value="Skådespelare" />
-			Skådespelare
-		</label>
-	{/if}
+	<label class="radio has-text-link">
+		<input type="radio" name="filter" bind:group={filter} value="Skådespelare" />
+		Skådespelare
+	</label>
 	<label class="radio has-text-success">
 		<input type="radio" name="filter" value="Deltagare online" bind:group={filter} />
 		Online
@@ -49,6 +68,22 @@
 >
 	{filter}
 </h1>
+
+{#if filter == "Skådespelare"}
+	<div class="mb-4">
+		<button class="button is-small is-info" on:click={handleCreateActor}>
+			<span class="icon is-small">
+				<PicolPlus />
+			</span>
+			<span>Lägg till skådespelare</span>
+		</button>
+	</div>
+	{#if createError}
+		<div class="notification is-danger is-light is-small mb-4">
+			{createError}
+		</div>
+	{/if}
+{/if}
 
 <div class="list">
 	{#if blocked.length && filter == "Blockerade deltagare"}
