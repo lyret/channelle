@@ -1,6 +1,7 @@
 import type { BackstageConfiguration, EditableShowAttributes, ClientPeerAttributes } from "../../types/serverSideTypes";
-import { writable, derived } from "svelte/store";
-import { backstageClient, peersClient } from "../_trpcClient";
+import { writable, derived, get } from "svelte/store";
+import { backstageClient, peersClient, wsPeerIdStore } from "../_trpcClient";
+import { currentPeerOnlineCounter } from "../auth/_onlineElsewhereStore";
 
 /** In-memory local show id of any loaded configuration */
 let _localShowId: number | null = null;
@@ -144,6 +145,7 @@ export async function subscribeToBackstageConfigurationChanges(): Promise<void> 
 	try {
 		configurationIsLoading.set(true);
 		configurationError.set(null);
+		const localPeerId = get(wsPeerIdStore);
 		let showId = 0;
 
 		// In stage mode, show id is constant and does not need to be determined on the client,
@@ -196,6 +198,9 @@ export async function subscribeToBackstageConfigurationChanges(): Promise<void> 
 					if (data.event == "initial") {
 						_localPeers.set(data.peers);
 					} else {
+						if (data.event === "onlineStatusChanged" && localPeerId == data.peer.id) {
+							currentPeerOnlineCounter.update((c) => c + (data.peer.online ? 1 : -1));
+						}
 						_localPeers.update((record) => {
 							record[data.peer.id] = data.peer;
 							return record;

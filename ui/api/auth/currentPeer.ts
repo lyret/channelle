@@ -3,6 +3,7 @@ import { wsPeerIdStore } from "../_trpcClient";
 import { showPeersStore } from "../backstage";
 
 /** The current users peer information  */
+console.log([showPeersStore, wsPeerIdStore]);
 export const currentPeerStore = derived([showPeersStore, wsPeerIdStore], ([$peers, $peerId]) => {
 	return $peers[$peerId] || ({} as any);
 });

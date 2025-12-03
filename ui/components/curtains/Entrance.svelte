@@ -106,9 +106,7 @@
 
 <style lang="scss">
 	.image {
-		width: 100%;
-		max-height: 50px;
-		object-fit: cover;
+		max-height: 24px;
 	}
 
 	.level {

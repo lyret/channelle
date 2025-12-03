@@ -27,6 +27,7 @@ export const peersRouter = router({
 		| { event: "initial"; peers: Record<string, PeerAttributes & { online: boolean }> }
 		| { event: "created"; peer: PeerAttributes & { online: boolean } }
 		| { event: "updated"; peer: PeerAttributes & { online: boolean } }
+		| { event: "onlineStatusChanged"; peer: PeerAttributes & { online: boolean } }
 	> {
 		const peers = await Peer.findAll({
 			where: {

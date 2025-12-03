@@ -4,6 +4,7 @@
 	import IconAward from "../icons/Icon-award.svelte";
 	import IconBriefcase from "../icons/Icon-briefcase.svelte";
 	import IconCircle from "../icons/Icon-circle.svelte";
+	import IconCopy from "../icons/Icon-copy.svelte";
 	import IconLock from "../icons/Icon-lock.svelte";
 	import IconMic from "../icons/Icon-mic.svelte";
 	import IconToggleLeft from "../icons/Icon-toggle-left.svelte";
@@ -35,24 +36,36 @@
 		}
 		loading = false;
 	}
+
+	async function copyInviteLink(peerId: string) {
+		const url = new URL(window.location.href);
+		url.searchParams.set("peerId", peerId);
+
+		try {
+			await navigator.clipboard.writeText(url.toString());
+			alert(`Kopierade inbjudningslänken, skicka den vidare till ${peer.name}`);
+		} catch (err) {
+			console.error("Failed to copy invite link:", err);
+		}
+	}
 </script>
 
 <div class="list-item" use:clickOutside on:click_outside={() => (active = false)}>
 	<div class="accordion-header" class:is-loading={loading}>
-		<div class="icon" class:has-text-grey-light={!peer.online} class:has-text-success={peer.online}>
-			{#if peer.manager}
-				<IconBriefcase />
-			{:else if peer.actor}
-				<IconAward />
-			{:else}
-				<IconCircle />
-			{/if}
-		</div>
-		&nbsp;
-		<div class="name pr-7" class:is-strikethrough={peer.banned}>
+		<button class="button name pr-7" class:is-strikethrough={peer.banned} on:click={() => (active = !active)}>
+			<span class="icon mr-1" class:has-text-grey-light={!peer.online} class:has-text-success={peer.online}>
+				{#if peer.manager}
+					<IconBriefcase />
+				{:else if peer.actor}
+					<IconAward />
+				{:else}
+					<IconCircle />
+				{/if}
+			</span>
+			&nbsp;
 			{peer.name}
 			{#if isCurrentPeer}(du){/if}
-		</div>
+		</button>
 		<div class="buttons">
 			{#if peer.manager || peer.actor}
 				<button class="button is-small" disabled title="Video control not implemented">
@@ -79,6 +92,10 @@
 	</div>
 	{#if active}
 		<div class="accordion-content">
+			<!-- COPY INVITE LINK -->
+			<button class="dropdown-item" on:click={() => copyInviteLink(peer.id)}>
+				<span class="icon is-small"><IconCopy /></span> Kopiera inbjudningslänk
+			</button>
 			<!-- MAKE ACTOR -->
 			{#if peer.actor && !peer.manager}
 				<!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -138,6 +155,10 @@
 </div>
 
 <style>
+	.button.name {
+		text-align: left;
+		justify-content: flex-start;
+	}
 	.list-item {
 		width: 100%;
 		display: flex;
@@ -167,6 +188,16 @@
 	}
 	.accordion-header .name {
 		flex-grow: 1;
+		background: none;
+		border: none;
+		text-align: left;
+		cursor: pointer;
+		font-size: inherit;
+		color: inherit;
+		padding: 0;
+	}
+	.accordion-header .name:hover {
+		text-decoration: underline;
 	}
 
 	.accordion-content {

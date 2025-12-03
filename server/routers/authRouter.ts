@@ -19,25 +19,30 @@ const SESSION_EXPIRATION_TIME = 8 * 60 * 60 * 1000;
 
 /** Marks a known user as online */
 export async function authenticate(peerId: string, givenPeer?: Peer): Promise<void> {
+	const peer = givenPeer || (await Peer.findByPk(peerId));
+
+	if (_adminSessions[peerId]) {
+		_adminSessions[peerId].lastSeenTs = Date.now();
+	}
+
 	if (!onlineSessions[peerId]) {
-		const peer = givenPeer || (await Peer.findByPk(peerId));
 		onlineSessions[peerId] = peer;
 		peerEmitter.emit("onlineStatusChanged", peer);
 		console.log(`[Auth] Login successful for peer ${peerId}. Active sessions: ${Object.keys(onlineSessions).length}`);
-	}
-	if (_adminSessions[peerId]) {
-		_adminSessions[peerId].lastSeenTs = Date.now();
+		return true;
+	} else {
+		return false;
 	}
 }
 /** Marks a known user as offline */
 export function deauthenticate(peerId: string): void {
 	if (!onlineSessions[peerId]) {
-		return;
+		return false;
 	} else {
 		const peer = onlineSessions[peerId];
 		delete onlineSessions[peerId];
-		peerEmitter.emit("onlineStatusChanged", peer);
 		console.log(`[Auth] Logout successful for peer ${peerId}. Active sessions: ${Object.keys(onlineSessions).length}`);
+		return true;
 	}
 }
 
@@ -176,7 +181,10 @@ export const authRouter = trcpRouter({
 			}
 
 			// Authenticate
-			authenticate(ctx.peer.id, peer);
+			const didAuthenticate = authenticate(ctx.peer.id, peer);
+			if (didAuthenticate) {
+				peerEmitter.emit("onlineStatusChanged", peer);
+			}
 
 			return {
 				success: true,
@@ -214,7 +222,11 @@ export const authRouter = trcpRouter({
 			};
 		}
 
-		deauthenticate(ctx.peer.id);
+		const didLogOut = deauthenticate(ctx.peer.id);
+
+		if (didLogOut) {
+			peerEmitter.emit("onlineStatusChanged", peer);
+		}
 
 		return {
 			valid: false,

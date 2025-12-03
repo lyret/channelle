@@ -20,8 +20,11 @@ export const wsIsConnectedStore = writable<boolean>(false);
 const wsClient = createWSClient({
 	url: `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}`,
 	connectionParams: async () => {
-		// Get peer id from storage, or generate a new random UUIDv4 token
-		const peerId = get(wsPeerIdStore) || "111-111-1111".replace(/[018]/g, () => (crypto.getRandomValues(new Uint8Array(1))[0] & 15).toString(16));
+		// Get peer id from URL params, storage, or generate a new random UUIDv4 token
+		const urlParams = new URLSearchParams(window.location.search);
+		const urlPeerId = urlParams.get("peerId");
+		const peerId =
+			urlPeerId || get(wsPeerIdStore) || "111-111-1111".replace(/[018]/g, () => (crypto.getRandomValues(new Uint8Array(1))[0] & 15).toString(16));
 
 		// Update the persisted peer id
 		wsPeerIdStore.set(peerId);

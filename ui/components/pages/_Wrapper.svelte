@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { blur } from "svelte/transition";
 
-	import { hasAutenticated, currentPeerIsBannedStore, currentPeerStore } from "~/api";
+	import { hasAutenticated, currentPeerIsBannedStore, currentPeerStore, currentPeerIsOnlineElsewhere } from "~/api";
 
 	import BlockedCurtainMessage from "~/components/curtains/BlockedCurtainMessage.svelte";
 	import LoaderCurtainMessage from "~/components/curtains/LoadingCurtainMessage.svelte";
 	import ProblemCurtainMessage from "~/components/curtains/ProblemCurtainMessage.svelte";
 	import PasswordCurtainMessage from "~/components/curtains/PasswordCurtainMessage.svelte";
+	import DuplicateSessionCurtainMessage from "~/components/curtains/DuplicateSessionCurtainMessage.svelte";
 	import Entrance from "~/components/curtains/Entrance.svelte";
 	import Curtains from "~/components/curtains/Curtains.svelte";
 	import FloatingImage from "~/components/home/FloatingImage.svelte";
@@ -33,7 +34,13 @@
 	$: needsToBeManager = lockedToManager && !($hasAutenticated && $currentPeerStore.manager);
 	$: needsInviteKey = lockedToInviteKey && !$isStagePasswordOkStore;
 	$: renderMessages =
-		!$hasAutenticated || !hasEnteredName || !hasInteractedWithTheDocument || $currentPeerIsBannedStore || needsInviteKey || needsToBeManager;
+		!$hasAutenticated ||
+		!hasEnteredName ||
+		!hasInteractedWithTheDocument ||
+		$currentPeerIsBannedStore ||
+		needsInviteKey ||
+		needsToBeManager ||
+		$currentPeerIsOnlineElsewhere;
 	$: renderContent = !renderMessages;
 </script>
 
@@ -49,7 +56,7 @@
 
 {#if renderMessages}
 	<div class="overlay">
-		{#if $hasAutenticated && (!hasEnteredName || !hasInteractedWithTheDocument)}
+		{#if !$currentPeerIsOnlineElsewhere && $hasAutenticated && (!hasEnteredName || !hasInteractedWithTheDocument)}
 			<FloatingImage src={rosesSrc} alt="two roses shining" zIndex={9993} />
 			<FloatingImage src={rosesSrc} alt="two roses shining" zIndex={9993} />
 			<FloatingImage src={rosesSrc} alt="two roses shining" zIndex={9993} />
@@ -63,6 +70,8 @@
 				<img class="logo" src={logoSrc} alt="Online Teater" />
 				{#if $currentPeerIsBannedStore}
 					<BlockedCurtainMessage />
+				{:else if $currentPeerIsOnlineElsewhere}
+					<DuplicateSessionCurtainMessage />
 				{:else if !$hasAutenticated}
 					<LoaderCurtainMessage label="Ansluter..." />
 				{:else if needsToBeManager}
