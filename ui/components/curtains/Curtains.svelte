@@ -1,150 +1,148 @@
 <script lang="ts">
-	import { onMount } from "svelte";
 	import { showSceneSettingsStore } from "~/api";
 
 	// Forces the curtains to be closed if needed from the parent component
 	export let forcedToBeClosed = false;
 
-	// Track animation and rendering state
-	let animationState: "idle" | "opening" | "closing" = "idle";
-	let currentState: "open" | "closed" | "unknown" = "unknown";
+	// Simplified state management
+	let isOpen = false;
+	let hasInitialized = false;
 
+	// Determine if curtains should be open
+	$: shouldBeOpen = !forcedToBeClosed && !$showSceneSettingsStore.curtains;
+
+	// Update state when conditions change
 	$: {
-		if (forcedToBeClosed) {
-			if (currentState === "unknown") {
-				animationState = "closing";
-				currentState = "closed";
-			} else {
-				currentState = "unknown";
-				animationState = "idle";
-			}
-		} else {
-			if ((currentState === "closed" || currentState === "unknown") && !$showSceneSettingsStore.curtains) {
-				animationState = "opening";
-			}
+		if (!hasInitialized) {
+			// Initial state without animation
+			setTimeout(() => {
+				hasInitialized = true;
+				isOpen = shouldBeOpen;
+			}, 100);
+		} else if (shouldBeOpen !== isOpen) {
+			// State changes after initialization
+			isOpen = shouldBeOpen;
 		}
 	}
 
-	onMount(() => {
-		showSceneSettingsStore.subscribe(({ curtains }) => {
-			let open = !curtains;
-			if (forcedToBeClosed) {
-				open = false;
-				return;
-			}
-			if (currentState === "unknown") {
-				animationState = "idle";
-				if (open) {
-					currentState = "open";
-				} else {
-					currentState = "closed";
-				}
-				return;
-			}
-
-			if (open && currentState === "closed") {
-				animationState = "opening";
-			} else if (!open && currentState === "open") {
-				animationState = "closing";
-			}
-		});
-	});
-
-	// Reset animation state after animation completes
+	// Handle animation completion
 	function handleAnimationEnd() {
-		if (animationState === "opening") {
-			currentState = "open";
-		} else if (animationState === "closing") {
-			currentState = "closed";
-		}
-		animationState = "idle";
+		// Animation complete
 	}
 </script>
 
-<div
-	class="curtains-container"
-	class:open={animationState === "idle" && currentState === "open"}
-	class:opening={animationState === "opening"}
-	class:closing={animationState === "closing"}
->
-	<!-- Left curtain -->
-	<div class="curtain left" on:animationend={handleAnimationEnd}>
-		<div class="curtain-fabric">
-			<div class="curtain-fold"></div>
-			<div class="curtain-fold"></div>
-			<div class="curtain-fold"></div>
-			<div class="curtain-fold"></div>
-			<div class="curtain-fold"></div>
-			<div class="curtain-fold"></div>
-			<div class="curtain-fold"></div>
-			<div class="curtain-fold"></div>
+<div class="curtains-container" class:open={isOpen} class:closed={!isOpen}>
+	<div class="curtains-inner">
+		<!-- Left curtain -->
+		<div class="curtain left" on:animationend={handleAnimationEnd}>
+			<div class="curtain-fabric">
+				<div class="curtain-fold"></div>
+				<div class="curtain-fold"></div>
+				<div class="curtain-fold"></div>
+				<div class="curtain-fold"></div>
+				<div class="curtain-fold"></div>
+				<div class="curtain-fold"></div>
+				<div class="curtain-fold"></div>
+				<div class="curtain-fold"></div>
+			</div>
+			<div class="curtain-shadow"></div>
 		</div>
-		<div class="curtain-shadow"></div>
-	</div>
 
-	<!-- Center curtain (splits in half) -->
-	<div class="curtain center-left" on:animationend={handleAnimationEnd}>
-		<div class="curtain-fabric">
-			<div class="curtain-fold"></div>
-			<div class="curtain-fold"></div>
-			<div class="curtain-fold"></div>
-			<div class="curtain-fold"></div>
-			<div class="curtain-fold"></div>
-			<div class="curtain-fold"></div>
+		<!-- Center curtain (splits in half) -->
+		<div class="curtain center-left" on:animationend={handleAnimationEnd}>
+			<div class="curtain-fabric">
+				<div class="curtain-fold"></div>
+				<div class="curtain-fold"></div>
+				<div class="curtain-fold"></div>
+				<div class="curtain-fold"></div>
+				<div class="curtain-fold"></div>
+				<div class="curtain-fold"></div>
+			</div>
+			<div class="curtain-shadow"></div>
 		</div>
-		<div class="curtain-shadow"></div>
-	</div>
 
-	<div class="curtain center-right" on:animationend={handleAnimationEnd}>
-		<div class="curtain-fabric">
-			<div class="curtain-fold"></div>
-			<div class="curtain-fold"></div>
-			<div class="curtain-fold"></div>
-			<div class="curtain-fold"></div>
-			<div class="curtain-fold"></div>
-			<div class="curtain-fold"></div>
+		<div class="curtain center-right" on:animationend={handleAnimationEnd}>
+			<div class="curtain-fabric">
+				<div class="curtain-fold"></div>
+				<div class="curtain-fold"></div>
+				<div class="curtain-fold"></div>
+				<div class="curtain-fold"></div>
+				<div class="curtain-fold"></div>
+				<div class="curtain-fold"></div>
+			</div>
+			<div class="curtain-shadow"></div>
 		</div>
-		<div class="curtain-shadow"></div>
-	</div>
 
-	<!-- Right curtain -->
-	<div class="curtain right" on:animationend={handleAnimationEnd}>
-		<div class="curtain-fabric">
-			<div class="curtain-fold"></div>
-			<div class="curtain-fold"></div>
-			<div class="curtain-fold"></div>
-			<div class="curtain-fold"></div>
-			<div class="curtain-fold"></div>
-			<div class="curtain-fold"></div>
-			<div class="curtain-fold"></div>
-			<div class="curtain-fold"></div>
+		<!-- Right curtain -->
+		<div class="curtain right" on:animationend={handleAnimationEnd}>
+			<div class="curtain-fabric">
+				<div class="curtain-fold"></div>
+				<div class="curtain-fold"></div>
+				<div class="curtain-fold"></div>
+				<div class="curtain-fold"></div>
+				<div class="curtain-fold"></div>
+				<div class="curtain-fold"></div>
+				<div class="curtain-fold"></div>
+				<div class="curtain-fold"></div>
+			</div>
+			<div class="curtain-shadow"></div>
 		</div>
-		<div class="curtain-shadow"></div>
-	</div>
 
-	<!-- Valance -->
-	<div class="valance">
-		<div class="valance-center">
-			<div class="valance-drape"></div>
-			<div class="valance-drape"></div>
-			<div class="valance-drape"></div>
+		<!-- Valance -->
+		<div class="valance">
+			<div class="valance-center">
+				<div class="valance-drape"></div>
+				<div class="valance-drape"></div>
+				<div class="valance-drape"></div>
+			</div>
+			<div class="valance-fringe"></div>
 		</div>
-		<div class="valance-fringe"></div>
 	</div>
 </div>
 
-<style>
+<style lang="scss">
 	.curtains-container {
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		width: 100%;
-		max-width: calc(((100vh - 60px) / 10) * 16);
-		aspect-ratio: 14/10;
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
 		pointer-events: none;
 		z-index: 9990;
 		overflow: hidden;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	/* Inner wrapper that matches stage dimensions */
+	.curtains-inner {
+		position: relative;
+		width: 100%;
+		height: 100%;
+		min-width: 100%;
+		min-height: 100%;
+		max-width: calc(((100vh - 60px) / 10) * 16);
+		max-height: calc(100vh - 60px);
+		aspect-ratio: 16/10;
+		overflow: visible;
+	}
+
+	@include mobile {
+		.curtains-inner {
+			max-width: calc(((100vh - 120px) / 10) * 16);
+			max-height: calc(100vh - 120px);
+		}
+	}
+
+	/* Ensure curtains cover full viewport on wide screens */
+	@media (min-aspect-ratio: 16/10) {
+		.curtains-inner {
+			max-width: 100%;
+			width: 100%;
+			height: 100%;
+			max-height: 100%;
+		}
 	}
 
 	/* Curtain base styles */
@@ -256,6 +254,7 @@
 		top: 0;
 		left: 0;
 		right: 0;
+		width: 100%;
 		height: 15%;
 		min-height: 60px;
 		max-height: 100px;
@@ -315,200 +314,59 @@
 		opacity: 0.8;
 	}
 
+	/* Curtain states with transitions */
+	.curtain {
+		transition: transform 2.5s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+
+	.valance {
+		transition: transform 2s cubic-bezier(0.4, 0, 0.2, 1) 0.3s;
+	}
+
 	/* Closed state (default) */
-	.curtains-container:not(.open) .curtain {
+	.curtains-container.closed .left {
 		transform: translateX(0) scaleX(1);
 	}
 
-	.curtains-container:not(.open) .valance {
+	.curtains-container.closed .center-left {
+		transform: translateX(0) scaleX(1);
+	}
+
+	.curtains-container.closed .center-right {
+		transform: translateX(0) scaleX(1);
+	}
+
+	.curtains-container.closed .right {
+		transform: translateX(0) scaleX(1);
+	}
+
+	.curtains-container.closed .valance {
 		transform: translateY(0) scaleY(1);
 	}
 
-	/* Open state (after animation) */
-	.curtains-container.open:not(.closing) .left {
-		transform: translateX(-95%) scaleX(0.3);
+	/* Open state */
+	.curtains-container.open .left {
+		transform: translateX(-100%) scaleX(0.3);
 	}
 
-	.curtains-container.open:not(.closing) .center-left {
-		transform: translateX(-200%) scaleX(0.5);
+	.curtains-container.open .center-left {
+		transform: translateX(-250%) scaleX(0.5);
 	}
 
-	.curtains-container.open:not(.closing) .center-right {
-		transform: translateX(200%) scaleX(0.5);
+	.curtains-container.open .center-right {
+		transform: translateX(250%) scaleX(0.5);
 	}
 
-	.curtains-container.open:not(.closing) .right {
-		transform: translateX(95%) scaleX(0.3);
+	.curtains-container.open .right {
+		transform: translateX(100%) scaleX(0.3);
 	}
 
-	.curtains-container.open:not(.closing) .valance {
-		transform: translateY(-85%) scaleY(0.7);
-	}
-
-	/* Opening animation */
-	.curtains-container.opening .left {
-		animation: curtain-open-left 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-	}
-
-	.curtains-container.opening .center-left {
-		animation: curtain-open-center-left 2.2s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
-	}
-
-	.curtains-container.opening .center-right {
-		animation: curtain-open-center-right 2.2s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
-	}
-
-	.curtains-container.opening .right {
-		animation: curtain-open-right 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-	}
-
-	.curtains-container.opening .valance {
-		animation: valance-open 1.8s cubic-bezier(0.4, 0, 0.2, 1) 0.5s forwards;
-	}
-
-	/* Closing animation */
-	.curtains-container.closing .left {
-		animation: curtain-close-left 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-	}
-
-	.curtains-container.closing .center-left {
-		animation: curtain-close-center-left 2.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-	}
-
-	.curtains-container.closing .center-right {
-		animation: curtain-close-center-right 2.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-	}
-
-	.curtains-container.closing .right {
-		animation: curtain-close-right 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-	}
-
-	.curtains-container.closing .valance {
-		animation: valance-close 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-	}
-
-	/* Opening animations */
-	@keyframes curtain-open-left {
-		0% {
-			transform: translateX(0) scaleX(1);
-		}
-		40% {
-			transform: translateX(-10%) scaleX(0.95);
-		}
-		100% {
-			transform: translateX(-95%) scaleX(0.3);
-		}
-	}
-
-	@keyframes curtain-open-center-left {
-		0% {
-			transform: translateX(0) scaleX(1);
-		}
-		30% {
-			transform: translateX(-5%) scaleX(0.98);
-		}
-		100% {
-			transform: translateX(-200%) scaleX(0.5);
-		}
-	}
-
-	@keyframes curtain-open-center-right {
-		0% {
-			transform: translateX(0) scaleX(1);
-		}
-		30% {
-			transform: translateX(5%) scaleX(0.98);
-		}
-		100% {
-			transform: translateX(200%) scaleX(0.5);
-		}
-	}
-
-	@keyframes curtain-open-right {
-		0% {
-			transform: translateX(0) scaleX(1);
-		}
-		40% {
-			transform: translateX(10%) scaleX(0.95);
-		}
-		100% {
-			transform: translateX(95%) scaleX(0.3);
-		}
-	}
-
-	@keyframes valance-open {
-		0% {
-			transform: translateY(0) scaleY(1);
-		}
-		100% {
-			transform: translateY(-85%) scaleY(0.7);
-		}
-	}
-
-	/* Closing animations */
-	@keyframes curtain-close-left {
-		0% {
-			transform: translateX(-95%) scaleX(0.3);
-		}
-		60% {
-			transform: translateX(-10%) scaleX(0.95);
-		}
-		100% {
-			transform: translateX(0) scaleX(1);
-		}
-	}
-
-	@keyframes curtain-close-center-left {
-		0% {
-			transform: translateX(-200%) scaleX(0.5);
-		}
-		70% {
-			transform: translateX(-5%) scaleX(0.98);
-		}
-		100% {
-			transform: translateX(0) scaleX(1);
-		}
-	}
-
-	@keyframes curtain-close-center-right {
-		0% {
-			transform: translateX(200%) scaleX(0.5);
-		}
-		70% {
-			transform: translateX(5%) scaleX(0.98);
-		}
-		100% {
-			transform: translateX(0) scaleX(1);
-		}
-	}
-
-	@keyframes curtain-close-right {
-		0% {
-			transform: translateX(95%) scaleX(0.3);
-		}
-		60% {
-			transform: translateX(10%) scaleX(0.95);
-		}
-		100% {
-			transform: translateX(0) scaleX(1);
-		}
-	}
-
-	@keyframes valance-close {
-		0% {
-			transform: translateY(-85%) scaleY(0.7);
-		}
-		100% {
-			transform: translateY(0) scaleY(1);
-		}
+	.curtains-container.open .valance {
+		transform: translateY(-110%) scaleY(0.7);
 	}
 
 	/* Mobile adjustments */
 	@media (max-width: 768px) {
-		.curtains-container {
-			max-width: calc(((100vh - 120px) / 10) * 16);
-		}
-
 		.valance {
 			height: 12%;
 			min-height: 40px;
@@ -516,36 +374,12 @@
 		}
 
 		/* Adjust open positions for mobile */
-		.curtains-container.open:not(.closing) .left {
-			transform: translateX(-90%) scaleX(0.4);
+		.curtains-container.open .left {
+			transform: translateX(-100%) scaleX(0.4);
 		}
 
-		.curtains-container.open:not(.closing) .right {
-			transform: translateX(90%) scaleX(0.4);
-		}
-
-		@keyframes curtain-open-left {
-			100% {
-				transform: translateX(-90%) scaleX(0.4);
-			}
-		}
-
-		@keyframes curtain-open-right {
-			100% {
-				transform: translateX(90%) scaleX(0.4);
-			}
-		}
-
-		@keyframes curtain-close-left {
-			0% {
-				transform: translateX(-90%) scaleX(0.4);
-			}
-		}
-
-		@keyframes curtain-close-right {
-			0% {
-				transform: translateX(90%) scaleX(0.4);
-			}
+		.curtains-container.open .right {
+			transform: translateX(100%) scaleX(0.4);
 		}
 	}
 </style>
