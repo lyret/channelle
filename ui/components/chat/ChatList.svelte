@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { onMount, onDestroy } from "svelte";
 	import { blur } from "svelte/transition";
-	import { messagesStore, canDeleteMessagesStore, deleteMessage, startChatSubscription, unsubscribeFromMessages } from "~/api/chat";
+	import { messagesStore, canDeleteMessagesStore, deleteMessage } from "~/api/chat";
 	import { currentPeerStore } from "~/api";
-	import PicoBadgeMinus from "../picol/icons/Picol-badge-minus.svelte";
 
 	export let backstageOnly: boolean = false;
 
@@ -14,10 +13,7 @@
 	let previousMessageCount = 0;
 
 	// Initialize chat when component mounts
-	onMount(async () => {
-		// Start the chat subscription
-		await startChatSubscription();
-
+	onMount(() => {
 		// Set up scroll handling
 		if (ref) {
 			ref.addEventListener("scroll", handleScroll);
@@ -33,8 +29,6 @@
 		if (ref) {
 			ref.removeEventListener("scroll", handleScroll);
 		}
-		// Unsubscribe from messages
-		unsubscribeFromMessages();
 	});
 
 	function handleScroll() {

@@ -44,7 +44,7 @@
 	};
 	const chat: Scene = {
 		name: "Chatduell",
-		chatEnabled: false,
+		chatEnabled: true,
 		curtains: false,
 		gratitudeEffectsEnabled: true,
 		criticalEffectsEnabled: false,

@@ -13,7 +13,7 @@ const { router, procedure } = trpc();
 // Internal event emitter for message updates
 // Uses showId as event name (0 for stage mode)
 const _messageEmitter = new Emittery<{
-	[id: number]: MessageAttributes;
+	[id: number]: { event: "created" | "deleted"; message: MessageAttributes };
 }>();
 
 // Chat connection procedure
@@ -69,47 +69,27 @@ const chatProcedure = procedure
  */
 export const chatRouter = router({
 	// Subscribe to all messages
-	messages: chatProcedure.subscription(async function* ({ ctx }) {
+	messages: chatProcedure.subscription(async function* ({
+		ctx,
+	}): AsyncGenerator<
+		| { event: "initial"; initialMessages: Array<MessageAttributes> }
+		| { event: "created"; message: MessageAttributes }
+		| { event: "deleted"; messageId: number }
+	> {
 		// Yield initial messages
 		const initialMessages = await _getInitialMessages(ctx.showId);
-		yield tracked("initial", initialMessages);
+		yield { event: "initial", initialMessages };
 
 		// Listen for new messages on the showId channel
 		const eventKey = ctx.showId || 0;
-		for await (const message of _messageEmitter.events(eventKey)) {
-			// Additional filter by message type (all messages)
-			yield tracked(String(message.id), message);
-		}
-	}),
-
-	// Subscribe to public messages only (backstage: false)
-	publicMessages: chatProcedure.subscription(async function* ({ ctx }) {
-		// Yield initial public messages
-		const initialMessages = await _getInitialMessages(ctx.showId, { backstage: false });
-		yield tracked("initial", initialMessages);
-
-		// Listen for new messages on the showId channel
-		const eventKey = ctx.showId || 0;
-		for await (const message of _messageEmitter.events(eventKey)) {
-			// Filter by message type (public only)
-			if (!message.backstage) {
-				yield tracked(String(message.id), message);
-			}
-		}
-	}),
-
-	// Subscribe to backstage messages only
-	backstageMessages: chatProcedure.subscription(async function* ({ ctx }) {
-		// Yield initial backstage messages
-		const initialMessages = await _getInitialMessages(ctx.showId, { backstage: true });
-		yield tracked("initial", initialMessages);
-
-		// Listen for new messages on the showId channel
-		const eventKey = ctx.showId || 0;
-		for await (const message of _messageEmitter.events(eventKey)) {
-			// Filter by message type (backstage only)
-			if (message.backstage) {
-				yield tracked(String(message.id), message);
+		for await (const { event, message } of _messageEmitter.events(eventKey)) {
+			if (event === "created") {
+				// Emit the new message
+				// Additional filter by message type (all messages)
+				yield { event: "created", message };
+			} else if (event === "deleted") {
+				// Emit the deleted message
+				yield { event: "deleted", messageId: message.id };
 			}
 		}
 	}),
@@ -134,7 +114,7 @@ export const chatRouter = router({
 			});
 
 			// Emit the new message
-			await _emitMessage(message);
+			await _emitMessage(message, "created");
 		}),
 
 	// Delete a message (managers only)
@@ -163,6 +143,9 @@ export const chatRouter = router({
 			}
 
 			await message.destroy();
+
+			// Emit that the message is deleated
+			await _emitMessage(message, "deleted");
 		}),
 });
 
@@ -172,12 +155,12 @@ export type ChatRouter = typeof chatRouter;
 /**
  * Utility function to emit message events to the router
  */
-async function _emitMessage(message: Message) {
+async function _emitMessage(message: Message, event: "created" | "deleted" = "created") {
 	const messageData = message.toJSON() as MessageAttributes;
 
 	// Emit to the showId channel (0 for stage mode)
 	const eventKey = message.showId || 0;
-	_messageEmitter.emit(eventKey, messageData);
+	_messageEmitter.emit(eventKey, { event, message: messageData });
 }
 
 /**
