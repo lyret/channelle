@@ -8,7 +8,7 @@
 
 	import { onMount } from "svelte";
 	import { showsListStore, showsStoreIsLoading, showsErrorStore, fetchShows } from "~/api/shows";
-	import { openCreateShowModal, openLauncherModal } from "~/stores/theaterModals";
+	import { openCreateShowModal, openLauncherModal } from "~/stores/theater/theaterModals";
 	import { isTheaterAuthenticated } from "~/api/auth";
 
 	// Use reactive statement to get shows from store

@@ -3,7 +3,7 @@
 	import { wsPeerIdStore } from "~/api/_trpcClient";
 	import { showPeersStore } from "~/api/backstage";
 	import { DebugPanel } from "~/components/debug";
-	import { debugModeStore } from "~/stores/debugMode";
+	import { debugModeStore } from "~/stores/debug";
 
 	export let peerId: string;
 
