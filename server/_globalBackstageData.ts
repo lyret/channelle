@@ -20,7 +20,16 @@ let _backstageConfiguration: BackstageConfiguration = {
 	criticalEffectsEnabledOverride: SceneSetting.FORCED_OFF,
 	visitorAudioEnabledOverride: SceneSetting.FORCED_OFF,
 	visitorVideoEnabledOverride: SceneSetting.FORCED_OFF,
-	selectedScene: null,
+	selectedScene: {
+		name: "Alla",
+		chatEnabled: true,
+		curtains: false,
+		gratitudeEffectsEnabled: false,
+		criticalEffectsEnabled: false,
+		visitorAudioEnabled: false,
+		visitorVideoEnabled: true,
+		layout: [],
+	},
 };
 
 /**

@@ -69,9 +69,11 @@ export const peersRouter = router({
 				actor: z.boolean().optional(),
 				manager: z.boolean().optional(),
 				banned: z.boolean().optional(),
+				audioMuted: z.boolean().optional(),
+				videoMuted: z.boolean().optional(),
 			}),
 		)
-		.mutation(async ({ ctx, input: { id, name, actor, manager, banned } }) => {
+		.mutation(async ({ ctx, input: { id, name, actor, manager, banned, audioMuted, videoMuted } }) => {
 			// Make sure that the peer in context is either the same as being updated or a manager
 			if (!(ctx.peer.id == id || ctx.peer.manager)) {
 				throw new TRPCError({ code: "UNAUTHORIZED", message: "Unauthorized" });
@@ -106,6 +108,15 @@ export const peersRouter = router({
 				// Update peer's banned status
 				if (banned !== undefined) {
 					updates.banned = banned;
+				}
+
+				// Update peer's mute status
+				if (audioMuted !== undefined) {
+					updates.audioMuted = audioMuted;
+				}
+
+				if (videoMuted !== undefined) {
+					updates.videoMuted = videoMuted;
 				}
 			}
 

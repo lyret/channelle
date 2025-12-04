@@ -10,6 +10,8 @@ export async function updatePeer(
 		actor?: boolean;
 		manager?: boolean;
 		banned?: boolean;
+		audioMuted?: boolean;
+		videoMuted?: boolean;
 	},
 ): Promise<{ success: true } | { success: false; error: string }> {
 	try {

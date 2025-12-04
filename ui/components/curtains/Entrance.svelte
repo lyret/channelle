@@ -4,7 +4,6 @@
 	import { updatePeer, currentPeerStore } from "~/api";
 	import { showMetadataStore } from "~/api/backstage";
 	import logoSrc from "~/assets/images/logo-smoker-free.gif";
-	import IconArrowRight from "~/components/icons/Icon-arrow-right.svelte";
 
 	const dispatch = createEventDispatcher<{ submit: void }>();
 
@@ -106,7 +105,12 @@
 
 <style lang="scss">
 	.image {
-		max-height: 24px;
+		max-width: 30vw;
+		width: 80%;
+		@include tablet {
+			max-width: 800px;
+			width: 28vw;
+		}
 	}
 
 	.level {
