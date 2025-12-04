@@ -2,10 +2,8 @@
 	import { blur } from "svelte/transition";
 	import IconVideoOff from "~/components/icons/Icon-camera-off.svelte";
 	import IconVideo from "~/components/icons/Icon-camera.svelte";
-	import { enableCamera, disableCamera, peerStreamsStore } from "~/api/stageNew";
-	import { wsPeerIdStore } from "~/api/_trpcClient";
-	import { currentPeerStore } from "~/api/auth";
-	import { showSceneSettingsStore } from "~/api/backstage";
+	import { enableCamera, disableCamera } from "~/api/stageNew";
+	import { localPeerMediaState } from "~/api/stageNew/peerMedia";
 
 	export let minimal: boolean = false;
 
@@ -14,20 +12,23 @@
 	let isProcessing = false;
 	let errorMessage = "";
 
-	// Get local stream to check if we have video
-	$: myPeerId = $wsPeerIdStore;
-	$: localStream = $peerStreamsStore[myPeerId];
-	$: hasVideoTrack = localStream?.getVideoTracks().length > 0;
+	// Use the local peer media state directly
+	$: mediaState = $localPeerMediaState;
 
-	// Update camera state based on stream
-	$: if (hasVideoTrack !== undefined) {
-		isCameraOn = hasVideoTrack;
+	// Update camera state based on media state
+	$: if (mediaState?.hasLocalVideoTrack !== undefined) {
+		isCameraOn = mediaState.hasLocalVideoTrack;
 	}
 
-	$: hasError = !!errorMessage;
+	// Automatically disable camera when muted
+	$: if (mediaState?.videoMuted && isCameraOn) {
+		disableCamera().catch((error) => {
+			console.error("[CameraControls] Error disabling camera on mute:", error);
+		});
+	}
 
 	async function handleClick() {
-		if (isProcessing) return;
+		if (isProcessing || mediaState?.videoMuted) return; // Don't allow if muted
 
 		try {
 			isProcessing = true;
@@ -46,33 +47,46 @@
 			console.error("[CameraControlsNew] Error toggling camera:", error);
 			errorMessage = error.message || "Camera error";
 			// Reset state on error
-			isCameraOn = hasVideoTrack;
+			isCameraOn = mediaState?.hasLocalVideoTrack || false;
 		} finally {
 			isProcessing = false;
 		}
 	}
 </script>
 
-{#if $currentPeerStore.actor || $currentPeerStore.manager || $showSceneSettingsStore.visitorVideoEnabled}
-	<button type="button" class="button is-small" class:is-loading={isProcessing} disabled={isProcessing} transition:blur on:click={handleClick}>
-		<span class="icon is-size-4" class:has-text-danger={hasError} class:has-text-success={isCameraOn}>
-			{#if isCameraOn}
-				<IconVideo />
-			{:else}
+{#if mediaState?.isActor || mediaState?.isManager || mediaState?.visitorVideoEnabled}
+	<button
+		type="button"
+		class="button is-small"
+		class:is-loading={isProcessing}
+		class:is-success={isCameraOn && !mediaState.videoMuted}
+		class:is-info={!isCameraOn && mediaState.videoAllowed && !mediaState.videoMuted}
+		class:is-light={mediaState.videoMuted || (!isCameraOn && !mediaState.videoAllowed)}
+		disabled={isProcessing || mediaState.videoMuted}
+		transition:blur
+		on:click={handleClick}
+	>
+		<span class="icon is-size-4" class:has-text-danger={!!errorMessage} class:has-text-grey={mediaState.videoMuted}>
+			{#if mediaState.videoMuted || !isCameraOn}
 				<IconVideoOff />
+			{:else}
+				<IconVideo />
 			{/if}
 		</span>
 		{#if !minimal}
 			<span>
-				Camera:
 				{#if errorMessage}
 					{errorMessage}
 				{:else if isProcessing}
-					...
-				{:else if isCameraOn}
-					On
+					Ansluter...
+				{:else if isCameraOn && !mediaState.videoMuted}
+					Aktiv
+				{:else if mediaState.videoMuted}
+					Blockerad (DB)
+				{:else if mediaState.videoAllowed}
+					Tillåten
 				{:else}
-					Off
+					Av
 				{/if}
 			</span>
 		{/if}
@@ -87,10 +101,22 @@
 		background-color: var(--channelle-menu-bg-color);
 		color: var(--channelle-menu-text-color);
 		position: relative;
+		transition:
+			opacity 0.2s ease,
+			background-color 0.2s ease;
 
 		&:disabled {
-			opacity: 0.7;
+			opacity: 0.5;
 			cursor: not-allowed;
+			background-color: #363636 !important;
+
+			.icon {
+				color: #999 !important;
+			}
+
+			span:not(.icon) {
+				color: #999 !important;
+			}
 		}
 
 		&.is-loading {

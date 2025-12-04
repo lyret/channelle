@@ -2,10 +2,8 @@
 	import { blur } from "svelte/transition";
 	import IconMicOff from "~/components/icons/Icon-mic-off.svelte";
 	import IconMic from "~/components/icons/Icon-mic.svelte";
-	import { enableMicrophone, disableMicrophone, peerStreamsStore } from "~/api/stageNew";
-	import { wsPeerIdStore } from "~/api/_trpcClient";
-	import { currentPeerStore } from "~/api/auth";
-	import { showSceneSettingsStore } from "~/api/backstage";
+	import { enableMicrophone, disableMicrophone } from "~/api/stageNew";
+	import { localPeerMediaState } from "~/api/stageNew/peerMedia";
 
 	export let minimal: boolean = false;
 
@@ -14,20 +12,23 @@
 	let isProcessing = false;
 	let errorMessage = "";
 
-	// Get local stream to check if we have audio
-	$: myPeerId = $wsPeerIdStore;
-	$: localStream = $peerStreamsStore[myPeerId];
-	$: hasAudioTrack = localStream?.getAudioTracks().length > 0;
+	// Use the local peer media state directly
+	$: mediaState = $localPeerMediaState;
 
-	// Update mic state based on stream
-	$: if (hasAudioTrack !== undefined) {
-		isMicOn = hasAudioTrack;
+	// Update mic state based on media state
+	$: if (mediaState?.hasLocalAudioTrack !== undefined) {
+		isMicOn = mediaState.hasLocalAudioTrack;
 	}
 
-	$: hasError = !!errorMessage;
+	// Automatically disable microphone when muted
+	$: if (mediaState?.audioMuted && isMicOn) {
+		disableMicrophone().catch((error) => {
+			console.error("[MicrophoneControls] Error disabling microphone on mute:", error);
+		});
+	}
 
 	async function handleClick() {
-		if (isProcessing) return;
+		if (isProcessing || mediaState?.audioMuted) return; // Don't allow if muted
 
 		try {
 			isProcessing = true;
@@ -46,33 +47,46 @@
 			console.error("[MicrophoneControlsNew] Error toggling microphone:", error);
 			errorMessage = error.message || "Microphone error";
 			// Reset state on error
-			isMicOn = hasAudioTrack;
+			isMicOn = mediaState?.hasLocalAudioTrack || false;
 		} finally {
 			isProcessing = false;
 		}
 	}
 </script>
 
-{#if $currentPeerStore.actor || $currentPeerStore.manager || $showSceneSettingsStore.visitorAudioEnabled}
-	<button type="button" class="button is-small" class:is-loading={isProcessing} disabled={isProcessing} transition:blur on:click={handleClick}>
-		<span class="icon is-size-4" class:has-text-danger={hasError} class:has-text-success={isMicOn}>
-			{#if isMicOn}
-				<IconMic />
-			{:else}
+{#if mediaState?.isActor || mediaState?.isManager || mediaState?.visitorAudioEnabled}
+	<button
+		type="button"
+		class="button is-small"
+		class:is-loading={isProcessing}
+		class:is-success={isMicOn && !mediaState.audioMuted}
+		class:is-info={!isMicOn && mediaState.audioAllowed && !mediaState.audioMuted}
+		class:is-light={mediaState.audioMuted || (!isMicOn && !mediaState.audioAllowed)}
+		disabled={isProcessing || mediaState.audioMuted}
+		transition:blur
+		on:click={handleClick}
+	>
+		<span class="icon is-size-4" class:has-text-danger={!!errorMessage} class:has-text-grey={mediaState.audioMuted}>
+			{#if mediaState.audioMuted || !isMicOn}
 				<IconMicOff />
+			{:else}
+				<IconMic />
 			{/if}
 		</span>
 		{#if !minimal}
 			<span>
-				Microphone:
 				{#if errorMessage}
 					{errorMessage}
 				{:else if isProcessing}
-					...
-				{:else if isMicOn}
-					On
+					Ansluter...
+				{:else if isMicOn && !mediaState.audioMuted}
+					Aktiv
+				{:else if mediaState.audioMuted}
+					Blockerad (DB)
+				{:else if mediaState.audioAllowed}
+					Tillåten
 				{:else}
-					Off
+					Av
 				{/if}
 			</span>
 		{/if}
@@ -87,10 +101,22 @@
 		background-color: var(--channelle-menu-bg-color);
 		color: var(--channelle-menu-text-color);
 		position: relative;
+		transition:
+			opacity 0.2s ease,
+			background-color 0.2s ease;
 
 		&:disabled {
-			opacity: 0.7;
+			opacity: 0.5;
 			cursor: not-allowed;
+			background-color: #363636 !important;
+
+			.icon {
+				color: #999 !important;
+			}
+
+			span:not(.icon) {
+				color: #999 !important;
+			}
 		}
 
 		&.is-loading {

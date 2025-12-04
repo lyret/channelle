@@ -1,6 +1,7 @@
 import "@babel/polyfill";
 import { enableMediaSoupDebugging, enableHotReloadingOnRebuilds } from "./api/development";
 import { authenticate, participateInTheMediaRoom, subscribeToBackstageConfigurationChanges } from "./api";
+import { startMuteEnforcement } from "./api/stageNew/peerMedia";
 import Stage from "~/components/pages/Stage.svelte";
 
 // Set correct debug output level for MediaSoup
@@ -14,6 +15,8 @@ async function initializeStage() {
 	try {
 		// Authenticate as online
 		await authenticate();
+		// Enable mute enforcement to stop streams when peer is muted via database
+		startMuteEnforcement();
 		// Enable configuration synchronization for real-time updates when changes are made
 		await subscribeToBackstageConfigurationChanges();
 		// Enable media session synchronization for real-time multimedia communication
