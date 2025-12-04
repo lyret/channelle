@@ -151,7 +151,7 @@
 		<div class="level-item">
 			<button
 				class="button"
-				class:is-warning={$showSceneOverridesStore.visitorVideoEnabledOverride === 0}
+				class:is-warning={$showSceneOverridesStore.visitorVideoEnabledOverride === 0 && $showSelectedSceneStore?.visitorVideoEnabled}
 				class:is-loading={isLoading}
 				disabled={isLoading || !$showSelectedSceneStore?.visitorVideoEnabled}
 				on:click={() => handleUpdate({ visitorVideoEnabledOverride: 0 })}
@@ -162,7 +162,7 @@
 		<div class="level-item">
 			<button
 				class="button is-danger"
-				class:is-light={$showSceneOverridesStore.visitorVideoEnabledOverride !== 2}
+				class:is-light={$showSceneOverridesStore.visitorVideoEnabledOverride !== 2 || !$showSelectedSceneStore?.visitorVideoEnabled}
 				class:is-loading={isLoading}
 				disabled={isLoading || !$showSelectedSceneStore?.visitorVideoEnabled}
 				on:click={() => handleUpdate({ visitorVideoEnabledOverride: 2 })}
@@ -173,7 +173,7 @@
 		<div class="level-item">
 			<button
 				class="button is-success"
-				class:is-light={$showSceneOverridesStore.visitorVideoEnabledOverride !== 1}
+				class:is-light={$showSceneOverridesStore.visitorVideoEnabledOverride !== 1 || !$showSelectedSceneStore?.visitorVideoEnabled}
 				class:is-loading={isLoading}
 				disabled={isLoading || !$showSelectedSceneStore?.visitorVideoEnabled}
 				on:click={() => handleUpdate({ visitorVideoEnabledOverride: 1 })}

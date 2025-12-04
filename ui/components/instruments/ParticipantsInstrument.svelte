@@ -11,7 +11,7 @@
 	$: blocked = peers.filter((p) => p.banned && p.name);
 	$: online = peers.filter((p) => p.online);
 
-	let filter: string = "Deltagare";
+	let filter: string = "Deltagare online";
 	let createError = "";
 
 	async function handleCreateActor() {
@@ -34,6 +34,14 @@
 </script>
 
 <div class="radios is-size-7">
+	<label class="radio has-text-success">
+		<input type="radio" name="filter" value="Deltagare online" bind:group={filter} />
+		Online
+	</label>
+	<label class="radio has-text-link">
+		<input type="radio" name="filter" bind:group={filter} value="Skådespelare" />
+		Skådespelare
+	</label>
 	<label class="radio">
 		<input type="radio" name="filter" value="Deltagare" bind:group={filter} />
 		Alla
@@ -44,14 +52,6 @@
 			Tekniker
 		</label>
 	{/if}
-	<label class="radio has-text-link">
-		<input type="radio" name="filter" bind:group={filter} value="Skådespelare" />
-		Skådespelare
-	</label>
-	<label class="radio has-text-success">
-		<input type="radio" name="filter" value="Deltagare online" bind:group={filter} />
-		Online
-	</label>
 	{#if blocked.length}
 		<label class="radio has-text-danger">
 			<input type="radio" name="filter" value="Blockerade deltagare" bind:group={filter} />

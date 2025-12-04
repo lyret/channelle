@@ -49,7 +49,7 @@
 		gratitudeEffectsEnabled: true,
 		criticalEffectsEnabled: false,
 		visitorAudioEnabled: true,
-		visitorVideoEnabled: true,
+		visitorVideoEnabled: false,
 		layout: [[{ type: "actor", peerId: "-1" }, { type: "chat" }, { type: "actor", peerId: "-1" }]],
 	};
 	const oneXOne: Scene = {
@@ -59,7 +59,7 @@
 		gratitudeEffectsEnabled: true,
 		criticalEffectsEnabled: false,
 		visitorAudioEnabled: true,
-		visitorVideoEnabled: true,
+		visitorVideoEnabled: false,
 		layout: [[{ type: "actor", peerId: "-1" }]],
 	};
 	const oneXTwo: Scene = {
@@ -69,7 +69,7 @@
 		gratitudeEffectsEnabled: true,
 		criticalEffectsEnabled: false,
 		visitorAudioEnabled: true,
-		visitorVideoEnabled: true,
+		visitorVideoEnabled: false,
 		layout: [
 			[
 				{ type: "actor", peerId: "-1" },
@@ -84,7 +84,7 @@
 		gratitudeEffectsEnabled: true,
 		criticalEffectsEnabled: true,
 		visitorAudioEnabled: true,
-		visitorVideoEnabled: true,
+		visitorVideoEnabled: false,
 		layout: [
 			[
 				{ type: "actor", peerId: "-1" },
