@@ -13,7 +13,7 @@
 		closeAboutModal,
 		closeCreateShowModal,
 		closeLauncherModal,
-	} from "~/stores/theaterModals";
+	} from "~/stores/theater/theaterModals";
 
 	// Modal event handlers
 	function handleAuthenticated() {

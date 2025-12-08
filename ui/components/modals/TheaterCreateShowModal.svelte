@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher } from "svelte";
 	import Modal from "./_Modal.svelte";
-	import { createShowLocal, showCreationError, isCreatingShow, clearShowCreationError } from "~/stores/showCreation";
+	import { createShowLocal, showCreationError, isCreatingShow, clearShowCreationError } from "~/stores/theater/showCreation";
 
 	const dispatch = createEventDispatcher<{
 		created: { id: number; name: string };
