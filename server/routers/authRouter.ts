@@ -18,7 +18,7 @@ export const _adminSessions: Record<string, AdminSession> = {};
 const SESSION_EXPIRATION_TIME = 8 * 60 * 60 * 1000;
 
 /** Marks a known user as online */
-export async function authenticate(peerId: string, givenPeer?: Peer): Promise<void> {
+export async function authenticate(peerId: string, givenPeer?: Peer): Promise<boolean> {
 	const peer = givenPeer || (await Peer.findByPk(peerId));
 
 	if (_adminSessions[peerId]) {
@@ -35,7 +35,7 @@ export async function authenticate(peerId: string, givenPeer?: Peer): Promise<vo
 	}
 }
 /** Marks a known user as offline */
-export function deauthenticate(peerId: string): void {
+export function deauthenticate(peerId: string): boolean {
 	if (!onlineSessions[peerId]) {
 		return false;
 	} else {
