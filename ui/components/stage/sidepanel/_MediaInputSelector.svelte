@@ -2,6 +2,8 @@
 	import IconMeh from "~/components/icons/Icon-meh.svelte";
 	import IconMic from "~/components/icons/Icon-mic.svelte";
 	import IconVideo from "~/components/icons/Icon-video.svelte";
+	import IconAward from "~/components/icons/Icon-award.svelte";
+	import IconBriefcase from "~/components/icons/Icon-briefcase.svelte";
 	import { currentPeerStore } from "~/api";
 	import { updatePeer } from "~/api/peers";
 
@@ -36,7 +38,7 @@
 		const currentName = $currentPeerStore.name;
 		const newName = window.prompt("Byt namn till...", currentName) || currentName;
 		if (newName && newName !== currentName) {
-			await updatePeer($currentPeerStore.id, { name: newName});
+			await updatePeer($currentPeerStore.id, { name: newName });
 		}
 	}
 </script>
@@ -47,6 +49,21 @@
 	<span class="icon"><IconMeh /></span>
 	<span>{$currentPeerStore?.name} </span>
 </button>
+{#if $currentPeerStore?.manager}
+	<div class="user-role">
+		<span class="icon is-small">
+			<IconBriefcase />
+		</span>
+		<span>tekniker</span>
+	</div>
+{:else if $currentPeerStore?.actor}
+	<div class="user-role">
+		<span class="icon is-small">
+			<IconAward />
+		</span>
+		<span>skådespelare</span>
+	</div>
+{/if}
 <p class="label">Välj din kamera- och mikrofon- ingång</p>
 <div class="control has-icons-left">
 	<div class="select is-fullwidth mb-4 is-rounded" class:is-loading={isLoading}>
@@ -79,5 +96,20 @@
 	.label {
 		text-align: center;
 		font-weight: 400;
+	}
+
+	.user-role {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 4px;
+		font-size: 0.8em;
+		color: #9a9a9a;
+		font-style: italic;
+		margin-bottom: 16px;
+	}
+
+	.user-role .icon {
+		color: #9a9a9a;
 	}
 </style>
