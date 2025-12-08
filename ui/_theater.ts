@@ -1,7 +1,7 @@
 import "@babel/polyfill";
 import Theater from "~/components/pages/Theater.svelte";
 import { enableHotReloadingOnRebuilds } from "./api/development";
-import { authenticate, validateSessionWithServer } from "./api/auth";
+import { validateSessionWithServer } from "./api/auth";
 
 // Enables hot reloading of the debug app when developing
 enableHotReloadingOnRebuilds();
@@ -9,7 +9,7 @@ enableHotReloadingOnRebuilds();
 // Initialize all required services in sequence before rendering
 async function initialize() {
 	try {
-		// Authenticate as admin
+		// Validate admin session
 		await validateSessionWithServer();
 
 		// Mount the Svelte interface after everything is ready

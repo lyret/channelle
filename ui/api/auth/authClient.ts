@@ -70,9 +70,9 @@ export async function authenticate(name: string = "") {
 /**
  * Sign out from theater admin mode
  */
-export async function deauthenticateTheater(): Promise<void> {
+export async function endAdminAuthorization(): Promise<void> {
 	try {
-		await authClient.deauthenticate.mutate();
+		await authClient.endAuthorization.mutate();
 	} catch (error) {
 		console.warn("[Authentication] Error while deauthenticating theater:", error);
 	}

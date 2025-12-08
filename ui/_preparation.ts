@@ -14,7 +14,7 @@ async function initialize() {
 		// Authenticate as online
 		await authenticate();
 
-		// Authenticate as admin
+		// Validate admin session
 		await validateSessionWithServer();
 
 		// Enable configuration synchronization for real-time updates when changes are made

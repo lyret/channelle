@@ -11,39 +11,60 @@ const { router: trcpRouter, procedure, middleware } = trpc();
 /** In-memory online peer session storage */
 export const onlineSessions: Record<string, Peer> = {};
 
+/** In-memory connection counter for each peer */
+export const connectionCounts: Record<string, number> = {};
+
 /** In-memory authenticated admin session storage */
 export const _adminSessions: Record<string, AdminSession> = {};
 
 /** Session expiration time: 8 hours in milliseconds */
 const SESSION_EXPIRATION_TIME = 8 * 60 * 60 * 1000;
 
-/** Marks a known user as online */
-export async function authenticate(peerId: string, givenPeer?: Peer): Promise<boolean> {
-	const peer = givenPeer || (await Peer.findByPk(peerId));
-
+/** Marks a known user as online and increments their connection count */
+export async function refreshAuthentication(peerId: string, givenPeer?: Peer): Promise<boolean> {
+	// Refresh any ongoing admin sessions for the given peerId
 	if (_adminSessions[peerId]) {
 		_adminSessions[peerId].lastSeenTs = Date.now();
 	}
 
-	if (!onlineSessions[peerId]) {
-		onlineSessions[peerId] = peer;
-		peerEmitter.emit("onlineStatusChanged", peer);
-		console.log(`[Auth] Login successful for peer ${peerId}. Active sessions: ${Object.keys(onlineSessions).length}`);
+	// This peer is now online
+	if (givenPeer && !onlineSessions[peerId]) {
+		onlineSessions[peerId] = givenPeer;
+		connectionCounts[peerId] = (connectionCounts[peerId] || 0) + 1;
+		peerEmitter.emit("onlineStatusChanged", givenPeer);
+		console.log(
+			`[Auth] Login successful for peer ${peerId}. Connections: ${connectionCounts[peerId]}, Active sessions: ${Object.keys(onlineSessions).length}`,
+		);
 		return true;
+	} else if (givenPeer) {
+		// Update peer information if provided
+		onlineSessions[peerId] = givenPeer;
+		return false;
 	} else {
+		console.log(`[Auth] Additional connection for peer ${peerId}. Total connections: ${connectionCounts[peerId]}`);
 		return false;
 	}
 }
-/** Marks a known user as offline */
+
+/** Decrements connection count and marks user as offline only when no connections remain */
 export function deauthenticate(peerId: string): boolean {
-	if (!onlineSessions[peerId]) {
-		return false;
-	} else {
+	// Handle connection counting for all peers (even those not authenticated)
+	if ((connectionCounts[peerId] || 0) >= 0) {
+		// Decrement connection count
+		connectionCounts[peerId] = (connectionCounts[peerId] || 1) - 1;
+		console.log(`[Auth] Connection closed for peer ${peerId}. Remaining connections: ${connectionCounts[peerId]}`);
+	}
+
+	// Only proceed with deauthentication when no connections remain
+	if (connectionCounts[peerId] == 0 && onlineSessions[peerId]) {
 		const peer = onlineSessions[peerId];
 		delete onlineSessions[peerId];
+		peerEmitter.emit("onlineStatusChanged", peer);
 		console.log(`[Auth] Logout successful for peer ${peerId}. Active sessions: ${Object.keys(onlineSessions).length}`);
 		return true;
 	}
+
+	return false;
 }
 
 /**
@@ -62,8 +83,8 @@ export const withAuthenticatedPeerMiddleware = middleware(async ({ ctx, next }) 
 		throw new TRPCError({ code: "BAD_REQUEST", message: "The given peer is not online, please authenticate" });
 	}
 
-	// Update peer online status
-	authenticate(ctx.peer.id);
+	// Update peer online status (refresh authentication)
+	refreshAuthentication(ctx.peer.id, peer);
 
 	return next({ ctx: { peer } });
 });
@@ -160,6 +181,11 @@ export const authRouter = trcpRouter({
 					console.error(`[Auth] Failed to create a new peer ${ctx.peer.id}: ${error.message}`);
 				}
 				console.log("[Auth]", ctx.peer.id, "joined as new peer");
+			} else if (input.name) {
+				// Update the peer's name if provided
+				peer.name = input.name;
+				await peer.save();
+				console.log("[Auth]", ctx.peer.id, "updated name to", input.name);
 			}
 
 			// Verify given password, needed in theater mode to become an admin
@@ -181,7 +207,7 @@ export const authRouter = trcpRouter({
 			}
 
 			// Authenticate
-			const didAuthenticate = authenticate(ctx.peer.id, peer);
+			const didAuthenticate = refreshAuthentication(ctx.peer.id, peer);
 			if (didAuthenticate) {
 				peerEmitter.emit("onlineStatusChanged", peer);
 			}
@@ -212,24 +238,19 @@ export const authRouter = trcpRouter({
 	}),
 
 	/**
-	 * Invalidate (logout) all sessions and go offline
+	 * Invalidates any existing admin session for the given peerId
 	 */
-	deauthenticate: procedure.mutation(async ({ ctx }) => {
-		if (!onlineSessions[ctx.peer.id]) {
+	endAuthorization: procedure.mutation(async ({ ctx }) => {
+		if (!_adminSessions[ctx.peer.id]) {
 			return {
 				valid: false,
 				message: "Session not found",
 			};
 		}
 
-		const didLogOut = deauthenticate(ctx.peer.id);
-
-		if (didLogOut) {
-			peerEmitter.emit("onlineStatusChanged", peer);
-		}
-
+		delete _adminSessions[ctx.peer.id];
 		return {
-			valid: false,
+			valid: true,
 		};
 	}),
 });

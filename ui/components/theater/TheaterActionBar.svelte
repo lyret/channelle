@@ -3,12 +3,12 @@
 	import IconUser from "~/components/picol/icons/Picol-user-close.svelte";
 	import IconInfo from "~/components/picol/icons/Picol-book-sans-information.svelte";
 
-	import { isTheaterAuthenticated, deauthenticateTheater } from "~/api/auth";
+	import { isTheaterAuthenticated, endAdminAuthorization } from "~/api/auth";
 	import { openAuthModal, openAboutModal } from "~/stores/theater/theaterModals";
 
 	function handleSignIn() {
 		if ($isTheaterAuthenticated) {
-			deauthenticateTheater();
+			endAdminAuthorization();
 		} else {
 			openAuthModal();
 		}

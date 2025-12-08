@@ -1,5 +1,5 @@
+import type { Peer } from "./models/Peer";
 import { applyWSSHandler } from "@trpc/server/adapters/ws";
-import type { Peer } from "./lib";
 import { trpc, ws } from "./lib";
 import { closeMediaPeer, stageRouter } from "./routers/stageRouter";
 import { developmentRouter } from "./routers/developmentRouter";
@@ -57,13 +57,24 @@ export async function createAppRouter() {
 	applyWSSHandler({
 		wss: wsServer,
 		router: appRouter,
-		createContext: ({ info, res }) => {
+		createContext: async ({ info, res }) => {
 			// Get the peer id from the connection parameters
 			const peerId = info.connectionParams?.peerId;
+
+			// Reject connections without a peer ID
+			if (!peerId) {
+				console.log("[TRPC] Connection rejected: No peer ID provided");
+				res.close();
+				throw new Error("Connection requires a peer ID");
+			}
+
 			console.log("[TRPC] Peer Connected:", peerId);
+
 			res.once("close", () => {
 				console.log("[TRPC] Peer Disconnected:", peerId);
+				// Close all open media connections
 				closeMediaPeer(peerId);
+				// Decrement connection count and deauthenticate if no connections remain
 				deauthenticate(peerId);
 			});
 

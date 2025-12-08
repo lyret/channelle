@@ -197,14 +197,15 @@ export async function subscribeToBackstageConfigurationChanges(): Promise<void> 
 					}
 					if (data.event == "initial") {
 						_localPeers.set(data.peers);
+						currentPeerOnlineCounter.update((c) => c + (data.peers[localPeerId].online ? 1 : 0));
 					} else {
-						if (data.event === "onlineStatusChanged" && localPeerId == data.peer.id) {
-							currentPeerOnlineCounter.update((c) => c + (data.peer.online ? 1 : -1));
-						}
 						_localPeers.update((record) => {
 							record[data.peer.id] = data.peer;
 							return record;
 						});
+						if (data.event === "onlineStatusChanged" && data.peer.id == localPeerId) {
+							currentPeerOnlineCounter.update((c) => c + (data.peer.online ? 1 : -1));
+						}
 					}
 				},
 				onError: (error) => {
