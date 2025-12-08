@@ -15,7 +15,7 @@ async function initializeStage() {
 	try {
 		// Authenticate as online
 		await authenticate();
-		// Enable mute enforcement to stop streams when peer is muted via database
+		// Enable media enforcement to stop streams when muted or permissions are revoked
 		startMuteEnforcement();
 		// Enable configuration synchronization for real-time updates when changes are made
 		await subscribeToBackstageConfigurationChanges();

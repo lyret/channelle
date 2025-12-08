@@ -49,11 +49,7 @@ export function isPeerOnStage(peer: ClientPeerAttributes, isInLayout: boolean, s
 /**
  * Determine media permissions based on role and scene settings
  */
-export function getMediaPermissions(
-	peer: ClientPeerAttributes,
-	isOnStage: boolean,
-	sceneSettings: any,
-): { audioAllowed: boolean; videoAllowed: boolean } {
+export function getMediaPermissions(peer: ClientPeerAttributes, isOnStage: boolean, sceneSettings: any): { audioAllowed: boolean; videoAllowed: boolean } {
 	// Database mute states override all permissions
 	if (peer.audioMuted || peer.videoMuted) {
 		return {
@@ -62,11 +58,11 @@ export function getMediaPermissions(
 		};
 	}
 
-	// Actors and managers have permissions when on stage
+	// Actors and managers have different audio/video permissions
 	if (peer.actor || peer.manager) {
 		return {
-			audioAllowed: isOnStage,
-			videoAllowed: isOnStage,
+			audioAllowed: isOnStage || sceneSettings?.visitorAudioEnabled || false,
+			videoAllowed: isOnStage || sceneSettings?.visitorVideoEnabled || false,
 		};
 	}
 

@@ -7,7 +7,7 @@
  * - peerMediaTypes.ts - Type definitions
  * - peerMediaStateComputation.ts - Core logic functions
  * - peerMediaStores.ts - Reactive store definitions
- * - muteEnforcement.ts - Mute enforcement logic
+ * - muteEnforcement.ts - Media enforcement logic (mute states and permissions)
  */
 
 // Export types
@@ -39,5 +39,5 @@ export {
 	videoButtonStateStore,
 } from "./peerMediaStores";
 
-// Export mute enforcement
-export { startMuteEnforcement } from "./muteEnforcement";
+// Export media enforcement (handles both mute states and permissions)
+export { startMuteEnforcement, stopMuteEnforcement } from "./muteEnforcement";
