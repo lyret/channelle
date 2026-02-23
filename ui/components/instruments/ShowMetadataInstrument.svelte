@@ -1,15 +1,18 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { updateConfigurationSettings, showMetadataStore } from "~/api/backstage/backstageClient";
+	import { themes, DEFAULT_THEME } from "~/api/theme";
 	import IconSave from "../icons/Icon-save.svelte";
 	import IconX from "../icons/Icon-x.svelte";
 
 	let nameInput = "";
 	let descriptionInput = "";
 	let nomenclatureInput = "";
+	let themeInput = DEFAULT_THEME;
 	let originalName = "";
 	let originalDescription = "";
 	let originalNomenclature = "";
+	let originalTheme = DEFAULT_THEME;
 	let isLoading = false;
 	let errorMessage = "";
 	let success = false;
@@ -27,7 +30,7 @@
 	const descriptionMaxLength = 1000;
 	const nomenclatureMaxLength = 100;
 
-	$: hasChanges = nameInput !== originalName || descriptionInput !== originalDescription || nomenclatureInput !== originalNomenclature;
+	$: hasChanges = nameInput !== originalName || descriptionInput !== originalDescription || nomenclatureInput !== originalNomenclature || themeInput !== originalTheme;
 	$: canSave = hasChanges && nameInput.trim().length > 0 && !isLoading;
 
 	let isInitialized = false;
@@ -39,20 +42,24 @@
 				const newOriginalName = show.name || "";
 				const newOriginalDescription = show.description || "";
 				const newOriginalNomenclature = show.nomenclature || "föreställningen";
+				const newOriginalTheme = show.theme || DEFAULT_THEME;
 
 				// Only update if this is the initial load or if the values actually changed from outside
 				if (
 					!isInitialized ||
 					(originalName !== newOriginalName && nameInput === originalName) ||
 					(originalDescription !== newOriginalDescription && descriptionInput === originalDescription) ||
-					(originalNomenclature !== newOriginalNomenclature && nomenclatureInput === originalNomenclature)
+					(originalNomenclature !== newOriginalNomenclature && nomenclatureInput === originalNomenclature) ||
+					(originalTheme !== newOriginalTheme)
 				) {
 					originalName = newOriginalName;
 					originalDescription = newOriginalDescription;
 					originalNomenclature = newOriginalNomenclature;
+					originalTheme = newOriginalTheme;
 					nameInput = originalName;
 					descriptionInput = originalDescription;
 					nomenclatureInput = originalNomenclature;
+					themeInput = originalTheme;
 					isInitialized = true;
 				}
 			}
@@ -76,10 +83,13 @@
 		nameInput = originalName;
 		descriptionInput = originalDescription;
 		nomenclatureInput = originalNomenclature;
+		themeInput = originalTheme;
 	}
 
 	async function saveChanges() {
-		if (!canSave) return;
+		if (!canSave) {
+			return;
+		}
 
 		isLoading = true;
 		errorMessage = "";
@@ -87,7 +97,7 @@
 
 		try {
 			// Only include fields that have actually changed
-			const metadata: { name?: string; description?: string; nomenclature?: string } = {};
+			const metadata: { name?: string; description?: string; nomenclature?: string; theme?: string } = {};
 
 			if (nameInput.trim() !== originalName) {
 				metadata.name = nameInput.trim();
@@ -97,6 +107,9 @@
 			}
 			if (nomenclatureInput.trim() !== originalNomenclature) {
 				metadata.nomenclature = nomenclatureInput.trim();
+			}
+			if (themeInput !== originalTheme) {
+				metadata.theme = themeInput;
 			}
 
 			// Check if we actually have changes to send
@@ -117,6 +130,9 @@
 				}
 				if (metadata.nomenclature !== undefined) {
 					originalNomenclature = metadata.nomenclature;
+				}
+				if (metadata.theme !== undefined) {
+					originalTheme = metadata.theme;
 				}
 
 				success = true;
@@ -243,6 +259,20 @@
 					{descriptionCharCount}/{descriptionMaxLength} tecken
 				</p>
 			</div>
+		</div>
+
+		<div class="field">
+			<label class="label">Tema</label>
+			<div class="control">
+				<div class="select">
+					<select bind:value={themeInput}>
+						{#each Object.keys(themes) as name (name)}
+								<option value={name}>{name}</option>
+						{/each}
+					</select>
+				</div>
+			</div>
+			<div class="help">Välj {nomenclatureInput}s visuella tema</div>
 		</div>
 
 		<div class="field is-grouped">

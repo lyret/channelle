@@ -12,6 +12,7 @@ let _backstageConfiguration: BackstageConfiguration = {
 	name: "",
 	description: "",
 	nomenclature: "föreställningen",
+	theme: "mellan",
 	script: null,
 	password: "",
 	curtainsOverride: SceneSetting.FORCED_ON,
@@ -82,6 +83,7 @@ export function toBackstageConfiguration(show: Show): BackstageConfiguration {
 		name: show.name,
 		description: show.description,
 		nomenclature: show.nomenclature,
+		theme: show.theme,
 		script: show.script,
 		password: show.password,
 		curtainsOverride: show.curtainsOverride,
@@ -113,6 +115,7 @@ export async function saveBackstageConfiguration(config: BackstageConfiguration)
 					visitorAudioEnabledOverride: config.visitorAudioEnabledOverride,
 					visitorVideoEnabledOverride: config.visitorVideoEnabledOverride,
 					selectedScene: config.selectedScene,
+					theme: config.theme
 				});
 				console.log(`[Backstage] Configuration persisted to the database on show with id ${show.id}: ${show.name}`);
 			}

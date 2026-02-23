@@ -123,52 +123,6 @@
 		// Store the modified layout
 		modifiedLayouts[event.detail.name] = event.detail;
 	}
-
-	// TODO: Theming
-	// const doDesignTest = (style: "simple" | "ukraine") => {
-	// 	if (style == "simple") {
-	// 		document.documentElement.style.setProperty("--channelle-main-bg-color", "black");
-	// 		document.documentElement.style.setProperty("--channelle-main-text-color", "white");
-	// 		document.documentElement.style.setProperty("--channelle-menu-bg-color", "black");
-	// 		document.documentElement.style.setProperty("--channelle-menu-text-color", " white");
-	// 	} else {
-	// 		document.documentElement.style.setProperty("--channelle-main-bg-color", "blue");
-	// 		document.documentElement.style.setProperty("--channelle-main-text-color", "yellow");
-	// 		document.documentElement.style.setProperty("--channelle-menu-bg-color", "yellow");
-	// 		document.documentElement.style.setProperty("--channelle-menu-text-color", " red");
-	// 	}
-	// document.documentElement.style.setProperty("--bulma-primary-h", "246deg");
-	// document.documentElement.style.setProperty("--bulma-primary-s", "100%");
-	// document.documentElement.style.setProperty("--bulma-primary-l", "48.4%");
-	// document.documentElement.style.setProperty("--bulma-info-h", "60deg");
-	// document.documentElement.style.setProperty("--bulma-info-s", "100%");
-	// document.documentElement.style.setProperty("--bulma-info-l", "63.7%");
-	// document.documentElement.style.setProperty("--bulma-scheme-h", "60deg");
-	// document.documentElement.style.setProperty("--bulma-scheme-s", "100%");
-	// document.documentElement.style.setProperty("--bulma-scheme-l", "63.7%");
-	// document.documentElement.style.setProperty(
-	// 	"--bulma-scheme-main-l",
-	// 	"63.7%"
-	// );
-	// document.documentElement.style.setProperty("--bulma-link-h", "317deg");
-	// document.documentElement.style.setProperty("--bulma-link-s", "41.2%");
-	// document.documentElement.style.setProperty("--bulma-link-l", "93.3%");
-	// document.documentElement.style.setProperty("--bulma-link-l", "93.3%");
-	// document.documentElement.style.setProperty("--bulma-link-l", "93.3%");
-
-	// document.documentElement.style.setProperty(
-	// 	"--bulma-black",
-	// 	"var(--bulma-primary)"
-	// );
-	// document.documentElement.style.setProperty(
-	// 	"--bulma-button-static-background-color",
-	// 	"var(--bulma-black)"
-	// );
-	// document.documentElement.style.setProperty(
-	// 	"--bulma-body-background-color",
-	// 	"var(--bulma-black)"
-	// );
-	//};
 </script>
 
 <div class="scene-selector-instrument">

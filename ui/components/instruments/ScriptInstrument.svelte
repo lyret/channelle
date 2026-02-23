@@ -105,7 +105,9 @@
 	}
 
 	async function saveChanges() {
-		if (!canSave || !editor) return;
+		if (!canSave || !editor){
+			return;
+		}
 
 		isLoading = true;
 		errorMessage = "";

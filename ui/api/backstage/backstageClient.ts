@@ -2,6 +2,7 @@ import type { BackstageConfiguration, EditableShowAttributes, ClientPeerAttribut
 import { writable, derived, get } from "svelte/store";
 import { backstageClient, peersClient, wsPeerIdStore } from "../_trpcClient";
 import { currentPeerOnlineCounter } from "../auth/_onlineElsewhereStore";
+import { applyTheme, DEFAULT_THEME } from "../theme";
 
 /** In-memory local show id of any loaded configuration */
 let _localShowId: number | null = null;
@@ -22,6 +23,7 @@ const _localConfigStore = writable<BackstageConfiguration>({
 	visitorAudioEnabledOverride: 2,
 	visitorVideoEnabledOverride: 2,
 	selectedScene: null,
+	theme: DEFAULT_THEME,
 });
 
 /** Contains a registry of all peers belonging to the loaded show configuration */
@@ -84,6 +86,7 @@ export const showMetadataStore = derived(_localConfigStore, ($config) => ({
 	name: $config.name || "namnlös",
 	description: $config.description,
 	nomenclature: $config.nomenclature || "föreställningen",
+	theme: $config.theme || DEFAULT_THEME
 }));
 
 /** Current show script from configuration */
@@ -173,6 +176,12 @@ export async function subscribeToBackstageConfigurationChanges(): Promise<void> 
 					}
 					_localConfigStore.set(data.config);
 					_localShowId = data.config.showId;
+
+					// Apply the theme from the updated configuration
+					if (data.config.theme) {
+						applyTheme(data.config.theme);
+					}
+
 					if (data.type == "initial") {
 						configurationIsLoading.set(false);
 					}

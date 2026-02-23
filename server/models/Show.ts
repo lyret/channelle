@@ -18,6 +18,7 @@ export class Show extends Model {
 	declare visitorAudioEnabledOverride: SceneSetting;
 	declare visitorVideoEnabledOverride: SceneSetting;
 	declare url: string | null;
+	declare theme: "minimal" | "mellan" | "cool";
 	declare online: boolean;
 	declare nrOfTimesRehersed: number;
 	declare nrOfTimesShown: number;
@@ -71,6 +72,11 @@ export function initShow(sequelize: Sequelize) {
 				type: DataTypes.STRING,
 				allowNull: true,
 				defaultValue: null,
+			},
+			theme: {
+				type: DataTypes.ENUM("minimal", "mellan", "cool"),
+				allowNull: false,
+				defaultValue: "mellan", // Matches DEFAULT_THEME constant from client-side
 			},
 			nrOfTimesRehersed: {
 				type: DataTypes.INTEGER,
