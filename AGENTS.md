@@ -1,192 +1,115 @@
 # Channelle - AI Development Guidelines
 
 ## Overview
-Channelle is an open-source multimedia communication platform designed for the free culture sector, enabling artists, cultural workers, and activists to host autonomous online performances and events without corporate control or censorship.
+Channelle is an open-source multimedia communication platform for the free culture sector, enabling autonomous online performances without corporate control.
 
 ## Architecture
 
 ### Operational Modes
-Channelle is a unified Node.js application that operates in two distinct modes within a single codebase:
-
-- **Theater Mode** (`--theater`): Management interface for creating and configuring shows, scenes, and performance settings
-- **Stage Mode** (default): Live performance execution with WebRTC streaming, real-time chat, and audience interaction
+- **Theater Mode** (`--theater`): Management interface for shows, scenes, and settings
+- **Stage Mode** (default): Live performance with WebRTC streaming and audience interaction
 
 ### Core Architecture
-- **Unified Server**: Single Node.js application serving both modes via mode-specific routing
-- **Database Models**: SQLite with Sequelize ORM (Show, Scene, Peer, Message models)
-- **WebRTC Streaming**: MediaSoup SFU (Selective Forwarding Unit) for professional one-to-many broadcasting
-- **Type-safe API**: tRPC with WebSocket support for real-time communication
-- **Frontend**: Multiple Svelte interfaces (theater, stage, backstage, debug) served as separate HTML entry points
-- **Build System**: Custom CLI with ESBuild for both client and server compilation
+- **Unified Server**: Single Node.js application with mode-specific routing
+- **Database**: SQLite with Sequelize ORM
+- **WebRTC**: MediaSoup SFU for professional broadcasting
+- **API**: tRPC with WebSocket support
+- **Frontend**: Multiple Svelte interfaces
+- **Build**: Custom CLI with ESBuild
 
-### Key Concepts
-- **Shows**: Configured performances with settings and scene definitions
-- **Scenes**: Predefined layouts and behavior settings for different parts of a performance
-- **Peers**: Participants with roles (actor, manager, visitor) and associated permissions
-- **Stage Layout**: Grid-based arrangement of video feeds, chat, and empty spaces
-- **Launch Adapters**: Pluggable adapters for deploying stage instances (none, local, digitalocean)
+## Development Guidelines
 
-The application can run standalone as a stage server or be initialized with a specific show configuration via `--showId` parameter. Theater mode includes launcher capabilities for spawning stage instances on different infrastructure.
+### Code Style
+- **Indentation**: Tabs (not spaces)
+- **Quotes**: Double quotes for strings
+- **Semicolons**: Required
+- **Line Length**: Max 160 characters
+- **Types**: TypeScript strict mode
 
-### Launcher System Architecture
-- **Single Active Adapter**: Only one launcher adapter active at a time (configured via `THEATER_ADAPTER`)
-- **Functional Registry**: Module-based adapter registration without class hierarchies
-- **Real-time Status**: tRPC sync endpoints for live adapter status and instance monitoring
-- **Configurable Constraints**: Each adapter defines launch limitations (e.g., max instances, API requirements)
+### File Organization
+- **Naming**: lowercase filenames, camelCase for multi-word
+- **Index Files**: Use wildcard exports (`export * from "module"`)
+- **Single Responsibility**: One clear purpose per file
+- **Type Centralization**: Related types in dedicated `types.ts` files
 
-### tRPC Router Patterns
-- **Custom Procedures**: Use middleware procedures for common validation (e.g., `roomProcedure`, `launcherProcedure`)
-- **Sync Endpoints**: Primary polling endpoints for real-time state synchronization (inspired by `mediaRouter.sync`)
-- **Consistent Error Handling**: Centralized error handling functions to reduce duplication
-- **Safe Fallbacks**: Query endpoints should gracefully handle uninitialized states
-- **Helper Functions**: Extract common logic to pure functions in appropriate modules
+### Barrel File Patterns
+```typescript
+// GOOD: Wildcard export for clean API
+export * from "./module";
 
-## Technology Stack
-
-### Core Technologies
-- **TypeScript/JavaScript**: Primary languages (ES2021+ with Node.js 21+)
-- **Svelte 4**: Frontend framework with TypeScript support
-- **Node.js**: Server runtime (>21.0.0 required)
-- **SQLite**: Database via Sequelize ORM
-- **SASS/SCSS**: Styling with Bulma CSS framework
-
-### Server Libraries
-- **MediaSoup**: Core WebRTC media streaming (one-to-many broadcasting)
-- **tRPC**: Type-safe API layer with WebSocket support
-- **Restify**: HTTP server framework
-- **Sequelize**: Database ORM
-- **WebSocket (ws)**: Real-time communication
-
-### Client Libraries
-- **MediaSoup Client**: WebRTC client-side media handling
-- **Bulma + Bulma-list**: CSS framework and extensions
-- **Universal Router**: Client-side routing
-- **Broadcast Channel**: Cross-tab communication
-
-### Build Tools
-- **ESBuild**: Fast bundler for both client and server
-- **ESLint**: Linting with TypeScript and Svelte support
-- **PostCSS + Autoprefixer**: CSS processing
-
-## Project Structure
-
-```
-channelle/
-├── server/           # Backend Node.js application
-│   ├── lib/         # Core server libraries (http, mediasoup, trpc, sequelize, ws)
-│   ├── models/      # Database models (Peer, Message, Scene, Show)
-│   ├── routers/     # tRPC route handlers (media, chat, effects, shows, theater, config)
-│   ├── _router.ts   # Main router configuration
-│   ├── _server.ts   # Server initialization
-│   └── _types.ts    # Server-side type definitions
-├── ui/              # Frontend Svelte application
-│   ├── components/  # Svelte components (pages, stage, theater, chat, etc.)
-│   ├── api/         # Client-side API utilities
-│   ├── stores/      # Svelte stores for state management
-│   ├── styles/      # SCSS stylesheets
-│   ├── assets/      # Static assets
-│   └── *.html       # Entry HTML files (stage, theater, backstage, debug, etc.)
-├── shared/          # Code shared between server and client
-│   └── types/       # TypeScript type definitions
-└── .dist/           # Build output directory
+// BAD: Manual named exports
+export { foo, bar } from "./module";
 ```
 
-## Code Style & Guidelines
+### Module Organization
+- **Function-Based**: Organize by primary exported function
+- **Registry Pattern**: Module-level functions over class-based registries
+- **Helper Functions**: Extract common logic to pure functions
+- **Avoid Classes**: Prefer functional programming patterns
 
-### ESLint Configuration
-- Tabs for indentation (not spaces)
-- Double quotes for strings
-- Semicolons required
-- Max line length: 160 characters
-- TypeScript strict mode enabled
-- Consistent type imports preferred
+### Constants and Defaults
+- **Respect Constants**: Always use defined constants, never hardcode values
+- **Server-Client Sync**: When constants are defined client-side but needed server-side:
+  - Document the expected value in server code
+  - Add comments like `// Matches DEFAULT_THEME constant from client-side`
+  - Ensure server defaults align with client constants
+- **Default Values**: Prefer constants over magic strings/numbers
+- **Example**:
+  ```typescript
+  // GOOD: Uses constant
+  defaultValue: DEFAULT_THEME,
+  
+  // BAD: Hardcoded value
+  defaultValue: "mellan",
+  
+  // ACCEPTABLE: Server-side with comment
+  defaultValue: "mellan", // Matches DEFAULT_THEME constant from client-side
+  ```
 
-### Documentation Standards
-- **JSDocs required** for all exported entities and top-level variables
-- Single-line comments (`//`) for inline function documentation
-- Keep code simple and direct
-- Avoid unnecessary error handling wrappers
-- Avoid excessive console.log statements
+## AI Assistant Rules
 
-### File Naming
-- TypeScript files use `.ts` extension
-- Svelte components use `.svelte` extension
-- Build scripts use `.mjs` extension
-- Private/internal files prefixed with `_`
+### ❌ Prohibited Actions
+- **NEVER** create documentation files (README.md, guides, etc.)
+- **NEVER** create example/demo files
+- **NEVER** run linting commands
+- **NEVER** create markdown files for documentation
+- **NEVER** start the server (build only for testing)
 
-### Styling
-- Do not create inline styles
-- Use Bulma class names for styling Svelte components
+### ✅ Required Behavior
+- **Focus**: Implement requested functionality only
+- **Explanations**: Brief inline comments, not separate docs
+- **Testing**: Build verification only (manual testing approach)
+- **Code**: Work directly with codebase, no auxiliary files
 
-## Build & Development
+### Testing Approach
+- **Manual Testing**: No automated tests
+- **Visual Verification**: Check UI features visually
+- **Build Verification**: Ensure code compiles without errors
+- **Functional Testing**: Test in running application
 
-### Build System
-- Custom CLI (`cli.mjs`) orchestrates builds
-- ESBuild for both client and server compilation
-- Watch mode for development with hot reloading
-- Separate contexts for client/server builds
+### Git Guidelines
+- **NEVER Stage Changes**: Agents must not stage or commit changes
+- **Build Only**: Use builds to verify code compiles correctly
+- **No Git Operations**: Avoid `git add`, `git commit`, `git stage`, etc.
+- **Verification**: Test functionality through builds, not git operations
 
-### Environment
-- Supports local, LAN, and WAN deployment modes
-- SQLite database stored in `.dist/database/`
-- Configuration via CLI args, env vars, and defaults
-- Debug modes available for development
+## Common Patterns
 
-### Dependencies
-- MediaSoup requires Python 3.7+ and pip3 for native dependencies
-- Manual deployment via npm scripts
+### Theme System
+- **Show-Level**: Theme applies to all users of a show
+- **Real-time**: Changes sync to all connected clients
+- **CSS Variables**: Uses `--channelle-*` variables
+- **Implementation**: Integrated with backstage configuration
 
-## AI Assistant Behavior Rules
+### Configuration Sync
+- **Pattern**: `subscribeToBackstageConfigurationChanges()`
+- **Usage**: Apply changes when configuration updates
+- **Example**: Theme application happens in config subscription
 
-### Prohibited Actions
-- **NEVER create documentation files** (README.md, example files, implementation guides, etc.)
-- **NEVER create demonstration files** or example code files
-- **NEVER run linting commands** (npm run lint, eslint, etc.)
-- **NEVER create markdown files** for examples, documentation, or summaries
-- **NEVER start the server** - Only build the project for testing purposes
-
-### Required Behavior
-- Focus solely on implementing requested functionality
-- Provide brief explanations in responses, not separate documentation files
-- Test builds only when necessary for verification
-- Work directly with the codebase without creating auxiliary files
-
-## Code Architecture Guidelines
-
-### Functional Programming Approach
-- **AVOID classes** - Use functional programming patterns instead
-- Prefer pure functions, modules, and data structures over class-based OOP
-- Use factory functions or plain objects instead of class instances
-- Export functions and data directly from modules rather than class methods
-- Exception: Only use classes when extending from required base classes (e.g., EventEmitter)
-
-### File Naming Conventions
-- **Use lowercase filenames** - Never start filenames with uppercase letters
-- Use camelCase for multi-word filenames (e.g., `adapterRegistry.ts`, not `AdapterRegistry.ts`)
-- Name files after their primary exported function or purpose
-- Avoid generic names like "Manager" - be specific about what the file does
-
-### Index File Guidelines
-- **Index files are export-only** - Use `index.ts` files solely for organizing imports and exports
-- Move all implementation logic to separate, descriptively named files
-- Index files should contain only `export` statements and type re-exports
-- **Prefer wildcard exports** - Use `export * from './module'` instead of explicit named exports in barrel files (TypeScript modules only; Svelte components require explicit default exports)
-- Keep index files minimal and focused on providing a clean public API
-
-### Module Organization Guidelines
-- **Single Responsibility** - Each file should have one clear purpose reflected in its name
-- **Function-Based Organization** - Organize files by their primary exported function or feature
-- **Registry Pattern** - Use module-level functions and state instead of class-based registries
-- **Helper Functions** - Extract common logic to pure functions in appropriate modules
-- **Type Centralization** - Keep related type definitions together in dedicated `types.ts` files
-
-### tRPC Router Architecture
-- **Custom Procedures** - Create middleware procedures for common validation (e.g., `launcherProcedure`)
-- **Sync-Based Real-time** - Use polling endpoints like `sync` for real-time state instead of WebSocket events
-- **Consistent Error Handling** - Centralize error handling in helper functions to reduce duplication
-- **Safe Query Fallbacks** - Query endpoints should gracefully handle uninitialized or error states
-- **Validation Middleware** - Move repetitive validation logic into custom procedures
-- **Context Enhancement** - Use middleware to provide validated context to endpoint handlers
+### Store Patterns
+- **Derived Stores**: For computed state
+- **Reactive**: Automatically update when dependencies change
+- **Cleanup**: Unsubscribe when components unmount
 
 ## License
 Creative Commons BY-NC 4.0 (non-commercial use)
