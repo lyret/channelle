@@ -5,6 +5,8 @@
 	import IconBriefcase from "../icons/Icon-briefcase.svelte";
 	import IconCircle from "../icons/Icon-circle.svelte";
 	import IconCopy from "../icons/Icon-copy.svelte";
+	import IconMonitor from "../icons/Icon-monitor.svelte";
+	import IconSmartphone from "../icons/Icon-smartphone.svelte";
 	import IconLock from "../icons/Icon-lock.svelte";
 	import IconMic from "../icons/Icon-mic.svelte";
 	import IconMicOff from "../icons/Icon-mic-off.svelte";
@@ -75,6 +77,15 @@
 				&nbsp;
 				{mediaState.name}
 				{#if isCurrentPeer}(du){/if}
+				{#if peer.deviceType}
+					<span class="icon ml-2 is-small" title="Enhet: {peer.deviceType}">
+						{#if peer.deviceType === "mobile"}
+							<IconSmartphone />
+						{:else if peer.deviceType === "desktop"}
+							<IconMonitor />
+						{/if}
+					</span>
+				{/if}
 			</button>
 			<div class="buttons">
 				{#if mediaState.isActor || mediaState.isManager}
@@ -232,6 +243,9 @@
 {/if}
 
 <style>
+	.icon.is-small {
+		font-size: 0.6em;
+	}
 	.has-background-menu {
 		background: unset !important;
 	}

@@ -5,7 +5,7 @@ import { Op } from "sequelize";
 import { trpc } from "../lib";
 import { Peer, peerEmitter } from "../models/Peer";
 import { withConfigProcedure } from "./backstageRouter";
-import { withAuthenticatedPeerMiddleware, withAuthenticatedAdminMiddleware, onlineSessions, isPeerOnline, updatePeerInformationInSessions } from "./authRouter";
+import { withAuthenticatedPeerMiddleware, withAuthenticatedAdminMiddleware, getPeerConnectionInfo, updatePeerInformationInSessions } from "./authRouter";
 
 // Get the trpc router constructor and default procedure
 const { router, procedure } = trpc();
@@ -24,11 +24,11 @@ export const peersRouter = router({
 	peers: withConfigProcedure.subscription(async function* ({
 		ctx: { config },
 	}): AsyncGenerator<
-		| { event: "initial"; peers: Record<string, PeerAttributes & { online: boolean }> }
-		| { event: "created"; peer: PeerAttributes & { online: boolean } }
-		| { event: "updated"; peer: PeerAttributes & { online: boolean } }
-		| { event: "onlineStatusChanged"; peer: PeerAttributes & { online: boolean } }
-		| { event: "productionDuplicationProblem"; peer: PeerAttributes & { connection: boolean } }
+		| { event: "initial"; peers: Record<string, PeerAttributes & { online: boolean; deviceType?: string }> }
+		| { event: "created"; peer: PeerAttributes & { online: boolean; deviceType?: string } }
+		| { event: "updated"; peer: PeerAttributes & { online: boolean; deviceType?: string } }
+		| { event: "onlineStatusChanged"; peer: PeerAttributes & { online: boolean; deviceType?: string } }
+		| { event: "productionDuplicationProblem"; peer: PeerAttributes & { connection: boolean; deviceType?: string } }
 	> {
 		const peers = await Peer.findAll({
 			where: {
@@ -41,7 +41,12 @@ export const peersRouter = router({
 
 		yield {
 			event: "initial",
-			peers: Object.fromEntries(peers.map((peer) => [peer.id, { ...(peer.toJSON() as PeerAttributes), online: isPeerOnline(peer.id) }])),
+			peers: Object.fromEntries(
+				peers.map((peer) => {
+					const { online, deviceType } = getPeerConnectionInfo(peer.id);
+					return [peer.id, { ...(peer.toJSON() as PeerAttributes), online, deviceType }];
+				}),
+			),
 		};
 
 		for await (const [event, peer] of peerEmitter.anyEvent()) {
@@ -50,11 +55,11 @@ export const peersRouter = router({
 			}
 			yield {
 				event: event as "created" | "updated" | "onlineStatusChanged",
-				peer: { ...peer.toJSON(), online: isPeerOnline(peer.id) },
+				peer: { ...peer.toJSON(), ...getPeerConnectionInfo(peer.id) },
 			} as
-				| { event: "created"; peer: PeerAttributes & { online: boolean } }
-				| { event: "updated"; peer: PeerAttributes & { online: boolean } }
-				| { event: "onlineStatusChanged"; peer: PeerAttributes & { online: boolean } };
+				| { event: "created"; peer: PeerAttributes & { online: boolean; deviceType?: string } }
+				| { event: "updated"; peer: PeerAttributes & { online: boolean; deviceType?: string } }
+				| { event: "onlineStatusChanged"; peer: PeerAttributes & { online: boolean; deviceType?: string } };
 		}
 	}),
 

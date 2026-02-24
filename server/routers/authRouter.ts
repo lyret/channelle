@@ -25,9 +25,30 @@ export const _adminSessions: Record<string, AdminSession> = {};
 /** Session expiration time: 8 hours in milliseconds */
 const SESSION_EXPIRATION_TIME = 8 * 60 * 60 * 1000;
 
-/** Returns if the peer with the given is currently online */
+/** Returns connection information for a peer, including online status and device type */
+export function getPeerConnectionInfo(peerId: string, routeType?: string): { online: boolean; deviceType?: string } {
+	// Find connections for this peer, prioritizing stage connections
+	const peerConnections = Object.values(onlineSessions).filter((session) => session.peer.id === peerId);
+
+	if (peerConnections.length === 0) {
+		return { online: false };
+	}
+
+	// For stage route, return first stage connection's device type
+	if (routeType === "stage") {
+		const stageConnection = peerConnections.find((conn) => conn.routeType === "stage");
+		if (stageConnection) {
+			return { online: true, deviceType: stageConnection.deviceType };
+		}
+	}
+
+	// For other routes or fallback, return first connection's device type
+	return { online: true, deviceType: peerConnections[0].deviceType };
+}
+
+/** Returns if the peer with the given is currently online (backward compatibility) */
 export function isPeerOnline(peerId: string, routeType?: string): boolean {
-	return _getOnlineSessionCount(peerId, routeType) > 0;
+	return getPeerConnectionInfo(peerId, routeType).online;
 }
 
 /** Updates the peer information stored in all online sessions for the given peer id with the given peer data */

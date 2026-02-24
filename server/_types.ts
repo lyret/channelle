@@ -48,7 +48,12 @@ export type EditableShowAttributes = Omit<
 	"id" | "online" | "createdAt" | "updatedAt" | "lastOnlineAt" | "nrOfTimesShown" | "nrOfTimes" | "nrOfTimesRehersed" | "url"
 >;
 
-export type ClientPeerAttributes = Omit<PeerAttributes, "createdAt" | "updatedAt"> & { createdAt: string, updatedAt: string, online: boolean };
+export type ClientPeerAttributes = Omit<PeerAttributes, "createdAt" | "updatedAt"> & {
+	createdAt: string;
+	updatedAt: string;
+	online: boolean;
+	deviceType?: string;
+};
 
 /**
  * The backstage configuration type is the fields of a show database object that effects
