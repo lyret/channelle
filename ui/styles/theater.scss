@@ -1,0 +1,387 @@
+@charset "utf-8";
+
+$primary: #78275b;
+$info: #2d8767;
+$link: #6c6efc;
+$success: #286631;
+$warning: #fffe64;
+$danger: #992329;
+$background: #000;
+
+/* Use Bulma */
+@use "bulma/sass" with (
+	// Responsive breakpoints
+	$tablet: 600px,
+
+	// Fonts
+	$title-family: "Georgia",
+	$family-secondary: "OpenSans",
+	$family-primary: "OpenSansItalic",
+	$family-sans-serif: "OpenSans",
+	$weight-light: 300,
+	$weight-normal: 400,
+	$weight-medium: 700,
+	$weight-semibold: 700,
+	$weight-bold: 700,
+	$weight-extrabold: 700,
+	$size-1: 1.8rem,
+	$size-2: 1.6rem,
+	$size-3: 1.4rem,
+	$size-4: 1.2rem,
+	$size-5: 1.1rem,
+	$size-6: 1rem,
+	$size-7: 0.8rem,
+
+	// Radius
+	$radius-small: 0px,
+	$radius: 0,
+	$radius-medium: 0px,
+	$radius-large: 24px,
+	$radius-rounded: 24px,
+
+	// Modals
+	$modal-card-head-radius: 0,
+	$modal-card-foot-radius: 0,
+
+	// Colors
+	$primary: $primary,
+	$info: $info,
+	$link: $link,
+	$success: $success,
+	$warning: $warning,
+	$danger: $danger,
+	$background: black,
+	$body-background-color: black,
+
+	// Tabs
+	$tabs-link-active-color: $primary,
+	$tabs-link-active-border-bottom-color: $primary,
+
+	// Notification
+	$notification-code-background-color: $primary
+);
+/* Use the extension Bulma List */
+@use "./_bulmaList.scss";
+
+.modal-card-head {
+	box-shadow: none !important;
+}
+
+// Breakpoints:
+// mobile: up to 768px
+// tablet: from 769px to 1024px
+// desktop: from 1024px to 1215px
+// widescreen: from 1216px to 1407px
+// fullhd: from 1408px
+
+/* Define CSS variables */
+:root {
+	/* Bulma scheme colors in RGB for transparency support */
+	--bulma-scheme-main-rgb: 0, 0, 0;
+
+	/* Channelle theme colors */
+	--channelle-main-bg-color: #000000;
+	--channelle-main-text-color: #ffffff;
+	--channelle-menu-bg-color: #000000;
+	--channelle-menu-text-color: #ffffff;
+}
+
+.has-main-background {
+	background-color: var(--channelle-main-bg-color);
+}
+.has-main-color {
+	background-color: var(--channelle-main-text-color);
+}
+.has-menu-background {
+	background-color: var(--channelle-menu-bg-color);
+}
+.has-menu-color {
+	background-color: var(--channelle-menu-text-color);
+}
+.has-backstage-background {
+	background-color: var(--channelle-backstage-bg-color);
+}
+.has-backstage-color {
+	color: var(--channelle-backstage-text-color);
+}
+
+/* Fonts and external resources */
+@font-face {
+	font-family: "OpenSansItalic";
+	src: url("../assets/fonts/OpenSans/OpenSans-Italic-VariableFont_wdth,wght.ttf") format("truetype");
+}
+@font-face {
+	font-family: "OpenSans";
+	src: url("../assets/fonts/OpenSans/OpenSans-VariableFont_wdth,wght.ttf") format("truetype");
+}
+
+/* Add custom class decelerations for changing the font family */
+.is-family-default {
+	font-family: "OpenSansItalic" !important;
+	font-weight: 400;
+}
+.is-family-secondary {
+	font-family: "OpenSans" !important;
+	font-weight: 300;
+}
+.is-family-title {
+	font-family: "Georgia" !important;
+	text-transform: uppercase;
+	font-weight: 900;
+}
+
+/* Add custom class decelerations for text decorations */
+.is-strikethrough {
+	text-decoration: line-through !important;
+}
+
+/* Modify default style rules */
+.title {
+	text-transform: uppercase;
+	font-weight: 900;
+}
+
+/* Style customizations for mobile devices */
+body,
+html {
+	background-color: var(--channelle-main-bg-color);
+	touch-action: none;
+	overscroll-behavior-y: none;
+	height: 100%;
+}
+
+body {
+	background-color: var(--channelle-main-bg-color);
+}
+
+/* Ensure confetti effects appear above curtains */
+canvas.confetti-canvas {
+	z-index: 9992 !important;
+}
+
+/* Theme-aware styles - ensure headings and labels are white across all themes */
+.title,
+.label,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6 {
+	color: white !important;
+}
+
+/* Instrument-specific heading styles */
+.show-metadata-instrument .title,
+.scene-selector-instrument .title,
+.access-instrument .title {
+	color: white !important;
+}
+
+/* Form labels in all instruments */
+.instrument-container .label,
+.instrument-content .label {
+	color: white !important;
+}
+
+/* Ensure box elements have proper text contrast */
+.box {
+	background-color: var(--channelle-scene-controls-bg-color) !important;
+	color: var(--channelle-box-text-color) !important;
+	border: 1px solid rgba(255, 255, 255, 0.1) !important;
+	border-radius: 4px !important;
+}
+
+/* Ensure accordion content (which uses box class) has proper box styling */
+.accordion-content.box {
+	background-color: var(--channelle-scene-controls-bg-color) !important;
+	color: var(--channelle-box-text-color) !important;
+	border: 1px solid rgba(255, 255, 255, 0.1) !important;
+	border-radius: 4px !important;
+}
+
+/* Ensure headings and labels inside boxes use box text color instead of hardcoded white */
+.box .title,
+.box .subtitle,
+.box .label,
+.box .h1,
+.box .h2,
+.box .h3,
+.box .h4,
+.box .h5,
+.box .h6 {
+	color: var(--channelle-box-text-color) !important;
+}
+
+/* Ensure accordion content specifically uses box colors */
+.accordion-content.box {
+	background-color: var(--channelle-scene-controls-bg-color) !important;
+	color: var(--channelle-box-text-color) !important;
+	border: 1px solid rgba(255, 255, 255, 0.1) !important;
+	border-radius: 4px !important;
+}
+
+/* Ensure all elements inside accordion boxes use box text color */
+.accordion-content.box,
+.accordion-content.box *,
+.accordion-content.box p,
+.accordion-content.box span,
+.accordion-content.box div,
+.accordion-content.box label {
+	color: var(--channelle-box-text-color) !important;
+}
+
+/* Ensure forced settings content in accordions uses box text color */
+.accordion-content.box .field,
+.accordion-content.box .control,
+.accordion-content.box .label,
+.accordion-content.box .field p {
+	color: var(--channelle-box-text-color) !important;
+}
+
+/* Ensure checkboxes and radio buttons in accordions have proper text color */
+.accordion-content.box .checkbox,
+.accordion-content.box .radio {
+	color: var(--channelle-box-text-color) !important;
+}
+
+/* Style scene header and details with slightly grayish background */
+.scene-header,
+.scene-details {
+	background-color: var(--channelle-scene-controls-bg-color) !important;
+}
+
+/* Ensure scene header and details content has proper text color */
+.scene-header,
+.scene-header *,
+.scene-details,
+.scene-details * {
+	color: var(--channelle-box-text-color) !important;
+}
+
+/* Theme-specific adjustments */
+.theme-minimal {
+	--bulma-text-strong: #ffffff;
+}
+
+.theme-mellan {
+	--bulma-text-strong: #ffffff;
+}
+
+.theme-cool {
+	--bulma-text-strong: #ffffff;
+}
+
+/* Bulma-style utility classes for theme colors */
+/* Background colors */
+.has-background-main {
+	background-color: var(--channelle-main-bg-color) !important;
+}
+
+.has-background-menu {
+	background-color: var(--channelle-menu-bg-color) !important;
+}
+
+.has-background-box {
+	background-color: var(--channelle-box-bg-color) !important;
+}
+
+.has-background-control {
+	background-color: var(--channelle-control-background) !important;
+}
+
+.has-background-scene-controls {
+	background-color: var(--channelle-scene-controls-bg-color) !important;
+}
+
+.has-background-primary {
+	background-color: var(--bulma-primary) !important;
+}
+
+.has-background-accent {
+	background-color: var(--bulma-link) !important;
+}
+
+.has-background-black {
+	background-color: var(--channelle-black-background) !important;
+}
+
+/* Text colors */
+.has-text-main {
+	color: var(--channelle-main-text-color) !important;
+}
+
+.has-text-menu {
+	color: var(--channelle-menu-text-color) !important;
+}
+
+.has-text-control {
+	color: var(--channelle-control-color) !important;
+}
+
+.has-text-box {
+	color: var(--channelle-box-text-color) !important;
+}
+
+.has-text-primary {
+	color: var(--bulma-primary) !important;
+}
+
+.has-text-accent {
+	color: var(--bulma-link) !important;
+}
+
+/* Border colors */
+.has-border-main {
+	border-color: var(--channelle-main-bg-color) !important;
+}
+
+.has-border-menu {
+	border-color: var(--channelle-menu-bg-color) !important;
+}
+
+.has-border-control {
+	border-color: var(--channelle-control-background) !important;
+}
+
+.has-border-scene-controls {
+	border-color: var(--channelle-scene-controls-bg-color) !important;
+}
+
+.has-border-primary {
+	border-color: var(--bulma-primary) !important;
+}
+
+.has-border-accent {
+	border-color: var(--bulma-link) !important;
+}
+
+.has-border-white {
+	border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Convenience classes */
+.has-background-dark {
+	background-color: var(--channelle-main-bg-color) !important;
+}
+
+.has-background-light {
+	background-color: var(--channelle-scene-controls-bg-color) !important;
+}
+
+.has-text-light {
+	color: var(--channelle-box-text-color) !important;
+}
+
+/* Theme-specific background classes */
+.has-background-minimal {
+	background-color: #000000 !important;
+}
+
+.has-background-mellan {
+	background-color: #1e1e1e !important;
+}
+
+.has-background-cool {
+	background-color: #0057b8 !important;
+}
