@@ -2,7 +2,7 @@
 	import { debugModeStore } from "~/stores/debug";
 
 	import { currentPeerStore } from "~/api/auth";
-	import { mediaDebugStore, currentPeerMediaStateStore } from "~/api/stageNew/peerMedia";
+	import { mediaDebugStore, currentPeerMediaStateStore } from "~/api/stage";
 
 	$: debugInfo = $mediaDebugStore;
 	$: mediaState = $currentPeerMediaStateStore;

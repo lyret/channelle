@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { peerStreamsStore, sessionsStore } from "~/api/stageNew";
+	import { peerStreamsStore, sessionsStore } from "~/api/stage";
 	import { wsPeerIdStore } from "~/api/_trpcClient";
 	import { showPeersStore } from "~/api/backstage";
 	import { DebugPanel } from "~/components/debug";

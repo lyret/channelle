@@ -2,8 +2,7 @@
 	import { blur } from "svelte/transition";
 	import IconMicOff from "~/components/icons/Icon-mic-off.svelte";
 	import IconMic from "~/components/icons/Icon-mic.svelte";
-	import { enableMicrophone, disableMicrophone } from "~/api/stageNew";
-	import { localPeerMediaState } from "~/api/stageNew/peerMedia";
+	import { enableMicrophone, disableMicrophone, localPeerMediaState } from "~/api/stage";
 
 	export let minimal: boolean = false;
 

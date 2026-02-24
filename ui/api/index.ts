@@ -1,7 +1,6 @@
 // Export all API clients
 export * from "./_trpcClient";
-
-export * from "./stageNew";
+export * from "./stage";
 export * from "./backstage";
 export * from "./chat";
 export * from "./effects";

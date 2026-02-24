@@ -5,8 +5,8 @@
  */
 
 import { localPeerMediaState } from "./peerMediaStores";
-import { disableCamera, disableMicrophone } from "~/api/stageNew";
-import { getLocalVideoTrack, getLocalAudioTrack } from "~/api/stage";
+import { disableCamera, disableMicrophone } from "./roomManager";
+import { getLocalVideoTrack, getLocalAudioTrack } from "./old";
 
 // Track enforcement state
 let mediaEnforcementUnsubscribe: (() => void) | null = null;

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { localMediaStreamStore, videoProducerStore, audioProducerStore } from "~/api/stage";
+	import { localMediaStreamStore, videoProducerStore, audioProducerStore } from "~/api/stage/old";
 	import { wsPeerIdStore } from "~/api/_trpcClient";
 
 	export let peerId: string;

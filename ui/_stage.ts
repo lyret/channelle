@@ -1,7 +1,7 @@
 import "@babel/polyfill";
 import { enableMediaSoupDebugging, enableHotReloadingOnRebuilds } from "./api/development";
-import { authenticate, participateInTheMediaRoom, subscribeToBackstageConfigurationChanges } from "./api";
-import { startMuteEnforcement } from "./api/stageNew/peerMedia";
+import { authenticate, subscribeToBackstageConfigurationChanges } from "./api";
+import { startMuteEnforcement, participateInTheMediaRoom } from "./api/stage";
 import Stage from "~/components/pages/Stage.svelte";
 
 // Set correct debug output level for MediaSoup

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { wsPeerIdStore } from "~/api";
 	import { showPeersStore } from "~/api/backstage";
-	import { sessionsStore as roomSessionsStore, activeSpeakerStore as roomActiveSpeakerStore, roomState } from "~/api/stageNew";
+	import { sessionsStore as roomSessionsStore, activeSpeakerStore as roomActiveSpeakerStore, roomState } from "~/api/stage";
 	import PeerMediaStatus from "./PeerMediaStatus.svelte";
 	import ConnectionStatus from "./ConnectionStatus.svelte";
 

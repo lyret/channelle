@@ -9,8 +9,8 @@ import { wsPeerIdStore } from "~/api/_trpcClient";
 import { showPeersStore } from "~/api/backstage";
 import { calculatedStageLayoutStore } from "~/stores/stage/stageLayoutStore";
 import { showSceneSettingsStore } from "~/api/backstage";
-import { peerStreamsStore, sessionsStore } from "~/api/stageNew";
-import { videoProducerStore, audioProducerStore, micPausedStore, camPausedStore } from "~/api/stage";
+import { peerStreamsStore, sessionsStore } from "./roomManager";
+import { videoProducerStore, audioProducerStore, micPausedStore, camPausedStore } from "./old";
 import type { PeerMediaState, MediaButtonState, MediaDebugInfo } from "./peerMediaTypes";
 import { isPeerInLayout, isPeerOnStage, getMediaPermissions } from "./peerMediaStateComputation";
 

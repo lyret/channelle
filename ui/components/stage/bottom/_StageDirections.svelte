@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { slide } from "svelte/transition";
-	import { localPeerMediaState } from "~/api/stageNew/peerMedia";
+	import { localPeerMediaState } from "~/api/stage";
 	import IconAward from "../../icons/Icon-award.svelte";
 	import IconBriefcase from "../../icons/Icon-briefcase.svelte";
 

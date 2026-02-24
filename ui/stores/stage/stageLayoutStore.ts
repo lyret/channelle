@@ -1,5 +1,5 @@
 import { derived, type Readable } from "svelte/store";
-import { peerStreamsStore, sessionsStore } from "~/api/stageNew";
+import { peerStreamsStore, sessionsStore } from "~/api/stage/roomManager";
 import { showSelectedSceneStore } from "~/api/backstage";
 import type { StageLayout } from "~/types/serverSideTypes";
 

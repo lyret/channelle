@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { peerStreamsStore, sessionsStore } from "~/api/stageNew/roomManager";
+	import { peerStreamsStore, sessionsStore } from "~/api/stage";
 	import { wsPeerIdStore } from "~/api/_trpcClient";
 
 	export let peerId: string;

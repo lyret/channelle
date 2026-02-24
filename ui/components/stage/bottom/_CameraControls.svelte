@@ -2,8 +2,7 @@
 	import { blur } from "svelte/transition";
 	import IconVideoOff from "~/components/icons/Icon-camera-off.svelte";
 	import IconVideo from "~/components/icons/Icon-camera.svelte";
-	import { enableCamera, disableCamera } from "~/api/stageNew";
-	import { localPeerMediaState } from "~/api/stageNew/peerMedia";
+	import { enableCamera, disableCamera, localPeerMediaState } from "~/api/stage";
 
 	export let minimal: boolean = false;
 

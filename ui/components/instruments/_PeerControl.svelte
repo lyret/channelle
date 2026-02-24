@@ -18,7 +18,7 @@
 	import IconVideoOff from "../icons/Icon-camera-off.svelte";
 	import IconXCircle from "../icons/Icon-x-circle.svelte";
 	import { updatePeer } from "~/api/peers";
-	import { getPeerMediaStateStore } from "~/api/stageNew/peerMedia";
+	import { getPeerMediaStateStore } from "~/api/stage";
 
 	export let peer: ClientPeerAttributes;
 	export let isCurrentPeer: boolean = false;
