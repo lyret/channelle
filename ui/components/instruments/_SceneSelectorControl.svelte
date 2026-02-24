@@ -366,7 +366,6 @@
 		border: none;
 		border-radius: var(--bulma-radius-small);
 		background: transparent;
-		color: var(--bulma-link-dark);
 		cursor: pointer;
 		font-weight: 500;
 		text-align: center;
@@ -375,12 +374,12 @@
 		-moz-appearance: none;
 
 		&:focus {
-			outline: 2px solid var(--bulma-link-dark);
+			outline: 2px solid var(--bulma-link);
 			outline-offset: -2px;
 		}
 
 		&:hover {
-			outline: 2px solid var(--bulma-link-dark);
+			outline: 2px solid var(--bulma-link);
 		}
 	}
 

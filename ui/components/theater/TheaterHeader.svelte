@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { blur } from "svelte/transition";
+	import { showMetadataStore } from "~/api/backstage";
 	import logoGif from "~/assets/images/logo-free.gif";
 	import stageLightsGif from "~/assets/gifs/stagelights_turning_orange_md_clr.gif";
 
@@ -10,6 +11,7 @@
 <section class="has-text-centered" in:blur={{ delay: 500, duration: 1000 }}>
 	<div class="hero-body has-text-centered">
 		<div class="container" in:blur={{ delay: 500, duration: 1000 }}>
+			{#if $showMetadataStore.theme != "minimal"}
 			<div class="decorations">
 				<img src={stageLightsGif} alt="Stage lights" class="stage-lights" />
 				<img src={stageLightsGif} alt="Stage lights" class="stage-lights" />
@@ -17,6 +19,7 @@
 				<img src={stageLightsGif} alt="Stage lights" class="stage-lights" />
 				<img src={stageLightsGif} alt="Stage lights" class="stage-lights" />
 			</div>
+			{/if}
 		</div>
 		{#if !minimal}
 			<img src={logoGif} alt="Channelle" class="logo" />
@@ -28,6 +31,10 @@
 {/if}
 
 <style lang="scss">
+	section {
+		background-color: #000000 !important;
+	}
+
 	.logo {
 		margin-top: 1rem;
 		max-width: 400px;

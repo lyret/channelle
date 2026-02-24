@@ -60,7 +60,7 @@
 
 			{#if $showStageSettingsStore || $showStageChatStore}
 				<div class="sidebar">
-					<div class="sidebar-contents" style="z-index: 9999" in:fly={{ y: 200 }} out:fly={{ y: 200 }}>
+					<div class="sidebar-contents has-background-black" style="z-index: 9999" in:fly={{ y: 200 }} out:fly={{ y: 200 }}>
 						{#if $showStageSettingsStore}
 							<OptionsSidePanel />
 						{:else}
@@ -78,7 +78,7 @@
 		{/each}
 
 		<!-- FOOTER -->
-		<div class="footer">
+		<div class="footer has-background-black">
 			<ActionBar />
 		</div>
 	</main>

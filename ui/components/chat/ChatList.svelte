@@ -121,7 +121,7 @@
 <div class="list-container" bind:this={ref} class:has-unread={hasUnread}>
 	<div class="list">
 		{#if !filteredMessages || filteredMessages.length === 0}
-			<div class="is-size-4 has-text-grey-light">
+			<div class="is-size-4 chat-placeholder" style="color: var(--channelle-text-placeholder);">
 				{#if backstageOnly}
 					Inga backstage-meddelanden ännu...
 				{:else}

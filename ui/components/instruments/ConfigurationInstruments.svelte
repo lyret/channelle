@@ -189,13 +189,17 @@
 	}
 
 	.tabs {
-		background-color: var(--channelle-main-bg-color);
+		background-color: var(--channelle-black-background) !important;
 		padding: 0;
 		display: block;
 		flex-grow: 0;
 		flex-shrink: 0;
 		flex-basis: auto;
 		z-index: 10;
+	}
+
+	.tabs-container {
+		background-color: var(--channelle-black-background) !important;
 	}
 
 	.instruments {

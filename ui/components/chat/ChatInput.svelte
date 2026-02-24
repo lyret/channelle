@@ -73,7 +73,7 @@
 </script>
 
 <form on:submit={onSubmit} class="form">
-	<div class="field has-addons">
+	<div class="field has-addons mt-1">
 		<div class="control is-expanded">
 			<input
 				type="text"
@@ -90,12 +90,12 @@
 		<div class="control">
 			<button
 				type="submit"
-				class="button is-dark"
+				class="button"
 				class:is-large={isLarge}
 				{disabled}
 				class:is-loading={loading}
-				class:is-primary={!loading && !disabled && !makeBackstage}
 				class:is-warning={!loading && !disabled && makeBackstage}
+				class:is-dark={!loading && !disabled && makeBackstage}
 			>
 				{#if disabled && !inputValue.trim()}
 					<span class="icon"><PicolArrowFullLeft /></span>

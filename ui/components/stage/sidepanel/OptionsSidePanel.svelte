@@ -73,12 +73,12 @@
 				><span class="icon is-size-5"><IconActivity /></span>
 				<span>Diagnostik</span></button
 			>
-			<hr />
+
 			<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "scene-settings")}
 				><span class="icon is-size-5"><IconScenes /></span>
 				<span>Aktiv scen</span></button
 			>
-			<hr />
+
 			<!-- Fullscreen button for mobile -->
 			{#if isMobile}
 				<button
@@ -97,23 +97,23 @@
 					</span>
 					<span>{$fullscreen ? "Avsluta fullskärm" : "Fullskärm"}</span>
 				</button>
-				<hr />
+
 			{/if}
 			<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "access")}
 				><span class="icon is-size-5"><IconAccess /></span>
 				<span>Tillgång</span></button
 			>
-			<hr />
+
 			<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "participants")}
 				><span class="icon is-size-5"><IconUsers /></span>
 				<span>Deltagare</span></button
 			>
-			<hr />
+
 			<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "script")}
 				><span class="icon is-size-5"><IconScript /></span>
 				<span>Manuskript</span></button
 			>
-			<hr />
+
 			<a class="button is-fullwidth is-small" href="/backstage" target="_blank">
 				<span class="icon is-size-5"><IconExternalLink /></span>
 				<span>Öppna Backstage</span>

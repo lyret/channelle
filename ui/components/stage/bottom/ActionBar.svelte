@@ -36,7 +36,7 @@
 	const iconClassList = "icon is-size-4";
 </script>
 
-<div class="bar">
+<div class="bar has-background-black">
 	<!-- STATUS -->
 	<span class="block is-hidden-mobile"><StageDirections /></span>
 	<!-- DESKTOP SPACER -->
@@ -45,16 +45,16 @@
 	{/if}
 	<!-- GRATITUDE EFFECTS -->
 	{#if $showSceneSettingsStore.gratitudeEffects}
-		<button class={effectBtnClassList} transition:blur on:click={() => effects.set({ type: "applause", number: 1 })}>
+		<button class="{effectBtnClassList} has-background-black" transition:blur on:click={() => effects.set({ type: "applause", number: 1 })}>
 			<span class={iconClassList}>👏</span></button
 		>
-		<button class={effectBtnClassList} transition:blur on:click={() => effects.set({ type: "flowers", number: 1 })}>
+		<button class="{effectBtnClassList} has-background-black" transition:blur on:click={() => effects.set({ type: "flowers", number: 1 })}>
 			<span class={iconClassList}>🌹</span></button
 		>
 	{/if}
 	<!-- CRITICAL EFFECTS -->
 	{#if $showSceneSettingsStore.criticalEffects}
-		<button class={criticalEffectBtnClassList} transition:blur on:click={() => effects.set({ type: "tomato", number: 1 })}>
+		<button class="{criticalEffectBtnClassList} has-background-black" transition:blur on:click={() => effects.set({ type: "tomato", number: 1 })}>
 			<span class={iconClassList}>🍅</span></button
 		>
 	{/if}
@@ -71,7 +71,7 @@
 	<!-- CHAT -->
 	{#if $showSceneSettingsStore.chatEnabled}
 		<button
-			class={btnClassList}
+			class="{btnClassList} has-background-black"
 			transition:blur
 			class:active={$showStageChatStore}
 			on:click={() => {
@@ -88,7 +88,7 @@
 	<div class="small-spacer" />
 	<!-- SETTINGS -->
 	<button
-		class={btnClassList}
+		class="{btnClassList} has-background-black"
 		transition:blur
 		class:active={$showStageSettingsStore}
 		on:click={() => {
@@ -112,7 +112,7 @@
 		<div class="small-spacer" />
 		<button
 			type="button"
-			class={btnClassList}
+			class="{btnClassList} has-background-black"
 			class:active={$fullscreen}
 			transition:blur
 			on:click={() => {

@@ -62,7 +62,7 @@
 {#if mediaState}
 	<div class="list-item" use:clickOutside on:click_outside={() => (active = false)}>
 		<div class="accordion-header" class:is-loading={loading}>
-			<button class="button name pr-7" class:is-strikethrough={mediaState.isBanned} on:click={() => (active = !active)}>
+			<button class="button name pr-7 has-background-main" class:is-strikethrough={mediaState.isBanned} on:click={() => (active = !active)}>
 				<span class="icon mr-1" class:has-text-grey-light={!mediaState.isOnline} class:has-text-success={mediaState.isOnline}>
 					{#if mediaState.isManager}
 						<IconBriefcase />

@@ -64,7 +64,7 @@
 		justify-content: space-around;
 		align-items: center;
 		height: 48px;
-		background-color: var(--channelle-menu-bg-color);
+		background-color: var(--channelle-black-background) !important;
 		overflow: hidden;
 
 		:global(.spacer) {

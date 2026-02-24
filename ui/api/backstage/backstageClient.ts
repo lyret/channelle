@@ -82,12 +82,18 @@ export const showSceneOverridesStore = derived(_localConfigStore, ($config) => (
 export const showSelectedSceneStore = derived(_localConfigStore, ($config) => $config.selectedScene);
 
 /** Current show metadata from configuration */
-export const showMetadataStore = derived(_localConfigStore, ($config) => ({
-	name: $config.name || "namnlös",
-	description: $config.description,
-	nomenclature: $config.nomenclature || "föreställningen",
-	theme: $config.theme || DEFAULT_THEME
-}));
+export const showMetadataStore = derived(_localConfigStore, ($config) => {
+	// Check for URL search parameter override (development feature)
+	const urlParams = new URLSearchParams(window.location.search);
+	const urlTheme = urlParams.get("theme");
+	// Return metadata
+	return {
+		name: $config.name || "namnlös",
+		description: $config.description,
+		nomenclature: $config.nomenclature || "föreställningen",
+		theme: urlTheme || $config.theme || DEFAULT_THEME
+	}
+});
 
 /** Current show script from configuration */
 export const showScriptStore = derived(_localConfigStore, ($config) => ({

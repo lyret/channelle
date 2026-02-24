@@ -7,10 +7,17 @@ export interface Theme {
 	mainTextColor: string;
 	menuBgColor: string;
 	menuTextColor: string;
-	backstageBgColor: string;
-	backstageTextColor: string;
 	primaryColor: string;
+	linkColor: string;
 	accentColor: string;
+	successColor: string;
+	dangerColor: string;
+	warningColor: string;
+	boxBgColor: string;
+	blackBackground: string;
+	controlBackground: string;
+	controlColor: string;
+	boxTextColor: string;
 }
 
 export const themes: Record<ThemeName, Theme> = {
@@ -18,33 +25,54 @@ export const themes: Record<ThemeName, Theme> = {
 		name: "minimal",
 		mainBgColor: "#000000",
 		mainTextColor: "#ffffff",
-		menuBgColor: "#000000",
-		menuTextColor: "#ffffff",
-		backstageBgColor: "#1a1a1a",
-		backstageTextColor: "#ffffff",
-		primaryColor: "#78275b",
-		accentColor: "#6c6efc"
+		menuBgColor: "#1e1e1e",
+		menuTextColor: "#e0e0e0",
+		primaryColor: "#bb86fc",
+		linkColor: "#9575cd",
+		accentColor: "#03dac6",
+		successColor: "#28a745",
+		dangerColor: "#dc3545",
+		warningColor: "#ff9800",
+		boxBgColor: "#1e1e1e",
+		blackBackground: "#000000",
+		controlBackground: "#333333",
+		controlColor: "#e0e0e0",
+		boxTextColor: "#e0e0e0"
 	},
 	mellan: {
 		name: "mellan",
-		mainBgColor: "#f5f5f5",
-		mainTextColor: "#333333",
-		menuBgColor: "#ffffff",
-		menuTextColor: "#333333",
-		backstageBgColor: "#e0e0e0",
-		backstageTextColor: "#333333",
-		primaryColor: "#9c27b0",
-		accentColor: "#3f51b5"
+		mainBgColor: "#000000",
+		mainTextColor: "#e0e0e0",
+		menuBgColor: "#1e1e1e",
+		menuTextColor: "#e0e0e0",
+		primaryColor: "#bb86fc",
+		linkColor: "#9575cd",
+		accentColor: "#03dac6",
+		successColor: "#28a745",
+		dangerColor: "#dc3545",
+		warningColor: "#ff9800",
+		boxBgColor: "#1e1e1e",
+		blackBackground: "#000000",
+		controlBackground: "#333333",
+		controlColor: "#e0e0e0",
+		boxTextColor: "#e0e0e0"
 	},
 	cool: {
 		name: "cool",
 		mainBgColor: "#000000",
-		mainTextColor: "#ffff00",
-		menuBgColor: "#000000",
-		menuTextColor: "#ffff00",
-		backstageBgColor: "#1a1a1a",
-		backstageTextColor: "#ffff00",
-		primaryColor: "#ffeb3b",
-		accentColor: "#ff9800"
+		mainTextColor: "#ffd700",
+		menuBgColor: "#0057b8",
+		menuTextColor: "#ffd700",
+		primaryColor: "#e57373",
+		linkColor: "#9575cd",
+		accentColor: "#0057b8",
+		successColor: "#7cb342",
+		dangerColor: "#f44336",
+		warningColor: "#ff9800",
+		boxBgColor: "#0057b8",
+		blackBackground: "#000000",
+		controlBackground: "#004596",
+		controlColor: "#ffd700",
+		boxTextColor: "#ffd700"
 	}
 };

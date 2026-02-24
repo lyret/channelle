@@ -30,7 +30,7 @@
 			<div class="tabs is-fullwidth">
 				<ul>
 					<li class:is-active={!$backstageOnly}>
-						<a on:click={() => ($backstageOnly = false)}>
+						<a on:click={() => ($backstageOnly = false)} class:has-text-link={!$backstageOnly}>
 							<span class="icon is-small"><IconUsers /></span>
 							<span>Alla</span>
 						</a>
@@ -63,6 +63,9 @@
 		justify-content: normal;
 		align-items: normal;
 		align-content: normal;
+	}
+	.tabs ul {
+		border: none !important;
 	}
 	.tab-container {
 		display: block;

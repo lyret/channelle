@@ -81,11 +81,13 @@
 
 	<!-- Footer -->
 	<div class="level">
-		<div class="level-left">
-			<div class="level-item">
-				<img class="image" src={logoSrc} alt="Channelle" />
+			<div class="level-left">
+				{#if $showMetadataStore.theme != "minimal"}
+					<div class="level-item">
+						<img class="image" src={logoSrc} alt="Channelle" />
+					</div>
+				{/if}
 			</div>
-		</div>
 		<div class="level-right">
 			<div class="level-item">
 				Av&nbsp;<a

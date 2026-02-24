@@ -2,6 +2,7 @@
 	import { blur } from "svelte/transition";
 
 	import { hasAutenticated, currentPeerIsBannedStore, currentPeerStore, currentPeerIsOnlineElsewhere } from "~/api";
+	import { showMetadataStore } from "~/api/backstage";
 
 	import BlockedCurtainMessage from "~/components/curtains/BlockedCurtainMessage.svelte";
 	import LoaderCurtainMessage from "~/components/curtains/LoadingCurtainMessage.svelte";
@@ -57,17 +58,24 @@
 {#if renderMessages}
 	<div class="overlay">
 		{#if !$currentPeerIsOnlineElsewhere && $hasAutenticated && (!hasEnteredName || !hasInteractedWithTheDocument)}
-			<FloatingImage src={rosesSrc} alt="two roses shining" zIndex={9993} />
-			<FloatingImage src={rosesSrc} alt="two roses shining" zIndex={9993} />
-			<FloatingImage src={rosesSrc} alt="two roses shining" zIndex={9993} />
-			<FloatingImage src={rosesSrc} alt="two roses shining" zIndex={9993} />
+			{#if $showMetadataStore.theme != "minimal"}
+				<FloatingImage src={rosesSrc} alt="two roses shining" zIndex={9993} />
+				<FloatingImage src={rosesSrc} alt="two roses shining" zIndex={9993} />
+				<FloatingImage src={rosesSrc} alt="two roses shining" zIndex={9993} />
+				<FloatingImage src={rosesSrc} alt="two roses shining" zIndex={9993} />
+			{/if}
 			<div class="menu" in:blur={{ duration: 1000 }} out:blur={{ duration: 500 }}>
+
+				{#if $showMetadataStore.theme != "minimal"}
 				<img class="logo" src={logoSrc} alt="Online Teater" />
+				{/if}
 				<Entrance on:submit={() => (hasInteractedWithTheDocument = true)} />
 			</div>
 		{:else}
 			<div class="menu" in:blur={{ duration: 1000 }} out:blur={{ duration: 500 }}>
-				<img class="logo" src={logoSrc} alt="Online Teater" />
+				{#if $showMetadataStore.theme != "minimal"}
+					<img class="logo" src={logoSrc} alt="Online Teater" />
+				{/if}
 				{#if $currentPeerIsBannedStore}
 					<BlockedCurtainMessage />
 				{:else if $currentPeerIsOnlineElsewhere}

@@ -11,7 +11,7 @@
 	<main in:blur={{ delay: 500, duration: 1000 }}>
 		<TheaterHeader minimal={true} />
 		<div class="action-bar">
-			<a class="button is-small is-inverted" href="/">
+			<a class="button is-small is-inverted has-background-black" href="/">
 				<span class="icon is-size-4">
 					<IconArrowLeft />
 				</span>
@@ -24,7 +24,6 @@
 
 <style lang="scss">
 	main {
-		background-color: var(--channelle-main-bg-color);
 		height: 100%;
 		display: flex;
 		flex-direction: column;
@@ -42,7 +41,7 @@
 		justify-content: flex-start;
 		align-items: center;
 		height: 48px;
-		background-color: var(--channelle-menu-bg-color);
+		background-color: var(--channelle-black-background);
 		overflow: hidden;
 
 		.spacer {
@@ -53,7 +52,7 @@
 			border-radius: 0;
 			border: none;
 			padding: 12px;
-			background-color: var(--channelle-menu-bg-color);
+			background-color: var(--channelle-black-background);
 			color: var(--channelle-menu-text-color);
 
 			&:hover {

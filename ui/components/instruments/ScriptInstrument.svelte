@@ -366,6 +366,8 @@
 		overflow-y: auto;
 		border: 1px solid var(--bulma-border);
 		border-radius: 4px;
+		background: white;
+		color: black;
 
 		&.read-only {
 			background-color: var(--bulma-background);

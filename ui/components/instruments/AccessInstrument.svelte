@@ -187,7 +187,7 @@
 						{#if isRemovingPassword}
 							Ta bort lösenord
 						{:else if isChangingPassword}
-							{isLocked ? "Uppdatera lösenord" : "Aktivera lösenord"}
+							{isLocked ? "Uppdatera lösenordet" : "Aktivera lösenordet"}
 						{:else if isLocked}
 							Lösenord aktivt
 						{:else}

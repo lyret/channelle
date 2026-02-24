@@ -144,12 +144,251 @@ $background: #000;
 /* Style customizations for mobile devices */
 body,
 html {
+	background-color: var(--channelle-main-bg-color);
 	touch-action: none;
 	overscroll-behavior-y: none;
 	height: 100%;
 }
 
+body {
+	background-color: var(--channelle-main-bg-color);
+}
+
 /* Ensure confetti effects appear above curtains */
 canvas.confetti-canvas {
 	z-index: 9992 !important;
+}
+
+/* Theme-aware styles - ensure headings and labels are white across all themes */
+.title,
+.label,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6 {
+	color: white !important;
+}
+
+/* Instrument-specific heading styles */
+.show-metadata-instrument .title,
+.scene-selector-instrument .title,
+.access-instrument .title {
+	color: white !important;
+}
+
+/* Form labels in all instruments */
+.instrument-container .label,
+.instrument-content .label {
+	color: white !important;
+}
+
+/* Ensure buttons have proper contrast in all themes */
+.button:not(.is-primary):not(.is-link):not(.is-info):not(.is-success):not(.is-warning):not(.is-danger):not(.is-text):not(.is-light):not(.is-dark):not(.is-white):not(.is-black):not(.is-focused):not(.is-hovered):not(.is-active) {
+	background-color: var(--channelle-scene-controls-bg-color);
+	color: var(--channelle-box-text-color) !important;
+	box-shadow: none !important;
+}
+
+/* Ensure box elements have proper text contrast */
+.box {
+	background-color: var(--channelle-scene-controls-bg-color) !important;
+	color: var(--channelle-box-text-color) !important;
+	border: 1px solid rgba(255, 255, 255, 0.1) !important;
+	border-radius: 4px !important;
+}
+
+/* Ensure accordion content (which uses box class) has proper box styling */
+.accordion-content.box {
+	background-color: var(--channelle-scene-controls-bg-color) !important;
+	color: var(--channelle-box-text-color) !important;
+	border: 1px solid rgba(255, 255, 255, 0.1) !important;
+	border-radius: 4px !important;
+}
+
+/* Ensure headings and labels inside boxes use box text color instead of hardcoded white */
+.box .title,
+.box .subtitle,
+.box .label,
+.box .h1,
+.box .h2,
+.box .h3,
+.box .h4,
+.box .h5,
+.box .h6 {
+	color: var(--channelle-box-text-color) !important;
+}
+
+/* Ensure accordion content specifically uses box colors */
+.accordion-content.box {
+	background-color: var(--channelle-scene-controls-bg-color) !important;
+	color: var(--channelle-box-text-color) !important;
+	border: 1px solid rgba(255, 255, 255, 0.1) !important;
+	border-radius: 4px !important;
+}
+
+/* Ensure all elements inside accordion boxes use box text color */
+.accordion-content.box,
+.accordion-content.box *,
+.accordion-content.box p,
+.accordion-content.box span,
+.accordion-content.box div,
+.accordion-content.box label {
+	color: var(--channelle-box-text-color) !important;
+}
+
+/* Ensure forced settings content in accordions uses box text color */
+.accordion-content.box .field,
+.accordion-content.box .control,
+.accordion-content.box .label,
+.accordion-content.box .field p {
+	color: var(--channelle-box-text-color) !important;
+}
+
+/* Ensure checkboxes and radio buttons in accordions have proper text color */
+.accordion-content.box .checkbox,
+.accordion-content.box .radio {
+	color: var(--channelle-box-text-color) !important;
+}
+
+/* Style scene header and details with slightly grayish background */
+.scene-header,
+.scene-details {
+	background-color: var(--channelle-scene-controls-bg-color) !important;
+}
+
+/* Ensure scene header and details content has proper text color */
+.scene-header,
+.scene-header *,
+.scene-details,
+.scene-details * {
+	color: var(--channelle-box-text-color) !important;
+}
+
+/* Theme-specific adjustments */
+.theme-minimal {
+	--bulma-text-strong: #ffffff;
+}
+
+.theme-mellan {
+	--bulma-text-strong: #ffffff;
+}
+
+.theme-cool {
+	--bulma-text-strong: #ffffff;
+}
+
+/* Bulma-style utility classes for theme colors */
+/* Background colors */
+.has-background-main {
+	background-color: var(--channelle-main-bg-color) !important;
+}
+
+.has-background-menu {
+	background-color: var(--channelle-menu-bg-color) !important;
+}
+
+.has-background-box {
+	background-color: var(--channelle-box-bg-color) !important;
+}
+
+.has-background-control {
+	background-color: var(--channelle-control-background) !important;
+}
+
+.has-background-scene-controls {
+	background-color: var(--channelle-scene-controls-bg-color) !important;
+}
+
+.has-background-primary {
+	background-color: var(--bulma-primary) !important;
+}
+
+.has-background-accent {
+	background-color: var(--bulma-link) !important;
+}
+
+.has-background-black {
+	background-color: var(--channelle-black-background) !important;
+}
+
+/* Text colors */
+.has-text-main {
+	color: var(--channelle-main-text-color) !important;
+}
+
+.has-text-menu {
+	color: var(--channelle-menu-text-color) !important;
+}
+
+.has-text-control {
+	color: var(--channelle-control-color) !important;
+}
+
+.has-text-box {
+	color: var(--channelle-box-text-color) !important;
+}
+
+.has-text-primary {
+	color: var(--bulma-primary) !important;
+}
+
+.has-text-accent {
+	color: var(--bulma-link) !important;
+}
+
+/* Border colors */
+.has-border-main {
+	border-color: var(--channelle-main-bg-color) !important;
+}
+
+.has-border-menu {
+	border-color: var(--channelle-menu-bg-color) !important;
+}
+
+.has-border-control {
+	border-color: var(--channelle-control-background) !important;
+}
+
+.has-border-scene-controls {
+	border-color: var(--channelle-scene-controls-bg-color) !important;
+}
+
+.has-border-primary {
+	border-color: var(--bulma-primary) !important;
+}
+
+.has-border-accent {
+	border-color: var(--bulma-link) !important;
+}
+
+.has-border-white {
+	border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Convenience classes */
+.has-background-dark {
+	background-color: var(--channelle-main-bg-color) !important;
+}
+
+.has-background-light {
+	background-color: var(--channelle-scene-controls-bg-color) !important;
+}
+
+.has-text-light {
+	color: var(--channelle-box-text-color) !important;
+}
+
+/* Theme-specific background classes */
+.has-background-minimal {
+	background-color: #000000 !important;
+}
+
+.has-background-mellan {
+	background-color: #1e1e1e !important;
+}
+
+.has-background-cool {
+	background-color: #0057b8 !important;
 }

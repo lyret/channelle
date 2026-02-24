@@ -12,7 +12,7 @@
 	<!-- Always show actor indicator if user is an actor -->
 	{#if mediaState.isActor || mediaState.isManager}
 		<span class="tag is-info mt-1 mr-2 is-large actor-indicator" transition:slide>
-			<span class="icon">
+			<span class="icon is-small">
 				{#if mediaState.isManager}
 					<IconBriefcase />
 				{:else}
