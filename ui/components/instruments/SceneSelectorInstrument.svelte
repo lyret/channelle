@@ -7,13 +7,13 @@
 
 	export let hideForcedSettings: boolean = false;
 
-	$: peers = Object.values($showPeersStore || {}).filter((p) => (p.actor || p.manager) && !p.banned);
+	$: peers = Object.values($showPeersStore || {}).filter((p) => (p.actor || p.manager) && !p.banned && p.name?.length);
 
 	// Track expanded states for each scene
 	let expandedScenes: Record<string, boolean> = {};
 
 	// Track modified layouts for each scene
-	let modifiedLayouts: Record<string, Scene> = {};
+	const modifiedLayouts: Record<string, Scene> = {};
 
 	// Sync the selected scene from the server to modifiedLayouts
 	$: if ($showSelectedSceneStore) {
