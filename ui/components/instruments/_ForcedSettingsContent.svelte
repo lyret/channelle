@@ -2,7 +2,6 @@
 	import { createEventDispatcher } from "svelte";
 	import {
 		showSceneOverridesStore,
-		showSceneSettingsStore,
 		updateConfigurationSettings,
 		automateOverridenSettings,
 		showSelectedSceneStore,
@@ -16,10 +15,35 @@
 	$: hasActiveOverrides =
 		$showSceneOverridesStore.curtainsOverride !== 0 ||
 		$showSceneOverridesStore.chatEnabledOverride !== 0 ||
-		$showSceneOverridesStore.visitorAudioEnabledOverride !== 0 ||
+		$showSceneOverridesStore.visitorVideoEnabledOverride !== 0 ||
 		$showSceneOverridesStore.visitorAudioEnabledOverride !== 0 ||
 		$showSceneOverridesStore.gratitudeEffectsEnabledOverride !== 0 ||
 		$showSceneOverridesStore.criticalEffectsEnabledOverride !== 0;
+
+	// Helper to get scene value descriptions
+	function getCurtainsSceneValue() {
+		return $showSelectedSceneStore?.curtains === 1 ? 'Nere' : 'Uppe';
+	}
+
+	function getChatSceneValue() {
+		return $showSelectedSceneStore?.chatEnabled ? 'Visa' : 'Dölj';
+	}
+
+	function getVisitorVideoSceneValue() {
+		return $showSelectedSceneStore?.visitorVideoEnabled ? 'Ja' : 'Nej';
+	}
+
+	function getVisitorAudioSceneValue() {
+		return $showSelectedSceneStore?.visitorAudioEnabled ? 'Ja' : 'Nej';
+	}
+
+	function getGratitudeSceneValue() {
+		return $showSelectedSceneStore?.gratitudeEffectsEnabled ? 'Ok' : 'Nej';
+	}
+
+	function getCriticalSceneValue() {
+		return $showSelectedSceneStore?.criticalEffectsEnabled ? 'Ok' : 'Nej';
+	}
 
 	async function handleUpdate(update: Partial<EditableShowAttributes>) {
 		isLoading = true;
@@ -56,7 +80,7 @@
 				disabled={isLoading}
 				on:click={() => handleUpdate({ curtainsOverride: 0 })}
 			>
-				Automatiskt
+				Automatiskt ({getCurtainsSceneValue()})
 			</button>
 		</div>
 		<div class="level-item">
@@ -85,11 +109,11 @@
 	<div class="help-section">
 		<p class="help">
 			{#if $showSceneOverridesStore.curtainsOverride === 0}
-				Visas automatiskt enligt vald scen
+				Visas automatiskt enligt vald scen (nu: {getCurtainsSceneValue()})
 			{:else if $showSceneOverridesStore.curtainsOverride === 1}
-				<b>Ridån visas och täcker innehållet på scenen</b>
+				<b>Ridån visas alltid (täcker innehållet på scenen)</b>
 			{:else}
-				<b>Ridån visas inte</b>
+				<b>Ridån visas aldrig</b>
 			{/if}
 		</p>
 	</div>
@@ -106,7 +130,7 @@
 				disabled={isLoading}
 				on:click={() => handleUpdate({ chatEnabledOverride: 0 })}
 			>
-				Automatiskt
+				Automatiskt ({getChatSceneValue()})
 			</button>
 		</div>
 		<div class="level-item">
@@ -135,11 +159,11 @@
 	<div class="help-section">
 		<p class="help">
 			{#if $showSceneOverridesStore.chatEnabledOverride === 0}
-				Chatten visas beroende på vald scen
+				Chatten visas beroende på vald scen (nu: {getChatSceneValue()})
 			{:else if $showSceneOverridesStore.chatEnabledOverride === 1}
-				<b>Chatten är aktiverad</b>
+				<b>Chatten visas alltid</b>
 			{:else}
-				<b>Chatten är av-aktiverad</b>
+				<b>Chatten visas aldrig</b>
 			{/if}
 		</p>
 	</div>
@@ -156,7 +180,7 @@
 				disabled={isLoading || !$showSelectedSceneStore?.visitorVideoEnabled}
 				on:click={() => handleUpdate({ visitorVideoEnabledOverride: 0 })}
 			>
-				Automatiskt
+				Automatiskt ({getVisitorVideoSceneValue()})
 			</button>
 		</div>
 		<div class="level-item">
@@ -187,11 +211,11 @@
 			{#if !$showSelectedSceneStore?.visitorVideoEnabled}
 				<b>OBS: Fungerar endast där scen-layouten tillåter det (exempelvis "alla")</b>
 			{:else if $showSceneOverridesStore.visitorVideoEnabledOverride === 0}
-				Publikens video är tillåten beroende på scen
+				Publikens video är tillåten beroende på scen (nu: {getVisitorVideoSceneValue()})
 			{:else if $showSceneOverridesStore.visitorVideoEnabledOverride === 1}
 				<b>Video från publiken är alltid tillåtet</b>
 			{:else}
-				<b>Video från publiken tillåts inte</b>
+				<b>Video från publiken tillåts aldrig</b>
 			{/if}
 		</p>
 	</div>
@@ -208,7 +232,7 @@
 				disabled={isLoading}
 				on:click={() => handleUpdate({ visitorAudioEnabledOverride: 0 })}
 			>
-				Automatiskt
+				Automatiskt ({getVisitorAudioSceneValue()})
 			</button>
 		</div>
 		<div class="level-item">
@@ -237,11 +261,11 @@
 	<div class="help-section">
 		<p class="help">
 			{#if $showSceneOverridesStore.visitorAudioEnabledOverride === 0}
-				Publikens ljud är tillåten beroende på scen
+				Publikens ljud är tillåten beroende på scen (nu: {getVisitorAudioSceneValue()})
 			{:else if $showSceneOverridesStore.visitorAudioEnabledOverride === 1}
 				<b>Ljud från publiken är alltid tillåtet</b>
 			{:else}
-				<b>Ljud från publiken tillåts inte</b>
+				<b>Ljud från publiken tillåts aldrig</b>
 			{/if}
 		</p>
 	</div>
@@ -258,7 +282,7 @@
 				disabled={isLoading}
 				on:click={() => handleUpdate({ gratitudeEffectsEnabledOverride: 0 })}
 			>
-				Automatiskt
+				Automatiskt ({getGratitudeSceneValue()})
 			</button>
 		</div>
 		<div class="level-item">
@@ -288,11 +312,11 @@
 	<div class="help-section">
 		<p class="help">
 			{#if $showSceneOverridesStore.gratitudeEffectsEnabledOverride === 0}
-				Beroende på scen kan publiken ibland 🌹 och 👏
+				Beroende på scen kan publiken ibland 🌹 och 👏 (nu: {getGratitudeSceneValue()})
 			{:else if $showSceneOverridesStore.gratitudeEffectsEnabledOverride === 1}
 				<b>Hyllningar från publiken är alltid tillåtna</b>
 			{:else}
-				<b>Hyllningar från publiken tillåts inte</b>
+				<b>Hyllningar från publiken tillåts aldrig</b>
 			{/if}
 		</p>
 	</div>
@@ -309,7 +333,7 @@
 				disabled={isLoading}
 				on:click={() => handleUpdate({ criticalEffectsEnabledOverride: 0 })}
 			>
-				Automatiskt
+				Automatiskt ({getCriticalSceneValue()})
 			</button>
 		</div>
 		<div class="level-item">
@@ -338,11 +362,11 @@
 	<div class="help-section">
 		<p class="help">
 			{#if $showSceneOverridesStore.criticalEffectsEnabledOverride === 0}
-				Beroende på scen kan publiken ibland kasta ruttna tomater
+				Beroende på scen kan publiken ibland kasta ruttna tomater (nu: {getCriticalSceneValue()})
 			{:else if $showSceneOverridesStore.criticalEffectsEnabledOverride === 1}
 				<b>Kritik från publiken är alltid tillåten</b>
 			{:else}
-				<b>Kritik från publiken tillåts inte</b>
+				<b>Kritik från publiken tillåts aldrig</b>
 			{/if}
 		</p>
 	</div>
