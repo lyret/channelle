@@ -6,6 +6,13 @@ import shineSrc from "~/assets/sounds/shine.wav";
 import tinkSrc from "~/assets/sounds/c4.wav";
 import slimeSrc from "~/assets/sounds/slime.wav";
 
+/** Helper to create a sound effect with the preset audio */
+const _addSound = (src: string, volume: number = 1): HTMLAudioElement => {
+	const snd = new Audio(src);
+	snd.volume = volume;
+	return snd;
+};
+
 /** Flower SVG shape for confetti effects */
 const flower = Confetti.shapeFromText({ text: "🌹", scalar: 4 });
 
@@ -16,13 +23,13 @@ const hands = Confetti.shapeFromText({ text: "👏", scalar: 6 });
 const tomato = Confetti.shapeFromText({ text: "🍅", scalar: 8 });
 
 /** Clap sound effects */
-const clapSounds = [new Audio(sharpClap), new Audio(analogClap), new Audio(danceClap)];
+const clapSounds = [_addSound(sharpClap, 0.5), _addSound(analogClap, 0.6), _addSound(danceClap, 0.5)];
 
 /** Flower sound effect */
-const flowerSounds = [new Audio(tinkSrc), new Audio(shineSrc)];
+const flowerSounds = [_addSound(tinkSrc, 0.5), _addSound(shineSrc, 0.7)];
 
 // Tomato sound effects
-const tomatoSounds = [new Audio(slimeSrc)];
+const tomatoSounds = [_addSound(slimeSrc, 0.6)];
 
 // Celebration methods
 
