@@ -8,11 +8,16 @@ import { getGlobalBackstageConfiguration } from "../_globalBackstageData";
 // Get the trpc router constructor and default procedure
 const { router: trcpRouter, procedure, middleware } = trpc();
 
-/** In-memory online peer session storage */
-export const onlineSessions: Record<string, Peer> = {};
-
-/** In-memory connection counter for each peer */
-export const connectionCounts: Record<string, number> = {};
+/** In-memory online connection storage with route awareness */
+export const onlineSessions: Record<
+	/** Connection id */ string,
+	{
+		id: string;
+		deviceType: string;
+		routeType: string;
+		peer: Peer;
+	}
+> = {};
 
 /** In-memory authenticated admin session storage */
 export const _adminSessions: Record<string, AdminSession> = {};
@@ -20,50 +25,84 @@ export const _adminSessions: Record<string, AdminSession> = {};
 /** Session expiration time: 8 hours in milliseconds */
 const SESSION_EXPIRATION_TIME = 8 * 60 * 60 * 1000;
 
-/** Marks a known user as online and increments their connection count */
-export async function refreshAuthentication(peerId: string, givenPeer?: Peer): Promise<boolean> {
+/** Returns if the peer with the given is currently online */
+export function isPeerOnline(peerId: string, routeType?: string): boolean {
+	return _getOnlineSessionCount(peerId, routeType) > 0;
+}
+
+/** Updates the peer information stored in all online sessions for the given peer id with the given peer data */
+export function updatePeerInformationInSessions(peerId: string, peer: Peer): void {
+	for (const connectionId in onlineSessions) {
+		const session = onlineSessions[connectionId];
+		if (session.peer.id === peerId) {
+			session.peer = peer;
+		}
+	}
+}
+
+/** Marks a known user as online */
+export async function refreshAuthentication(connectionId: string, deviceType: string, routeType: string, peerId: string, givenPeer?: Peer): Promise<boolean> {
 	// Refresh any ongoing admin sessions for the given peerId
 	if (_adminSessions[peerId]) {
 		_adminSessions[peerId].lastSeenTs = Date.now();
 	}
 
-	// This peer is now online
-	if (givenPeer && !onlineSessions[peerId]) {
-		onlineSessions[peerId] = givenPeer;
-		connectionCounts[peerId] = (connectionCounts[peerId] || 0) + 1;
+	// This peer is now online and this is the first connection
+	const connectionCount = _getOnlineSessionCount(peerId);
+	if (givenPeer && !connectionCount) {
+		// New session
+		onlineSessions[connectionId] = {
+			id: connectionId,
+			peer: givenPeer,
+			deviceType,
+			routeType,
+		};
 		peerEmitter.emit("onlineStatusChanged", givenPeer);
-		console.log(
-			`[Auth] Login successful for peer ${peerId}. Connections: ${connectionCounts[peerId]}, Active sessions: ${Object.keys(onlineSessions).length}`,
-		);
+		console.log(`[Auth] Login successful for peer ${peerId}. Online connections: ${connectionCount + 1}`);
 		return true;
-	} else if (givenPeer) {
-		// Update peer information if provided
-		onlineSessions[peerId] = givenPeer;
+	}
+
+	// Additional online session for a peer
+	else if (givenPeer) {
+		if (routeType === "stage") {
+			// FIXME: Check if there's already an existing stage connection
+			// const existingStageConnection = onlineSessions[peerId].stageConnection;
+			// if (existingStageConnection) {
+			// 	// There's already a stage connection - this new connection takes over!
+			// 	console.log(
+			// 		`[Auth] Stage connection takeover for peer ${peerId}. Old connection: ${existingStageConnection.connectionId}, New connection: ${connectionId}`,
+			// 	);
+			// }
+			// Add the additional connection
+			onlineSessions[connectionId] = {
+				id: connectionId,
+				peer: givenPeer,
+				deviceType,
+				routeType,
+			};
+		}
+		console.log(`[Auth] Login successful for peer ${peerId}. Online connections: ${connectionCount}`);
 		return false;
 	} else {
-		console.log(`[Auth] Additional connection for peer ${peerId}. Total connections: ${connectionCounts[peerId]}`);
+		console.log(`[Auth] Connection refresh for peer ${peerId}. Online connections: ${connectionCount}`); // FIXME: is this correct?
 		return false;
 	}
 }
 
-/** Decrements connection count and marks user as offline only when no connections remain */
-export function deauthenticate(peerId: string): boolean {
-	// Handle connection counting for all peers (even those not authenticated)
-	if ((connectionCounts[peerId] || 0) >= 0) {
-		// Decrement connection count
-		connectionCounts[peerId] = (connectionCounts[peerId] || 1) - 1;
-		console.log(`[Auth] Connection closed for peer ${peerId}. Remaining connections: ${connectionCounts[peerId]}`);
-	}
-
+/** Deauthenticate a connection and mark the peer as offline if needed */
+export function deauthenticate(connectionId: string, routeType: string, peerId: string): boolean {
 	// Only proceed with deauthentication when no connections remain
-	if (connectionCounts[peerId] == 0 && onlineSessions[peerId]) {
-		const peer = onlineSessions[peerId];
+	if (onlineSessions[connectionId]) {
+		const peer = onlineSessions[connectionId].peer;
 		delete onlineSessions[peerId];
-		peerEmitter.emit("onlineStatusChanged", peer);
-		console.log(`[Auth] Logout successful for peer ${peerId}. Active sessions: ${Object.keys(onlineSessions).length}`);
-		return true;
-	}
+		const connectionCount = _getOnlineSessionCount(peerId);
+		console.log(`[Auth] Logout successful for peer ${peerId}. Online connections: ${connectionCount}`);
 
+		if (!connectionCount) {
+			peerEmitter.emit("onlineStatusChanged", peer);
+			return true;
+		}
+	}
 	return false;
 }
 
@@ -75,16 +114,18 @@ export function deauthenticate(peerId: string): boolean {
 export const withAuthenticatedPeerMiddleware = middleware(async ({ ctx, next }) => {
 	if (!ctx.peer?.id) {
 		throw new TRPCError({ code: "BAD_REQUEST", message: "No peer id given in request" });
+	} else if (!ctx.connection.id) {
+		throw new TRPCError({ code: "BAD_REQUEST", message: "No connection id given in request" });
 	}
 
-	const peer = onlineSessions[ctx.peer.id];
+	const peer = onlineSessions[ctx.connection.id]?.peer;
 
 	if (!peer) {
-		throw new TRPCError({ code: "BAD_REQUEST", message: "The given peer is not online, please authenticate" });
+		throw new TRPCError({ code: "BAD_REQUEST", message: "The connection has not been established, please authenticate" });
 	}
 
 	// Update peer online status (refresh authentication)
-	refreshAuthentication(ctx.peer.id, peer);
+	refreshAuthentication(ctx.connection.id, ctx.connection.deviceType, ctx.connection.routeType, ctx.peer.id, peer);
 
 	return next({ ctx: { peer } });
 });
@@ -207,7 +248,7 @@ export const authRouter = trcpRouter({
 			}
 
 			// Authenticate
-			const didAuthenticate = refreshAuthentication(ctx.peer.id, peer);
+			const didAuthenticate = refreshAuthentication(ctx.connection.id, ctx.connection.deviceType, ctx.connection.routeType, ctx.peer.id, peer);
 			if (didAuthenticate) {
 				peerEmitter.emit("onlineStatusChanged", peer);
 			}
@@ -268,4 +309,15 @@ function _cleanupExpiredAdminSessions(): void {
 			delete _adminSessions[peerId];
 		}
 	}
+}
+
+/** Utility function to find the number of online sessions exists for the given peer id, optionally for the given route type */
+function _getOnlineSessionCount(peerId: string, routeType?: string): number {
+	let count = 0;
+	for (const session of Object.values(onlineSessions)) {
+		if (session.peer.id === peerId && (!routeType || session.routeType === routeType)) {
+			count++;
+		}
+	}
+	return count;
 }

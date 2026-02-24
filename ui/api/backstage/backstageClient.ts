@@ -1,7 +1,6 @@
 import type { BackstageConfiguration, EditableShowAttributes, ClientPeerAttributes } from "../../types/serverSideTypes";
 import { writable, derived, get } from "svelte/store";
 import { backstageClient, peersClient, wsPeerIdStore } from "../_trpcClient";
-import { currentPeerOnlineCounter } from "../auth/_onlineElsewhereStore";
 import { applyTheme, DEFAULT_THEME } from "../theme";
 
 /** In-memory local show id of any loaded configuration */
@@ -212,15 +211,11 @@ export async function subscribeToBackstageConfigurationChanges(): Promise<void> 
 					}
 					if (data.event == "initial") {
 						_localPeers.set(data.peers);
-						currentPeerOnlineCounter.update((c) => c + (data.peers[localPeerId].online ? 1 : 0));
 					} else {
 						_localPeers.update((record) => {
 							record[data.peer.id] = data.peer;
 							return record;
 						});
-						if (data.event === "onlineStatusChanged" && data.peer.id == localPeerId) {
-							currentPeerOnlineCounter.update((c) => c + (data.peer.online ? 1 : -1));
-						}
 					}
 				},
 				onError: (error) => {

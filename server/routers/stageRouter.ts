@@ -11,6 +11,7 @@ const _updateEmitter = new Emittery<{
 	sessionRemoved: MediaSession;
 	sessionUpdated: MediaSession;
 	sessionAdded: MediaSession;
+	sessionReplaced: MediaSession;
 	producerAdded: Producer;
 	producerRemoved: Producer;
 	producerPaused: Producer;
@@ -44,6 +45,11 @@ const _consumers: Record<string, Consumer> = {};
  */
 const mediaSessionProcedure = authenticatedPeerProcedure.use(async ({ ctx, next }) => {
 	// Make sure we have a session for this peer
+	if (_sessions[ctx.peer.id] && ctx.connection.id != _sessions[ctx.peer.id].connectionId) {
+		_updateEmitter.emit("sessionReplaced", _sessions[ctx.peer.id]);
+		closeMediaPeer(ctx.peer.id);
+		delete _sessions[ctx.peer.id];
+	}
 	if (!_sessions[ctx.peer.id]) {
 		const now = Date.now();
 		_sessions[ctx.peer.id] = {
@@ -54,11 +60,11 @@ const mediaSessionProcedure = authenticatedPeerProcedure.use(async ({ ctx, next 
 			media: {},
 			stats: {},
 			online: true,
+			connectionId: ctx.connection.id,
 		};
 		_updateEmitter.emit("sessionAdded", _sessions[ctx.peer.id]);
-	}
-	// Update our most-recently-seem timestamp -- we're not stale!
-	else {
+	} else {
+		// Update our most-recently-seem timestamp -- we're not stale!
 		_sessions[ctx.peer.id].lastSeenTs = Date.now();
 	}
 
@@ -72,7 +78,17 @@ const mediaSessionProcedure = authenticatedPeerProcedure.use(async ({ ctx, next 
 export const stageRouter = router({
 	/** Subscription for stage media room per show id (global in stage mode) with automatic updates */
 	room: procedure.subscription(async function* ({ ctx: { peer } }): AsyncGenerator<{
-		type: "initial" | "sessionChange" | "producerChange" | "consumerNeeded" | "consumerClosed" | "transportNeeded" | "activeSpeaker" | "error";
+		type:
+			| "initial"
+			| "sessionChange"
+			| "sessionRejected"
+			| "producerChange"
+			| "consumerNeeded"
+			| "consumerClosed"
+			| "transportNeeded"
+			| "activeSpeaker"
+			| "error";
+		session?: MediaSession;
 		sessions?: Record<string, MediaSession>;
 		producers?: Record<string, { peerId: string; mediaTag: MediaTag; paused: boolean }>;
 		consumers?: Array<{ peerId: string; mediaTag: MediaTag; consumerId?: string }>;
@@ -148,7 +164,13 @@ export const stageRouter = router({
 					};
 					break;
 				}
-
+				case "sessionReplaced":
+					yield {
+						type: "sessionRejected",
+						session: data as unknown as MediaSession,
+						error: "This session was replaced by a session from newer connection.",
+					};
+					break;
 				case "producerAdded":
 				case "producerRemoved":
 				case "producerPaused":

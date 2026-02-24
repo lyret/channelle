@@ -13,6 +13,15 @@ export type RouterOutputTypes = inferRouterOutputs<AppRouter>;
 /** The stored webscoket peer identification used for re-authentications */
 export const wsPeerIdStore = persisted(`${CONFIG.runtime.slug}-peer-id`, "");
 
+/** The current connection ID for this session (not persisted) */
+export let wsConnectionId = "";
+
+/** The device type for this session */
+export const connectionDeviceTypeStore = writable<string>("");
+
+/** The route type for this session */
+export const connectionRouteTypeStore = writable<string>("");
+
 /** Svelte Store that indicates if the client is connected to the server through websocket */
 export const wsIsConnectedStore = writable<boolean>(false);
 
@@ -26,12 +35,27 @@ const wsClient = createWSClient({
 		const peerId =
 			urlPeerId || get(wsPeerIdStore) || "111-111-1111".replace(/[018]/g, () => (crypto.getRandomValues(new Uint8Array(1))[0] & 15).toString(16));
 
-		// Update the persisted peer id
+		// Generate a unique connection ID for this session (not persisted)
+		const connectionId = "111-111-1111".replace(/[018]/g, () => (crypto.getRandomValues(new Uint8Array(1))[0] & 15).toString(16));
+
+		// Detect device type using browser APIs
+		const deviceType = detectDeviceType();
+
+		// Detect current route type
+		const routeType = detectCurrentRouteType();
+
+		// Update the persisted peer id and session stores
 		wsPeerIdStore.set(peerId);
+		wsConnectionId = connectionId;
+		connectionDeviceTypeStore.set(deviceType);
+		connectionRouteTypeStore.set(routeType);
 
 		// Connect to the TRPC server using these connection parameters
 		return {
 			peerId: peerId,
+			connectionId: connectionId,
+			deviceType: deviceType,
+			routeType: routeType,
 		};
 	},
 	onOpen: () => {
@@ -79,3 +103,46 @@ export const peersClient = appClient.peers;
 
 /** Client for the Launchers API only */
 export const launchersClient = appClient.launchers;
+
+/**
+ * Detect device type using browser APIs
+ * Returns "mobile" for mobile devices, "desktop" for desktop/laptop
+ */
+function detectDeviceType(): string {
+	// Check for touch support and screen size
+	const hasTouchScreen = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+	const screenWidth = window.screen.width;
+	const userAgent = navigator.userAgent.toLowerCase();
+
+	// Check for mobile user agents
+	const mobileKeywords = ["mobile", "android", "iphone", "ipad", "ipod", "blackberry", "windows phone"];
+	const isMobileUA = mobileKeywords.some((keyword) => userAgent.includes(keyword));
+
+	// Combine checks: mobile if small screen + touch OR mobile user agent
+	if ((screenWidth <= 768 && hasTouchScreen) || isMobileUA) {
+		return "mobile";
+	}
+
+	return "desktop";
+}
+
+/**
+ * Detect current route type based on URL pathname
+ * Returns "stage", "backstage", or "unknown"
+ */
+function detectCurrentRouteType(): string {
+	const pathname = window.location.pathname;
+
+	// Stage routes
+	if (pathname === "/" || pathname.startsWith("/stage")) {
+		return "stage";
+	}
+
+	// Backstage routes
+	if (pathname.startsWith("/backstage")) {
+		return "backstage";
+	}
+
+	// All other routes
+	return "unknown";
+}

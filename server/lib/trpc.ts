@@ -21,6 +21,7 @@ export function trpc(): TRPCRootObject<Context, object, TRPCRuntimeConfigOptions
 /** Information for a peer containing webrtc and trpc data that is unique for each connected session */
 export type MediaSession = {
 	peer: Peer;
+	connectionId: string;
 	joinTs: number;
 	lastSeenTs: number;
 	online: boolean;
@@ -38,5 +39,10 @@ export type AdminSession = {
 
 /** TRPC Context */
 export interface Context {
-	peer: undefined | Peer;
+	peer: Peer | undefined;
+	connection: {
+		id?: string;
+		deviceType?: string;
+		routeType?: string;
+	};
 }

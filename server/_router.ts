@@ -58,8 +58,11 @@ export async function createAppRouter() {
 		wss: wsServer,
 		router: appRouter,
 		createContext: async ({ info, res }) => {
-			// Get the peer id from the connection parameters
+			// Get the given connection details from the connection parameters
 			const peerId = info.connectionParams?.peerId;
+			const connectionId = info.connectionParams?.connectionId;
+			const deviceType = info.connectionParams?.deviceType || "unknown";
+			const routeType = info.connectionParams?.routeType || "unknown";
 
 			// Reject connections without a peer ID
 			if (!peerId) {
@@ -67,15 +70,27 @@ export async function createAppRouter() {
 				res.close();
 				throw new Error("Connection requires a peer ID");
 			}
+			// Reject connections without a connection ID
+			if (!connectionId) {
+				console.log("[TRPC] Connection rejected: No connection ID provided");
+				res.close();
+				throw new Error("Connection requires a connectionId ID");
+			}
 
-			console.log("[TRPC] Peer Connected:", peerId);
+			// Output that connection has been established
+			console.log(`[TRPC] Peer ${peerId} Connected (id: ${connectionId}, route: ${routeType}, device: ${deviceType})`);
 
 			res.once("close", () => {
-				console.log("[TRPC] Peer Disconnected:", peerId);
-				// Close all open media connections
-				closeMediaPeer(peerId);
-				// Decrement connection count and deauthenticate if no connections remain
-				deauthenticate(peerId);
+				console.log(`[TRPC] Peer ${peerId} Disconnected (id: ${connectionId}, route: ${routeType})`);
+
+				// Remove this connection when the websocket closes
+				const isOffline = deauthenticate(connectionId, routeType, peerId);
+
+				// If the user turned offline then also close its media peers
+				if (isOffline) {
+					// FIXME
+					closeMediaPeer(peerId);
+				}
 			});
 
 			return {
@@ -83,6 +98,11 @@ export async function createAppRouter() {
 					// Use the given id as the peer id in the initial context, it will be updated in the authentication middleware when applied
 					id: peerId,
 				} as Peer,
+				connection: {
+					id: info.connectionParams?.connectionId,
+					routeType: routeType,
+					deviceType: info.connectionParams?.deviceType,
+				},
 			};
 		},
 		// Enable heartbeat messages to keep connection open (disabled by default)

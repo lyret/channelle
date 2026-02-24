@@ -5,7 +5,6 @@
 import { writable, derived, readable, get } from "svelte/store";
 import type * as MediaSoup from "mediasoup-client";
 import type { CustomAppData, ActiveSpeaker } from "~/types/serverSideTypes";
-import { currentPeerStore } from "../auth";
 import { stageClient } from "../_trpcClient";
 
 // Type aliases

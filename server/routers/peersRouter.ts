@@ -5,7 +5,7 @@ import { Op } from "sequelize";
 import { trpc } from "../lib";
 import { Peer, peerEmitter } from "../models/Peer";
 import { withConfigProcedure } from "./backstageRouter";
-import { withAuthenticatedPeerMiddleware, withAuthenticatedAdminMiddleware, onlineSessions } from "./authRouter";
+import { withAuthenticatedPeerMiddleware, withAuthenticatedAdminMiddleware, onlineSessions, isPeerOnline, updatePeerInformationInSessions } from "./authRouter";
 
 // Get the trpc router constructor and default procedure
 const { router, procedure } = trpc();
@@ -28,6 +28,7 @@ export const peersRouter = router({
 		| { event: "created"; peer: PeerAttributes & { online: boolean } }
 		| { event: "updated"; peer: PeerAttributes & { online: boolean } }
 		| { event: "onlineStatusChanged"; peer: PeerAttributes & { online: boolean } }
+		| { event: "productionDuplicationProblem"; peer: PeerAttributes & { connection: boolean } }
 	> {
 		const peers = await Peer.findAll({
 			where: {
@@ -40,7 +41,7 @@ export const peersRouter = router({
 
 		yield {
 			event: "initial",
-			peers: Object.fromEntries(peers.map((peer) => [peer.id, { ...(peer.toJSON() as PeerAttributes), online: !!onlineSessions[peer.id] }])),
+			peers: Object.fromEntries(peers.map((peer) => [peer.id, { ...(peer.toJSON() as PeerAttributes), online: isPeerOnline(peer.id) }])),
 		};
 
 		for await (const [event, peer] of peerEmitter.anyEvent()) {
@@ -49,7 +50,7 @@ export const peersRouter = router({
 			}
 			yield {
 				event: event as "created" | "updated" | "onlineStatusChanged",
-				peer: { ...peer.toJSON(), online: !!onlineSessions[peer.id] },
+				peer: { ...peer.toJSON(), online: isPeerOnline(peer.id) },
 			} as
 				| { event: "created"; peer: PeerAttributes & { online: boolean } }
 				| { event: "updated"; peer: PeerAttributes & { online: boolean } }
@@ -124,9 +125,7 @@ export const peersRouter = router({
 			const updatedPeer = await peer.update(updates);
 
 			// Update the in-memory session storage if peer is online
-			if (onlineSessions[peer.id]) {
-				onlineSessions[peer.id] = peer;
-			}
+			updatePeerInformationInSessions(peer.id, peer);
 
 			return updatedPeer;
 		}),

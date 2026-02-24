@@ -4,9 +4,10 @@
  */
 import * as MediaSoup from "mediasoup-client";
 import { writable, derived, get } from "svelte/store";
-import { stageClient, wsPeerIdStore } from "../_trpcClient";
+import { stageClient, wsPeerIdStore, wsConnectionId } from "../_trpcClient";
 import type { Transport, Consumer, Producer, Device } from "mediasoup-client/lib/types";
 import type { CustomAppData, MediaTag, ActiveSpeaker, MediaSession } from "~/types/serverSideTypes";
+import { currentPeerIsRejected } from "../auth";
 
 // ============================================================================
 // TYPES
@@ -178,9 +179,36 @@ export async function participateInTheMediaRoom(): Promise<{ success: true } | {
 		console.log("[Stage] Started media session");
 
 		// Subscribe to media room events
-		stageClient.room.subscribe(undefined, {
+		const { unsubscribe } = stageClient.room.subscribe(undefined, {
 			onData: async (event) => {
-				await processRoomEvent(event);
+				switch (event.type) {
+					case "initial":
+						await handleInitialState(event);
+						break;
+
+					case "sessionChange":
+						handleSessionChange(event.sessions! as Record<string, MediaSession>);
+						break;
+
+					case "sessionRejected":
+						if (handleSessionRejection(event.session! as MediaSession, event.error)) {
+							// Leave the room if this session was rejected
+							unsubscribe();
+						}
+						break;
+
+					case "producerChange":
+						await handleProducerChange(event.producers, event.consumers, event.removedProducers);
+						break;
+
+					case "activeSpeaker":
+						handleActiveSpeaker(event.activeSpeaker!);
+						break;
+
+					case "error":
+						handleError(event.error!);
+						break;
+				}
 			},
 			onError: (error) => {
 				console.error("[RoomManager] Room subscription error:", error);
@@ -205,35 +233,6 @@ export async function participateInTheMediaRoom(): Promise<{ success: true } | {
 // ============================================================================
 // EVENT PROCESSING
 // ============================================================================
-
-/**
- * Process events from the room subscription
- */
-async function processRoomEvent(event: any): Promise<void> {
-	console.log(`[RoomManager] Processing event: ${event.type}`, event);
-
-	switch (event.type) {
-		case "initial":
-			await handleInitialState(event);
-			break;
-
-		case "sessionChange":
-			handleSessionChange(event.sessions);
-			break;
-
-		case "producerChange":
-			await handleProducerChange(event.producers, event.consumers, event.removedProducers);
-			break;
-
-		case "activeSpeaker":
-			handleActiveSpeaker(event.activeSpeaker);
-			break;
-
-		case "error":
-			handleError(event.error);
-			break;
-	}
-}
 
 /**
  * Handle initial state from server
@@ -340,9 +339,20 @@ function handleSessionChange(sessions: Record<string, MediaSession>): void {
 }
 
 /**
+ * Handle session rejections
+ */
+function handleSessionRejection(rejectedSession: MediaSession, reason?: string) {
+	if (rejectedSession.connectionId == wsConnectionId) {
+		currentPeerIsRejected.set(reason || "Unknown reason.");
+		return true;
+	}
+	return false;
+}
+
+/**
  * Handle producer changes
  */
-async function handleProducerChange(producers: any, consumers: any[], removedProducers?: any[]): Promise<void> {
+async function handleProducerChange(producers: any, consumers: (any | undefined)[] = [], removedProducers: any[] = []): Promise<void> {
 	console.log("[RoomManager] Producer change", { producers, consumers, removedProducers });
 
 	// Handle removed producers first - close corresponding consumers
@@ -466,7 +476,7 @@ async function createSendTransport(): Promise<void> {
 			pc.addEventListener("connectionstatechange", () => {
 				console.log("[RoomManager] Send transport RTCPeerConnection state:", pc.connectionState);
 				if (pc.connectionState === "failed") {
-					console.error(`[RoomManager] Send transport failed - connectivity issue, recreating...`);
+					console.error("[RoomManager] Send transport failed - connectivity issue, recreating...");
 					roomState.update((s) => ({ ...s, sendTransport: null }));
 				}
 			});
@@ -499,15 +509,6 @@ async function createSendTransport(): Promise<void> {
 
 	roomState.update((s) => ({ ...s, sendTransport: transport }));
 	console.log("[RoomManager] Send transport created");
-}
-
-/**
- * Create receive transport for remote media (not used anymore, kept for reference)
- */
-async function _createRecvTransport(): Promise<void> {
-	// We now use a single shared recv transport for all consumers
-	// This function is deprecated
-	throw new Error("Use shared recv transport instead");
 }
 
 // ============================================================================
@@ -769,16 +770,16 @@ async function subscribeToTrack(peerId: string, mediaTag: MediaTag): Promise<voi
 
 		// Handle transport events
 		transport.on("connect", async ({ dtlsParameters }, callback, errback) => {
-			console.log(`[RoomManager] Consumer transport ${transport.id} connecting...`);
+			console.log(`[RoomManager] Consumer transport ${transport!.id} connecting...`);
 			try {
 				await stageClient.connectTransport.mutate({
-					transportId: transport.id,
+					transportId: transport!.id,
 					dtlsParameters,
 				});
-				console.log(`[RoomManager] Consumer transport ${transport.id} connected successfully`);
+				console.log(`[RoomManager] Consumer transport ${transport!.id} connected successfully`);
 				callback();
 			} catch (error) {
-				console.error(`[RoomManager] Consumer transport ${transport.id} connection failed:`, error);
+				console.error(`[RoomManager] Consumer transport ${transport!.id} connection failed:`, error);
 				errback(error as Error);
 			}
 		});
@@ -817,7 +818,7 @@ async function subscribeToTrack(peerId: string, mediaTag: MediaTag): Promise<voi
 		// Store shared transport
 		roomState.update((s) => {
 			const recvTransports = new Map(s.recvTransports);
-			recvTransports.set("shared", transport);
+			recvTransports.set("shared", transport!);
 			return { ...s, recvTransports };
 		});
 	}
@@ -897,7 +898,7 @@ async function subscribeToTrack(peerId: string, mediaTag: MediaTag): Promise<voi
 		// Resume on server first
 		await stageClient.resumeConsumer.mutate({ consumerId: consumer.id });
 		// Then resume locally
-		await consumer.resume();
+		consumer.resume();
 		console.log(`[RoomManager] Consumer ${consumer.id} resumed successfully`);
 	} catch (error) {
 		console.error(`[RoomManager] Failed to resume consumer ${consumer.id}:`, error);
