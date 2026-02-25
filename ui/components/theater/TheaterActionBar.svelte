@@ -19,7 +19,7 @@
 	}
 
 	// Action bar styling classes matching ActionBar component
-	const btnClassList = "button is-small";
+	const btnClassList = "button is-small is-special";
 	const iconClassList = "icon is-size-4";
 </script>
 
@@ -71,22 +71,28 @@
 			flex-grow: 0.2;
 		}
 
-		:global(.button) {
+		:global(.button.is-small span) {
+			color: rgba(255, 255, 255, 0.6) !important;
+		}
+		:global(.button.is-small.active span) {
+			color: black !important;
+		}
+		:global(.button.is-small) {
 			border-radius: 0;
 			border: none;
 			padding: 12px;
-			background-color: var(--channelle-menu-bg-color);
-			color: var(--channelle-menu-text-color);
+			background-color: black !important;
+			color: white !important;
 
 			&:hover {
-				background-color: rgba(255, 255, 255, 0.1);
-				transform: translateY(-1px);
+				background-color: rgba(255, 255, 255, 0.1) !important;
+				transform: translateY(-2px);
 			}
 
 			&.active {
 				font-weight: 900;
-				background-color: var(--channelle-menu-text-color);
-				color: var(--channelle-menu-bg-color);
+				background-color: white !important;
+				color: black !important;
 			}
 		}
 	}

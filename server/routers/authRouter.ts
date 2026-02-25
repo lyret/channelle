@@ -68,44 +68,34 @@ export async function refreshAuthentication(connectionId: string, deviceType: st
 		_adminSessions[peerId].lastSeenTs = Date.now();
 	}
 
-	// This peer is now online and this is the first connection
-	const connectionCount = _getOnlineSessionCount(peerId);
-	if (givenPeer && !connectionCount) {
-		// New session
-		onlineSessions[connectionId] = {
-			id: connectionId,
-			peer: givenPeer,
-			deviceType,
-			routeType,
-		};
-		peerEmitter.emit("onlineStatusChanged", givenPeer);
-		console.log(`[Auth] Login successful for peer ${peerId}. Online connections: ${connectionCount + 1}`);
-		return true;
-	}
-
-	// Additional online session for a peer
-	else if (givenPeer) {
-		if (routeType === "stage") {
-			// FIXME: Check if there's already an existing stage connection
-			// const existingStageConnection = onlineSessions[peerId].stageConnection;
-			// if (existingStageConnection) {
-			// 	// There's already a stage connection - this new connection takes over!
-			// 	console.log(
-			// 		`[Auth] Stage connection takeover for peer ${peerId}. Old connection: ${existingStageConnection.connectionId}, New connection: ${connectionId}`,
-			// 	);
-			// }
-			// Add the additional connection
+	if (!onlineSessions[connectionId]) {
+		// This peer is now online and this is the first connection
+		const connectionCount = _getOnlineSessionCount(peerId);
+		if (givenPeer && !connectionCount) {
+			// New session
 			onlineSessions[connectionId] = {
 				id: connectionId,
 				peer: givenPeer,
 				deviceType,
 				routeType,
 			};
+			peerEmitter.emit("onlineStatusChanged", givenPeer);
+			console.log(`[Auth] Login successful for peer ${peerId} on ${routeType}. Online connections: ${connectionCount + 1}`);
+			return true;
 		}
-		console.log(`[Auth] Login successful for peer ${peerId}. Online connections: ${connectionCount}`);
-		return false;
+
+		// Additional online session for a peer
+		else if (givenPeer) {
+			onlineSessions[connectionId] = {
+				id: connectionId,
+				peer: givenPeer,
+				deviceType,
+				routeType,
+			};
+			console.log(`[Auth] Login successful for peer ${peerId} on ${routeType}. Online connections: ${connectionCount}`);
+			return true;
+		}
 	} else {
-		console.log(`[Auth] Connection refresh for peer ${peerId}. Online connections: ${connectionCount}`); // FIXME: is this correct?
 		return false;
 	}
 }
@@ -138,7 +128,6 @@ export const withAuthenticatedPeerMiddleware = middleware(async ({ ctx, next }) 
 	} else if (!ctx.connection.id) {
 		throw new TRPCError({ code: "BAD_REQUEST", message: "No connection id given in request" });
 	}
-
 	const peer = onlineSessions[ctx.connection.id]?.peer;
 
 	if (!peer) {

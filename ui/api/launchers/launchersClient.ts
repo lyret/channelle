@@ -3,6 +3,14 @@ import { launchersClient } from "~/api/_trpcClient";
 import { getShowsList } from "../shows";
 import type { LauncherSyncDataSerialized, LaunchAttributes } from "~/types/serverSideTypes";
 
+// Extended type for Launch with included Show information
+type LaunchWithShow = LaunchAttributes & {
+	show?: {
+		id: number;
+		name: string;
+	};
+};
+
 /** Store for launcher system readiness */
 export const launcherReadyStore = writable<boolean>(false);
 
@@ -13,7 +21,7 @@ export const activeAdapterStore = writable<string | null>(null);
 export const adapterStatusStore = writable<LauncherSyncDataSerialized["adapterStatus"] | null>(null);
 
 /** Store for running launches */
-export const instancesStore = writable<LaunchAttributes[]>([]);
+export const instancesStore = writable<LaunchWithShow[]>([]);
 
 /** Store for loading state */
 export const launcherLoadingStore = writable<boolean>(false);

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { isTheaterAuthenticated } from "~/api/auth";
 	import { canLaunchStore, launcherLoadingStore, launchShow, instancesStore, stopInstance } from "~/api/launchers";
+	import { themes, DEFAULT_THEME } from "~/api/theme";
 	import PicolEdit from "./picol/icons/Picol-edit.svelte";
 	import PicolControlsPlay from "./picol/icons/Picol-controls-play.svelte";
 	import PicolArrowFullUpperright from "./picol/icons/Picol-arrow-full-upperright.svelte";
@@ -13,6 +14,9 @@
 	let isLaunching = false;
 	let isStopping = false;
 	let copyButtonText = "";
+
+	// Get theme for this show
+	$: showTheme = themes[show.theme as keyof typeof themes] || themes[DEFAULT_THEME];
 
 	// Check if this show has any running instances (should only be one per show)
 	$: showInstances = $instancesStore.filter((instance) => instance.showId === show.id);
@@ -113,13 +117,18 @@
 	}
 </script>
 
-<div class="notification" class:online={showStatus === "online"}>
+<div
+	class="notification"
+	class:online={showStatus === "online"}
+	style="--show-theme-bg: {showTheme.menuBgColor}; --show-theme-text: {showTheme.menuTextColor}; --show-theme-primary: {showTheme.primaryColor};"
+>
 	<div class="level is-mobile">
 		<div class="level-left">
 			<div class="level-item">
 				<div>
 					<p class="title is-6 is-family-title">
 						{show.name}
+						{show.theme}
 						<span class="tag {statusClass} ml-4">
 							{statusLabel}
 						</span>
@@ -236,6 +245,13 @@
 							</span><span>Förbered</span>
 						</a>
 					{/if}
+					{#if $isTheaterAuthenticated}
+						<a href={`/preparation?show=${show.id}`} class="button is-small is-secondary">
+							<span class="icon is-small">
+								<PicolEdit />
+							</span><span>Förbered</span>
+						</a>
+					{/if}
 				</div>
 			</div>
 		</div>
@@ -250,6 +266,9 @@
 		border-bottom-right-radius: 0px;
 		max-width: 100%;
 		overflow: hidden;
+		background-color: var(--show-theme-bg, var(--channelle-menu-bg-color));
+		color: var(--show-theme-text, var(--channelle-menu-text-color));
+		border: 1px solid var(--show-theme-primary, var(--bulma-primary));
 	}
 	.notification.online {
 		border-top-left-radius: 28px;
@@ -261,6 +280,8 @@
 	.tag {
 		border-radius: 14px;
 		flex-shrink: 0;
+		background-color: var(--show-theme-primary, var(--bulma-primary));
+		color: var(--show-theme-text, var(--channelle-menu-text-color));
 	}
 
 	.title {
@@ -317,7 +338,7 @@
 	.instance-details {
 		margin-top: 0.75rem;
 		padding-top: 0.75rem;
-		border-top: 1px solid rgba(255, 255, 255, 0.1);
+		border-top: 1px solid var(--show-theme-primary, rgba(255, 255, 255, 0.1));
 		max-width: 100%;
 		overflow: hidden;
 	}
@@ -331,7 +352,7 @@
 	}
 
 	.instance-meta span {
-		color: var(--channelle-menu-text-color);
+		color: var(--show-theme-text, var(--channelle-menu-text-color));
 		opacity: 0.8;
 		white-space: nowrap;
 		min-width: 0;
@@ -348,7 +369,7 @@
 	}
 
 	.instance-url code {
-		background-color: rgba(255, 255, 255, 0.1);
+		background-color: color-mix(in srgb, var(--show-theme-primary, var(--bulma-primary)) 10%, transparent);
 		padding: 0.2rem 0.4rem;
 		border-radius: 3px;
 		word-break: break-all;
@@ -367,14 +388,14 @@
 	}
 
 	.show-url {
-		background-color: rgba(255, 255, 255, 0.08);
-		color: var(--channelle-menu-text-color);
+		background-color: color-mix(in srgb, var(--show-theme-primary, var(--bulma-primary)) 15%, transparent);
+		color: var(--show-theme-text, var(--channelle-menu-text-color));
 		padding: 0.25rem 0.5rem;
 		border-radius: 4px;
 		font-size: 0.8rem;
 		flex: 1;
 		word-break: break-all;
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		border: 1px solid var(--show-theme-primary, rgba(255, 255, 255, 0.1));
 		min-width: 0;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -382,8 +403,8 @@
 
 	.copy-url-button {
 		background-color: transparent;
-		border: 1px solid rgba(255, 255, 255, 0.2);
-		color: var(--channelle-menu-text-color);
+		border: 1px solid var(--show-theme-primary, rgba(255, 255, 255, 0.2));
+		color: var(--show-theme-text, var(--channelle-menu-text-color));
 		padding: 0.25rem 0.5rem;
 		border-radius: 4px;
 		transition: all 0.2s ease;
@@ -394,8 +415,8 @@
 	}
 
 	.copy-url-button:hover {
-		background-color: rgba(255, 255, 255, 0.1);
-		border-color: rgba(255, 255, 255, 0.3);
+		background-color: color-mix(in srgb, var(--show-theme-primary, var(--bulma-primary)) 20%, transparent);
+		border-color: var(--show-theme-primary, rgba(255, 255, 255, 0.3));
 		transform: translateY(-1px);
 	}
 
@@ -404,8 +425,8 @@
 		top: -1.5rem;
 		left: 50%;
 		transform: translateX(-50%);
-		background-color: rgba(0, 0, 0, 0.8);
-		color: white;
+		background-color: var(--show-theme-bg, rgba(0, 0, 0, 0.8));
+		color: var(--show-theme-text, white);
 		padding: 0.2rem 0.4rem;
 		border-radius: 3px;
 		font-size: 0.7rem;

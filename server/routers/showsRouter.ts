@@ -21,16 +21,7 @@ export const showsRouter = trcpRouter({
 			const shows = await Show.findAll({
 				order: [["updatedAt", "DESC"]],
 			});
-
-			// FIXME: This is a simplified version that doesn't include launch information
-			// In the future, we should enhance this to include launch status and timestamps
-			return shows.map((show) => ({
-				id: show.id,
-				name: show.name,
-				description: show.description,
-				nomenclature: show.nomenclature,
-				url: show.url || "",
-			}));
+			return shows;
 		} catch (error) {
 			console.error("[Shows] Error fetching shows:", error);
 			throw new TRPCError({

@@ -67,7 +67,7 @@
 						</div>
 					</div>
 				{:else}
-					<div class="box">
+					<div>
 						<!-- Current and upcoming shows -->
 						{#each currentShows as show (show.url)}
 							<ShowListEntry {show} />

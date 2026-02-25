@@ -88,13 +88,6 @@ const editConfigProcedure = withConfigProcedure
 	.use(withAuthenticatedAdminMiddleware)
 	.use(async ({ ctx, next }) => {
 		try {
-			if (!ctx.config.isEditable) {
-				throw new TRPCError({
-					code: "FORBIDDEN",
-					message: "Show is not configurable",
-				});
-			}
-
 			// Tries to edit the backstage configuration
 			const results = await next({ ctx });
 

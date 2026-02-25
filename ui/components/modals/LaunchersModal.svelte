@@ -19,6 +19,7 @@
 	import IconStop from "~/components/picol/icons/Picol-controls-stop.svelte";
 	import IconRefresh from "~/components/picol/icons/Picol-refresh.svelte";
 	import IconPlay from "~/components/picol/icons/Picol-controls-play.svelte";
+	import InstanceCard from "./InstanceCard.svelte";
 
 	const dispatch = createEventDispatcher<{
 		close: void;
@@ -128,7 +129,7 @@
 			} else {
 				launchError = result.message || "Misslyckades med att starta föreställning";
 			}
-		} catch (error) {
+		} catch (error: any) {
 			console.error("Failed to launch show:", error);
 			launchError = error.message || "Ett fel uppstod vid start av föreställning";
 		} finally {
@@ -305,67 +306,9 @@
 		{#if $isTheaterAuthenticated && instances.length > 0}
 			<div class="instances-section">
 				<h6 class="title is-6 mb-3">Aktiva servrar</h6>
-				<div class="instances-grid">
-					{#each instances as launch (launch.instanceId)}
-						<div class="instance-card">
-							<div class="instance-header">
-								<span
-									class="instance-status tag"
-									class:is-success={launch.status === "running"}
-									class:is-warning={launch.status === "starting"}
-									class:is-danger={launch.status === "error"}
-									class:is-light={launch.status === "stopped"}
-								>
-									{launch.status}
-								</span>
-								<span class="instance-id is-family-code has-text-weight-semibold">
-									{launch.instanceId.slice(-8)}
-								</span>
-							</div>
-
-							<div class="instance-details">
-								{#if launch.port}
-									<p class="detail-item">
-										<span class="has-text-grey">Port:</span>
-										<span class="has-text-weight-semibold">{launch.port}</span>
-									</p>
-								{/if}
-								{#if launch.showId}
-									<p class="detail-item">
-										<span class="has-text-grey">Föreställning:</span>
-										<span class="has-text-weight-semibold">{launch.showId}</span>
-									</p>
-								{/if}
-								{#if launch.createdAt}
-									<p class="detail-item">
-										<span class="has-text-grey">Skapad:</span>
-										<span>{new Date(launch.createdAt).toLocaleString("sv-SE")}</span>
-									</p>
-								{/if}
-								{#if launch.stoppedAt}
-									<p class="detail-item">
-										<span class="has-text-grey">Avslutad:</span>
-										<span>{new Date(launch.stoppedAt).toLocaleString("sv-SE")}</span>
-									</p>
-								{/if}
-							</div>
-
-							{#if $isTheaterAuthenticated && launch.status !== "stopped"}
-								<div class="instance-actions">
-									<button
-										class="button is-small is-danger is-outlined is-fullwidth"
-										class:is-loading={stoppingInstances.has(launch.instanceId)}
-										disabled={stoppingInstances.has(launch.instanceId)}
-										on:click={() => handleStopInstance(launch.instanceId)}
-									>
-										<span class="icon is-small">
-											<IconStop />
-										</span>
-										<span>Stoppa</span>
-									</button>
-								</div>
-							{/if}
-						</div>
+				<div class="instances-list">
+					{#each instances as instance (instance.instanceId)}
+						<InstanceCard {instance} isTheaterAuthenticated={$isTheaterAuthenticated} {stoppingInstances} onStop={handleStopInstance} />
 					{/each}
 				</div>
 			</div>
@@ -439,68 +382,11 @@
 		}
 
 		.instances-section {
-			.instances-grid {
-				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+			.instances-list {
+				display: flex;
+				flex-direction: column;
 				gap: 1rem;
 				max-width: 100%;
-			}
-
-			.instance-card {
-				background-color: rgba(0, 0, 0, 0.02);
-				border: 1px solid rgba(0, 0, 0, 0.1);
-				border-radius: 8px;
-				padding: 1rem;
-				min-width: 0;
-				max-width: 100%;
-				box-sizing: border-box;
-
-				.instance-header {
-					display: flex;
-					align-items: center;
-					gap: 0.75rem;
-					margin-bottom: 0.75rem;
-					flex-wrap: wrap;
-
-					.instance-status {
-						margin: 0;
-						flex-shrink: 0;
-					}
-
-					.instance-id {
-						font-size: 0.9rem;
-						word-break: break-all;
-						min-width: 0;
-					}
-				}
-
-				.instance-details {
-					margin-bottom: 1rem;
-
-					.detail-item {
-						display: flex;
-						justify-content: space-between;
-						margin-bottom: 0.25rem;
-						font-size: 0.85rem;
-						gap: 0.5rem;
-						min-width: 0;
-
-						span:last-child {
-							word-break: break-all;
-							text-align: right;
-							min-width: 0;
-						}
-
-						&:last-child {
-							margin-bottom: 0;
-						}
-					}
-				}
-
-				.instance-actions {
-					border-top: 1px solid rgba(0, 0, 0, 0.1);
-					padding-top: 0.75rem;
-				}
 			}
 		}
 
@@ -529,30 +415,8 @@
 				}
 			}
 
-			.instances-section .instances-grid {
-				grid-template-columns: 1fr;
+			.instances-section .instances-list {
 				gap: 0.75rem;
-			}
-
-			.instance-card {
-				padding: 0.75rem;
-
-				.instance-header {
-					flex-direction: column;
-					align-items: flex-start;
-					gap: 0.5rem;
-				}
-
-				.instance-details .detail-item {
-					font-size: 0.8rem;
-					flex-direction: column;
-					align-items: flex-start;
-					gap: 0.25rem;
-
-					span:last-child {
-						text-align: left;
-					}
-				}
 			}
 
 			.buttons {

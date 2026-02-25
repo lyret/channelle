@@ -97,6 +97,13 @@ export const launcherRouter = trcpRouter({
 				try {
 					instances = await Launch.findAll({
 						order: [["createdAt", "DESC"]],
+						include: [
+							{
+								model: Show,
+								attributes: ["id", "name"],
+								as: "show",
+							},
+						],
 					});
 				} catch (error) {
 					console.error("[LauncherRouter] Error getting launches for sync:", error);

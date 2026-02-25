@@ -9,7 +9,6 @@ let _localShowId: number | null = null;
 /** Contains the currently loaded/displayed backstage configuration from the server */
 const _localConfigStore = writable<BackstageConfiguration>({
 	showId: null,
-	isEditable: false,
 	name: "",
 	description: "",
 	nomenclature: "föreställningen",
@@ -90,8 +89,8 @@ export const showMetadataStore = derived(_localConfigStore, ($config) => {
 		name: $config.name || "namnlös",
 		description: $config.description,
 		nomenclature: $config.nomenclature || "föreställningen",
-		theme: urlTheme || $config.theme || DEFAULT_THEME
-	}
+		theme: urlTheme || $config.theme || DEFAULT_THEME,
+	};
 });
 
 /** Current show script from configuration */
