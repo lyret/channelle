@@ -9,30 +9,35 @@ const SAMPLE_SHOWS = [
 		description: "En tidlös berättelse om hämnd, kärlek och makt i det danska kungahuset.",
 		nomenclature: "föreställningen",
 		showPassword: "",
+		isPublic: true,
 	},
 	{
 		name: "Improvisationsworkshop",
 		description: "En interaktiv workshop där deltagarna utforskar scenkonst genom improvisation.",
 		nomenclature: "grejen",
 		showPassword: "workshop123",
+		isPublic: false,
 	},
 	{
 		name: "Litteraturföreläsning: Strindberg",
 		description: "En djupgående föreläsning om August Strindbergs dramatik och dess betydelse för modern teater.",
 		nomenclature: "föreläsningen",
 		showPassword: "",
+		isPublic: true,
 	},
 	{
 		name: "Experimentell performance",
 		description: "En avantgardistisk performance som utforskar gränserna mellan teater, dans och multimedia.",
 		nomenclature: "grejen",
 		showPassword: "experiment456",
+		isPublic: false,
 	},
 	{
 		name: "Barnteater: Pippi Långstrump",
 		description: "En färgglad och rolig föreställning för hela familjen baserad på Astrid Lindgrens klassiska berättelser.",
 		nomenclature: "föreställningen",
 		showPassword: "",
+		isPublic: true,
 	},
 ];
 

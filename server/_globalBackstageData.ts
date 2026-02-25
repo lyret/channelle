@@ -20,6 +20,7 @@ let _backstageConfiguration: BackstageConfiguration = {
 	criticalEffectsEnabledOverride: SceneSetting.FORCED_OFF,
 	visitorAudioEnabledOverride: SceneSetting.FORCED_OFF,
 	visitorVideoEnabledOverride: SceneSetting.FORCED_OFF,
+	isPublic: true,
 	selectedScene: {
 		name: "Alla",
 		chatEnabled: true,
@@ -90,6 +91,7 @@ export function toBackstageConfiguration(show: Show): BackstageConfiguration {
 		criticalEffectsEnabledOverride: show.criticalEffectsEnabledOverride,
 		visitorAudioEnabledOverride: show.visitorAudioEnabledOverride,
 		visitorVideoEnabledOverride: show.visitorVideoEnabledOverride,
+		isPublic: show.isPublic,
 		selectedScene: show.selectedScene,
 	};
 }

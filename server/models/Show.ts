@@ -17,10 +17,8 @@ export class Show extends Model {
 	declare criticalEffectsEnabledOverride: SceneSetting;
 	declare visitorAudioEnabledOverride: SceneSetting;
 	declare visitorVideoEnabledOverride: SceneSetting;
-	declare url: string | null;
 	declare theme: "minimal" | "mellan" | "cool";
-	declare nrOfTimesRehersed: number;
-	declare nrOfTimesShown: number;
+	declare isPublic: boolean;
 	declare createdAt: Date;
 	declare updatedAt: Date;
 }
@@ -66,26 +64,12 @@ export function initShow(sequelize: Sequelize) {
 				allowNull: true,
 				defaultValue: "",
 			},
-			url: {
-				type: DataTypes.STRING,
-				allowNull: true,
-				defaultValue: null,
-			},
 			theme: {
 				type: DataTypes.ENUM("minimal", "mellan", "cool"),
 				allowNull: false,
 				defaultValue: "mellan", // Matches DEFAULT_THEME constant from client-side
 			},
-			nrOfTimesRehersed: {
-				type: DataTypes.INTEGER,
-				allowNull: false,
-				defaultValue: 0,
-			},
-			nrOfTimesShown: {
-				type: DataTypes.INTEGER,
-				allowNull: false,
-				defaultValue: 0,
-			},
+
 			curtainsOverride: {
 				type: DataTypes.INTEGER,
 				allowNull: false,
@@ -120,6 +104,11 @@ export function initShow(sequelize: Sequelize) {
 				type: DataTypes.JSON,
 				allowNull: true,
 				defaultValue: null,
+			},
+			isPublic: {
+				type: DataTypes.BOOLEAN,
+				allowNull: false,
+				defaultValue: true, // Default to public for backward compatibility
 			},
 		},
 		{

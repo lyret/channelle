@@ -1,6 +1,7 @@
 import type { RouterOutputTypes, RouterInputTypes } from "../_trpcClient";
-import { writable, derived } from "svelte/store";
+import { writable } from "svelte/store";
 import { showsClient } from "../_trpcClient";
+import type { ShowAttributes } from "~/types/serverSideTypes";
 
 // ============================================================================
 // STORES
@@ -10,15 +11,10 @@ import { showsClient } from "../_trpcClient";
 export const showsStoreIsLoading = writable<boolean>(false);
 
 /** All available shows in the system */
-export const showsListStore = writable<RouterOutputTypes["shows"]["list"]>([]);
+export const showsListStore = writable<Array<ShowAttributes>>([]);
 
 /** Contains any errors from show client operations */
 export const showsErrorStore = writable<string | null>(null);
-
-// DERIVED STORES (Convenient views of show data)
-
-/** Shows that are currently running/online - filtered from showsStore */
-export const onlineShowsStore = derived(showsListStore, ($shows) => $shows.filter((show) => show.online));
 
 // ============================================================================
 // SHOW CRUD FUNCTIONS
@@ -36,6 +32,7 @@ export async function fetchShows(): Promise<void> {
 		showsErrorStore.set(null);
 
 		const shows = await showsClient.list.query();
+		console.log({ shows });
 		showsListStore.set(shows);
 	} catch (error) {
 		console.error("Failed to fetch shows:", error);
@@ -93,7 +90,7 @@ export async function createShow(data: RouterInputTypes["shows"]["create"]): Pro
 }
 
 /** Update an existing show's basic information */
-export async function updateShow(data: RouterOutputTypes["shows"]["update"]): Promise<RouterOutputTypes["shows"]["update"] | null> {
+export async function updateShow(data: Partial<RouterOutputTypes["shows"]["update"]>): Promise<RouterOutputTypes["shows"]["update"] | null> {
 	try {
 		showsStoreIsLoading.set(true);
 		showsErrorStore.set(null);

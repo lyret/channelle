@@ -11,14 +11,9 @@
 	import { openCreateShowModal, openLauncherModal } from "~/stores/theater/theaterModals";
 	import { isTheaterAuthenticated } from "~/api/auth";
 
-	// Use reactive statement to get shows from store
-	$: isLoadingShows = $showsStoreIsLoading;
-	$: showsError = $showsErrorStore;
-
-	// Separate shows into current/upcoming and previous
-	$: currentShows = $showsListStore.filter((show) => show.isOnline || show.lastOnlineAt === null);
-	$: previousShows = $showsListStore.filter((show) => !show.isOnline && show.lastOnlineAt !== null);
-
+	$: publicShows = $showsListStore.filter((show) => show.isPublic);
+	$: hiddenShows = $showsListStore.filter((show) => !show.isPublic);
+	$: console.log({ hiddenShows });
 	onMount(async () => {
 		await fetchShows();
 	});
@@ -49,45 +44,42 @@
 			{/if}
 		</TheaterActionBar>
 
-		<div class="container is-fluid">
+		<div class="container is-fluid mt-6">
 			<div class="container content-container">
 				<!-- Shows list section -->
-				{#if isLoadingShows}
+				{#if $showsStoreIsLoading}
 					<div class="box">
 						<div class="has-text-centered">
 							<div class="is-loading"></div>
 							<p class="is-family-secondary">Hämtar föreställningar...</p>
 						</div>
 					</div>
-				{:else if showsError}
+				{:else if $showsErrorStore}
 					<div class="box">
 						<div class="notification is-danger">
-							<p class="is-family-secondary">Ojdå, ett tekniskt fel: {showsError}</p>
+							<p class="is-family-secondary">Ojdå, ett tekniskt fel: {$showsErrorStore}</p>
 							<button class="button is-small is-light is-outlined mt-2" on:click={fetchShows}> Försök igen </button>
 						</div>
 					</div>
 				{:else}
 					<div>
-						<!-- Current and upcoming shows -->
-						{#each currentShows as show (show.url)}
+						<!-- Public shows -->
+						{#each publicShows as show (show.id)}
 							<ShowListEntry {show} />
 						{/each}
 
-						<!-- Divider for previous shows (only show if there are previous shows) -->
-						{#if previousShows.length > 0}
-							<hr class="previous-shows-divider" />
-							<h6 class="title is-6 has-text-grey previous-shows-title">Tidigare föreställningar</h6>
-
-							<!-- Previous shows -->
-							{#each previousShows as show (show.url)}
+						<!-- Private shows section - only visible to authenticated users -->
+						{#if $isTheaterAuthenticated}
+							<h6 class="title is-6 has-text-grey previous-shows-title mt-6 mb-4">Gömda föreställningar - syns endast för dig som inloggad</h6>
+							{#each hiddenShows as show (show.id)}
 								<ShowListEntry {show} />
 							{/each}
 						{/if}
 
 						<!-- Empty state -->
-						{#if $showsListStore.length === 0}
-							<div class="notification is-light">
-								<p class="is-family-secondary has-text-grey">Det finns inga föreställningar att visa just nu.</p>
+						{#if $showsListStore.length === 0 || (!$isTheaterAuthenticated && publicShows.length === 0)}
+							<div class="m-6 has-text-centered">
+								<p class="has-text-grey">Det finns inga föreställningar att visa just nu.</p>
 							</div>
 						{/if}
 					</div>
@@ -164,6 +156,19 @@
 	}
 
 	.previous-shows-title {
+		margin-bottom: 1.5rem;
+		font-size: 1rem;
+		font-weight: 600;
+		opacity: 0.7;
+	}
+
+	.private-shows-divider {
+		margin: 2rem 0 1rem 0;
+		border: none;
+		border-top: 1px solid var(--bulma-scheme-main-bis);
+	}
+
+	.private-shows-title {
 		margin-bottom: 1.5rem;
 		font-size: 1rem;
 		font-weight: 600;

@@ -30,6 +30,7 @@ const _editableShowAttributesSchema = z.object({
 	visitorVideoEnabledOverride: z.enum(SceneSetting),
 	nrOfTimesRehersed: z.number().int().min(0),
 	nrOfTimesShown: z.number().int().min(0),
+	isPublic: z.boolean(),
 }) satisfies z.ZodType<EditableShowAttributes>;
 
 // Get the trpc router constructor and default procedure
