@@ -5,6 +5,8 @@ import type { CanLaunchResult, LaunchResult, InstanceInfo, InstanceStatus } from
 import { LaunchAdapter } from "./_abstractlaunchAdapter";
 import type { Show } from "../models/Show";
 import { Launch } from "../models/Launch";
+import { getRedbirdProxy } from "../lib/redbirdProxy";
+import { v4 as uuidv4 } from "uuid";
 
 /**
  * Information about a local instance process
@@ -14,6 +16,8 @@ interface LocalInstanceInfo extends InstanceInfo {
 	process?: ChildProcess;
 	/** Process ID */
 	pid?: number;
+	/** Proxy URL through reverse proxy (if available) */
+	proxyUrl?: string;
 }
 
 /**
@@ -81,7 +85,8 @@ export class LocalAdapter extends LaunchAdapter {
 			throw new Error("No available port found");
 		}
 
-		const instanceId = this.generateInstanceId();
+		// Generate a UUID for instanceId - this is guaranteed to be unique
+		const instanceId = `local_${uuidv4()}`;
 		const url = `http://localhost:${port}`;
 
 		// Create instance info
@@ -114,12 +119,31 @@ export class LocalAdapter extends LaunchAdapter {
 
 			console.log(`[LocalAdapter] Launched instance '${instanceId}' for show '${show.name}' on port ${port}`);
 
+			// Register with Redbird proxy if available
+			let proxyUrl: string | undefined;
+			try {
+				const redbirdProxy = getRedbirdProxy();
+				if (redbirdProxy.isReady()) {
+					// Use show name as the pathname (e.g., "/hamlet")
+					const pathname = `/${show.name.toLowerCase().replace(/\s+/g, "-")}`;
+					proxyUrl = redbirdProxy.registerRoute(instanceId, url, pathname);
+					instanceInfo.proxyUrl = proxyUrl;
+					console.log(`[LocalAdapter] Registered proxy route: ${pathname} -> ${url}`);
+				} else {
+					console.log("[LocalAdapter] Redbird proxy not ready, skipping route registration");
+				}
+			} catch (error) {
+				console.error(`[LocalAdapter] Failed to register proxy route for ${instanceId}:`, error);
+				// Don't fail the launch if proxy registration fails
+			}
+
 			return {
 				instanceId,
 				url,
+				proxyUrl,
 				port,
 				status: "starting",
-				message: `Local stage instance launched on port ${port}`,
+				message: `Local stage instance launched on port ${port}` + (proxyUrl ? ` with proxy at ${proxyUrl}` : ""),
 			};
 		} catch (error) {
 			// Clean up on error
@@ -159,6 +183,18 @@ export class LocalAdapter extends LaunchAdapter {
 			}
 
 			console.log(`[LocalAdapter] Stopped instance '${instanceId}' (PID: ${instance.pid})`);
+
+			// Unregister from Redbird proxy if available
+			try {
+				const redbirdProxy = getRedbirdProxy();
+				if (redbirdProxy.isReady()) {
+					redbirdProxy.unregisterRoute(instanceId);
+					console.log(`[LocalAdapter] Unregistered proxy route for ${instanceId}`);
+				}
+			} catch (error) {
+				console.error(`[LocalAdapter] Failed to unregister proxy route for ${instanceId}:`, error);
+				// Don't fail the stop if proxy unregistration fails
+			}
 		} catch (error) {
 			console.error(`[LocalAdapter] Error stopping instance '${instanceId}':`, error);
 		}
@@ -179,10 +215,12 @@ export class LocalAdapter extends LaunchAdapter {
 	 * Get all instances managed by this adapter
 	 */
 	async getInstances(): Promise<InstanceInfo[]> {
+		const redbirdProxy = getRedbirdProxy();
 		return Array.from(this.instances.values()).map((instance) => ({
 			instanceId: instance.instanceId,
 			showId: instance.showId,
 			url: instance.url,
+			proxyUrl: redbirdProxy.isReady() ? redbirdProxy.getProxyUrl(instance.instanceId) : undefined,
 			port: instance.port,
 			status: instance.status,
 			createdAt: instance.createdAt,
@@ -242,15 +280,6 @@ export class LocalAdapter extends LaunchAdapter {
 	}
 
 	/**
-	 * Generate a unique instance ID
-	 */
-	private generateInstanceId(): string {
-		const timestamp = Date.now().toString(36);
-		const random = Math.random().toString(36).substring(2, 8);
-		return `local_${timestamp}_${random}`;
-	}
-
-	/**
 	 * Spawn a new stage process
 	 */
 	private async spawnStageProcess(showId: number, port: number): Promise<ChildProcess> {
@@ -298,20 +327,23 @@ export class LocalAdapter extends LaunchAdapter {
 		}
 
 		// Handle process events
-		childProcess.on("spawn", () => {
+		childProcess.on("spawn", async () => {
 			console.log(`[LocalAdapter] Process spawned for instance '${instanceId}' (PID: ${childProcess.pid})`);
 
 			// Create Launch record
-			Launch.create({
-				instanceId: instanceId,
-				showId: instance.showId,
-				url: instance.url,
-				port: instance.port,
-				status: "starting",
-				stoppedAt: null,
-			}).catch((error) => {
+			try {
+				await Launch.create({
+					instanceId: instanceId,
+					showId: instance.showId,
+					url: instance.url,
+					port: instance.port,
+					proxyUrl: instance.proxyUrl,
+					status: "starting",
+					stoppedAt: null,
+				});
+			} catch (error) {
 				console.error("[LocalAdapter] Error creating launch record:", error);
-			});
+			}
 
 			// Give the process a moment to start up, then mark as running
 			setTimeout(async () => {

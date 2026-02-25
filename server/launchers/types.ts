@@ -18,6 +18,8 @@ export interface LaunchResult {
 	instanceId: string;
 	/** URL where the instance can be accessed */
 	url: string;
+	/** Proxy URL through reverse proxy (if available) */
+	proxyUrl?: string;
 	/** Port number if applicable (mainly for local instances) */
 	port?: number;
 	/** Current status of the instance */
@@ -36,6 +38,8 @@ export interface InstanceInfo {
 	showId: number;
 	/** URL where the instance can be accessed */
 	url: string;
+	/** Proxy URL through reverse proxy (if available) */
+	proxyUrl?: string;
 	/** Port number if applicable */
 	port?: number;
 	/** Current status of the instance */
@@ -86,6 +90,8 @@ export interface InstanceInfoSerialized {
 	showId: number;
 	/** URL where the instance can be accessed */
 	url: string;
+	/** Proxy URL through reverse proxy (if available) */
+	proxyUrl?: string;
 	/** Port number if applicable */
 	port?: number;
 	/** Current status of the instance */

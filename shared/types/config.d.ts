@@ -99,6 +99,10 @@ type LauncherConfig = {
 	local: {
 		/** Maximum number of active local stage instances. */
 		maxActiveStages: number;
+		/** Proxy port for local instances (optional). */
+		proxyPort?: number;
+		/** Proxy domain for local instances (optional). */
+		proxyDomain?: string;
 	};
 	/** DigitalOcean adapter settings. */
 	digitalocean: {

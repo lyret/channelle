@@ -52,6 +52,7 @@
 		"nopt": "^7.2.1",
 		"postcss": "^8.4.24",
 		"public-ip": "^6.0.2",
+		"redbird": "^1.0.2",
 		"restify": "^11.1.0",
 		"restify-errors": "^8.0.2",
 		"sequelize": "^6.37.7",

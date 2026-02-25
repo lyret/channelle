@@ -249,23 +249,12 @@ export const launcherRouter = trcpRouter({
 			// Launch the instance
 			const launchResult = await activeAdapter.launch(show);
 
-			// Create Launch record in database to track this launch
-			const launch = await Launch.create({
-				instanceId: launchResult.instanceId,
-				showId: show.id,
-				url: launchResult.url,
-				port: launchResult.port,
-				status: launchResult.status,
-				stoppedAt: null,
-			});
-
 			console.log(
 				`[LauncherRouter] Successfully launched instance '${launchResult.instanceId}' for show '${show.name}' using ${activeAdapter.name} adapter`,
 			);
 
 			return {
 				success: true,
-				launchId: launch.id,
 				instanceId: launchResult.instanceId,
 				url: launchResult.url,
 				port: launchResult.port,

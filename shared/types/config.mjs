@@ -82,6 +82,8 @@
  * @property {string} activeAdapter - Active adapter name (none, local, digitalocean).
  * @property {Object} local - Local adapter settings.
  * @property {number} local.maxActiveStages - Maximum number of active local stage instances.
+ * @property {number|undefined} local.proxyPort - Proxy port for local instances.
+ * @property {string|undefined} local.proxyDomain - Proxy domain for local instances.
  * @property {Object} digitalocean - DigitalOcean adapter settings.
  * @property {string} digitalocean.apiKey - DigitalOcean API key.
  * @property {string} digitalocean.region - DigitalOcean region for droplet deployment.

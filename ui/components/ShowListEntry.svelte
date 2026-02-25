@@ -33,7 +33,6 @@
 				<div>
 					<p class="title is-6 is-family-title">
 						{show.name}
-						{show.theme}
 					</p>
 					{#if show.description}
 						<p class="subtitle is-7 is-family-secondary mt-2">{show.description}</p>
@@ -57,7 +56,7 @@
 							on:click={togglePublicStatus}
 							title={show.isPublic ? "Gör privat" : "Gör publik"}
 						>
-							<span>{show.isPublic ? "Publik" : "Privat"}</span>
+							<span>{show.isPublic ? "Offentlig" : "Gömd"}</span>
 						</button>
 					{/if}
 				</div>

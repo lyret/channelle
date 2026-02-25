@@ -199,6 +199,27 @@ export async function createConfiguration() {
 		console.log("🔸", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter DigitalOcean Region", digitaloceanRegion);
 	}
 
+	// Redbird reverse proxy configuration
+	console.log();
+
+	// Proxy port configuration (now part of local launcher)
+	const proxyPort =
+		cli.theaterAdapterLocalProxyPort !== undefined
+			? cli.theaterAdapterLocalProxyPort
+			: env.THEATER_ADAPTER_LOCAL_PROXY_PORT
+				? Number(env.THEATER_ADAPTER_LOCAL_PROXY_PORT)
+				: undefined;
+	const proxyDomain =
+		cli.theaterAdapterLocalProxyDomain !== undefined
+			? cli.theaterAdapterLocalProxyDomain
+			: env.THEATER_ADAPTER_LOCAL_PROXY_DOMAIN || (production ? "channelle.se" : "localhost");
+
+	// Only show local adapter proxy config if it's enabled
+	if (proxyPort && theaterAdapter === "local") {
+		console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Local Adapter Proxy Port", proxyPort);
+		console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Local Adapter Proxy Domain", proxyDomain);
+	}
+
 	// Create an array of transport listening info for webRTC, will be filled
 	// with configurations depending on the given wan, lan and local settings
 	// lower array-placement indicates preference in media soup
@@ -332,6 +353,10 @@ export async function createConfiguration() {
 			local: {
 				/** Maximum number of active local stage instances */
 				maxActiveStages: maxLocalStages,
+				/** Proxy port for local instances (optional) */
+				proxyPort: proxyPort,
+				/** Proxy domain for local instances (optional) */
+				proxyDomain: proxyDomain,
 			},
 			/** DigitalOcean adapter settings */
 			digitalocean: {
