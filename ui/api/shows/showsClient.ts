@@ -58,6 +58,19 @@ export async function getShow(id: number): Promise<RouterOutputTypes["shows"]["g
 	}
 }
 
+/** Get the list of shows for display purposes */
+export async function getShowsList(): Promise<RouterOutputTypes["shows"]["list"]> {
+	try {
+		showsErrorStore.set(null);
+		const shows = await showsClient.list.query();
+		return shows;
+	} catch (error) {
+		console.error("Failed to get shows list:", error);
+		showsErrorStore.set(error instanceof Error ? error.message : "Failed to get shows list");
+		return [];
+	}
+}
+
 /** Create a new show in the system */
 export async function createShow(data: RouterInputTypes["shows"]["create"]): Promise<RouterOutputTypes["shows"]["create"] | null> {
 	try {

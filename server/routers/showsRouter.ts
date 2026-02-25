@@ -1,5 +1,4 @@
 import { Show } from "../models/Show";
-import { getActiveAdapter, isLauncherReady } from "../launchers";
 
 import type { ShowAttributes, ShowListEntry } from "../_types";
 import { TRPCError } from "@trpc/server";
@@ -23,35 +22,15 @@ export const showsRouter = trcpRouter({
 				order: [["updatedAt", "DESC"]],
 			});
 
-			// Check for running instances
-			let runningInstances: Array<{ showId: number; url: string }> = [];
-			if (isLauncherReady()) {
-				const activeAdapter = getActiveAdapter();
-				if (activeAdapter) {
-					try {
-						const instances = await activeAdapter.getInstances();
-						runningInstances = instances
-							.filter((instance) => instance.status === "running" || instance.status === "starting")
-							.map((instance) => ({ showId: instance.showId, url: instance.url }));
-					} catch (error) {
-						console.error("[Shows] Error getting instances:", error);
-					}
-				}
-			}
-			return shows.map((show) => {
-				const runningInstance = runningInstances.find((instance) => instance.showId === show.id);
-				const isCurrentlyOnline = Boolean(runningInstance);
-
-				return {
-					id: show.id,
-					name: show.name,
-					description: show.description,
-					nomenclature: show.nomenclature,
-					isOnline: isCurrentlyOnline,
-					lastOnlineAt: show.lastOnlineAt,
-					url: runningInstance ? runningInstance.url : "",
-				};
-			});
+			// FIXME: This is a simplified version that doesn't include launch information
+			// In the future, we should enhance this to include launch status and timestamps
+			return shows.map((show) => ({
+				id: show.id,
+				name: show.name,
+				description: show.description,
+				nomenclature: show.nomenclature,
+				url: show.url || "",
+			}));
 		} catch (error) {
 			console.error("[Shows] Error fetching shows:", error);
 			throw new TRPCError({

@@ -40,13 +40,12 @@ export type ActiveSpeaker = {
 };
 
 /** The Show attribues needed when listed on the theater page */
-export type ShowListEntry = Pick<ShowAttributes, "id" | "name" | "description" | "nomenclature" | "online" | "url" | "lastOnlineAt">;
+// FIXME: Update this to include launch information
+// For now, simplified to basic show information
+export type ShowListEntry = Pick<ShowAttributes, "id" | "name" | "description" | "nomenclature" | "url">;
 
 /** The Show attributes that are editibale from the backstage interface */
-export type EditableShowAttributes = Omit<
-	ShowAttributes,
-	"id" | "online" | "createdAt" | "updatedAt" | "lastOnlineAt" | "nrOfTimesShown" | "nrOfTimes" | "nrOfTimesRehersed" | "url"
->;
+export type EditableShowAttributes = Omit<ShowAttributes, "id" | "createdAt" | "updatedAt" | "nrOfTimesShown" | "nrOfTimes" | "nrOfTimesRehersed" | "url">;
 
 export type ClientPeerAttributes = Omit<PeerAttributes, "createdAt" | "updatedAt"> & {
 	createdAt: string;
@@ -62,8 +61,6 @@ export type ClientPeerAttributes = Omit<PeerAttributes, "createdAt" | "updatedAt
 export type BackstageConfiguration = EditableShowAttributes & {
 	/** Identification for the selected show in the database */
 	showId: ShowAttributes["id"] | null;
-	/** Determines if the backstage configuration is editable */
-	isEditable: boolean;
 };
 
 export type EffectData = { type: "flowers" | "applause" | "tomato"; number: number };
@@ -73,7 +70,7 @@ export type EffectData = { type: "flowers" | "applause" | "tomato"; number: numb
 export type { AppRouter } from "./_router";
 export type { MediaTag, TransportDirection, CustomAppData } from "./lib/mediaSoup";
 export type { MediaSession } from "./lib/trpc";
-export type { MessageAttributes, ShowAttributes } from "./models";
+export type { MessageAttributes, ShowAttributes, LaunchAttributes } from "./models";
 export type {
 	CanLaunchResult,
 	LaunchResult,

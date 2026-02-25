@@ -11,11 +11,14 @@
 		startLauncherSync,
 		stopAllInstances,
 		stopInstance,
+		launchShow,
+		getLaunchableShows,
 	} from "~/api/launchers";
 	import { isTheaterAuthenticated } from "~/api/auth";
-	import IconSettings from "~/components/picol/icons/Picol-settings.svelte";
+
 	import IconStop from "~/components/picol/icons/Picol-controls-stop.svelte";
 	import IconRefresh from "~/components/picol/icons/Picol-refresh.svelte";
+	import IconPlay from "~/components/picol/icons/Picol-controls-play.svelte";
 
 	const dispatch = createEventDispatcher<{
 		close: void;
@@ -26,6 +29,11 @@
 	let syncCleanup: (() => void) | null = null;
 	let isStoppingAll = false;
 	let stoppingInstances = new Set<string>();
+	let isLaunching = false;
+	let availableShows: { id: number; name: string }[] = [];
+	let selectedShowId: number | null = null;
+	let launchError: string | null = null;
+	let isLoadingShows = false;
 
 	function handleClose() {
 		dispatch("close");
@@ -46,6 +54,7 @@
 	// Start/stop sync based on visibility
 	$: if (isVisible && !syncCleanup) {
 		syncCleanup = startLauncherSync(3000);
+		loadAvailableShows();
 	} else if (!isVisible && syncCleanup) {
 		syncCleanup();
 		syncCleanup = null;
@@ -79,6 +88,51 @@
 		} finally {
 			stoppingInstances.delete(instanceId);
 			stoppingInstances = stoppingInstances; // Trigger reactivity
+		}
+	}
+
+	async function loadAvailableShows() {
+		if (!isLoadingShows && $isTheaterAuthenticated) {
+			isLoadingShows = true;
+			launchError = null;
+			try {
+				const shows = await getLaunchableShows();
+				availableShows = shows.map((show) => ({ id: show.id, name: show.name }));
+				if (availableShows.length > 0 && selectedShowId === null) {
+					selectedShowId = availableShows[0].id;
+				}
+			} catch (error) {
+				console.error("Failed to load shows:", error);
+				launchError = "Kunde inte ladda föreställningar";
+			} finally {
+				isLoadingShows = false;
+			}
+		}
+	}
+
+	async function handleLaunchShow() {
+		if (!$isTheaterAuthenticated || isLaunching || !selectedShowId || !canLaunch) return;
+
+		isLaunching = true;
+		launchError = null;
+
+		try {
+			const result = await launchShow(selectedShowId);
+			if (result.success) {
+				console.log(`Launched show ${selectedShowId}: ${result.message}`);
+				// Refresh the instances list
+				if (syncCleanup) {
+					syncCleanup();
+				}
+				syncCleanup = startLauncherSync(3000);
+			} else {
+				launchError = result.message || "Misslyckades med att starta föreställning";
+			}
+		} catch (error) {
+			console.error("Failed to launch show:", error);
+			launchError = error.message || "Ett fel uppstod vid start av föreställning";
+		} finally {
+			isLaunching = false;
 		}
 	}
 
@@ -179,6 +233,55 @@
 			</div>
 		</div>
 
+		<!-- Launch Form -->
+		{#if $isTheaterAuthenticated}
+			<div class="launch-form-section">
+				<h6 class="title is-6 mb-3">Starta ny föreställning</h6>
+				<div class="field is-horizontal">
+					<div class="field-body">
+						<div class="field is-expanded">
+							<div class="control is-expanded">
+								<div class="select is-fullwidth">
+									<select bind:value={selectedShowId} disabled={isLoadingShows || isLaunching || !canLaunch}>
+										{#if isLoadingShows}
+											<option value="">Laddar föreställningar...</option>
+										{:else if availableShows.length === 0}
+											<option value="">Inga föreställningar tillgängliga</option>
+										{:else}
+											{#each availableShows as show (show.id)}
+												<option value={show.id}>{show.name}</option>
+											{/each}
+										{/if}
+									</select>
+								</div>
+							</div>
+						</div>
+						<div class="field">
+							<div class="control">
+								<button
+									class="button is-success"
+									class:is-loading={isLaunching}
+									disabled={isLoadingShows || isLaunching || !selectedShowId || !canLaunch}
+									on:click={handleLaunchShow}
+									title="Starta vald föreställning"
+								>
+									<span class="icon is-small">
+										<IconPlay />
+									</span>
+									<span>Starta</span>
+								</button>
+							</div>
+						</div>
+					</div>
+					{#if launchError}
+						<div class="notification is-danger is-light mt-3">
+							<p class="is-size-7">{launchError}</p>
+						</div>
+					{/if}
+				</div>
+			</div>
+		{/if}
+
 		<!-- Status Details -->
 		{#if adapterStatus?.reason && !canLaunch}
 			<div class="notification is-warning is-light">
@@ -198,56 +301,62 @@
 			</div>
 		{/if}
 
-		<!-- Instances List -->
+		<!-- Launches List -->
 		{#if $isTheaterAuthenticated && instances.length > 0}
 			<div class="instances-section">
 				<h6 class="title is-6 mb-3">Aktiva servrar</h6>
 				<div class="instances-grid">
-					{#each instances as instance (instance.instanceId)}
+					{#each instances as launch (launch.instanceId)}
 						<div class="instance-card">
 							<div class="instance-header">
 								<span
 									class="instance-status tag"
-									class:is-success={instance.status === "running"}
-									class:is-warning={instance.status === "starting"}
-									class:is-danger={instance.status === "error"}
-									class:is-light={instance.status === "stopped"}
+									class:is-success={launch.status === "running"}
+									class:is-warning={launch.status === "starting"}
+									class:is-danger={launch.status === "error"}
+									class:is-light={launch.status === "stopped"}
 								>
-									{instance.status}
+									{launch.status}
 								</span>
 								<span class="instance-id is-family-code has-text-weight-semibold">
-									{instance.instanceId.slice(-8)}
+									{launch.instanceId.slice(-8)}
 								</span>
 							</div>
 
 							<div class="instance-details">
-								{#if instance.port}
+								{#if launch.port}
 									<p class="detail-item">
 										<span class="has-text-grey">Port:</span>
-										<span class="has-text-weight-semibold">{instance.port}</span>
+										<span class="has-text-weight-semibold">{launch.port}</span>
 									</p>
 								{/if}
-								{#if instance.showId}
+								{#if launch.showId}
 									<p class="detail-item">
-										<span class="has-text-grey">Show ID:</span>
-										<span class="has-text-weight-semibold">{instance.showId}</span>
+										<span class="has-text-grey">Föreställning:</span>
+										<span class="has-text-weight-semibold">{launch.showId}</span>
 									</p>
 								{/if}
-								{#if instance.createdAt}
+								{#if launch.createdAt}
 									<p class="detail-item">
 										<span class="has-text-grey">Skapad:</span>
-										<span>{new Date(instance.createdAt).toLocaleString("sv-SE")}</span>
+										<span>{new Date(launch.createdAt).toLocaleString("sv-SE")}</span>
+									</p>
+								{/if}
+								{#if launch.stoppedAt}
+									<p class="detail-item">
+										<span class="has-text-grey">Avslutad:</span>
+										<span>{new Date(launch.stoppedAt).toLocaleString("sv-SE")}</span>
 									</p>
 								{/if}
 							</div>
 
-							{#if $isTheaterAuthenticated && instance.status !== "stopped"}
+							{#if $isTheaterAuthenticated && launch.status !== "stopped"}
 								<div class="instance-actions">
 									<button
 										class="button is-small is-danger is-outlined is-fullwidth"
-										class:is-loading={stoppingInstances.has(instance.instanceId)}
-										disabled={stoppingInstances.has(instance.instanceId)}
-										on:click={() => handleStopInstance(instance.instanceId)}
+										class:is-loading={stoppingInstances.has(launch.instanceId)}
+										disabled={stoppingInstances.has(launch.instanceId)}
+										on:click={() => handleStopInstance(launch.instanceId)}
 									>
 										<span class="icon is-small">
 											<IconStop />
@@ -300,6 +409,25 @@
 					word-break: break-word;
 					min-width: 0;
 				}
+			}
+		}
+
+		.launch-form-section {
+			margin-bottom: 2rem;
+			padding: 1rem;
+			background-color: rgba(0, 0, 0, 0.02);
+			border-radius: 8px;
+			border: 1px solid rgba(0, 0, 0, 0.1);
+
+			.launch-form-title {
+				margin-bottom: 1rem;
+				font-size: 0.9rem;
+			}
+
+			.notification {
+				margin-top: 1rem;
+				border-radius: 6px;
+				font-size: 0.85rem;
 			}
 		}
 

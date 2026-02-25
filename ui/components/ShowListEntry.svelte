@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { isTheaterAuthenticated } from "~/api/auth";
-	import { canLaunchStore, launcherLoadingStore, launchInstance, instancesStore, stopInstance } from "~/api/launchers";
+	import { canLaunchStore, launcherLoadingStore, launchShow, instancesStore, stopInstance } from "~/api/launchers";
 	import PicolEdit from "./picol/icons/Picol-edit.svelte";
 	import PicolControlsPlay from "./picol/icons/Picol-controls-play.svelte";
 	import PicolArrowFullUpperright from "./picol/icons/Picol-arrow-full-upperright.svelte";
@@ -68,7 +68,7 @@
 
 		isLaunching = true;
 		try {
-			const result = await launchInstance(show.id);
+			const result = await launchShow(show.id);
 			if (result.success && result.url) {
 				// Optional: Auto-open the launched instance
 				setTimeout(() => {

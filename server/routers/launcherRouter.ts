@@ -2,8 +2,10 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { trpc } from "../lib";
 import { Show } from "../models/Show";
+import { Launch } from "../models/Launch";
 import { getActiveAdapter, isLauncherReady, getAdapterStatus } from "../launchers";
 import type { AdapterStatus } from "../launchers/types";
+import { Op } from "sequelize";
 
 // Get the trpc router constructor and default procedure
 const { router: trcpRouter, procedure: trcpProcedure } = trpc();
@@ -19,15 +21,15 @@ const LaunchRequestSchema = z.object({
 /**
  * Stop instance request validation
  */
-const StopInstanceSchema = z.object({
-	instanceId: z.string().min(1, "Instance ID is required"),
+const StopLaunchSchema = z.object({
+	launchId: z.number().int().positive("Launch ID is required"),
 });
 
 /**
- * Instance status request validation
+ * Launch status request validation
  */
-const InstanceStatusSchema = z.object({
-	instanceId: z.string().min(1, "Instance ID is required"),
+const LaunchStatusSchema = z.object({
+	launchId: z.number().int().positive("Launch ID is required"),
 });
 
 /**
@@ -90,12 +92,14 @@ export const launcherRouter = trcpRouter({
 			// Get current adapter status
 			const adapterStatus = await getAdapterStatus();
 
-			// Get current instances if adapter is available
-			if (isReady && activeAdapter) {
+			// Get current launches from database
+			if (isReady) {
 				try {
-					instances = await activeAdapter.getInstances();
+					instances = await Launch.findAll({
+						order: [["createdAt", "DESC"]],
+					});
 				} catch (error) {
-					console.error("[LauncherRouter] Error getting instances for sync:", error);
+					console.error("[LauncherRouter] Error getting launches for sync:", error);
 				}
 			}
 
@@ -120,7 +124,7 @@ export const launcherRouter = trcpRouter({
 	/**
 	 * Get current launcher system status and available adapters
 	 */
-	getStatus: trcpProcedure.query(
+	getSystemStatus: trcpProcedure.query(
 		async (): Promise<{
 			isReady: boolean;
 			activeAdapter: string | null;
@@ -143,42 +147,61 @@ export const launcherRouter = trcpRouter({
 	),
 
 	/**
-	 * Stop all running instances managed by the active adapter
+	 * Stop all running launches
 	 */
 	stopAll: launcherProcedure.mutation(async ({ ctx }) => {
 		try {
 			const { activeAdapter } = ctx;
 
-			const instances = await activeAdapter.getInstances();
-			const runningInstances = instances.filter((instance) => instance.status === "running" || instance.status === "starting");
+			// Get all running launches from database
+			const runningLaunches = await Launch.findAll({
+				where: {
+					status: {
+						[Op.in]: ["running", "starting"],
+					},
+				},
+			});
 
-			if (runningInstances.length === 0) {
+			if (runningLaunches.length === 0) {
 				return {
 					success: true,
-					message: "No running instances to stop",
+					message: "No running launches to stop",
 					stoppedCount: 0,
 				};
 			}
 
-			// Stop all instances
-			const stopPromises = runningInstances.map((instance) =>
-				activeAdapter.stop(instance.instanceId).catch((error) => {
-					console.error(`[LauncherRouter] Error stopping instance '${instance.instanceId}':`, error);
-					return { instanceId: instance.instanceId, error: error.message };
-				}),
-			);
+			// Stop all instances and update launch records
+			const stopPromises = runningLaunches.map(async (launch) => {
+				try {
+					await activeAdapter.stop(launch.instanceId);
+				} catch (stopError) {
+					// If the instance is not found, consider it successfully stopped
+					if (!stopError.message.includes("not found") && !stopError.message.includes("Not found")) {
+						console.error(`[LauncherRouter] Error stopping launch '${launch.id}' (instance: '${launch.instanceId}'):`, stopError);
+						return { launchId: launch.id, error: stopError.message };
+					}
+					// If not found, continue to mark as stopped
+				}
+
+				// Update the launch record (whether we successfully stopped or it was not found)
+				await launch.update({
+					status: "stopped",
+					stoppedAt: new Date(),
+				});
+				return { launchId: launch.id, success: true };
+			});
 
 			await Promise.all(stopPromises);
 
-			console.log(`[LauncherRouter] Stopped ${runningInstances.length} instances using ${activeAdapter.name} adapter`);
+			console.log(`[LauncherRouter] Stopped ${runningLaunches.length} launches using ${activeAdapter.name} adapter`);
 
 			return {
 				success: true,
-				message: `Stopped ${runningInstances.length} instances`,
-				stoppedCount: runningInstances.length,
+				message: `Stopped ${runningLaunches.length} launches`,
+				stoppedCount: runningLaunches.length,
 			};
 		} catch (error) {
-			handleTRPCError(error, "Failed to stop instances", "stopping all instances");
+			handleTRPCError(error, "Failed to stop launches", "stopping all launches");
 		}
 	}),
 
@@ -219,12 +242,23 @@ export const launcherRouter = trcpRouter({
 			// Launch the instance
 			const launchResult = await activeAdapter.launch(show);
 
+			// Create Launch record in database to track this launch
+			const launch = await Launch.create({
+				instanceId: launchResult.instanceId,
+				showId: show.id,
+				url: launchResult.url,
+				port: launchResult.port,
+				status: launchResult.status,
+				stoppedAt: null,
+			});
+
 			console.log(
 				`[LauncherRouter] Successfully launched instance '${launchResult.instanceId}' for show '${show.name}' using ${activeAdapter.name} adapter`,
 			);
 
 			return {
 				success: true,
+				launchId: launch.id,
 				instanceId: launchResult.instanceId,
 				url: launchResult.url,
 				port: launchResult.port,
@@ -238,73 +272,98 @@ export const launcherRouter = trcpRouter({
 	}),
 
 	/**
-	 * Stop a running instance
+	 * Stop a running launch
 	 */
-	stop: launcherProcedure.input(StopInstanceSchema).mutation(async ({ input, ctx }) => {
+	stop: launcherProcedure.input(StopLaunchSchema).mutation(async ({ input, ctx }) => {
 		try {
 			const { activeAdapter } = ctx;
 
-			// Stop the instance
-			await activeAdapter.stop(input.instanceId);
+			// Find the launch record
+			const launch = await Launch.findByPk(input.launchId);
+			if (!launch) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Launch not found",
+				});
+			}
 
-			console.log(`[LauncherRouter] Successfully stopped instance '${input.instanceId}' using ${activeAdapter.name} adapter`);
+			// Stop the instance using the instanceId from the launch record
+			try {
+				await activeAdapter.stop(launch.instanceId);
+			} catch (stopError) {
+				// If the instance is not found, consider it successfully stopped
+				if (stopError.message.includes("not found") || stopError.message.includes("Not found")) {
+					console.log(`[LauncherRouter] Instance '${launch.instanceId}' not found - considering it stopped`);
+				} else {
+					// Re-throw other types of errors
+					throw stopError;
+				}
+			}
+
+			// Update the launch record
+			await launch.update({
+				status: "stopped",
+				stoppedAt: new Date(),
+			});
+
+			console.log(
+				`[LauncherRouter] Successfully stopped launch '${input.launchId}' (instance: '${launch.instanceId}') using ${activeAdapter.name} adapter`,
+			);
 
 			return {
 				success: true,
-				message: `Instance '${input.instanceId}' stopped successfully`,
+				message: `Launch '${input.launchId}' stopped successfully`,
 			};
 		} catch (error) {
-			handleTRPCError(error, "Failed to stop instance", "stopping instance");
+			handleTRPCError(error, "Failed to stop launch", "stopping launch");
 		}
 	}),
 
 	/**
-	 * Get status of a specific instance
+	 * Get status of a specific launch
 	 */
-	getInstanceStatus: launcherProcedure.input(InstanceStatusSchema).query(async ({ input, ctx }) => {
+	getInstanceStatus: launcherProcedure.input(LaunchStatusSchema).query(async ({ input, ctx }) => {
 		try {
 			const { activeAdapter } = ctx;
 
-			const status = await activeAdapter.getStatus(input.instanceId);
+			// Find the launch record
+			const launch = await Launch.findByPk(input.launchId);
+			if (!launch) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Launch not found",
+				});
+			}
+
+			const status = await activeAdapter.getStatus(launch.instanceId);
 
 			return {
-				instanceId: input.instanceId,
+				launchId: input.launchId,
+				instanceId: launch.instanceId,
 				status,
 				adapterName: activeAdapter.name,
 			};
 		} catch (error) {
-			handleTRPCError(error, "Failed to get instance status", "getting instance status");
+			handleTRPCError(error, "Failed to get launch status", "getting launch status");
 		}
 	}),
 
 	/**
-	 * Get all instances managed by the active adapter
+	 * Get all launches from the database
 	 */
 	getInstances: trcpProcedure.query(async () => {
 		try {
-			if (!isLauncherReady()) {
-				return {
-					instances: [],
-					adapterName: null,
-				};
-			}
-
-			const activeAdapter = getActiveAdapter();
-			if (!activeAdapter) {
-				return {
-					instances: [],
-					adapterName: null,
-				};
-			}
-
-			const instances = await activeAdapter.getInstances();
+			// Get all launch records from database
+			const launches = await Launch.findAll({
+				order: [["createdAt", "DESC"]],
+			});
 
 			return {
-				instances,
-				adapterName: activeAdapter.name,
+				instances: launches,
+				adapterName: null, // We don't track adapter per launch currently
 			};
 		} catch (error) {
-			handleTRPCError(error, "Failed to get instances", "getting instances");
+			handleTRPCError(error, "Failed to get launches", "getting launches");
 		}
 	}),
 

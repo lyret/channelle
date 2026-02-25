@@ -3,7 +3,8 @@ import { promises as fs } from "fs";
 import path from "path";
 import type { CanLaunchResult, LaunchResult, InstanceInfo, InstanceStatus } from "./types";
 import { LaunchAdapter } from "./_abstractlaunchAdapter";
-import { Show } from "../models/Show";
+import type { Show } from "../models/Show";
+import { Launch } from "../models/Launch";
 
 /**
  * Information about a local instance process
@@ -300,11 +301,28 @@ export class LocalAdapter extends LaunchAdapter {
 		childProcess.on("spawn", () => {
 			console.log(`[LocalAdapter] Process spawned for instance '${instanceId}' (PID: ${childProcess.pid})`);
 
+			// Create Launch record
+			Launch.create({
+				instanceId: instanceId,
+				showId: instance.showId,
+				url: instance.url,
+				port: instance.port,
+				status: "starting",
+				stoppedAt: null,
+			}).catch((error) => {
+				console.error("[LocalAdapter] Error creating launch record:", error);
+			});
+
 			// Give the process a moment to start up, then mark as running
 			setTimeout(async () => {
 				if (instance.status === "starting") {
 					instance.status = "running";
 					console.log(`[LocalAdapter] Instance '${instanceId}' is now running`);
+
+					// Update Launch record
+					Launch.update({ status: "running" }, { where: { instanceId: instanceId } }).catch((error) => {
+						console.error("[LocalAdapter] Error updating launch status:", error);
+					});
 				}
 			}, 2000);
 		});
@@ -314,9 +332,15 @@ export class LocalAdapter extends LaunchAdapter {
 
 			instance.status = "stopped";
 
-			// Mark show as having been online with current timestamp
-			Show.update({ lastOnlineAt: new Date() }, { where: { id: instance.showId } }).catch((error) => {
-				console.error(`[LocalAdapter] Error updating show lastOnlineAt timestamp:`, error);
+			// Update Launch record with stopped time
+			Launch.update(
+				{
+					status: "stopped",
+					stoppedAt: new Date(),
+				},
+				{ where: { instanceId: instanceId } },
+			).catch((error) => {
+				console.error("[LocalAdapter] Error updating launch record:", error);
 			});
 		});
 
@@ -324,6 +348,11 @@ export class LocalAdapter extends LaunchAdapter {
 			console.error(`[LocalAdapter] Process error for instance '${instanceId}':`, error);
 
 			instance.status = "error";
+
+			// Update Launch record with error status
+			Launch.update({ status: "error" }, { where: { instanceId: instanceId } }).catch((error) => {
+				console.error("[LocalAdapter] Error updating launch error status:", error);
+			});
 		});
 	}
 }

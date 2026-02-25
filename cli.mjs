@@ -19,6 +19,20 @@ const channel = new BroadcastChannel("cli-channel");
 
 if (CONFIG.runtime.theater) {
 	// Theater mode - build and run theater-server and theater-interface
+	// Also build stage interface once so both are available
+	// Stage Interface (build once for theater mode)
+	if ((CONFIG.runtime.build || CONFIG.runtime.watch) && CONFIG.launcher.activeAdapter == "LOCAL") {
+		try {
+			const stageInterfaceContext = await createStageInterfaceBuildContext(CONFIG);
+			await stageInterfaceContext.rebuild();
+			await stageInterfaceContext.dispose();
+			console.log("✅ Stage interface built successfully");
+		} catch (err) {
+			console.error("❌ Failed to build stage interface:", err);
+			// Don't exit, continue with theater build
+		}
+	}
+
 	// Theater Interface
 	if (CONFIG.runtime.watch) {
 		try {

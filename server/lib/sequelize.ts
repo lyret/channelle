@@ -4,6 +4,7 @@ import { initPeer, Peer } from "../models/Peer";
 import { initMessage, Message } from "../models/Message";
 import { initScene } from "../models/Scene";
 import { initShow, Show } from "../models/Show";
+import { initLaunch, Launch } from "../models/Launch";
 
 let _sequelize: Sequelize | undefined;
 
@@ -35,6 +36,7 @@ export async function sequelize(): Promise<Sequelize> {
 	initMessage(_sequelize);
 	initScene(_sequelize);
 	initShow(_sequelize);
+	initLaunch(_sequelize);
 
 	// Set up model associations after all models are initialized
 	setupModelAssociations();
@@ -84,5 +86,19 @@ function setupModelAssociations() {
 		foreignKey: "showId",
 		sourceKey: "id",
 		as: "messages",
+	});
+
+	// Launch <-> Show associations
+	Launch.belongsTo(Show, {
+		foreignKey: "showId",
+		targetKey: "id",
+		onDelete: "CASCADE",
+		onUpdate: "CASCADE",
+		as: "show",
+	});
+	Show.hasMany(Launch, {
+		foreignKey: "showId",
+		sourceKey: "id",
+		as: "launches",
 	});
 }

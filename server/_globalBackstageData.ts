@@ -8,7 +8,6 @@ import { Show } from "./models/Show";
  */
 let _backstageConfiguration: BackstageConfiguration = {
 	showId: null,
-	isEditable: true,
 	name: "",
 	description: "",
 	nomenclature: "föreställningen",
@@ -79,7 +78,6 @@ export async function loadBackstageConfigurationFromRuntime(): Promise<void> {
 export function toBackstageConfiguration(show: Show): BackstageConfiguration {
 	return {
 		showId: show.id,
-		isEditable: !show.online,
 		name: show.name,
 		description: show.description,
 		nomenclature: show.nomenclature,
@@ -115,7 +113,7 @@ export async function saveBackstageConfiguration(config: BackstageConfiguration)
 					visitorAudioEnabledOverride: config.visitorAudioEnabledOverride,
 					visitorVideoEnabledOverride: config.visitorVideoEnabledOverride,
 					selectedScene: config.selectedScene,
-					theme: config.theme
+					theme: config.theme,
 				});
 				console.log(`[Backstage] Configuration persisted to the database on show with id ${show.id}: ${show.name}`);
 			}

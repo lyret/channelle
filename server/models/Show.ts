@@ -19,12 +19,10 @@ export class Show extends Model {
 	declare visitorVideoEnabledOverride: SceneSetting;
 	declare url: string | null;
 	declare theme: "minimal" | "mellan" | "cool";
-	declare online: boolean;
 	declare nrOfTimesRehersed: number;
 	declare nrOfTimesShown: number;
 	declare createdAt: Date;
 	declare updatedAt: Date;
-	declare lastOnlineAt: Date | null;
 }
 
 /** Initialize the Show model. */
@@ -122,17 +120,6 @@ export function initShow(sequelize: Sequelize) {
 				type: DataTypes.JSON,
 				allowNull: true,
 				defaultValue: null,
-			},
-			lastOnlineAt: {
-				type: DataTypes.DATE,
-				allowNull: true,
-				defaultValue: null,
-			},
-			online: {
-				type: DataTypes.VIRTUAL,
-				get() {
-					return this.url !== null;
-				},
 			},
 		},
 		{

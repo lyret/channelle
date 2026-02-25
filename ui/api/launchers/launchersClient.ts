@@ -1,6 +1,7 @@
-import { writable, derived } from "svelte/store";
-import { launchersClient } from "../_trpcClient";
-import type { LauncherSyncDataSerialized } from "~/types/serverSideTypes";
+import { writable, derived, get } from "svelte/store";
+import { launchersClient } from "~/api/_trpcClient";
+import { getShowsList } from "../shows";
+import type { LauncherSyncDataSerialized, LaunchAttributes } from "~/types/serverSideTypes";
 
 /** Store for launcher system readiness */
 export const launcherReadyStore = writable<boolean>(false);
@@ -11,8 +12,8 @@ export const activeAdapterStore = writable<string | null>(null);
 /** Store for adapter status */
 export const adapterStatusStore = writable<LauncherSyncDataSerialized["adapterStatus"] | null>(null);
 
-/** Store for running instances */
-export const instancesStore = writable<LauncherSyncDataSerialized["instances"]>([]);
+/** Store for running launches */
+export const instancesStore = writable<LaunchAttributes[]>([]);
 
 /** Store for loading state */
 export const launcherLoadingStore = writable<boolean>(false);
@@ -26,8 +27,8 @@ export const canLaunchStore = derived([launcherReadyStore, adapterStatusStore], 
 });
 
 /** Derived store for running instances count */
-export const runningInstancesCountStore = derived(instancesStore, (instances) => {
-	return instances.filter((instance) => instance.status === "running" || instance.status === "starting").length;
+export const runningInstancesCountStore = derived(instancesStore, (launches) => {
+	return launches.filter((launch) => launch.status === "running" || launch.status === "starting").length;
 });
 
 /**
@@ -50,13 +51,24 @@ export async function syncLauncherData(): Promise<void> {
 }
 
 /**
+ * Get list of available shows
+ */
+export async function getLaunchableShows(): Promise<{ id: number; name: string }[]> {
+	try {
+		const shows = await getShowsList();
+		return shows.map((show) => ({ id: show.id, name: show.name }));
+	} catch (error: any) {
+		console.error("[Launchers] Failed to get shows list:", error);
+		throw new Error(error?.message || "Failed to get shows list");
+	}
+}
+
+/**
  * Launch a new stage instance for a show
  */
-export async function launchInstance(
-	showId: number,
-	adapterName?: string,
-): Promise<{
+export async function launchShow(showId: number): Promise<{
 	success: boolean;
+	launchId?: number;
 	instanceId?: string;
 	url?: string;
 	message?: string;
@@ -67,7 +79,6 @@ export async function launchInstance(
 
 		const result = await launchersClient.launch.mutate({
 			showId,
-			adapterName,
 		});
 
 		// Refresh data after successful launch
@@ -75,13 +86,14 @@ export async function launchInstance(
 
 		return {
 			success: true,
+			launchId: result?.launchId,
 			instanceId: result?.instanceId,
 			url: result?.url,
 			message: result?.message,
 		};
 	} catch (error: any) {
 		console.error("[Launchers] Launch error:", error);
-		const errorMessage = error?.message || "Failed to launch instance";
+		const errorMessage = error?.message || "Failed to launch show";
 		launcherErrorStore.set(errorMessage);
 
 		return {
@@ -94,7 +106,7 @@ export async function launchInstance(
 }
 
 /**
- * Stop a running instance
+ * Stop a running launch
  */
 export async function stopInstance(instanceId: string): Promise<{
 	success: boolean;
@@ -104,7 +116,17 @@ export async function stopInstance(instanceId: string): Promise<{
 		launcherLoadingStore.set(true);
 		launcherErrorStore.set(null);
 
-		const result = await launchersClient.stop.mutate({ instanceId });
+		// Find the launch with this instanceId
+		const launches = get(instancesStore);
+		const launch = launches.find((l) => l.instanceId === instanceId);
+
+		if (!launch) {
+			throw new Error("Launch not found for instance: " + instanceId);
+		}
+
+		const result = await launchersClient.stop.mutate({
+			launchId: launch.id,
+		});
 
 		// Refresh data after successful stop
 		await syncLauncherData();
@@ -128,7 +150,7 @@ export async function stopInstance(instanceId: string): Promise<{
 }
 
 /**
- * Stop all running instances
+ * Stop all running launches
  */
 export async function stopAllInstances(): Promise<{
 	success: boolean;
@@ -164,11 +186,22 @@ export async function stopAllInstances(): Promise<{
 }
 
 /**
- * Get status of a specific instance
+ * Get status of a specific launch
  */
 export async function getInstanceStatus(instanceId: string): Promise<string | null> {
 	try {
-		const result = await launchersClient.getInstanceStatus.query({ instanceId });
+		// Find the launch with this instanceId
+		const launches = get(instancesStore);
+		const launch = launches.find((l) => l.instanceId === instanceId);
+
+		if (!launch) {
+			return null;
+		}
+
+		const result = await launchersClient.getInstanceStatus.query({
+			launchId: launch.id,
+		});
+
 		return result?.status || null;
 	} catch (error: any) {
 		console.error("[Launchers] Get status error:", error);
