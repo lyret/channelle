@@ -2,7 +2,8 @@
 	import { onMount } from "svelte";
 	import IconLock from "../icons/Icon-lock.svelte";
 	import IconUnlock from "../icons/Icon-unlock.svelte";
-	import { showPasswordStore, showMetadataStore, updateConfigurationSettings } from "~/api/backstage";
+	import { showPasswordStore, showMetadataStore, showIdStore, updateConfigurationSettings } from "~/api/backstage";
+	import { generateUrlSlug } from "~/utils/serverSideUtils";
 
 	let inputRef: HTMLInputElement;
 	let inputValue: string = "";
@@ -11,14 +12,14 @@
 	let errorMessage: string = "";
 	let successMessage: string = "";
 	let originalPassword = "";
+	let urlPathDisplay = "";
 
 	$: isLocked = $showPasswordStore?.length;
 	$: isChanged = originalPassword !== inputValue;
 	$: canSave = isChanged && !isLoading;
 	$: isChangingPassword = isChanged && inputValue.trim().length > 0;
 	$: isRemovingPassword = isChanged && inputValue.trim().length === 0 && isLocked;
-
-	const inviteLinks = ["", ""];
+	$: showPath = generateUrlSlug({ name: $showMetadataStore?.name, id: $showIdStore }) || window.location.pathname;
 
 	// Sets the displayed error message and clears after 8 seconds
 	function setError(message: string) {
@@ -81,20 +82,15 @@
 
 	onMount(() => {
 		// Subscribe to password store - this will fire immediately with current value
-		const unsubscribe = showPasswordStore.subscribe((storeValue) => {
+		const unsubscribePassword = showPasswordStore.subscribe((storeValue) => {
 			// Handle both undefined (not loaded) and string (loaded) values
 			const newValue = storeValue !== undefined ? storeValue || "" : "";
 			inputValue = newValue;
 			originalPassword = newValue;
 		});
 
-		const currentUrl = new URL(window.location.href);
-		const searchParams = $showPasswordStore ? "?" + new URLSearchParams("invite=" + $showPasswordStore).toString() : "";
-		inviteLinks[0] = `${currentUrl.origin}${searchParams}`;
-		inviteLinks[1] = `${currentUrl.origin}/backstage${searchParams}`;
-
 		return () => {
-			unsubscribe();
+			unsubscribePassword();
 		};
 	});
 </script>
@@ -102,14 +98,15 @@
 <div class="access-instrument">
 	<h1 class="title">Tillgång</h1>
 	<div class="access-content">
+		<!-- URL Path Display (read-only) -->
 		<div class="field">
-			<label class="label" for="actor-link">Länk för aktörer</label>
+			<label class="label">URL-sökväg</label>
 			<div class="control">
-				<input id="actor-link" class="input" type="text" value={inviteLinks[1]} readonly />
+				<input class="input" type="text" value={showPath} readonly />
 			</div>
 			<div class="help-section">
 				<p class="help">
-					Dela denna länk för att ge omedelbar tillgång till {$showMetadataStore?.nomenclature || "föreställningen"} som aktör/skådespelare
+					Denna sökväg genereras automatiskt från föreställningens namn och används för att komma åt föreställningen: /{showPath}
 				</p>
 			</div>
 		</div>

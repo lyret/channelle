@@ -7,6 +7,7 @@ import type { Show } from "../models/Show";
 import { Launch } from "../models/Launch";
 import { getRedbirdProxy } from "../lib/redbirdProxy";
 import { v4 as uuidv4 } from "uuid";
+import { generateUrlSlug } from "../../shared/utils/urlUtils";
 
 /**
  * Information about a local instance process
@@ -124,8 +125,8 @@ export class LocalAdapter extends LaunchAdapter {
 			try {
 				const redbirdProxy = getRedbirdProxy();
 				if (redbirdProxy.isReady()) {
-					// Use show name as the pathname (e.g., "/hamlet")
-					const pathname = `/${show.name.toLowerCase().replace(/\s+/g, "-")}`;
+					// Use show's urlPath if available, otherwise generate from show object using shared function
+					const pathname = show.urlPath ? `/${show.urlPath}` : `/${generateUrlSlug(show)}`;
 					proxyUrl = redbirdProxy.registerRoute(instanceId, url, pathname);
 					instanceInfo.proxyUrl = proxyUrl;
 					console.log(`[LocalAdapter] Registered proxy route: ${pathname} -> ${url}`);
