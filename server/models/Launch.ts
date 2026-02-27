@@ -7,7 +7,6 @@ export class Launch extends Model {
 	declare showId: number;
 	declare instanceId: string;
 	declare url: string | null;
-	declare proxyUrl: string | null;
 	declare port: number | null;
 	declare status: "starting" | "running" | "stopping" | "stopped" | "error";
 	declare stoppedAt: Date | null;
@@ -46,11 +45,7 @@ export function initLaunch(sequelize: Sequelize) {
 				allowNull: true,
 				defaultValue: null,
 			},
-			proxyUrl: {
-				type: DataTypes.STRING,
-				allowNull: true,
-				defaultValue: null,
-			},
+
 			port: {
 				type: DataTypes.INTEGER,
 				allowNull: true,

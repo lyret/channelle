@@ -7,3 +7,4 @@ export * from "./types";
 // Export adapters
 export * from "./noneLaunchAdapter";
 export * from "./localLaunchAdapter";
+export * from "./remoteLaunchAdapter";

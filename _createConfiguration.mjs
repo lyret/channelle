@@ -42,6 +42,10 @@ export async function createConfiguration() {
 			theater: Boolean,
 			theaterAdapter: String,
 			theaterAdapterLocalMaxStages: Number,
+			theaterAdapterLocalPortRangeMin: Number,
+			theaterAdapterLocalPortRangeMax: Number,
+			theaterAdapterRemoteServer: String,
+			theaterAdapterIpcSecret: String,
 			theaterAdapterDigitaloceanApiKey: String,
 			theaterAdapterDigitaloceanRegion: String,
 			theaterAdapterDigitaloceanMaxVpns: Number,
@@ -56,6 +60,10 @@ export async function createConfiguration() {
 			s: ["--showId"],
 			"theater-adapter": ["--theaterAdapter"],
 			"theater-adapter-local-max-stages": ["--theaterAdapterLocalMaxStages"],
+			"theater-adapter-local-port-range-min": ["--theaterAdapterLocalPortRangeMin"],
+			"theater-adapter-local-port-range-max": ["--theaterAdapterLocalPortRangeMax"],
+			"theater-adapter-remote-server": ["--theaterAdapterRemoteServer"],
+			"theater-adapter-ipc-secret": ["--theaterAdapterIpcSecret"],
 			"theater-adapter-digitalocean-api-key": ["--theaterAdapterDigitaloceanApiKey"],
 			"theater-adapter-digitalocean-region": ["--theaterAdapterDigitaloceanRegion"],
 			"theater-adapter-digitalocean-max-vpns": ["--theaterAdapterDigitaloceanMaxVpns"],
@@ -174,6 +182,45 @@ export async function createConfiguration() {
 		console.log("🔸", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter Local Max Stages", maxLocalStages);
 	}
 
+	// The THEATER_ADAPTER_LOCAL_PORT_RANGE_MIN option sets the minimum port for local instance port range
+	const portRangeMin =
+		cli.theaterAdapterLocalPortRangeMin !== undefined
+			? cli.theaterAdapterLocalPortRangeMin
+			: env.THEATER_ADAPTER_LOCAL_PORT_RANGE_MIN
+				? Number(env.THEATER_ADAPTER_LOCAL_PORT_RANGE_MIN)
+				: 3001;
+
+	// The THEATER_ADAPTER_LOCAL_PORT_RANGE_MAX option sets the maximum port for local instance port range
+	const portRangeMax =
+		cli.theaterAdapterLocalPortRangeMax !== undefined
+			? cli.theaterAdapterLocalPortRangeMax
+			: env.THEATER_ADAPTER_LOCAL_PORT_RANGE_MAX
+				? Number(env.THEATER_ADAPTER_LOCAL_PORT_RANGE_MAX)
+				: 4000;
+
+	if (theater && theaterAdapter === "local") {
+		console.log("🔸", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter Local Port Range", `${portRangeMin}-${portRangeMax}`);
+	}
+
+	// The THEATER_ADAPTER_REMOTE_SERVER option sets the URL for the remote stage server
+	const remoteServer =
+		cli.theaterAdapterRemoteServer !== undefined ? cli.theaterAdapterRemoteServer : env.THEATER_ADAPTER_REMOTE_SERVER || "http://localhost:3000";
+	if (theater && theaterAdapter === "remote") {
+		console.log("🔸", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter Remote Server", remoteServer);
+	}
+
+	// The THEATER_ADAPTER_IPC_SECRET option sets the secret key for inter-process communication
+	const ipcSecret = cli.theaterAdapterIpcSecret !== undefined ? cli.theaterAdapterIpcSecret : env.THEATER_ADAPTER_IPC_SECRET || "channelle-ipc-secret";
+	if (theater || !theater) {
+		// Show for both theater and stage modes
+		console.log(
+			"🔸",
+			Chalk.bgBlueBright("[CONFIG]"),
+			"Theater Adapter IPC Secret",
+			ipcSecret.startsWith("channelle-") ? ipcSecret : "***" + ipcSecret.slice(-4),
+		);
+	}
+
 	// The THEATER_ADAPTER_DIGITALOCEAN_API_KEY option sets the API key for DigitalOcean launcher adapter
 	const digitaloceanApiKey =
 		cli.theaterAdapterDigitaloceanApiKey !== undefined ? cli.theaterAdapterDigitaloceanApiKey : env.THEATER_ADAPTER_DIGITALOCEAN_API_KEY || "";
@@ -199,24 +246,14 @@ export async function createConfiguration() {
 		console.log("🔸", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter DigitalOcean Region", digitaloceanRegion);
 	}
 
-	// Redbird reverse proxy configuration
-	console.log();
-
-	// Proxy port configuration (now part of local launcher)
-	const proxyPort =
-		cli.theaterAdapterLocalProxyPort !== undefined
-			? cli.theaterAdapterLocalProxyPort
-			: env.THEATER_ADAPTER_LOCAL_PROXY_PORT
-				? Number(env.THEATER_ADAPTER_LOCAL_PROXY_PORT)
-				: undefined;
+	// Proxy domain for local adapter
 	const proxyDomain =
 		cli.theaterAdapterLocalProxyDomain !== undefined
 			? cli.theaterAdapterLocalProxyDomain
 			: env.THEATER_ADAPTER_LOCAL_PROXY_DOMAIN || (production ? "channelle.se" : "localhost");
 
 	// Only show local adapter proxy config if it's enabled
-	if (proxyPort && theaterAdapter === "local") {
-		console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Local Adapter Proxy Port", proxyPort);
+	if (proxyDomain && theaterAdapter === "local") {
 		console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Local Adapter Proxy Domain", proxyDomain);
 	}
 
@@ -287,8 +324,6 @@ export async function createConfiguration() {
 		}
 	}
 
-	// Determine the listening info for media soup
-
 	// Create the appropriate configuration
 
 	/** @type {Types.CONFIG} */
@@ -344,19 +379,28 @@ export async function createConfiguration() {
 			host: production ? "0.0.0.0" : "localhost",
 			/** Exposed listening port */
 			port: port,
+			/** Base url path used for serving file and api connections */
+			basePath: basePath,
 		},
 		/** Launcher Settings */
 		launcher: {
-			/** Active adapter name (none, local, digitalocean) */
+			/** Active adapter name (none, local, digitalocean, remote) */
 			activeAdapter: theaterAdapter,
+			/** IPC secret for inter-process communication */
+			ipcSecret: ipcSecret,
 			/** Local adapter settings */
 			local: {
 				/** Maximum number of active local stage instances */
 				maxActiveStages: maxLocalStages,
-				/** Proxy port for local instances (optional) */
-				proxyPort: proxyPort,
 				/** Proxy domain for local instances (optional) */
 				proxyDomain: proxyDomain,
+				portRangeMin: portRangeMin,
+				portRangeMax: portRangeMax,
+			},
+			/** Remote adapter settings */
+			remote: {
+				/** URL of the remote stage server */
+				server: remoteServer,
 			},
 			/** DigitalOcean adapter settings */
 			digitalocean: {

@@ -2,6 +2,7 @@ import type { LaunchAdapter } from "./_abstractlaunchAdapter";
 import type { AdapterStatus } from "./types";
 import { NoneAdapter } from "./noneLaunchAdapter";
 import { LocalAdapter } from "./localLaunchAdapter";
+import { RemoteAdapter } from "./remoteLaunchAdapter";
 
 /** In-memory active adapter */
 let _activeAdapter: LaunchAdapter | null = null;
@@ -106,6 +107,9 @@ export async function initializeAllLaunchers(): Promise<void> {
 
 		// Register local adapter (always available)
 		initializeAdapter(new LocalAdapter());
+
+		// Register remote adapter (always available)
+		initializeAdapter(new RemoteAdapter());
 
 		// TODO: Register DigitalOcean adapter when implemented
 		// if (CONFIG.launcher.digitalocean.apiKey) {

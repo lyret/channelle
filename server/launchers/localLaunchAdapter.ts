@@ -5,9 +5,9 @@ import type { CanLaunchResult, LaunchResult, InstanceInfo, InstanceStatus } from
 import { LaunchAdapter } from "./_abstractlaunchAdapter";
 import type { Show } from "../models/Show";
 import { Launch } from "../models/Launch";
-import { getRedbirdProxy } from "../lib/redbirdProxy";
 import { v4 as uuidv4 } from "uuid";
 import { generateUrlSlug } from "../../shared/utils/urlUtils";
+import GetPort from "get-port";
 
 /**
  * Information about a local instance process
@@ -17,8 +17,6 @@ interface LocalInstanceInfo extends InstanceInfo {
 	process?: ChildProcess;
 	/** Process ID */
 	pid?: number;
-	/** Proxy URL through reverse proxy (if available) */
-	proxyUrl?: string;
 }
 
 /**
@@ -31,7 +29,6 @@ export class LocalAdapter extends LaunchAdapter {
 	readonly name = "local";
 
 	private instances = new Map<string, LocalInstanceInfo>();
-	private nextPort = 3001; // Start from port 3001 (main theater typically runs on 3000)
 
 	/**
 	 * Check if we can launch more local instances
@@ -101,6 +98,7 @@ export class LocalAdapter extends LaunchAdapter {
 			metadata: {
 				showName: show.name,
 				launchMethod: "local",
+				urlPath: generateUrlSlug(show),
 			},
 		};
 
@@ -109,7 +107,7 @@ export class LocalAdapter extends LaunchAdapter {
 
 		try {
 			// Spawn the stage process
-			const process = await this.spawnStageProcess(show.id, port);
+			const process = await this.spawnStageProcess(instanceInfo);
 
 			// Update instance with process info
 			instanceInfo.process = process;
@@ -120,31 +118,12 @@ export class LocalAdapter extends LaunchAdapter {
 
 			console.log(`[LocalAdapter] Launched instance '${instanceId}' for show '${show.name}' on port ${port}`);
 
-			// Register with Redbird proxy if available
-			let proxyUrl: string | undefined;
-			try {
-				const redbirdProxy = getRedbirdProxy();
-				if (redbirdProxy.isReady()) {
-					// Use show's urlPath if available, otherwise generate from show object using shared function
-					const pathname = show.urlPath ? `/${show.urlPath}` : `/${generateUrlSlug(show)}`;
-					proxyUrl = redbirdProxy.registerRoute(instanceId, url, pathname);
-					instanceInfo.proxyUrl = proxyUrl;
-					console.log(`[LocalAdapter] Registered proxy route: ${pathname} -> ${url}`);
-				} else {
-					console.log("[LocalAdapter] Redbird proxy not ready, skipping route registration");
-				}
-			} catch (error) {
-				console.error(`[LocalAdapter] Failed to register proxy route for ${instanceId}:`, error);
-				// Don't fail the launch if proxy registration fails
-			}
-
 			return {
 				instanceId,
 				url,
-				proxyUrl,
 				port,
 				status: "starting",
-				message: `Local stage instance launched on port ${port}` + (proxyUrl ? ` with proxy at ${proxyUrl}` : ""),
+				message: `Local stage instance launched on port ${port}`,
 			};
 		} catch (error) {
 			// Clean up on error
@@ -184,18 +163,6 @@ export class LocalAdapter extends LaunchAdapter {
 			}
 
 			console.log(`[LocalAdapter] Stopped instance '${instanceId}' (PID: ${instance.pid})`);
-
-			// Unregister from Redbird proxy if available
-			try {
-				const redbirdProxy = getRedbirdProxy();
-				if (redbirdProxy.isReady()) {
-					redbirdProxy.unregisterRoute(instanceId);
-					console.log(`[LocalAdapter] Unregistered proxy route for ${instanceId}`);
-				}
-			} catch (error) {
-				console.error(`[LocalAdapter] Failed to unregister proxy route for ${instanceId}:`, error);
-				// Don't fail the stop if proxy unregistration fails
-			}
 		} catch (error) {
 			console.error(`[LocalAdapter] Error stopping instance '${instanceId}':`, error);
 		}
@@ -216,12 +183,10 @@ export class LocalAdapter extends LaunchAdapter {
 	 * Get all instances managed by this adapter
 	 */
 	async getInstances(): Promise<InstanceInfo[]> {
-		const redbirdProxy = getRedbirdProxy();
 		return Array.from(this.instances.values()).map((instance) => ({
 			instanceId: instance.instanceId,
 			showId: instance.showId,
 			url: instance.url,
-			proxyUrl: redbirdProxy.isReady() ? redbirdProxy.getProxyUrl(instance.instanceId) : undefined,
 			port: instance.port,
 			status: instance.status,
 			createdAt: instance.createdAt,
@@ -247,43 +212,37 @@ export class LocalAdapter extends LaunchAdapter {
 	}
 
 	/**
-	 * Find an available port for a new instance
+	 * Find an available port for a new instance using get-port package
 	 */
 	private async findAvailablePort(): Promise<number | null> {
-		const maxAttempts = 100;
-		let port = this.nextPort;
+		// Get port range from configuration, with defaults
+		const portRangeMin = CONFIG.launcher.local.portRangeMin || 3001;
+		const portRangeMax = CONFIG.launcher.local.portRangeMax || 4000;
 
-		for (let i = 0; i < maxAttempts; i++) {
-			if (await this.isPortAvailable(port)) {
-				this.nextPort = port + 1;
-				return port;
-			}
-			port++;
+		// Get all ports currently in use by our instances
+		const usedPorts = Array.from(this.instances.values())
+			.filter((instance) => instance.status === "running" || instance.status === "starting")
+			.map((instance) => instance.port);
+
+		try {
+			// Use get-port to find an available port in the specified range
+			const availablePort = await GetPort({
+				port: Array.from({ length: portRangeMax - portRangeMin + 1 }, (_, i) => portRangeMin + i),
+				// Exclude ports that are already in use by our instances
+				exclude: usedPorts,
+			});
+
+			return availablePort;
+		} catch (error) {
+			console.error(`[LocalAdapter] Error finding available port:`, error);
+			return null;
 		}
-
-		return null;
-	}
-
-	/**
-	 * Check if a port is available
-	 */
-	private async isPortAvailable(port: number): Promise<boolean> {
-		// Check if any of our instances are using this port
-		for (const instance of this.instances.values()) {
-			if (instance.port === port && (instance.status === "running" || instance.status === "starting")) {
-				return false;
-			}
-		}
-
-		// Could add actual port checking here using net.createServer()
-		// For now, just check against our instances
-		return true;
 	}
 
 	/**
 	 * Spawn a new stage process
 	 */
-	private async spawnStageProcess(showId: number, port: number): Promise<ChildProcess> {
+	private async spawnStageProcess(instanceInfo: LocalInstanceInfo): Promise<ChildProcess> {
 		// Verify that cli.mjs exists
 		const cliPath = path.join(process.cwd(), "cli.mjs");
 		try {
@@ -292,7 +251,15 @@ export class LocalAdapter extends LaunchAdapter {
 			throw new Error(`CLI script not found at ${cliPath}`);
 		}
 
-		const args = ["cli.mjs", "--start", "--build", "--no-theater", `--port=${port}`, `--showId=${showId}`, "--no-debug"];
+		const args = [
+			"cli.mjs",
+			"--start",
+			"--build",
+			"--no-theater",
+			`--port=${instanceInfo.port}`,
+			`--showId=${instanceInfo.showId}`,
+			"--no-debug",
+		];
 
 		console.log(`[LocalAdapter] Spawning process: node ${args.join(" ")}`);
 
@@ -338,7 +305,6 @@ export class LocalAdapter extends LaunchAdapter {
 					showId: instance.showId,
 					url: instance.url,
 					port: instance.port,
-					proxyUrl: instance.proxyUrl,
 					status: "starting",
 					stoppedAt: null,
 				});

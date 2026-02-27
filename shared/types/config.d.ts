@@ -93,16 +93,29 @@ type WebRTCTransportConfig = {
 };
 
 type LauncherConfig = {
-	/** Active adapter name (none, local, digitalocean). */
+	/** Active adapter name (none, local, digitalocean, remote). */
 	activeAdapter: string;
+	/** IPC secret for inter-process communication. */
+	ipcSecret: string;
 	/** Local adapter settings. */
 	local: {
 		/** Maximum number of active local stage instances. */
 		maxActiveStages: number;
-		/** Proxy port for local instances (optional). */
-		proxyPort?: number;
 		/** Proxy domain for local instances (optional). */
 		proxyDomain?: string;
+		/** Minimum port for local instance port range (optional). */
+		portRangeMin?: number;
+		/** Maximum port for local instance port range (optional). */
+		portRangeMax?: number;
+	};
+	/** Remote adapter settings. */
+	remote: {
+		/** URL of the remote stage server. */
+		server: string;
+		/** Health check interval in milliseconds (optional). */
+		healthCheckInterval?: number;
+		/** Timeout for remote server operations in milliseconds (optional). */
+		timeout?: number;
 	};
 	/** DigitalOcean adapter settings. */
 	digitalocean: {

@@ -79,11 +79,17 @@
 
 /**
  * @typedef {Object} LauncherConfig
- * @property {string} activeAdapter - Active adapter name (none, local, digitalocean).
+ * @property {string} activeAdapter - Active adapter name (none, local, digitalocean, remote).
+ * @property {string} ipcSecret - IPC secret for inter-process communication.
  * @property {Object} local - Local adapter settings.
  * @property {number} local.maxActiveStages - Maximum number of active local stage instances.
- * @property {number|undefined} local.proxyPort - Proxy port for local instances.
  * @property {string|undefined} local.proxyDomain - Proxy domain for local instances.
+ * @property {number|undefined} local.portRangeMin - Minimum port for local instance port range.
+ * @property {number|undefined} local.portRangeMax - Maximum port for local instance port range.
+ * @property {Object} remote - Remote adapter settings.
+ * @property {string} remote.server - URL of the remote stage server.
+ * @property {number|undefined} remote.healthCheckInterval - Health check interval in milliseconds.
+ * @property {number|undefined} remote.timeout - Timeout for remote server operations.
  * @property {Object} digitalocean - DigitalOcean adapter settings.
  * @property {string} digitalocean.apiKey - DigitalOcean API key.
  * @property {string} digitalocean.region - DigitalOcean region for droplet deployment.

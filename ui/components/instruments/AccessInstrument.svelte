@@ -106,7 +106,9 @@
 			</div>
 			<div class="help-section">
 				<p class="help">
-					Denna sökväg genereras automatiskt från föreställningens namn och används för att komma åt föreställningen: /{showPath}
+					Denna sökväg genereras automatiskt från föreställningens namn.<br />
+					Scen-URL: {window.location.protocol}//{window.location.host}/{showPath}<br />
+					Backstage-URL: {window.location.protocol}//{window.location.host}/{showPath}/backstage
 				</p>
 			</div>
 		</div>
