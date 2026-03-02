@@ -78,22 +78,9 @@
  */
 
 /**
- * @typedef {Object} LauncherConfig
- * @property {string} activeAdapter - Active adapter name (none, local, digitalocean, remote).
- * @property {string} ipcSecret - IPC secret for inter-process communication.
- * @property {Object} local - Local adapter settings.
- * @property {number} local.maxActiveStages - Maximum number of active local stage instances.
- * @property {string|undefined} local.proxyDomain - Proxy domain for local instances.
- * @property {number|undefined} local.portRangeMin - Minimum port for local instance port range.
- * @property {number|undefined} local.portRangeMax - Maximum port for local instance port range.
- * @property {Object} remote - Remote adapter settings.
- * @property {string} remote.server - URL of the remote stage server.
- * @property {number|undefined} remote.healthCheckInterval - Health check interval in milliseconds.
- * @property {number|undefined} remote.timeout - Timeout for remote server operations.
- * @property {Object} digitalocean - DigitalOcean adapter settings.
- * @property {string} digitalocean.apiKey - DigitalOcean API key.
- * @property {string} digitalocean.region - DigitalOcean region for droplet deployment.
- * @property {number} digitalocean.maxVpnServers - Maximum number of VPN servers.
+ * @typedef {Object} IpcConfig
+ * @property {string} stageUrl - URL for stage server communication (replaces remote server URL).
+ * @property {string} secret - Secret key for inter-process communication between theater and stage servers.
  */
 
 /**
@@ -104,7 +91,7 @@
  * @property {TheaterConfig} theater - Theater Settings.
  * @property {BackstageConfig} backstage - Backstage Settings.
  * @property {WebConfig} web - Web Server Settings.
- * @property {LauncherConfig} launcher - Launcher Settings.
+ * @property {IpcConfig} ipc - IPC Configuration for theater-stage communication.
  * @property {MediasoupConfig} mediasoup - MediaSoup Settings.
  */
 

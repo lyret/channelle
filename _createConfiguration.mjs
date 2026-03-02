@@ -40,15 +40,8 @@ export async function createConfiguration() {
 			watch: Boolean,
 			start: Boolean,
 			theater: Boolean,
-			theaterAdapter: String,
-			theaterAdapterLocalMaxStages: Number,
-			theaterAdapterLocalPortRangeMin: Number,
-			theaterAdapterLocalPortRangeMax: Number,
-			theaterAdapterRemoteServer: String,
-			theaterAdapterIpcSecret: String,
-			theaterAdapterDigitaloceanApiKey: String,
-			theaterAdapterDigitaloceanRegion: String,
-			theaterAdapterDigitaloceanMaxVpns: Number,
+			ipcStageUrl: String,
+			ipcSecret: String,
 		},
 		{
 			p: ["--port"],
@@ -58,15 +51,6 @@ export async function createConfiguration() {
 			w: ["--watch"],
 			t: ["--theater"],
 			s: ["--showId"],
-			"theater-adapter": ["--theaterAdapter"],
-			"theater-adapter-local-max-stages": ["--theaterAdapterLocalMaxStages"],
-			"theater-adapter-local-port-range-min": ["--theaterAdapterLocalPortRangeMin"],
-			"theater-adapter-local-port-range-max": ["--theaterAdapterLocalPortRangeMax"],
-			"theater-adapter-remote-server": ["--theaterAdapterRemoteServer"],
-			"theater-adapter-ipc-secret": ["--theaterAdapterIpcSecret"],
-			"theater-adapter-digitalocean-api-key": ["--theaterAdapterDigitaloceanApiKey"],
-			"theater-adapter-digitalocean-region": ["--theaterAdapterDigitaloceanRegion"],
-			"theater-adapter-digitalocean-max-vpns": ["--theaterAdapterDigitaloceanMaxVpns"],
 		},
 	);
 
@@ -165,96 +149,30 @@ export async function createConfiguration() {
 	// Launcher configuration
 	console.log();
 
-	// The THEATER_ADAPTER option sets which adapter is active for launching stages
-	const theaterAdapter = cli.theaterAdapter !== undefined ? cli.theaterAdapter : env.THEATER_ADAPTER || "none";
+	// The URL for the remote stage server
+	const ipcStageUrl = cli.ipcStageUrl !== undefined ? cli.ipcStageUrl : env.IPC_STAGE_URL || "http://localhost:3000";
 	if (theater) {
-		console.log("🔸", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter", theaterAdapter.toUpperCase());
+		console.log("🔸", Chalk.bgBlueBright("[CONFIG]"), "IPC Stage URL", ipcStageUrl);
 	}
 
-	// The THEATER_ADAPTER_LOCAL_MAX_STAGES option sets the maximum number of local stage instances that can be launched simultaneously
-	const maxLocalStages =
-		cli.theaterAdapterLocalMaxStages !== undefined
-			? cli.theaterAdapterLocalMaxStages
-			: env.THEATER_ADAPTER_LOCAL_MAX_STAGES
-				? Number(env.THEATER_ADAPTER_LOCAL_MAX_STAGES)
-				: 1;
-	if (theater && theaterAdapter === "local") {
-		console.log("🔸", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter Local Max Stages", maxLocalStages);
-	}
-
-	// The THEATER_ADAPTER_LOCAL_PORT_RANGE_MIN option sets the minimum port for local instance port range
-	const portRangeMin =
-		cli.theaterAdapterLocalPortRangeMin !== undefined
-			? cli.theaterAdapterLocalPortRangeMin
-			: env.THEATER_ADAPTER_LOCAL_PORT_RANGE_MIN
-				? Number(env.THEATER_ADAPTER_LOCAL_PORT_RANGE_MIN)
-				: 3001;
-
-	// The THEATER_ADAPTER_LOCAL_PORT_RANGE_MAX option sets the maximum port for local instance port range
-	const portRangeMax =
-		cli.theaterAdapterLocalPortRangeMax !== undefined
-			? cli.theaterAdapterLocalPortRangeMax
-			: env.THEATER_ADAPTER_LOCAL_PORT_RANGE_MAX
-				? Number(env.THEATER_ADAPTER_LOCAL_PORT_RANGE_MAX)
-				: 4000;
-
-	if (theater && theaterAdapter === "local") {
-		console.log("🔸", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter Local Port Range", `${portRangeMin}-${portRangeMax}`);
-	}
-
-	// The THEATER_ADAPTER_REMOTE_SERVER option sets the URL for the remote stage server
-	const remoteServer =
-		cli.theaterAdapterRemoteServer !== undefined ? cli.theaterAdapterRemoteServer : env.THEATER_ADAPTER_REMOTE_SERVER || "http://localhost:3000";
-	if (theater && theaterAdapter === "remote") {
-		console.log("🔸", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter Remote Server", remoteServer);
-	}
-
-	// The THEATER_ADAPTER_IPC_SECRET option sets the secret key for inter-process communication
-	const ipcSecret = cli.theaterAdapterIpcSecret !== undefined ? cli.theaterAdapterIpcSecret : env.THEATER_ADAPTER_IPC_SECRET || "channelle-ipc-secret";
-	if (theater || !theater) {
+	// Tthe secret key for inter-process communication
+	const ipcSecret = cli.ipcSecret !== undefined ? cli.ipcSecret : env.IPC_SECRET || "channelle-ipc-secret";
+	if (theater) {
 		// Show for both theater and stage modes
 		console.log(
-			"🔸",
+			"🔌",
 			Chalk.bgBlueBright("[CONFIG]"),
 			"Theater Adapter IPC Secret",
 			ipcSecret.startsWith("channelle-") ? ipcSecret : "***" + ipcSecret.slice(-4),
 		);
-	}
-
-	// The THEATER_ADAPTER_DIGITALOCEAN_API_KEY option sets the API key for DigitalOcean launcher adapter
-	const digitaloceanApiKey =
-		cli.theaterAdapterDigitaloceanApiKey !== undefined ? cli.theaterAdapterDigitaloceanApiKey : env.THEATER_ADAPTER_DIGITALOCEAN_API_KEY || "";
-	if (theater && theaterAdapter === "digitalocean" && digitaloceanApiKey) {
-		console.log("🔸", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter DigitalOcean API Key", "***" + digitaloceanApiKey.slice(-4));
-	}
-
-	// The THEATER_ADAPTER_DIGITALOCEAN_MAX_VPNS option sets the maximum number of DigitalOcean VPN servers that can be launched
-	const maxDigitaloceanVpns =
-		cli.theaterAdapterDigitaloceanMaxVpns !== undefined
-			? cli.theaterAdapterDigitaloceanMaxVpns
-			: env.THEATER_ADAPTER_DIGITALOCEAN_MAX_VPNS
-				? Number(env.THEATER_ADAPTER_DIGITALOCEAN_MAX_VPNS)
-				: 5;
-	if (theater && theaterAdapter === "digitalocean") {
-		console.log("🔸", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter DigitalOcean Max VPNs", maxDigitaloceanVpns);
-	}
-
-	// The THEATER_ADAPTER_DIGITALOCEAN_REGION option sets the DigitalOcean region for droplet deployment
-	const digitaloceanRegion =
-		cli.theaterAdapterDigitaloceanRegion !== undefined ? cli.theaterAdapterDigitaloceanRegion : env.THEATER_ADAPTER_DIGITALOCEAN_REGION || "ams3";
-	if (theater && theaterAdapter === "digitalocean") {
-		console.log("🔸", Chalk.bgBlueBright("[CONFIG]"), "Theater Adapter DigitalOcean Region", digitaloceanRegion);
-	}
-
-	// Proxy domain for local adapter
-	const proxyDomain =
-		cli.theaterAdapterLocalProxyDomain !== undefined
-			? cli.theaterAdapterLocalProxyDomain
-			: env.THEATER_ADAPTER_LOCAL_PROXY_DOMAIN || (production ? "channelle.se" : "localhost");
-
-	// Only show local adapter proxy config if it's enabled
-	if (proxyDomain && theaterAdapter === "local") {
-		console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Local Adapter Proxy Domain", proxyDomain);
+	} else {
+		// Show for both theater and stage modes
+		console.log(
+			"🔌",
+			Chalk.bgBlueBright("[CONFIG]"),
+			"Theater Connection IPC Secret",
+			ipcSecret.startsWith("channelle-") ? ipcSecret : "***" + ipcSecret.slice(-4),
+		);
 	}
 
 	// Create an array of transport listening info for webRTC, will be filled
@@ -354,7 +272,7 @@ export async function createConfiguration() {
 			/** The default interface entry point file */
 			defaultInterfaceEntryPoint: theater ? "theater.html" : "stage.html",
 			/** The files to use as build inputs for the stage-interface, relative to the 'stage-interface' folder. */
-			stageInterfaceInputs: ["stage.html", "backstage.html", "_stage.ts", "_backstage.ts"],
+			stageInterfaceInputs: ["stage.html", "backstage.html", "notFound.html", "_stage.ts", "_backstage.ts"],
 			/** The files to use as build inputs for the theater-interface, relative to the 'theater-interface' folder. */
 			theaterInterfaceInputs: ["theater.html", "_theater.ts", "preparation.html", "_preparation.ts"],
 		},
@@ -379,38 +297,14 @@ export async function createConfiguration() {
 			host: production ? "0.0.0.0" : "localhost",
 			/** Exposed listening port */
 			port: port,
-			/** Base url path used for serving file and api connections */
-			basePath: basePath,
 		},
-		/** Launcher Settings */
-		launcher: {
-			/** Active adapter name (none, local, digitalocean, remote) */
-			activeAdapter: theaterAdapter,
-			/** IPC secret for inter-process communication */
-			ipcSecret: ipcSecret,
-			/** Local adapter settings */
-			local: {
-				/** Maximum number of active local stage instances */
-				maxActiveStages: maxLocalStages,
-				/** Proxy domain for local instances (optional) */
-				proxyDomain: proxyDomain,
-				portRangeMin: portRangeMin,
-				portRangeMax: portRangeMax,
-			},
-			/** Remote adapter settings */
-			remote: {
-				/** URL of the remote stage server */
-				server: remoteServer,
-			},
-			/** DigitalOcean adapter settings */
-			digitalocean: {
-				/** DigitalOcean API key */
-				apiKey: digitaloceanApiKey,
-				/** DigitalOcean region for droplet deployment */
-				region: digitaloceanRegion,
-				/** Maximum number of VPN servers */
-				maxVpnServers: maxDigitaloceanVpns,
-			},
+
+		/** IPC Configuration for theater-stage communication */
+		ipc: {
+			/** URL for stage server communication */
+			stageUrl: ipcStageUrl,
+			/** Secret key for inter-process communication between theater and stage servers */
+			secret: ipcSecret,
 		},
 		/** MediaSoup Settings */
 		mediasoup: {

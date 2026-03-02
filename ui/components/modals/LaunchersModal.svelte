@@ -3,7 +3,6 @@
 	import Modal from "./_Modal.svelte";
 	import {
 		launcherReadyStore,
-		activeAdapterStore,
 		adapterStatusStore,
 		instancesStore,
 		runningInstancesCountStore,
@@ -147,8 +146,9 @@
 	// Swedish adapter names mapping
 	const adapterNames = {
 		none: " - Ingen - ",
-		local: "lokal hårdvara",
-		digitalocean: "DigitalOcean",
+		remote: "statisk lokaldrift",
+		local: "dynamisk lokaldrift",
+		digitalocean: "dynamisk virtuella servrar",
 	};
 
 	// Helper function to get Swedish adapter name
@@ -159,7 +159,6 @@
 
 	// Reactive statements for display
 	$: isReady = $launcherReadyStore;
-	$: activeAdapter = $activeAdapterStore;
 	$: adapterStatus = $adapterStatusStore;
 	$: instances = $instancesStore;
 	$: runningCount = $runningInstancesCountStore;

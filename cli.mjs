@@ -21,7 +21,7 @@ if (CONFIG.runtime.theater) {
 	// Theater mode - build and run theater-server and theater-interface
 	// Also build stage interface once so both are available
 	// Stage Interface (build once for theater mode)
-	if ((CONFIG.runtime.build || CONFIG.runtime.watch) && CONFIG.launcher.activeAdapter == "LOCAL") {
+	if (CONFIG.runtime.build || CONFIG.runtime.watch) {
 		try {
 			const stageInterfaceContext = await createStageInterfaceBuildContext(CONFIG);
 			await stageInterfaceContext.rebuild();

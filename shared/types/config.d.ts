@@ -92,40 +92,11 @@ type WebRTCTransportConfig = {
 	initialAvailableOutgoingBitrate: number;
 };
 
-type LauncherConfig = {
-	/** Active adapter name (none, local, digitalocean, remote). */
-	activeAdapter: string;
-	/** IPC secret for inter-process communication. */
-	ipcSecret: string;
-	/** Local adapter settings. */
-	local: {
-		/** Maximum number of active local stage instances. */
-		maxActiveStages: number;
-		/** Proxy domain for local instances (optional). */
-		proxyDomain?: string;
-		/** Minimum port for local instance port range (optional). */
-		portRangeMin?: number;
-		/** Maximum port for local instance port range (optional). */
-		portRangeMax?: number;
-	};
-	/** Remote adapter settings. */
-	remote: {
-		/** URL of the remote stage server. */
-		server: string;
-		/** Health check interval in milliseconds (optional). */
-		healthCheckInterval?: number;
-		/** Timeout for remote server operations in milliseconds (optional). */
-		timeout?: number;
-	};
-	/** DigitalOcean adapter settings. */
-	digitalocean: {
-		/** DigitalOcean API key. */
-		apiKey: string;
-		/** DigitalOcean region for droplet deployment. */
-		region: string;
-		/** Maximum number of VPN servers. */
-		maxVpnServers: number;
-	};
+type IpcConfig = {
+	/** URL for stage server communication (replaces remote server URL). */
+	stageUrl: string;
+	/** Secret key for inter-process communication between theater and stage servers. */
+	secret: string;
 };
 
 type MediasoupConfig = {
@@ -151,8 +122,9 @@ type CONFIG = {
 	backstage: BackstageConfig;
 	/** Web Server Settings */
 	web: WebConfig;
-	/** Launcher Settings */
-	launcher: LauncherConfig;
+	/** IPC Configuration for theater-stage communication */
+	ipc: IpcConfig;
+
 	/** MediaSoup Settings */
 	mediasoup: MediasoupConfig;
 };

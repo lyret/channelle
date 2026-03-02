@@ -5,6 +5,5 @@ export * from "./backstage";
 export * from "./chat";
 export * from "./effects";
 export * from "./development";
-export * from "./launchers";
 export * from "./auth";
 export * from "./peers";

@@ -9,7 +9,8 @@ import { showsRouter } from "./routers/showsRouter";
 import { backstageRouter } from "./routers/backstageRouter";
 import { authRouter, deauthenticate } from "./routers/authRouter";
 import { peersRouter } from "./routers/peersRouter";
-import { launcherRouter } from "./routers/launcherRouter";
+
+import { theaterRouter } from "./routers/theaterRouter";
 
 /**
  * Creates and returns the application router
@@ -25,11 +26,16 @@ export async function createAppRouter() {
 		auth: authRouter,
 		peers: peersRouter,
 		shows: showsRouter,
-		launchers: launcherRouter,
+
 		chat: chatRouter,
 		media: stageRouter,
 		effects: effectsRouter,
 	};
+
+	// Add theater router if in theater mode
+	if (CONFIG.runtime.theater) {
+		routerConfig["theater"] = theaterRouter;
+	}
 
 	// Remove handling of incomming development messages from the cli
 	// when not developing
@@ -42,9 +48,6 @@ export async function createAppRouter() {
 	if (CONFIG.runtime.theater) {
 		delete routerConfig["media"];
 		delete routerConfig["effects"];
-	} else {
-		// delete routerConfig["shows"]; TODO: needed?
-		delete routerConfig["launchers"];
 	}
 
 	// Create the application router
