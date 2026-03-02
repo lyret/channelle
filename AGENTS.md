@@ -25,6 +25,7 @@ Channelle is an open-source multimedia communication platform for the free cultu
 - **Semicolons**: Required
 - **Line Length**: Max 160 characters
 - **Types**: TypeScript strict mode
+- **Restify Handlers**: NEVER use async functions (use callbacks instead)
 
 ### File Organization
 - **Naming**: lowercase filenames, camelCase for multi-word
@@ -46,6 +47,45 @@ export { foo, bar } from "./module";
 - **Registry Pattern**: Module-level functions over class-based registries
 - **Helper Functions**: Extract common logic to pure functions
 - **Avoid Classes**: Prefer functional programming patterns
+
+### Restify Handler Rules
+- **NEVER Use Async**: Restify handlers must use callback pattern, not async/await
+- **ALWAYS Call next()**: Every handler must call next() to continue the request cycle
+- **Reason**: Restify's internal request handling doesn't properly handle async functions and requires explicit next() calls
+- **Pattern**: Always use `(req, res, next) => {}` with explicit callback calls and next() invocation
+- **Examples**:
+  ```typescript
+  // GOOD: Callback pattern with next()
+  server.get('/endpoint', (req, res, next) => {
+    someAsyncOperation()
+      .then(result => {
+        res.send(200, result);
+        next(); // Always call next()
+      })
+      .catch(error => next(error));
+  });
+  
+  // GOOD: Simple synchronous handler with next()
+  server.get('/simple', (req, res, next) => {
+    res.send(200, { message: 'Hello' });
+    next(); // Always call next()
+  });
+  
+  // BAD: Async function (will cause issues)
+  server.get('/endpoint', async (req, res, next) => {
+    const result = await someAsyncOperation();
+    res.send(200, result);
+    // Missing next() call
+  });
+  
+  // BAD: Missing next() call
+  server.get('/endpoint', (req, res, next) => {
+    someAsyncOperation()
+      .then(result => res.send(200, result))
+      .catch(error => next(error));
+    // Missing next() in success case
+  });
+  ```
 
 ### Constants and Defaults
 - **Respect Constants**: Always use defined constants, never hardcode values
