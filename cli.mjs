@@ -6,12 +6,15 @@ import { createTheaterServerBuildContext } from "./_createTheaterServerBuildCont
 import { createTheaterInterfaceBuildContext } from "./_createTheaterInterfaceBuildContext.mjs";
 import { runStageServerCode } from "./_runStageServerCode.mjs";
 import { runTheaterServerCode } from "./_runTheaterServerCode.mjs";
+import { rewriteEnvironment } from "./_rewriteEnvironment.mjs";
 
 // Create the global runtime configuration
-const CONFIG = await createConfiguration();
+const CONFIG = createConfiguration();
 
-// Create Broadcast Channel used for IPC messages regarding debugging events
-const channel = new BroadcastChannel("cli-channel");
+// Open a Broadcast Channel used for IPC messages that lets a stage
+// be controlled from a separate theater process and send build events while
+// developing.
+const _cliChannel = new BroadcastChannel(CONFIG.ipc.secret);
 
 // ------------------------------------------
 // On file execution
@@ -38,8 +41,8 @@ if (CONFIG.runtime.theater) {
 		try {
 			const theaterInterfaceContext = await createTheaterInterfaceBuildContext(CONFIG, (results) => {
 				if (CONFIG.runtime.start && CONFIG.runtime.debug && results.metafile) {
-					channel.postMessage({
-						type: "build-event",
+					_cliChannel.postMessage({
+						type: "new-build-available",
 						data: results.metafile.outputs,
 					});
 				}
@@ -95,8 +98,8 @@ if (CONFIG.runtime.theater) {
 		try {
 			const stageInterfaceContext = await createStageInterfaceBuildContext(CONFIG, (results) => {
 				if (CONFIG.runtime.start && CONFIG.runtime.debug && results.metafile) {
-					channel.postMessage({
-						type: "build-event",
+					_cliChannel.postMessage({
+						type: "new-build-available",
 						data: results.metafile.outputs,
 					});
 				}
@@ -152,4 +155,17 @@ if (!CONFIG.runtime.start && !CONFIG.runtime.watch) {
 	process.exit(0);
 }
 
-// ------------------------------------------
+// Use the broadcast channel to rewrite the show id and rebuild if requested through IPC
+if (CONFIG.ipc.secret && !CONFIG.runtime.theater) {
+	_cliChannel.addEventListener("message", ({ type, data }) => {
+		switch (type) {
+			case "rebuild-with-show-id":
+				console.log("HERE FIXME:", data);
+				//rewriteEnvironment(data.showId);
+				break;
+			// Unhandled messages
+			default:
+				break;
+		}
+	});
+}

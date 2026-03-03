@@ -1,78 +1,58 @@
 import * as Restify from "restify";
-import * as Fs from "node:fs/promises";
-import * as Path from "node:path";
+import { createTheaterServer } from "./_restify/createTheaterServer";
+import { createStageServer } from "./_restify/createStageServer";
+import { createNotUsedServer } from "./_restify/createNotUsedServer";
+import { ipcServerEmitter } from "./_restify/_ipcMangement";
+import type * as Http from "node:http";
 
 let _restify: Restify.Server | undefined;
 
 /** Returns the global restify server  */
-export async function restify(): Promise<Restify.Server> {
+export async function restify(): Promise<() => Restify.Server> {
 	// Return already initialized singleton instance
 	if (_restify) {
-		return _restify;
+		return () => _restify;
 	}
 
-	// Create and return the server instance
-	_restify = Restify.createServer();
+	// Create a new server dependent on the current mode
+	if (CONFIG.runtime.theater) {
+		_restify = await createTheaterServer();
+	} else {
+		_restify = await createStageServer();
 
-	// Configure server options
-	_restify.use(
-		Restify.plugins.bodyParser({
-			mapParams: false,
-			overrideParams: false,
-		}),
-	);
-	_restify.use(Restify.plugins.queryParser());
-	_restify.use(Restify.plugins.gzipResponse());
+		// Listen for server end events
+		ipcServerEmitter.on("ended", async () => {
+			await stopCurrentServer();
+			_restify = await createNotUsedServer();
+		});
 
-	// Disable all caching when debugging
-	if (CONFIG.runtime.debug) {
-		_restify.use((req, res, next) => {
-			res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
-			res.setHeader("Pragma", "no-cache");
-			res.setHeader("Expires", "0");
-			res.setHeader("Surrogate-Control", "no-store");
-			return next();
+		// Listen for server restart events
+		ipcServerEmitter.on("restarted", async () => {
+			await stopCurrentServer();
+			_restify = await createStageServer();
 		});
 	}
 
-	// Serve static files
-	const staticPath = Path.resolve(process.cwd(), CONFIG.build.interfaceOutput);
-	_restify.get(
-		"/*",
-		Restify.plugins.serveStatic({
-			directory: staticPath,
-			maxAge: CONFIG.runtime.production ? 3600 : 0,
-		}),
-	);
+	// Create the appropriate server using the server manager
+	_restify.listen(CONFIG.web.port);
+	console.log(`[Server] Restify listening on port ${CONFIG.web.port}`);
 
-	// Serve all html files in the stage-interface output folder as paths without file extensions
-	await Fs.readdir(staticPath).then((files) =>
-		files
-			.filter((file) => file.endsWith(".html"))
-			.map((file) => [file, `/${file.split(".")[0]}`])
-			.forEach(([file, url]) => {
-				// Use the default entry point from config to determine root path mapping
-				const defaultEntryPoint = `/${CONFIG.build.defaultInterfaceEntryPoint.split(".")[0]}`;
-				if (url == defaultEntryPoint) {
-					_restify.get(
-						"/",
-						Restify.plugins.serveStatic({
-							file: file,
-							directory: staticPath,
-							maxAge: CONFIG.runtime.production ? 3600 : 0,
-						}),
-					);
-				}
-				_restify.get(
-					url,
-					Restify.plugins.serveStatic({
-						file: file,
-						directory: staticPath,
-						maxAge: CONFIG.runtime.production ? 3600 : 0,
-					}),
-				);
-			}),
-	);
+	return () => _restify;
+}
 
-	return _restify;
+/**
+ * Stop the current running server
+ */
+async function stopCurrentServer(): Promise<void> {
+	return new Promise((resolve, reject) => {
+		if (_restify) {
+			console.log(`[Server] Stopping current HTTP server...`);
+			_restify.close(() => {
+				_restify = undefined;
+				resolve();
+			});
+		} else {
+			resolve();
+		}
+	});
 }

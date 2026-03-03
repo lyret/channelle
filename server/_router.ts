@@ -10,8 +10,6 @@ import { backstageRouter } from "./routers/backstageRouter";
 import { authRouter, deauthenticate } from "./routers/authRouter";
 import { peersRouter } from "./routers/peersRouter";
 
-import { theaterRouter } from "./routers/theaterRouter";
-
 /**
  * Creates and returns the application router
  */
@@ -26,16 +24,10 @@ export async function createAppRouter() {
 		auth: authRouter,
 		peers: peersRouter,
 		shows: showsRouter,
-
 		chat: chatRouter,
 		media: stageRouter,
 		effects: effectsRouter,
 	};
-
-	// Add theater router if in theater mode
-	if (CONFIG.runtime.theater) {
-		routerConfig["theater"] = theaterRouter;
-	}
 
 	// Remove handling of incomming development messages from the cli
 	// when not developing

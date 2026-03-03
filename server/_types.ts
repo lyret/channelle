@@ -63,6 +63,15 @@ export type BackstageConfiguration = EditableShowAttributes & {
 	showId: ShowAttributes["id"] | null;
 };
 
+/** Stage Status for when theater queries and controls a stage server using the IPC API */
+export type IpcStatus = {
+	isStarted: boolean;
+	isEnded?: boolean;
+	createdAt: Date;
+	endedAt?: Date | undefined;
+	backstageConfiguration: BackstageConfiguration;
+};
+
 export type EffectData = { type: "flowers" | "applause" | "tomato"; number: number };
 
 //Export types needed on the client side
