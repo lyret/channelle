@@ -7,7 +7,7 @@ import * as Path from "node:path";
  */
 export async function serveNotUsedFileOnly(server: Restify.Server): Promise<void> {
 	let staticPath = Path.resolve(process.cwd(), CONFIG.build.interfaceOutput);
-	let defaultEntryPoint = "notFound.html";
+	let defaultEntryPoint = "notfound.html";
 
 	// Serve all files in the output folder for static files
 	server.get(

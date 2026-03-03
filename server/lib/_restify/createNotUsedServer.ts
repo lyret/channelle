@@ -50,12 +50,12 @@ export async function createNotUsedServer(): Promise<Restify.Server> {
 			return next();
 		}
 		if (req.url.startsWith("/stage")) {
-			return res.redirect(301, "/notFound", next);
+			return res.redirect(301, "/notfound", next);
 		}
 		if (req.url.startsWith("/backstage")) {
-			return res.redirect(301, "/notFound", next);
+			return res.redirect(301, "/notfound", next);
 		}
-		console.log(`[Not-Used Server] Redirecting request to notFound: ${req.url}`);
+		console.log(`[Not-Used Server] Redirecting request to notfound: ${req.url}`);
 		return next();
 	});
 
