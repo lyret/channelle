@@ -1,5 +1,5 @@
 import { WebSocketServer } from "ws";
-import { http } from "./http";
+import { restify } from "./restify";
 
 let _ws: WebSocketServer | undefined;
 
@@ -11,7 +11,7 @@ export async function ws(): Promise<WebSocketServer> {
 	}
 
 	// Get the http server
-	const httpServer = await http();
+	const httpServer = (await restify())().server;
 
 	// Create and return the socket server
 	_ws = new WebSocketServer({

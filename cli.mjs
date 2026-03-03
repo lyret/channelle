@@ -9,7 +9,7 @@ import { runTheaterServerCode } from "./_runTheaterServerCode.mjs";
 import { rewriteEnvironment } from "./_rewriteEnvironment.mjs";
 
 // Create the global runtime configuration
-const CONFIG = createConfiguration();
+const CONFIG = await createConfiguration();
 
 // Open a Broadcast Channel used for IPC messages that lets a stage
 // be controlled from a separate theater process and send build events while
