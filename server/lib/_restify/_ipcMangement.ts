@@ -14,7 +14,6 @@ const _cliChannel = new BroadcastChannel<{ type: "rebuild-with-show-id"; data: {
 // Event emitter for server management events
 export const ipcServerEmitter = new Emittery<{
 	ended: {};
-	restarted: {};
 }>();
 
 /**
@@ -37,16 +36,6 @@ export function endCurrentShow(): void {
 	console.log(`[IPC] Current show was ended`);
 	ipcEndedAt = new Date();
 	ipcServerEmitter.emit("ended", {});
-}
-
-/**
- * Restarts the current show without rebuilding
- */
-export function restartCurrentShow(): void {
-	console.log(`[IPC] Current show was restarted`);
-	ipcCreatedAt = new Date();
-	ipcEndedAt = undefined;
-	ipcServerEmitter.emit("restarted", {});
 }
 
 /**

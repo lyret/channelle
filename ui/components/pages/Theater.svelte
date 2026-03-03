@@ -8,12 +8,11 @@
 
 	import { onMount } from "svelte";
 	import { showsListStore, showsStoreIsLoading, showsErrorStore, fetchShows } from "~/api/shows";
-	import { openCreateShowModal, openLauncherModal } from "~/stores/theater/theaterModals";
+	import { openCreateShowModal, openRemoteServerModal } from "~/stores/theater/theaterModals";
 	import { isTheaterAuthenticated } from "~/api/auth";
 
 	$: publicShows = $showsListStore.filter((show) => show.isPublic);
 	$: hiddenShows = $showsListStore.filter((show) => !show.isPublic);
-	$: console.log({ hiddenShows });
 	onMount(async () => {
 		await fetchShows();
 	});
@@ -35,7 +34,7 @@
 					</span>
 					<span class="is-family-secondary">Skapa en ny föreställning</span>
 				</button>
-				<button class="button is-small is-outlined" on:click={openLauncherModal}>
+				<button class="button is-small is-outlined" on:click={openRemoteServerModal}>
 					<span class="icon is-size-4">
 						<IconSettings />
 					</span>

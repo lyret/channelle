@@ -1,6 +1,6 @@
 import * as Restify from "restify";
 import { setupIpcEndpoints } from "./_setupIpcEndpoints";
-import { serveStaticFiles } from "./_serveStaticFiles";
+import { serveNotUsedFileOnly } from "./_serveNotUsedFileOnly";
 
 /**
  * Creates a not-used server (stage server in not-used mode)
@@ -38,24 +38,29 @@ export async function createNotUsedServer(): Promise<Restify.Server> {
 		});
 	}
 
-	// FIXME:
+	// Add theater IPC API endpoints
+	if (CONFIG.ipc.secret) {
+		setupIpcEndpoints(restify);
+	}
+
 	// Always redirect non-api request to notFound in not-used mode
 	restify.use((req, res, next) => {
 		// Check if this is a theater IPC request (should always be allowed)
 		if (req.url.startsWith("/api/theater/")) {
 			return next();
 		}
+		if (req.url.startsWith("/stage")) {
+			return res.redirect(301, "/notFound", next);
+		}
+		if (req.url.startsWith("/backstage")) {
+			return res.redirect(301, "/notFound", next);
+		}
 		console.log(`[Not-Used Server] Redirecting request to notFound: ${req.url}`);
-		return res.redirect(300, "/notFound", next);
+		return next();
 	});
 
-	// Add theater IPC API endpoints
-	if (CONFIG.ipc.secret) {
-		setupIpcEndpoints(restify);
-	}
-
-	// Serve static files
-	await serveStaticFiles(restify);
+	// Serve static files - but default to notFound.html
+	await serveNotUsedFileOnly(restify);
 
 	console.log(`[Server] Not-used server created`);
 	return restify;

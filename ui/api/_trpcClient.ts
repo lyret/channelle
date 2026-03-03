@@ -101,8 +101,8 @@ export const authClient = appClient.auth;
 /** Client for the Peers API only */
 export const peersClient = appClient.peers;
 
-/** Client for the Launchers API only */
-export const launchersClient = appClient.launchers;
+/** Client for the Theater-side IPC API only */
+export const theaterClient = appClient.theater;
 
 /**
  * Detect device type using browser APIs

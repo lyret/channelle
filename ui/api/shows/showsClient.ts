@@ -32,7 +32,7 @@ export async function fetchShows(): Promise<void> {
 		showsErrorStore.set(null);
 
 		const shows = await showsClient.list.query();
-		console.log({ shows });
+
 		showsListStore.set(shows);
 	} catch (error) {
 		console.error("Failed to fetch shows:", error);

@@ -16,7 +16,7 @@ export async function sequelize(): Promise<Sequelize> {
 	}
 
 	// Set up the database path in the .dist directory
-	const dbPath = Path.join(process.cwd(), ".dist", "database", `${CONFIG.runtime.slug}${!CONFIG.runtime.production ? "-dev" : ""}.sqlite`);
+	const dbPath = Path.join(process.cwd(), ".dist", "database", `${CONFIG.runtime.production ? "prod" : "dev"}.sqlite`);
 
 	// Create Sequelize instance
 	_sequelize = new Sequelize({

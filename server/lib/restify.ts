@@ -17,25 +17,25 @@ export async function restify(): Promise<() => Restify.Server> {
 	// Create a new server dependent on the current mode
 	if (CONFIG.runtime.theater) {
 		_restify = await createTheaterServer();
+		_restify.listen(CONFIG.web.port);
+		console.log(`[Server] Restify listening on port ${CONFIG.web.port}`);
 	} else {
-		_restify = await createStageServer();
+		if (CONFIG.runtime.notUsed) {
+			_restify = await createNotUsedServer();
+		} else {
+			_restify = await createStageServer();
+		}
+		_restify.listen(CONFIG.web.port);
+		console.log(`[Server] Restify listening on port ${CONFIG.web.port}`);
 
 		// Listen for server end events
 		ipcServerEmitter.on("ended", async () => {
 			await stopCurrentServer();
 			_restify = await createNotUsedServer();
-		});
-
-		// Listen for server restart events
-		ipcServerEmitter.on("restarted", async () => {
-			await stopCurrentServer();
-			_restify = await createStageServer();
+			_restify.listen(CONFIG.web.port);
+			console.log(`[Server] Restify listening on port ${CONFIG.web.port}`);
 		});
 	}
-
-	// Create the appropriate server using the server manager
-	_restify.listen(CONFIG.web.port);
-	console.log(`[Server] Restify listening on port ${CONFIG.web.port}`);
 
 	return () => _restify;
 }

@@ -69,7 +69,6 @@ Channelle operates in two distinct modes:
 **Theater Mode (Advanced Usage)**
 - Management interface for creating and organizing multiple shows
 - Configure show info, scenes, and performance settings
-- Launcher seperate Channelle instances in stage mode, possibly on seperate servers through different adapters
 - For organizations running multiple events or complex productions
 
 ### CLI Configuration

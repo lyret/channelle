@@ -17,6 +17,8 @@ type RuntimeConfig = {
 	theater: boolean;
 	/** The slug identifier for the deployment. */
 	slug: string;
+	/** Indicates if not-used mode is enabled (stage server in not-used mode). */
+	notUsed: boolean;
 };
 
 type PackageConfig = {

@@ -9,6 +9,7 @@
  * @property {boolean} start - Indicates if start mode is enabled.
  * @property {boolean} theater - Indicates if theater mode is enabled.
  * @property {string} slug - The slug identifier for the deployment.
+ * @property {boolean} notUsed - Indicates if not-used mode is enabled (stage server in not-used mode).
  */
 
 /**

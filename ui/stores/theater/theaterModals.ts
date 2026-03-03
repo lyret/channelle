@@ -9,8 +9,8 @@ export const showAboutModal = writable<boolean>(false);
 /** Store for create show modal visibility */
 export const showCreateShowModal = writable<boolean>(false);
 
-/** Store for launcher modal visibility */
-export const showLauncherModal = writable<boolean>(false);
+/** Store for remote server modal visibility */
+export const showRemoteServerModal = writable<boolean>(false);
 
 /** Open authentication modal */
 export function openAuthModal() {
@@ -42,14 +42,14 @@ export function closeCreateShowModal() {
 	showCreateShowModal.set(false);
 }
 
-/** Open launcher modal */
-export function openLauncherModal() {
-	showLauncherModal.set(true);
+/** Open remote server modal */
+export function openRemoteServerModal() {
+	showRemoteServerModal.set(true);
 }
 
-/** Close launcher modal */
-export function closeLauncherModal() {
-	showLauncherModal.set(false);
+/** Close remote server modal */
+export function closeRemoteServerModal() {
+	showRemoteServerModal.set(false);
 }
 
 /** Close all modals */
@@ -57,5 +57,5 @@ export function closeAllModals() {
 	showAuthModal.set(false);
 	showAboutModal.set(false);
 	showCreateShowModal.set(false);
-	showLauncherModal.set(false);
+	showRemoteServerModal.set(false);
 }

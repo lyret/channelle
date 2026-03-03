@@ -40,8 +40,6 @@ export type ActiveSpeaker = {
 };
 
 /** The Show attribues needed when listed on the theater page */
-// FIXME: Update this to include launch information
-// For now, simplified to basic show information
 export type ShowListEntry = Pick<ShowAttributes, "id" | "name" | "description" | "nomenclature" | "isPublic">;
 
 /** The Show attributes that are editibale from the backstage interface */

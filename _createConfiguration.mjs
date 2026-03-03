@@ -10,9 +10,9 @@ import { publicIpv4 } from "public-ip";
 
 /**
  * Creates and returns a runtime context including any given CLI options
- * @returns {CONFIG} CONFIG - The runtime context
+ * @returns {Promise<CONFIG>} CONFIG - The runtime context
  */
-export async function createConfiguration() {
+export async function createConfiguration(overridenShowId) {
 	// Parse environmental variables
 	const { env } = process;
 
@@ -40,6 +40,7 @@ export async function createConfiguration() {
 			watch: Boolean,
 			start: Boolean,
 			theater: Boolean,
+			notUsed: Boolean,
 			ipcStageUrl: String,
 			ipcSecret: String,
 		},
@@ -53,6 +54,9 @@ export async function createConfiguration() {
 			s: ["--showId"],
 		},
 	);
+
+	// Allows for manually overidable show id from parameter list
+	cli.showId = overridenShowId || cli.showId;
 
 	// Determine and define the most important runtime options given
 	// either by cli options, or set as environment variables
@@ -139,14 +143,20 @@ export async function createConfiguration() {
 	const start = cli.start !== undefined ? cli.start : env.START != "false";
 	console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Start", start);
 
+	// The STAGE_NOT_USED option starts the stage server in not-used mode, preventing access to show views
+	const notUsed = cli.notUsed !== undefined ? cli.notUsed : env.STAGE_NOT_USED === "true" || false;
+	if (notUsed) {
+		console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Not-Used Mode", notUsed);
+	}
+
 	// If SLUG is set or 'slug' is given in the CLI it will be used to identify this deployment (stage), otherwise a slug
 	// from the SHOW_NAME will be used
-	const slug = cli.slug !== undefined ? cli.slug : env.SLUG || Slug(showName);
+	const slug = (cli.slug !== undefined ? cli.slug : env.SLUG) || (theater ? "theater" : `show-${showId}`);
 	if (showId == undefined) {
 		console.log("🔹", Chalk.bgBlueBright("[CONFIG]"), "Runtime Slug", slug);
 	}
 
-	// Launcher configuration
+	// IPC configuration
 	console.log();
 
 	// The URL for the remote stage server
@@ -257,6 +267,7 @@ export async function createConfiguration() {
 			start: start,
 			theater: theater,
 			slug: slug,
+			notUsed: notUsed,
 		},
 		/** Package Information */
 		package: {

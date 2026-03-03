@@ -2,17 +2,17 @@
 	import AuthenticationModal from "~/components/modals/TheaterAuthenticationModal.svelte";
 	import AboutModal from "~/components/modals/TheaterAboutModal.svelte";
 	import CreateShowModal from "~/components/modals/TheaterCreateShowModal.svelte";
-	import LaunchersModal from "~/components/modals/LaunchersModal.svelte";
+	import RemoteServerModal from "~/components/modals/RemoteServerModal.svelte";
 
 	import {
 		showAuthModal,
 		showAboutModal,
 		showCreateShowModal,
-		showLauncherModal,
+		showRemoteServerModal,
 		closeAuthModal,
 		closeAboutModal,
 		closeCreateShowModal,
-		closeLauncherModal,
+		closeRemoteServerModal,
 	} from "~/stores/theater/theaterModals";
 
 	// Modal event handlers
@@ -36,8 +36,8 @@
 		closeCreateShowModal();
 	}
 
-	function handleLauncherClose() {
-		closeLauncherModal();
+	function handleRemoteServerModalClose() {
+		closeRemoteServerModal();
 	}
 </script>
 
@@ -52,7 +52,7 @@
 
 	<CreateShowModal isVisible={$showCreateShowModal} on:created={handleShowCreated} on:cancel={handleCreateShowCancel} />
 
-	<LaunchersModal isVisible={$showLauncherModal} on:close={handleLauncherClose} />
+	<RemoteServerModal isVisible={$showRemoteServerModal} on:close={handleRemoteServerModalClose} />
 </main>
 
 <style lang="scss">

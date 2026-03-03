@@ -9,6 +9,7 @@ import { showsRouter } from "./routers/showsRouter";
 import { backstageRouter } from "./routers/backstageRouter";
 import { authRouter, deauthenticate } from "./routers/authRouter";
 import { peersRouter } from "./routers/peersRouter";
+import { theaterRouter } from "./routers/theaterRouter";
 
 /**
  * Creates and returns the application router
@@ -27,6 +28,7 @@ export async function createAppRouter() {
 		chat: chatRouter,
 		media: stageRouter,
 		effects: effectsRouter,
+		theater: theaterRouter,
 	};
 
 	// Remove handling of incomming development messages from the cli
@@ -40,6 +42,8 @@ export async function createAppRouter() {
 	if (CONFIG.runtime.theater) {
 		delete routerConfig["media"];
 		delete routerConfig["effects"];
+	} else {
+		delete routerConfig["theater"];
 	}
 
 	// Create the application router
@@ -83,7 +87,7 @@ export async function createAppRouter() {
 
 				// If the user turned offline then also close its media peers
 				if (isOffline) {
-					// FIXME
+					// FIXME: is this correct?
 					closeMediaPeer(peerId);
 				}
 			});

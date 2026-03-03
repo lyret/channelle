@@ -157,11 +157,22 @@ if (!CONFIG.runtime.start && !CONFIG.runtime.watch) {
 
 // Use the broadcast channel to rewrite the show id and rebuild if requested through IPC
 if (CONFIG.ipc.secret && !CONFIG.runtime.theater) {
-	_cliChannel.addEventListener("message", ({ type, data }) => {
+	_cliChannel.addEventListener("message", async ({ type, data }) => {
 		switch (type) {
 			case "rebuild-with-show-id":
-				console.log("HERE FIXME:", data);
 				//rewriteEnvironment(data.showId);
+				// Don't preserve the notUsed flag from the current CONFIG when creating replacement config
+				const REPLACEMENT_CONFIG = await createConfiguration(data.showId);
+				REPLACEMENT_CONFIG.runtime.notUsed = false;
+				const stageInterfaceContext = await createStageInterfaceBuildContext(REPLACEMENT_CONFIG);
+				const stageServerContext = await createStageServerBuildContext(REPLACEMENT_CONFIG);
+				await stageInterfaceContext.rebuild();
+				await stageServerContext.rebuild();
+				await stageInterfaceContext.dispose();
+				await stageServerContext.dispose();
+				if (REPLACEMENT_CONFIG.runtime.start) {
+					runStageServerCode(REPLACEMENT_CONFIG);
+				}
 				break;
 			// Unhandled messages
 			default:

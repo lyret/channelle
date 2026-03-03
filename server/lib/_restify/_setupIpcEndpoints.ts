@@ -1,5 +1,5 @@
 import * as Restify from "restify";
-import { getIpcStatus, endCurrentShow, restartCurrentShow, rebuildWithNewShow } from "./_ipcMangement";
+import { getIpcStatus, endCurrentShow, rebuildWithNewShow } from "./_ipcMangement";
 
 /**
  * Creates the IPC endpoints for a stage server for communications from the theater server
@@ -39,9 +39,7 @@ export function setupIpcEndpoints(server: Restify.Server): void {
 	// Ends the current showing of the selected show
 	server.post("/api/theater/end", validateIpcSecret, (req, res, next) => {
 		endCurrentShow();
-
-		const status = getIpcStatus();
-		res.send(200, status);
+		res.send(200, { end: true });
 		return next();
 	});
 
@@ -54,18 +52,9 @@ export function setupIpcEndpoints(server: Restify.Server): void {
 			return next();
 		}
 
-		const status = getIpcStatus();
-
-		// Rebuild is not needed
-		if (showId == status.backstageConfiguration.showId) {
-			restartCurrentShow();
-			res.send(200, { rebuild: false });
+		rebuildWithNewShow(showId).then((success) => {
+			res.send(200, { rebuild: success });
 			return next();
-		} else {
-			rebuildWithNewShow(showId).then((success) => {
-				res.send(200, { rebuild: success });
-				return next();
-			});
-		}
+		});
 	});
 }

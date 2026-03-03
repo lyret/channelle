@@ -7,6 +7,9 @@ if (CONFIG.runtime.theater) {
 	throw new Error("This file should not be executed directly when built for theater mode.");
 }
 
+// Create the database connection
+await sequelize();
+
 // Initialize the backstage configuration
 try {
 	await loadBackstageConfigurationFromRuntime();
@@ -14,9 +17,6 @@ try {
 	console.error(`[Server] Failed to initialize with show ID ${CONFIG.backstage.showId}:`, error);
 	// Don't fail server startup, but log the error
 }
-
-// Create the database connection
-await sequelize();
 
 // Create the app router
 await createAppRouter();
