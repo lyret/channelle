@@ -9,59 +9,33 @@ export function getNonActiveStageTemplate(): string {
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Stage Not Active</title>
+	<title>En tom scen - Channelle</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/1.0.4/css/bulma.min.css">
+	<link rel="stylesheet" href="/styles/stage.css">
 	<style>
 		body {
-			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-			background-color: #f5f5f5;
-			margin: 0;
-			padding: 0;
-			display: flex;
-			justify-content: center;
-			align-items: center;
-			height: 100vh;
-			color: #333;
+			background-color: var(--channelle-main-bg-color);
+			color: var(--channelle-main-text-color);
 		}
 		.container {
 			text-align: center;
 			max-width: 600px;
 			padding: 2rem;
+			margin: 0 auto;
 		}
-		h1 {
-			font-size: 3rem;
-			margin-bottom: 1rem;
-			color: #d32f2f;
-		}
-		p {
-			font-size: 1.2rem;
-			margin-bottom: 2rem;
-		}
-		.back-link {
-			display: inline-block;
-			padding: 0.8rem 1.5rem;
-			background-color: #1976d2;
-			color: white;
-			text-decoration: none;
-			border-radius: 4px;
-			font-size: 1rem;
-			transition: background-color 0.3s;
-		}
-		.back-link:hover {
-			background-color: #1565c0;
-		}
-		.logo {
-			width: 120px;
-			height: auto;
-			margin-bottom: 2rem;
-			opacity: 0.8;
+		strong {
+			color: var(--channelle-main-text-color);
 		}
 	</style>
 </head>
 <body>
 	<div class="container">
-		<h1>Stage Not Active</h1>
-		<p>The stage server is not currently active. Please check back later.</p>
-		<a href="/" class="back-link">Return to Home</a>
+		<h1 class="title">Ingenting på scenen</h1>
+		<p>Det verkar inte vara någon aktivitet på den här scenen just nu, antagligen har här varit en föreställning eller så kommer det snart att vara än, i så fall</p>
+		<p class="mt-2"><strong>kan du antagligen komma tillbaka hit om en liten stund</strong></p>
+		<a href="${CONFIG.ipc.theaterServerUrl}" class="button is-large is-primary mt-6">Gå tillbaka till teatern</a>
+		<br/>
+		<a href="./" class="button is-large is-secondary mt-6">Ladda om sidan</a>
 	</div>
 </body>
 </html>`;

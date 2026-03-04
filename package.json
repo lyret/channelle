@@ -75,6 +75,7 @@
 		"@types/luxon": "^3.0.1",
 		"@types/node": "^18.15.11",
 		"@types/nopt": "^3.0.32",
+		"@types/restify-errors": "^4.3.9",
 		"@types/ws": "^8.18.1",
 		"autoprefixer": "^10.4.14",
 		"esbuild": "^0.25.0",

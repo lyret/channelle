@@ -1,5 +1,5 @@
 import * as Restify from "restify";
-import * as RestifyErrors from "restify-errors";
+import RestifyErrors from "restify-errors";
 import { checkStageServerStatus } from "../../routers/theaterRouter";
 import { Show } from "../../models/Show";
 import { generateUrlSlug } from "../../../shared/utils/urlUtils";
@@ -67,7 +67,7 @@ export async function serveSharableShows(server: Restify.Server): Promise<void> 
 		},
 		(req, res, next) => {
 			if (!res.headersSent) {
-				return next(RestifyErrors.NotFoundError("not here!"));
+				return next(new RestifyErrors.NotFoundError());
 			}
 			return next();
 		},

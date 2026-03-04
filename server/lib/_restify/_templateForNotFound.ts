@@ -9,59 +9,27 @@ export function getNotFoundTemplate(): string {
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>404 - Show Not Found</title>
+	<title>Channelle - Hittades inte</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/1.0.4/css/bulma.min.css">
+	<link rel="stylesheet" href="/styles/stage.css">
 	<style>
-		body {
-			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-			background-color: #f5f5f5;
-			margin: 0;
-			padding: 0;
-			display: flex;
-			justify-content: center;
-			align-items: center;
-			height: 100vh;
-			color: #333;
-		}
+	body {
+		background-color: var(--channelle-main-bg-color);
+		color: var(--channelle-main-text-color);
+	}
 		.container {
 			text-align: center;
 			max-width: 600px;
 			padding: 2rem;
-		}
-		h1 {
-			font-size: 3rem;
-			margin-bottom: 1rem;
-			color: #d32f2f;
-		}
-		p {
-			font-size: 1.2rem;
-			margin-bottom: 2rem;
-		}
-		.back-link {
-			display: inline-block;
-			padding: 0.8rem 1.5rem;
-			background-color: #1976d2;
-			color: white;
-			text-decoration: none;
-			border-radius: 4px;
-			font-size: 1rem;
-			transition: background-color 0.3s;
-		}
-		.back-link:hover {
-			background-color: #1565c0;
-		}
-		.logo {
-			width: 120px;
-			height: auto;
-			margin-bottom: 2rem;
-			opacity: 0.8;
+			margin: 0 auto;
 		}
 	</style>
 </head>
 <body>
 	<div class="container">
-		<h1>404</h1>
-		<p>The show you're looking for is not currently running or doesn't exist.</p>
-		<a href="/" class="back-link">Return to Home</a>
+		<h1 class="title is-1">Sidan hittades inte</h1>
+		<p class="has-text-white mt-6">Sidan du öppnade finns inte längre, eller så har den aldrig funnits.</p>
+		<a href="${CONFIG.ipc.theaterServerUrl}" class="button is-large is-primary mt-6">Gå tillbaka till teatern</a>
 	</div>
 </body>
 </html>`;
