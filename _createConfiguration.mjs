@@ -291,7 +291,7 @@ export async function createConfiguration(overridenShowId) {
 			/** The default interface entry point file */
 			defaultInterfaceEntryPoint: theater ? "theater.html" : "stage.html",
 			/** The files to use as build inputs for the stage-interface, relative to the 'stage-interface' folder. */
-			stageInterfaceInputs: ["stage.html", "backstage.html", "notfound.html", "_stage.ts", "_backstage.ts"],
+			stageInterfaceInputs: ["stage.html", "backstage.html", "_stage.ts", "_backstage.ts"],
 			/** The files to use as build inputs for the theater-interface, relative to the 'theater-interface' folder. */
 			theaterInterfaceInputs: ["theater.html", "_theater.ts", "preparation.html", "_preparation.ts"],
 		},

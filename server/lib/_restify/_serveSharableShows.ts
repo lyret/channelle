@@ -1,8 +1,9 @@
 import * as Restify from "restify";
+import * as RestifyErrors from "restify-errors";
 import { checkStageServerStatus } from "../../routers/theaterRouter";
 import { Show } from "../../models/Show";
 import { generateUrlSlug } from "../../../shared/utils/urlUtils";
-import { getShowSocialTemplate } from "./_showSocialTemplate";
+import { getShowSocialTemplate } from "./_templateForShowMetadata";
 
 /**
  * Add middleware to serve sharable show pages with slug-based routing
@@ -66,8 +67,9 @@ export async function serveSharableShows(server: Restify.Server): Promise<void> 
 		},
 		(req, res, next) => {
 			if (!res.headersSent) {
-				res.redirect(302, "/notfound", next);
+				return next(RestifyErrors.NotFoundError("not here!"));
 			}
+			return next();
 		},
 	);
 }

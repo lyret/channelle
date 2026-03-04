@@ -3,20 +3,11 @@ import * as Fs from "node:fs/promises";
 import * as Path from "node:path";
 
 /**
- * Serves all static files from the build output folder
+ * Serves all html files from the build output folder as paths
  */
-export async function serveNotUsedFileOnly(server: Restify.Server): Promise<void> {
+export async function serveBuildOutputFiles(server: Restify.Server): Promise<void> {
 	let staticPath = Path.resolve(process.cwd(), CONFIG.build.interfaceOutput);
-	let defaultEntryPoint = "notfound.html";
-
-	// Serve all files in the output folder for static files
-	server.get(
-		"/*",
-		Restify.plugins.serveStatic({
-			directory: staticPath,
-			maxAge: CONFIG.runtime.production ? 3600 : 0,
-		}),
-	);
+	let defaultEntryPoint = CONFIG.build.defaultInterfaceEntryPoint;
 
 	// Serve all html files in the appropriate output folder as paths without file extensions
 	await Fs.readdir(staticPath).then((files) =>

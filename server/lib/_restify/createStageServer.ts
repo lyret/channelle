@@ -1,6 +1,7 @@
 import * as Restify from "restify";
 import { setupIpcEndpoints } from "./_setupIpcEndpoints";
 import { serveStaticFiles } from "./_serveStaticFiles";
+import { serveBuildOutputFiles } from "./_serveBuildOutputs";
 
 /**
  * Creates a stage server (for stage interface with IPC endpoints)
@@ -9,7 +10,13 @@ export async function createStageServer(): Promise<Restify.Server> {
 	console.log(`[Server] Creating stage server...`);
 
 	// Create the server instance
-	const restify = Restify.createServer();
+	const restify = Restify.createServer({
+		formatters: {
+			"text/html": function (req, res, body) {
+				return body.toString();
+			},
+		},
+	});
 
 	// Configure server options
 	restify.use(
@@ -42,6 +49,9 @@ export async function createStageServer(): Promise<Restify.Server> {
 	if (CONFIG.ipc.secret) {
 		setupIpcEndpoints(restify);
 	}
+
+	// Serve build outputs
+	serveBuildOutputFiles(restify);
 
 	// Serve static files
 	await serveStaticFiles(restify);

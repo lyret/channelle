@@ -1,6 +1,7 @@
 import * as Restify from "restify";
 import * as Fs from "node:fs/promises";
 import * as Path from "node:path";
+import { getNotFoundTemplate } from "./_templateForNotFound";
 
 /**
  * Serves all static files from the build output folder
@@ -18,32 +19,13 @@ export async function serveStaticFiles(server: Restify.Server): Promise<void> {
 		}),
 	);
 
-	// Serve all html files in the appropriate output folder as paths without file extensions
-	await Fs.readdir(staticPath).then((files) =>
-		files
-			.filter((file) => file.endsWith(".html"))
-			.map((file) => [file, `/${file.split(".")[0]}`])
-			.forEach(([file, url]) => {
-				// Use the default entry point from config to determine root path mapping
-				const defaultEntry = `/${defaultEntryPoint.split(".")[0]}`;
-				if (url == defaultEntry) {
-					server.get(
-						"/",
-						Restify.plugins.serveStatic({
-							file: file,
-							directory: staticPath,
-							maxAge: CONFIG.runtime.production ? 3600 : 0,
-						}),
-					);
-				}
-				server.get(
-					url,
-					Restify.plugins.serveStatic({
-						file: file,
-						directory: staticPath,
-						maxAge: CONFIG.runtime.production ? 3600 : 0,
-					}),
-				);
-			}),
-	);
+	// Handle not found files
+	server.on("NotFound", (req, res, error, next) => {
+		res.setHeader("Content-Type", "text/html");
+		error.statusCode = 404;
+		error.toString = function customToJSON() {
+			return getNotFoundTemplate();
+		};
+		next();
+	});
 }

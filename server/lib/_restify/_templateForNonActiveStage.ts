@@ -1,0 +1,82 @@
+import type Restify from "restify";
+/**
+ * HTML template for non-active stage pages
+ * Uses template literals for static content
+ */
+export function getNonActiveStageTemplate(): string {
+	return `<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Stage Not Active</title>
+	<style>
+		body {
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+			background-color: #f5f5f5;
+			margin: 0;
+			padding: 0;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			height: 100vh;
+			color: #333;
+		}
+		.container {
+			text-align: center;
+			max-width: 600px;
+			padding: 2rem;
+		}
+		h1 {
+			font-size: 3rem;
+			margin-bottom: 1rem;
+			color: #d32f2f;
+		}
+		p {
+			font-size: 1.2rem;
+			margin-bottom: 2rem;
+		}
+		.back-link {
+			display: inline-block;
+			padding: 0.8rem 1.5rem;
+			background-color: #1976d2;
+			color: white;
+			text-decoration: none;
+			border-radius: 4px;
+			font-size: 1rem;
+			transition: background-color 0.3s;
+		}
+		.back-link:hover {
+			background-color: #1565c0;
+		}
+		.logo {
+			width: 120px;
+			height: auto;
+			margin-bottom: 2rem;
+			opacity: 0.8;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<h1>Stage Not Active</h1>
+		<p>The stage server is not currently active. Please check back later.</p>
+		<a href="/" class="back-link">Return to Home</a>
+	</div>
+</body>
+</html>`;
+}
+
+/**
+ * Restify Route for sending the template
+ */
+export function NonActiveStageTemplateMiddleware(req: Restify.Request, res: Restify.Response, next: Restify.Next) {
+	const html = getNonActiveStageTemplate();
+	res.writeHead(200, {
+		"Content-Length": Buffer.byteLength(html),
+		"Content-Type": "text/html; charset=utf-8",
+	});
+	res.write(html);
+	res.end();
+	return next();
+}

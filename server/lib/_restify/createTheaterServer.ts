@@ -1,6 +1,7 @@
 import * as Restify from "restify";
 import { serveStaticFiles } from "./_serveStaticFiles";
 import { serveSharableShows } from "./_serveSharableShows";
+import { serveBuildOutputFiles } from "./_serveBuildOutputs";
 
 /**
  * Creates a theater server (for theater interface)
@@ -9,7 +10,13 @@ export async function createTheaterServer(): Promise<Restify.Server> {
 	console.log(`[Server] Creating theater server...`);
 
 	// Create the server instance
-	const restify = Restify.createServer();
+	const restify = Restify.createServer({
+		formatters: {
+			"text/html": function (req, res, body) {
+				return body.toString();
+			},
+		},
+	});
 
 	// Configure server options
 	restify.use(
@@ -40,6 +47,9 @@ export async function createTheaterServer(): Promise<Restify.Server> {
 
 	// Add slug-based routing middleware for sharable shows
 	await serveSharableShows(restify);
+
+	// Serve build outputs
+	serveBuildOutputFiles(restify);
 
 	// Serve static files
 	await serveStaticFiles(restify);

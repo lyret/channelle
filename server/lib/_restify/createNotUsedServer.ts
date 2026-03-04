@@ -1,6 +1,7 @@
 import * as Restify from "restify";
 import { setupIpcEndpoints } from "./_setupIpcEndpoints";
-import { serveNotUsedFileOnly } from "./_serveNotUsedFileOnly";
+import { serveNonActiveTemplateOnly } from "./_serveNonActiveTemplateOnly";
+import { serveStaticFiles } from "./_serveStaticFiles";
 
 /**
  * Creates a not-used server (stage server in not-used mode)
@@ -9,7 +10,13 @@ export async function createNotUsedServer(): Promise<Restify.Server> {
 	console.log(`[Server] Creating not-used server...`);
 
 	// Create the server instance
-	const restify = Restify.createServer();
+	const restify = Restify.createServer({
+		formatters: {
+			"text/html": function (req, res, body) {
+				return body.toString();
+			},
+		},
+	});
 
 	// Configure server options
 	restify.use(
@@ -43,24 +50,11 @@ export async function createNotUsedServer(): Promise<Restify.Server> {
 		setupIpcEndpoints(restify);
 	}
 
-	// Always redirect non-api request to notFound in not-used mode
-	restify.use((req, res, next) => {
-		// Check if this is a theater IPC request (should always be allowed)
-		if (req.url.startsWith("/api/theater/")) {
-			return next();
-		}
-		if (req.url.startsWith("/stage")) {
-			return res.redirect(301, "/notfound", next);
-		}
-		if (req.url.startsWith("/backstage")) {
-			return res.redirect(301, "/notfound", next);
-		}
-		console.log(`[Not-Used Server] Redirecting request to notfound: ${req.url}`);
-		return next();
-	});
+	// Return get requests to the non active server template
+	await serveNonActiveTemplateOnly(restify);
 
-	// Serve static files - but default to notFound.html
-	await serveNotUsedFileOnly(restify);
+	// Serve static files
+	await serveStaticFiles(restify);
 
 	console.log(`[Server] Not-used server created`);
 	return restify;
