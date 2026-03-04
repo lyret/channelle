@@ -61,7 +61,7 @@
 							<a href={`/preparation?show=${show.id}`} class="button is-small is-secondary weird-radius">
 								<span class="icon is-small">
 									<PicolEdit />
-								</span><span>Redigera</span>
+								</span><span>Förbered</span>
 							</a>
 						{/if}
 						<button

@@ -13,7 +13,7 @@
 	// Use reactive statements to get show data from store
 	$: currentShow = $showMetadataStore;
 	$: showName = currentShow?.name || "Okänd föreställning";
-	$: isSameShow = $showIdStore && $remoteServerStatusStore?.backstageConfiguration?.showId === $showIdStore;
+	$: isSameShow = $showIdStore && !$remoteServerStatusStore?.isEnded && $remoteServerStatusStore?.backstageConfiguration?.showId === $showIdStore;
 </script>
 
 <TheaterWrapper>
