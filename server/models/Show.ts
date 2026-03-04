@@ -1,6 +1,6 @@
 import { Model, DataTypes } from "sequelize";
 import type { Sequelize } from "sequelize";
-import type { Scene, SceneSetting } from "../_types";
+import type { Scene, SceneSetting, ThemeName } from "../_types";
 
 /** Show model. */
 export class Show extends Model {
@@ -17,7 +17,7 @@ export class Show extends Model {
 	declare criticalEffectsEnabledOverride: SceneSetting;
 	declare visitorAudioEnabledOverride: SceneSetting;
 	declare visitorVideoEnabledOverride: SceneSetting;
-	declare theme: "minimal" | "mellan" | "cool";
+	declare theme: ThemeName;
 	declare isPublic: boolean;
 	declare createdAt: Date;
 	declare updatedAt: Date;
@@ -65,7 +65,7 @@ export function initShow(sequelize: Sequelize) {
 				defaultValue: "",
 			},
 			theme: {
-				type: DataTypes.ENUM("minimal", "mellan", "cool"),
+				type: DataTypes.STRING,
 				allowNull: false,
 				defaultValue: "mellan", // Matches DEFAULT_THEME constant from client-side
 			},

@@ -82,3 +82,6 @@ export type { MessageAttributes, ShowAttributes, HistoryAttributes } from "./mod
 export type Transport = MediaSoup.types.WebRtcTransport<{ peerId: string; clientDirection: TransportDirection }>;
 export type Consumer = MediaSoup.types.Consumer<CustomAppData>;
 export type Producer = MediaSoup.types.Producer<CustomAppData>;
+
+/** Possible themes */
+export type ThemeName = "minimal" | "mellan" | "cool" | "varm" | "livlig";
