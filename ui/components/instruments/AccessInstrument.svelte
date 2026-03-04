@@ -21,7 +21,7 @@
 	$: canSave = isChanged && !isLoading;
 	$: isChangingPassword = isChanged && inputValue.trim().length > 0;
 	$: isRemovingPassword = isChanged && inputValue.trim().length === 0 && isLocked;
-	$: showPath = generateUrlSlug({ name: $showMetadataStore?.name, id: $showIdStore }) || window.location.pathname;
+	$: showPath = generateUrlSlug({ name: $showMetadataStore?.name, id: $showIdStore || undefined }) || window.location.pathname;
 
 	// Sets the displayed error message and clears after 8 seconds
 	function setError(message: string) {
