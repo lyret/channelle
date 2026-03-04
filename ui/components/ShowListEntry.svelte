@@ -2,10 +2,13 @@
 	import { isTheaterAuthenticated } from "~/api/auth";
 	import { themes, DEFAULT_THEME } from "~/api/theme";
 	import PicolEdit from "./picol/icons/Picol-edit.svelte";
+	import PicolExternalLink from "./picol/icons/Picol-arrow-full-up.svelte";
 	import type { ShowAttributes } from "~/types/serverSideTypes";
 	import { fetchShows, updateShow } from "~/api/shows";
 
 	export let show: ShowAttributes;
+	export let isActiveOnRemoteServer: boolean = false;
+	export let onOpenRemoteStage: (showId: number) => void = () => {};
 
 	// Get theme for this show
 	$: showTheme = themes[show.theme as keyof typeof themes] || themes[DEFAULT_THEME];
@@ -24,7 +27,7 @@
 </script>
 
 <div
-	class="notification"
+	class="notification weird-radius"
 	style="--show-theme-bg: {showTheme.menuBgColor}; --show-theme-text: {showTheme.menuTextColor}; --show-theme-primary: {showTheme.primaryColor};"
 >
 	<div class="level is-mobile">
@@ -32,6 +35,9 @@
 			<div class="level-item">
 				<div>
 					<p class="title is-6 is-family-title">
+						{#if isActiveOnRemoteServer}
+							<span class="pr-3 tag is-success weird-radius">Spelas nu!</span>
+						{/if}
 						{show.name}
 					</p>
 					{#if show.description}
@@ -43,14 +49,23 @@
 		<div class="level-right">
 			<div class="level-item">
 				<div class="buttons">
+					{#if isActiveOnRemoteServer}
+						<button class="button is-success weird-radius" on:click={() => onOpenRemoteStage(show.id)}>
+							<span class="icon">
+								<PicolExternalLink />
+							</span><span>Gå till scenen</span>
+						</button>
+					{/if}
 					{#if $isTheaterAuthenticated}
-						<a href={`/preparation?show=${show.id}`} class="button is-small is-secondary">
-							<span class="icon is-small">
-								<PicolEdit />
-							</span><span>Redigera</span>
-						</a>
+						{#if !isActiveOnRemoteServer}
+							<a href={`/preparation?show=${show.id}`} class="button is-small is-secondary weird-radius">
+								<span class="icon is-small">
+									<PicolEdit />
+								</span><span>Redigera</span>
+							</a>
+						{/if}
 						<button
-							class="button is-small"
+							class="button is-small weird-radius"
 							class:is-info={show.isPublic}
 							class:is-warning={!show.isPublic}
 							on:click={togglePublicStatus}
@@ -66,11 +81,13 @@
 </div>
 
 <style>
-	.notification {
+	.weird-radius {
 		border-top-left-radius: 28px;
 		border-top-right-radius: 28px;
 		border-bottom-left-radius: 28px;
 		border-bottom-right-radius: 0px;
+	}
+	.notification {
 		max-width: 100%;
 		overflow: hidden;
 		background-color: var(--show-theme-bg, var(--channelle-menu-bg-color));

@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { blur } from "svelte/transition";
 
-	import { showMetadataStore, configurationIsLoading, configurationError } from "~/api/backstage/backstageClient";
+	import { showMetadataStore, configurationIsLoading, configurationError, showIdStore } from "~/api/backstage/backstageClient";
+	import { remoteServerStatusStore } from "~/api/theater/theaterClient";
 
 	import TheaterWrapper from "~/components/theater/_TheaterWrapper.svelte";
 	import TheaterHeader from "~/components/theater/TheaterHeader.svelte";
@@ -12,6 +13,7 @@
 	// Use reactive statements to get show data from store
 	$: currentShow = $showMetadataStore;
 	$: showName = currentShow?.name || "Okänd föreställning";
+	$: isSameShow = $showIdStore && $remoteServerStatusStore?.backstageConfiguration?.showId === $showIdStore;
 </script>
 
 <TheaterWrapper>
@@ -35,6 +37,12 @@
 						<span class="is-loading"></span>
 					{/if}
 				</p>
+				{#if isSameShow}
+					<div class="notification is-warning mt-4">
+						<p class="has-text-weight-semibold">OBS: Denna föreställning visas just nu.</p>
+						<p class="p-1">Ändringar här kommer inte påverka den pågående visningen och riskerar att skrivas över</p>
+					</div>
+				{/if}
 			{/if}
 		</div>
 

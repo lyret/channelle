@@ -1,6 +1,21 @@
-import { writable } from "svelte/store";
+import { writable, type Readable } from "svelte/store";
 import { theaterClient } from "../_trpcClient";
 import type { IpcStatus } from "~/types/serverSideTypes";
+
+/**
+ * Type for the remote server status store value
+ */
+type RemoteServerStatusValue = Omit<IpcStatus, "createdAt" | "endedAt"> & {
+	createdAt: string;
+	endedAt?: string | undefined;
+};
+
+/**
+ * Type for the auto-updating remote server status store
+ */
+type RemoteServerStatusStore = Readable<RemoteServerStatusValue | null> & {
+	set: (value: RemoteServerStatusValue | null) => void;
+};
 
 /**
  * Loading state for remote server operations
@@ -13,9 +28,36 @@ export const remoteServerStatusIsLoading = writable(false);
 export const remoteServerStatusError = writable<string | null>(null);
 
 /**
- * Stage server status store
+ * Stage server status store that auto-updates when subscribed
  */
-export const remoteServerStatusStore = writable<(Omit<IpcStatus, "createdAt" | "endedAt"> & { createdAt: string; endedAt?: string | undefined }) | null>(null);
+export const remoteServerStatusStore: RemoteServerStatusStore = (() => {
+	const { subscribe, set } = writable<RemoteServerStatusValue | null>(null);
+	let pollInterval: number | null = null;
+
+	// Initial update
+	updateRemoteServerStatus();
+
+	return {
+		subscribe: (run: (value: RemoteServerStatusValue | null) => void, invalidate?: (value?: RemoteServerStatusValue | null) => void) => {
+			pollInterval =
+				pollInterval ||
+				window.setInterval(() => {
+					updateRemoteServerStatus();
+				}, 2000);
+
+			const unsubscribe = subscribe(run, invalidate);
+
+			return () => {
+				if (pollInterval) {
+					clearInterval(pollInterval);
+					pollInterval = null;
+				}
+				unsubscribe();
+			};
+		},
+		set,
+	};
+})();
 
 /**
  * Updates the current status of the stage server
@@ -23,7 +65,7 @@ export const remoteServerStatusStore = writable<(Omit<IpcStatus, "createdAt" | "
 export async function updateRemoteServerStatus() {
 	try {
 		remoteServerStatusError.set(null);
-		const status = await theaterClient.status.query();
+		const status = (await theaterClient.status.query()) as RemoteServerStatusValue;
 		remoteServerStatusStore.set(status);
 	} catch (error) {
 		remoteServerStatusIsLoading.set(false);

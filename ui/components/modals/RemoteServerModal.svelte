@@ -3,7 +3,6 @@
 	import Modal from "./_Modal.svelte";
 	import {
 		remoteServerStatusStore,
-		updateRemoteServerStatus,
 		remoteServerStatusError,
 		remoteServerStatusIsLoading,
 		endCurrentShowOnRemoteServer,
@@ -21,43 +20,11 @@
 	$: isLoading = $remoteServerStatusIsLoading;
 	$: errorMessage = $remoteServerStatusError;
 	$: console.log($remoteServerStatusStore);
+
 	// Show selection
 	let selectedShowId: number | null = null;
 	$: shows = $showsListStore;
 	$: selectedShow = selectedShowId ? $showsListStore.find((s) => s.id == selectedShowId) : null;
-
-	// Polling interval
-	let pollingInterval: number | null = null;
-
-	// Start polling when modal becomes visible and on mount
-	$: if (isVisible) {
-		startPolling();
-		updateRemoteServerStatus(); // Immediate update when opened
-	} else {
-		stopPolling();
-	}
-	onMount(() => {
-		updateRemoteServerStatus();
-	});
-
-	function startPolling() {
-		stopPolling(); // Clear any existing interval
-		pollingInterval = window.setInterval(() => {
-			updateRemoteServerStatus();
-		}, 2000); // Poll every 2 seconds
-	}
-
-	function stopPolling() {
-		if (pollingInterval) {
-			clearInterval(pollingInterval);
-			pollingInterval = null;
-		}
-	}
-
-	// Clean up on component destroy
-	onDestroy(() => {
-		stopPolling();
-	});
 
 	async function handleEndShow() {
 		await endCurrentShowOnRemoteServer();

@@ -4,7 +4,7 @@ import { authenticatedAdminProcedure } from "./authRouter";
 import type { IpcStatus } from "../_types";
 
 // Get the trpc router constructor and default procedure
-const { router: trcpRouter } = trpc();
+const { router: trcpRouter, procedure: trcpProcedure } = trpc();
 
 /**
  * Theater Router - Handles theater mode operations for managing stage servers
@@ -13,7 +13,7 @@ export const theaterRouter = trcpRouter({
 	/**
 	 * Get the current status of the stage server
 	 */
-	status: authenticatedAdminProcedure.query(async (): Promise<IpcStatus> => {
+	status: trcpProcedure.query(async (): Promise<IpcStatus> => {
 		try {
 			const response = await fetch(`${CONFIG.ipc.stageUrl}/api/theater/status?secret=${CONFIG.ipc.secret}`);
 			if (!response.ok) {

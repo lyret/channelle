@@ -9,15 +9,29 @@
 
 	import { onMount } from "svelte";
 	import { showsListStore, showsStoreIsLoading, showsErrorStore, fetchShows } from "~/api/shows";
-	import { historyStore, historyStoreIsLoading, historyErrorStore, fetchHistory } from "~/api/history";
 	import { openCreateShowModal, openRemoteServerModal, openHistoryModal } from "~/stores/theater/theaterModals";
 	import { isTheaterAuthenticated } from "~/api/auth";
+	import { remoteServerStatusStore } from "~/api/theater";
 
 	$: publicShows = $showsListStore.filter((show) => show.isPublic);
 	$: hiddenShows = $showsListStore.filter((show) => !show.isPublic);
+	$: activeRemoteShowId = $remoteServerStatusStore?.backstageConfiguration?.showId || null;
+	$: console.log($remoteServerStatusStore);
+
+	// Sort public shows to put the currently playing one first
+	$: sortedPublicShows = [...publicShows].sort((a, b) => {
+		const aIsPlaying = activeRemoteShowId === a.id && !$remoteServerStatusStore?.isEnded ? 1 : 0;
+		const bIsPlaying = activeRemoteShowId === b.id && !$remoteServerStatusStore?.isEnded ? 1 : 0;
+		return bIsPlaying - aIsPlaying; // Currently playing shows come first
+	});
 	onMount(async () => {
 		await fetchShows();
 	});
+
+	function openRemoteStage(showId: number) {
+		const stageUrl = CONFIG.ipc.stageUrl;
+		window.open(`${stageUrl}/stage`, "_blank");
+	}
 </script>
 
 <TheaterWrapper>
@@ -71,15 +85,26 @@
 				{:else}
 					<div>
 						<!-- Public shows -->
-						{#each publicShows as show (show.id)}
-							<ShowListEntry {show} />
+						{#each sortedPublicShows as show, index (show.id)}
+							<ShowListEntry
+								{show}
+								isActiveOnRemoteServer={activeRemoteShowId === show.id && !$remoteServerStatusStore?.isEnded}
+								onOpenRemoteStage={openRemoteStage}
+							/>
+							{#if index === 0 && activeRemoteShowId === show.id && !$remoteServerStatusStore?.isEnded}
+								<div class="show-spacer"></div>
+							{/if}
 						{/each}
 
 						<!-- Private shows section - only visible to authenticated users -->
 						{#if $isTheaterAuthenticated}
 							<h6 class="title is-6 has-text-grey previous-shows-title mt-6 mb-4">Gömda föreställningar - syns endast för dig som inloggad</h6>
 							{#each hiddenShows as show (show.id)}
-								<ShowListEntry {show} />
+								<ShowListEntry
+									{show}
+									isActiveOnRemoteServer={activeRemoteShowId === show.id && !$remoteServerStatusStore?.isEnded}
+									onOpenRemoteStage={openRemoteStage}
+								/>
 							{/each}
 						{/if}
 
@@ -180,5 +205,9 @@
 		font-size: 1rem;
 		font-weight: 600;
 		opacity: 0.7;
+	}
+
+	.show-spacer {
+		height: 40px;
 	}
 </style>
