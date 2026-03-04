@@ -160,16 +160,25 @@ if (CONFIG.ipc.secret && !CONFIG.runtime.theater) {
 	_cliChannel.addEventListener("message", async ({ type, data }) => {
 		switch (type) {
 			case "rebuild-with-show-id":
-				//rewriteEnvironment(data.showId);
-				// Don't preserve the notUsed flag from the current CONFIG when creating replacement config
 				const REPLACEMENT_CONFIG = await createConfiguration(data.showId);
+
+				// Don't preserve the notUsed flag from the current CONFIG when creating replacement config
 				REPLACEMENT_CONFIG.runtime.notUsed = false;
+
+				// Use the given slug if it exists
+				if (data.slug) {
+					REPLACEMENT_CONFIG.runtime.slug = data.slug;
+				}
+
+				// Rebuild stage files
 				const stageInterfaceContext = await createStageInterfaceBuildContext(REPLACEMENT_CONFIG);
 				const stageServerContext = await createStageServerBuildContext(REPLACEMENT_CONFIG);
 				await stageInterfaceContext.rebuild();
 				await stageServerContext.rebuild();
 				await stageInterfaceContext.dispose();
 				await stageServerContext.dispose();
+
+				// Start
 				if (REPLACEMENT_CONFIG.runtime.start) {
 					runStageServerCode(REPLACEMENT_CONFIG);
 				}
