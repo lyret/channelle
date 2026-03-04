@@ -38,9 +38,16 @@ export function setupIpcEndpoints(server: Restify.Server): void {
 
 	// Ends the current showing of the selected show
 	server.post("/api/theater/end", validateIpcSecret, (req, res, next) => {
-		endCurrentShow();
-		res.send(200, { end: true });
-		return next();
+		endCurrentShow()
+			.then(() => {
+				res.send(200, { end: true });
+				return next();
+			})
+			.catch((error) => {
+				console.error("[IPC] Error ending show:", error);
+				res.send(500, { error: "Failed to end show" });
+				return next();
+			});
 	});
 
 	// Rebuilds the stage server with the given show selected
@@ -52,9 +59,15 @@ export function setupIpcEndpoints(server: Restify.Server): void {
 			return next();
 		}
 
-		rebuildWithNewShow(showId).then((success) => {
-			res.send(200, { rebuild: success });
-			return next();
-		});
+		rebuildWithNewShow(showId)
+			.then((success) => {
+				res.send(200, { rebuild: success });
+				return next();
+			})
+			.catch((error) => {
+				console.error("[IPC] Error rebuilding with new show:", error);
+				res.send(500, { error: "Failed to rebuild with new show" });
+				return next();
+			});
 	});
 }

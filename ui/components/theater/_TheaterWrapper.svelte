@@ -3,16 +3,19 @@
 	import AboutModal from "~/components/modals/TheaterAboutModal.svelte";
 	import CreateShowModal from "~/components/modals/TheaterCreateShowModal.svelte";
 	import RemoteServerModal from "~/components/modals/RemoteServerModal.svelte";
+	import TheaterHistoryModal from "~/components/modals/TheaterHistoryModal.svelte";
 
 	import {
 		showAuthModal,
 		showAboutModal,
 		showCreateShowModal,
 		showRemoteServerModal,
+		showHistoryModal,
 		closeAuthModal,
 		closeAboutModal,
 		closeCreateShowModal,
 		closeRemoteServerModal,
+		closeHistoryModal,
 	} from "~/stores/theater/theaterModals";
 
 	// Modal event handlers
@@ -39,6 +42,10 @@
 	function handleRemoteServerModalClose() {
 		closeRemoteServerModal();
 	}
+
+	function handleHistoryModalClose() {
+		closeHistoryModal();
+	}
 </script>
 
 <main>
@@ -53,6 +60,8 @@
 	<CreateShowModal isVisible={$showCreateShowModal} on:created={handleShowCreated} on:cancel={handleCreateShowCancel} />
 
 	<RemoteServerModal isVisible={$showRemoteServerModal} on:close={handleRemoteServerModalClose} />
+
+	<TheaterHistoryModal isVisible={$showHistoryModal} on:close={handleHistoryModalClose} />
 </main>
 
 <style lang="scss">

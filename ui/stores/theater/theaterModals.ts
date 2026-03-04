@@ -1,4 +1,7 @@
 import { writable } from "svelte/store";
+import { fetchHistory } from "~/api/history";
+import { updateRemoteServerStatus } from "~/api/theater";
+import { fetchShows } from "~/api/shows";
 
 /** Store for authentication modal visibility */
 export const showAuthModal = writable<boolean>(false);
@@ -11,6 +14,9 @@ export const showCreateShowModal = writable<boolean>(false);
 
 /** Store for remote server modal visibility */
 export const showRemoteServerModal = writable<boolean>(false);
+
+/** Store for history modal visibility */
+export const showHistoryModal = writable<boolean>(false);
 
 /** Open authentication modal */
 export function openAuthModal() {
@@ -43,7 +49,9 @@ export function closeCreateShowModal() {
 }
 
 /** Open remote server modal */
-export function openRemoteServerModal() {
+export async function openRemoteServerModal() {
+	await fetchShows();
+	await updateRemoteServerStatus();
 	showRemoteServerModal.set(true);
 }
 
@@ -52,10 +60,22 @@ export function closeRemoteServerModal() {
 	showRemoteServerModal.set(false);
 }
 
+/** Open history modal */
+export async function openHistoryModal() {
+	await fetchHistory();
+	showHistoryModal.set(true);
+}
+
+/** Close history modal */
+export function closeHistoryModal() {
+	showHistoryModal.set(false);
+}
+
 /** Close all modals */
 export function closeAllModals() {
 	showAuthModal.set(false);
 	showAboutModal.set(false);
 	showCreateShowModal.set(false);
 	showRemoteServerModal.set(false);
+	showHistoryModal.set(false);
 }

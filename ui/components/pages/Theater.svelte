@@ -4,11 +4,13 @@
 	import TheaterActionBar from "../theater/TheaterActionBar.svelte";
 	import ShowListEntry from "~/components/ShowListEntry.svelte";
 	import IconPlus from "~/components/picol/icons/Picol-plus.svelte";
-	import IconSettings from "~/components/picol/icons/Picol-settings.svelte";
+	import IconServer from "~/components/picol/icons/Picol-server.svelte";
+	import IconClock from "~/components/picol/icons/Picol-clock.svelte";
 
 	import { onMount } from "svelte";
 	import { showsListStore, showsStoreIsLoading, showsErrorStore, fetchShows } from "~/api/shows";
-	import { openCreateShowModal, openRemoteServerModal } from "~/stores/theater/theaterModals";
+	import { historyStore, historyStoreIsLoading, historyErrorStore, fetchHistory } from "~/api/history";
+	import { openCreateShowModal, openRemoteServerModal, openHistoryModal } from "~/stores/theater/theaterModals";
 	import { isTheaterAuthenticated } from "~/api/auth";
 
 	$: publicShows = $showsListStore.filter((show) => show.isPublic);
@@ -34,11 +36,17 @@
 					</span>
 					<span class="is-family-secondary">Skapa en ny föreställning</span>
 				</button>
-				<button class="button is-small is-outlined" on:click={openRemoteServerModal}>
+				<button class="button is-small is-outlined" on:click={() => openRemoteServerModal()}>
 					<span class="icon is-size-4">
-						<IconSettings />
+						<IconServer />
 					</span>
-					<span class="is-family-secondary">Serverhantering</span>
+					<span class="is-family-secondary">Hantera scenen</span>
+				</button>
+				<button class="button is-small is-outlined" on:click={() => openHistoryModal()}>
+					<span class="icon is-size-4">
+						<IconClock />
+					</span>
+					<span class="is-family-secondary">Historik</span>
 				</button>
 			{/if}
 		</TheaterActionBar>

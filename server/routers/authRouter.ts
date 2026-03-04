@@ -128,7 +128,7 @@ export const withAuthenticatedPeerMiddleware = middleware(async ({ ctx, next }) 
 	} else if (!ctx.connection.id) {
 		throw new TRPCError({ code: "BAD_REQUEST", message: "No connection id given in request" });
 	}
-	const peer = onlineSessions[ctx.connection.id]?.peer;
+	const peer = onlineSessions[ctx.connection.id]?.peer || Object.values(onlineSessions).find((session) => session.peer.id == ctx.peer.id)?.peer;
 
 	if (!peer) {
 		throw new TRPCError({ code: "BAD_REQUEST", message: "The connection has not been established, please authenticate" });

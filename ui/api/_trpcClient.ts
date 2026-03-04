@@ -104,6 +104,9 @@ export const peersClient = appClient.peers;
 /** Client for the Theater-side IPC API only */
 export const theaterClient = appClient.theater;
 
+/** Client for the History API only */
+export const historyClient = appClient.history;
+
 /**
  * Detect device type using browser APIs
  * Returns "mobile" for mobile devices, "desktop" for desktop/laptop

@@ -23,13 +23,8 @@ export const remoteServerStatusStore = writable<(Omit<IpcStatus, "createdAt" | "
 export async function updateRemoteServerStatus() {
 	try {
 		remoteServerStatusError.set(null);
-		remoteServerStatusIsLoading.set(true);
-		remoteServerStatusError.set(null);
-		console.log("updating...");
 		const status = await theaterClient.status.query();
-		console.log("status", status);
 		remoteServerStatusStore.set(status);
-		remoteServerStatusIsLoading.set(false);
 	} catch (error) {
 		remoteServerStatusIsLoading.set(false);
 		remoteServerStatusError.set(error instanceof Error ? error.message : "Unknown error");
@@ -45,8 +40,10 @@ export async function endCurrentShowOnRemoteServer() {
 		remoteServerStatusIsLoading.set(true);
 		remoteServerStatusError.set(null);
 		await theaterClient.end.mutate();
-		remoteServerStatusIsLoading.set(false);
-		await updateRemoteServerStatus();
+		setTimeout(() => {
+			remoteServerStatusIsLoading.set(false);
+			updateRemoteServerStatus();
+		}, 6000);
 	} catch (error) {
 		remoteServerStatusIsLoading.set(false);
 		remoteServerStatusError.set(error instanceof Error ? error.message : "Unknown error");
@@ -62,8 +59,10 @@ export async function startShowOnRemoteServer(showId: number) {
 		remoteServerStatusIsLoading.set(true);
 		remoteServerStatusError.set(null);
 		await theaterClient.start.mutate({ showId });
-		remoteServerStatusIsLoading.set(false);
-		await updateRemoteServerStatus();
+		setTimeout(() => {
+			remoteServerStatusIsLoading.set(false);
+			updateRemoteServerStatus();
+		}, 8000);
 	} catch (error) {
 		remoteServerStatusIsLoading.set(false);
 		remoteServerStatusError.set(error instanceof Error ? error.message : "Unknown error");

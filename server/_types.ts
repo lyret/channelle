@@ -77,7 +77,7 @@ export type EffectData = { type: "flowers" | "applause" | "tomato"; number: numb
 export type { AppRouter } from "./_router";
 export type { MediaTag, TransportDirection, CustomAppData } from "./lib/mediaSoup";
 export type { MediaSession } from "./lib/trpc";
-export type { MessageAttributes, ShowAttributes, LaunchAttributes } from "./models";
+export type { MessageAttributes, ShowAttributes, HistoryAttributes } from "./models";
 
 export type Transport = MediaSoup.types.WebRtcTransport<{ peerId: string; clientDirection: TransportDirection }>;
 export type Consumer = MediaSoup.types.Consumer<CustomAppData>;

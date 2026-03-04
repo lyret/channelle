@@ -46,6 +46,7 @@
 				on:keydown={handleKeydown}
 				placeholder="..."
 				disabled={$isAuthenticating}
+				autofocus
 			/>
 		</div>
 		{#if $authError}

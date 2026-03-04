@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, createEventDispatcher } from "svelte";
+	import { onMount, onDestroy, createEventDispatcher } from "svelte";
 	import Modal from "./_Modal.svelte";
 	import {
 		remoteServerStatusStore,
@@ -10,12 +10,8 @@
 		startShowOnRemoteServer,
 	} from "~/api/theater";
 	import { showsListStore } from "~/api/shows";
-	import IconAlertCircle from "~/components/icons/Icon-alert-circle.svelte";
-	import IconCheck from "~/components//icons/Icon-check.svelte";
-	import IconLoader from "~/components//icons/Icon-loader.svelte";
-	import IconPlay from "~/components//icons/Icon-play.svelte";
-	import IconStop from "~/components//icons/Icon-stop-circle.svelte";
-	import IconRefresh from "~/components//icons/Icon-refresh-cw.svelte";
+	import IconPlay from "~/components/icons/Icon-play.svelte";
+	import IconStop from "~/components/icons/Icon-stop-circle.svelte";
 
 	// Modal controls
 	export let isVisible = false;
@@ -30,15 +26,38 @@
 	$: shows = $showsListStore;
 	$: selectedShow = selectedShowId ? $showsListStore.find((s) => s.id == selectedShowId) : null;
 
-	// Remote server status and handlers
-	//
+	// Polling interval
+	let pollingInterval: number | null = null;
+
+	// Start polling when modal becomes visible and on mount
+	$: if (isVisible) {
+		startPolling();
+		updateRemoteServerStatus(); // Immediate update when opened
+	} else {
+		stopPolling();
+	}
 	onMount(() => {
 		updateRemoteServerStatus();
 	});
 
-	async function handleUpdateStatus() {
-		await updateRemoteServerStatus();
+	function startPolling() {
+		stopPolling(); // Clear any existing interval
+		pollingInterval = window.setInterval(() => {
+			updateRemoteServerStatus();
+		}, 2000); // Poll every 2 seconds
 	}
+
+	function stopPolling() {
+		if (pollingInterval) {
+			clearInterval(pollingInterval);
+			pollingInterval = null;
+		}
+	}
+
+	// Clean up on component destroy
+	onDestroy(() => {
+		stopPolling();
+	});
 
 	async function handleEndShow() {
 		await endCurrentShowOnRemoteServer();
@@ -58,98 +77,61 @@
 	}
 </script>
 
-<Modal {isVisible} title="Serverhantering" on:close={handleCloseModal}>
-	<div class="box mb-4">
-		<h4 class="title is-4">Server Status</h4>
-
-		{#if !$remoteServerStatusStore?.isEnded}
-			<div class="notification is-success">
-				<span class="icon mr-2">
-					<IconCheck />
-				</span>
-				<strong>Servern är aktiv med {$remoteServerStatusStore?.backstageConfiguration.name || "?"}</strong>
-			</div>
-		{:else}
-			<div class="notification is-warning">
-				<span class="icon mr-2">
-					<IconAlertCircle />
-				</span>
-				<strong>Servern är inte aktiv</strong>
+<Modal {isVisible} title="Hantera scenen" on:close={handleCloseModal}>
+	<h4 class="subtitle is-5 mt-3">Nuvarande visning</h4>
+	{#if errorMessage}
+		<div class="notification is-danger">
+			<p class="is-family-secondary has-text-white">Ett fel uppstod: {errorMessage}</p>
+		</div>
+	{:else if isLoading}
+		<div class="notification p-0 m-0 is-warning">Vänta...</div>
+	{:else if !$remoteServerStatusStore?.isEnded}
+		<div class="notification p-0 m-0 is-success">Visning pågår</div>
+		{#if $remoteServerStatusStore?.backstageConfiguration}
+			<div class="mt-2 is-size-7">
+				Föreställning: {$remoteServerStatusStore.backstageConfiguration.name}<br />
+				Offentlig: {$remoteServerStatusStore.backstageConfiguration.isPublic ? "Ja" : "Nej"}<br />
+				Lösenord: {$remoteServerStatusStore.backstageConfiguration.password}<br />
+				Ridån: {$remoteServerStatusStore.backstageConfiguration.curtainsOverride ? "Nere" : "Uppe"}<br />
 			</div>
 		{/if}
-	</div>
+		{#if $remoteServerStatusStore?.createdAt}
+			<div class="mt-2 is-size-7">
+				Startad: {new Date($remoteServerStatusStore.createdAt).toLocaleString()}
+			</div>
+		{/if}
+	{:else}
+		<div class="notification p-0 m-0 is-warning">Ingen visning pågår</div>
+	{/if}
 
 	<!-- Show Selection -->
-	<div class="box mb-4">
-		<h4 class="title is-4">Välj show</h4>
+	<h4 class="subtitle is-5 mt-6">Välj en föreställning att visa</h4>
 
-		<div class="select is-fullwidth">
-			<select bind:value={selectedShowId} disabled={isLoading}>
-				<option value="">Välj en show...</option>
-				{#each shows as show}
-					<option value={show.id}>{show.name}</option>
-				{/each}
-			</select>
-		</div>
-
-		{#if selectedShowId}
-			<p class="mt-2">Selected: {selectedShow?.name}</p>
-		{/if}
+	<div class="select is-fullwidth">
+		<select bind:value={selectedShowId} disabled={isLoading} placeholder="Välj en...">
+			<option value={""}></option>
+			{#each shows as show}
+				<option value={show.id}>{show.name}</option>
+			{/each}
+		</select>
 	</div>
+	<button class="button is-primary is-fullwidth mt-1" on:click={handleStartShow} disabled={isLoading || !selectedShowId || !!errorMessage}>
+		<span class="icon">
+			<IconPlay />
+		</span>
+		<span
+			>{$remoteServerStatusStore?.backstageConfiguration.showId === selectedShowId ? "Starta om" : "Starta"}
+			{selectedShow?.nomenclature || "föreställningen"}
+			{$remoteServerStatusStore?.backstageConfiguration.showId === selectedShowId && !$remoteServerStatusStore?.isEnded ? "" : "istället"}</span
+		>
+	</button>
 
-	<!-- Action Buttons -->
-	<div class="box">
-		<h4 class="title is-4">Actions</h4>
+	<button class="button is-danger is-fullwidth mt-1" on:click={handleEndShow} disabled={isLoading || $remoteServerStatusStore?.isEnded || !!errorMessage}>
+		<span class="icon">
+			<IconStop />
+		</span>
+		<span>Avsluta pågående visning</span>
+	</button>
 
-		<div class="buttons">
-			<button class="button is-primary" on:click={handleStartShow} disabled={isLoading || !selectedShowId}>
-				<span class="icon">
-					<IconPlay />
-				</span>
-				<span
-					>{$remoteServerStatusStore?.backstageConfiguration.showId === selectedShowId ? "Starta om" : "Starta"}
-					{selectedShow?.nomenclature || "föreställningen"}</span
-				>
-			</button>
-
-			<button class="button is-danger" on:click={handleEndShow} disabled={isLoading}>
-				<span class="icon">
-					<IconStop />
-				</span>
-				<span>Avsluta server</span>
-			</button>
-
-			<button class="button is-info" on:click={handleUpdateStatus} disabled={isLoading}>
-				<span class="icon">
-					<IconRefresh />
-				</span>
-				<span>Uppdatera Status</span>
-			</button>
-		</div>
-
-		<!-- Status Indicators -->
-		{#if isLoading}
-			<div class="notification is-info">
-				<span class="icon mr-2">
-					<IconLoader />
-				</span>
-				Vänta...
-			</div>
-		{/if}
-
-		{#if errorMessage}
-			<div class="notification is-danger mt-2">
-				<span class="icon mr-2">
-					<IconAlertCircle />
-				</span>
-				{errorMessage}
-			</div>
-		{/if}
-	</div>
+	<svelte:fragment slot="footer"></svelte:fragment>
 </Modal>
-
-<style lang="scss">
-	.help {
-		margin-top: 0.5rem;
-	}
-</style>

@@ -10,6 +10,7 @@ import { backstageRouter } from "./routers/backstageRouter";
 import { authRouter, deauthenticate } from "./routers/authRouter";
 import { peersRouter } from "./routers/peersRouter";
 import { theaterRouter } from "./routers/theaterRouter";
+import { historyRouter } from "./routers/historyRouter";
 
 /**
  * Creates and returns the application router
@@ -29,6 +30,7 @@ export async function createAppRouter() {
 		media: stageRouter,
 		effects: effectsRouter,
 		theater: theaterRouter,
+		history: historyRouter,
 	};
 
 	// Remove handling of incomming development messages from the cli
