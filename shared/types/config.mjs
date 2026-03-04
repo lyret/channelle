@@ -82,6 +82,8 @@
  * @typedef {Object} IpcConfig
  * @property {string} stageUrl - URL for stage server communication (replaces remote server URL).
  * @property {string} secret - Secret key for inter-process communication between theater and stage servers.
+ * @property {string} theaterServerUrl - URL for the theater server when deployed (used to generate correct sharable links).
+ * Defaults to "http://localhost:3000" in development, "https://channelle.se" in production.
  */
 
 /**

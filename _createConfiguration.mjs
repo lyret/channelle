@@ -43,6 +43,7 @@ export async function createConfiguration(overridenShowId) {
 			notUsed: Boolean,
 			ipcStageUrl: String,
 			ipcSecret: String,
+			theaterServerUrl: String,
 		},
 		{
 			p: ["--port"],
@@ -185,6 +186,13 @@ export async function createConfiguration(overridenShowId) {
 		);
 	}
 
+	// The URL for the theater server when deployed (used to generate correct sharable links)
+	// Default to localhost in development, channelle.se in production
+	const theaterServerUrl =
+		cli.theaterServerUrl !== undefined ? cli.theaterServerUrl : env.THEATER_SERVER_URL || (production ? "https://channelle.se" : "http://localhost:3000");
+
+	console.log("🎭", Chalk.bgBlueBright("[CONFIG]"), "Theater Server URL", theaterServerUrl);
+
 	// Create an array of transport listening info for webRTC, will be filled
 	// with configurations depending on the given wan, lan and local settings
 	// lower array-placement indicates preference in media soup
@@ -316,6 +324,8 @@ export async function createConfiguration(overridenShowId) {
 			stageUrl: ipcStageUrl,
 			/** Secret key for inter-process communication between theater and stage servers */
 			secret: ipcSecret,
+			/** URL for the theater server when deployed (used to generate correct sharable links) */
+			theaterServerUrl: theaterServerUrl,
 		},
 		/** MediaSoup Settings */
 		mediasoup: {

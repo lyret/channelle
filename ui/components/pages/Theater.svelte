@@ -28,9 +28,9 @@
 		await fetchShows();
 	});
 
-	function openRemoteStage(showId: number) {
+	function openRemoteStage(path?: string) {
 		const stageUrl = CONFIG.ipc.stageUrl;
-		window.open(`${stageUrl}/stage`, "_blank");
+		window.open(`${stageUrl}${path || "/stage"}`, "_blank");
 	}
 </script>
 

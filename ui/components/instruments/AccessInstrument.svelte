@@ -2,6 +2,7 @@
 	import { onMount } from "svelte";
 	import IconLock from "../icons/Icon-lock.svelte";
 	import IconUnlock from "../icons/Icon-unlock.svelte";
+	import IconCopy from "../icons/Icon-copy.svelte";
 	import { showPasswordStore, showMetadataStore, showIdStore, updateConfigurationSettings } from "~/api/backstage";
 	import { generateUrlSlug } from "~/utils/serverSideUtils";
 
@@ -12,7 +13,8 @@
 	let errorMessage: string = "";
 	let successMessage: string = "";
 	let originalPassword = "";
-	let urlPathDisplay = "";
+	let copyStageAddressMessage: string = "";
+	let copyBackstageAddressMessage: string = "";
 
 	$: isLocked = $showPasswordStore?.length;
 	$: isChanged = originalPassword !== inputValue;
@@ -27,6 +29,38 @@
 		setTimeout(() => {
 			errorMessage = "";
 		}, 8000);
+	}
+
+	async function copyToClipboardForStage(text: string) {
+		try {
+			await navigator.clipboard.writeText(text);
+			copyStageAddressMessage = "Kopierade adressen";
+			setTimeout(() => {
+				copyStageAddressMessage = "";
+			}, 2000);
+		} catch (err) {
+			console.error("Failed to copy: ", err);
+			copyStageAddressMessage = "Kunde inte kopiera";
+			setTimeout(() => {
+				copyStageAddressMessage = "";
+			}, 2000);
+		}
+	}
+
+	async function copyToClipboardForBackstage(text: string) {
+		try {
+			await navigator.clipboard.writeText(text);
+			copyBackstageAddressMessage = "Kopierade adressen för tekniker";
+			setTimeout(() => {
+				copyBackstageAddressMessage = "";
+			}, 2000);
+		} catch (err) {
+			console.error("Failed to copy: ", err);
+			copyBackstageAddressMessage = "Kunde inte kopiera";
+			setTimeout(() => {
+				copyBackstageAddressMessage = "";
+			}, 2000);
+		}
 	}
 
 	function handleKeydown(event: KeyboardEvent) {
@@ -98,17 +132,56 @@
 <div class="access-instrument">
 	<h1 class="title">Tillgång</h1>
 	<div class="access-content">
-		<!-- URL Path Display (read-only) -->
 		<div class="field">
-			<label class="label">URL-sökväg</label>
+			<label class="label">Scen-URL</label>
 			<div class="control">
-				<input class="input" type="text" value={showPath} readonly />
+				<div class="input-with-copy">
+					<input class="input" type="text" value={`${CONFIG.ipc.theaterServerUrl}/f/${showPath}`} readonly />
+					<button
+						class="button is-small copy-button"
+						on:click={() => copyToClipboardForStage(`${CONFIG.ipc.theaterServerUrl}/f/${showPath}`)}
+						title="Kopiera till urklipp"
+					>
+						<span class="icon is-small">
+							<IconCopy />
+						</span>
+						{#if copyStageAddressMessage}
+							<span class="copy-success">{copyStageAddressMessage}</span>
+						{/if}
+					</button>
+				</div>
 			</div>
 			<div class="help-section">
 				<p class="help">
-					Denna sökväg genereras automatiskt från föreställningens namn.<br />
-					Scen-URL: {window.location.protocol}//{window.location.host}/{showPath}<br />
-					Backstage-URL: {window.location.protocol}//{window.location.host}/{showPath}/backstage
+					Använd denna adress för att bjuda in publiken till {$showMetadataStore.nomenclature}. (kom ihåg att aktivera scenen först!)
+				</p>
+			</div>
+		</div>
+		<div class="field">
+			<label class="label">Backstage</label>
+			<div class="control">
+				<div class="input-with-copy">
+					<input class="input" type="text" value={`${CONFIG.ipc.theaterServerUrl}/f/${showPath}/backstage`} readonly />
+					<button
+						class="button is-small copy-button"
+						on:click={() => copyToClipboardForBackstage(`${CONFIG.ipc.theaterServerUrl}/f/${showPath}/backstage`)}
+						title="Kopiera till urklipp"
+					>
+						<span class="icon is-small">
+							<IconCopy />
+						</span>
+						{#if copyBackstageAddressMessage}
+							<span class="copy-success">{copyBackstageAddressMessage}</span>
+						{/if}
+					</button>
+				</div>
+			</div>
+			<div class="help-section">
+				<p class="help">
+					Använd denna adress för att bjuda in tekniker till att administrera {$showMetadataStore.name}<br /><br />
+					<strong class="has-text-white"
+						>Båda dessa sökvägar genereras automatiskt från föreställningens namn och gäller inte längre om du ändrar namn!</strong
+					>
 				</p>
 			</div>
 		</div>

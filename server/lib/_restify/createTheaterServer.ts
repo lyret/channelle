@@ -1,5 +1,6 @@
 import * as Restify from "restify";
 import { serveStaticFiles } from "./_serveStaticFiles";
+import { serveSharableShows } from "./_serveSharableShows";
 
 /**
  * Creates a theater server (for theater interface)
@@ -36,6 +37,9 @@ export async function createTheaterServer(): Promise<Restify.Server> {
 			return next();
 		});
 	}
+
+	// Add slug-based routing middleware for sharable shows
+	await serveSharableShows(restify);
 
 	// Serve static files
 	await serveStaticFiles(restify);

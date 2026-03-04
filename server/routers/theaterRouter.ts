@@ -15,12 +15,7 @@ export const theaterRouter = trcpRouter({
 	 */
 	status: trcpProcedure.query(async (): Promise<IpcStatus> => {
 		try {
-			const response = await fetch(`${CONFIG.ipc.stageUrl}/api/theater/status?secret=${CONFIG.ipc.secret}`);
-			if (!response.ok) {
-				throw new Error(`HTTP error! status: ${response.status}`);
-			}
-			const result = await response.json();
-			return result;
+			return checkStageServerStatus();
 		} catch (error) {
 			console.error("[Theater] Error fetching status:", error);
 			throw new Error("Failed to fetch stage server status");
@@ -80,6 +75,18 @@ export const theaterRouter = trcpRouter({
 			}
 		}),
 });
+
+/**
+ * Gets the current status of the stage server
+ */
+export async function checkStageServerStatus(): Promise<IpcStatus> {
+	const response = await fetch(`${CONFIG.ipc.stageUrl}/api/theater/status?secret=${CONFIG.ipc.secret}`);
+	if (!response.ok) {
+		throw new Error(`HTTP error! status: ${response.status}`);
+	}
+	const result = await response.json();
+	return result;
+}
 
 /** Theater Router Type */
 export type TheaterRouter = typeof theaterRouter;

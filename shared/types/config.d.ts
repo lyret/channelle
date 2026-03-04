@@ -99,6 +99,9 @@ type IpcConfig = {
 	stageUrl: string;
 	/** Secret key for inter-process communication between theater and stage servers. */
 	secret: string;
+	/** URL for the theater server when deployed (used to generate correct sharable links).
+	 * Defaults to "http://localhost:3000" in development, "https://channelle.se" in production. */
+	theaterServerUrl: string;
 };
 
 type MediasoupConfig = {

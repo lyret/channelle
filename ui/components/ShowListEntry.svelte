@@ -8,7 +8,7 @@
 
 	export let show: ShowAttributes;
 	export let isActiveOnRemoteServer: boolean = false;
-	export let onOpenRemoteStage: (showId: number) => void = () => {};
+	export let onOpenRemoteStage: (path?: string) => void = () => {};
 
 	// Get theme for this show
 	$: showTheme = themes[show.theme as keyof typeof themes] || themes[DEFAULT_THEME];
@@ -50,14 +50,20 @@
 			<div class="level-item">
 				<div class="buttons">
 					{#if isActiveOnRemoteServer}
-						<button class="button is-success weird-radius" on:click={() => onOpenRemoteStage(show.id)}>
+						<button class="button is-success weird-radius" on:click={() => onOpenRemoteStage()}>
 							<span class="icon">
 								<PicolExternalLink />
 							</span><span>Gå till scenen</span>
 						</button>
 					{/if}
 					{#if $isTheaterAuthenticated}
-						{#if !isActiveOnRemoteServer}
+						{#if isActiveOnRemoteServer}
+							<button class="button is-small is-secondary weird-radius-inverted" on:click={() => onOpenRemoteStage("/backstage")}>
+								<span class="icon is-small">
+									<PicolEdit />
+								</span><span>Administera</span>
+							</button>
+						{:else}
 							<a href={`/preparation?show=${show.id}`} class="button is-small is-secondary weird-radius">
 								<span class="icon is-small">
 									<PicolEdit />
@@ -65,7 +71,7 @@
 							</a>
 						{/if}
 						<button
-							class="button is-small weird-radius"
+							class="button is-small weird-radius-inverted"
 							class:is-info={show.isPublic}
 							class:is-warning={!show.isPublic}
 							on:click={togglePublicStatus}
@@ -86,6 +92,12 @@
 		border-top-right-radius: 28px;
 		border-bottom-left-radius: 28px;
 		border-bottom-right-radius: 0px;
+	}
+	.weird-radius-inverted {
+		border-top-left-radius: 28px;
+		border-top-right-radius: 28px;
+		border-bottom-left-radius: 0px;
+		border-bottom-right-radius: 28px;
 	}
 	.notification {
 		max-width: 100%;
