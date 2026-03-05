@@ -171,7 +171,7 @@ if (CONFIG.ipc.secret && !CONFIG.runtime.theater) {
 				}
 				// Set the given name as the default, for any edge cases
 				if (data.showName) {
-					CONFIG.backstage.showDefaults.name = showName;
+					CONFIG.backstage.showDefaults.name = data.showName;
 				}
 
 				// Set the html template data for the given show
