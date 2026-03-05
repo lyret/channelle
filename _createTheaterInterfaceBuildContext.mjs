@@ -53,7 +53,7 @@ export async function createTheaterInterfaceBuildContext(CONFIG, htmlTemplateDat
 				preprocess: async (html) => {
 					const template = Handlebars.compile(html);
 					return template({
-						OG_IMAGE: `${CONFIG.ipc.theaterServerUrl}/opengraph.jpg`,
+						OG_IMAGE: `${CONFIG.ipc.theaterServerUrl}/opengraph_theater.jpg`,
 						...htmlTemplateData,
 					});
 				},

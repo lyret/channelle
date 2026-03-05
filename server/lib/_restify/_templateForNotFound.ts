@@ -4,8 +4,6 @@ import type Restify from "restify";
  * Uses template literals for static content
  */
 export function getNotFoundTemplate(): string {
-	const imageUrl = `${CONFIG.ipc.theaterServerUrl}/opengraph.jpg`;
-
 	return `<!DOCTYPE html>
 <html lang="en">
 <head>
