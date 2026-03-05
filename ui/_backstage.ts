@@ -1,6 +1,6 @@
 import "@babel/polyfill";
 import { enableMediaSoupDebugging, enableHotReloadingOnRebuilds } from "./api/development";
-import { authenticate, showMetadataStore, subscribeToBackstageConfigurationChanges } from "./api";
+import { authenticate, subscribeToBackstageConfigurationChanges } from "./api";
 import Backstage from "~/components/pages/Backstage.svelte";
 
 // Set correct debug output level for MediaSoup
@@ -17,11 +17,6 @@ async function initializeBackstage() {
 
 		// Enable configuration synchronization for real-time updates when changes are made
 		await subscribeToBackstageConfigurationChanges();
-
-		// Update document title with show name
-		showMetadataStore.subscribe((showMetadata) => {
-			document.title = showMetadata.name ? `${showMetadata.name} - Channelle` : "Channelle";
-		});
 
 		// Mount the Svelte interface after everything is ready
 		const backstageComponent = new Backstage({

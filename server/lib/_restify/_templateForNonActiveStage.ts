@@ -10,7 +10,13 @@ export function getNonActiveStageTemplate(): string {
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>En tom scen - Channelle</title>
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/1.0.4/css/bulma.min.css">
+
+	<!-- Open Graph -->
+	<meta property="og:type" content="website">
+	<meta property="og:site_name" content="Channelle">
+	<meta property="og:description" content="Channelle är en digital teaterplattform för att skapa och uppleva interaktiva föreställningar online." />
+	<meta property="og:image" content="${CONFIG.ipc.theaterServerUrl}/opengraph.jpg">
+
 	<link rel="stylesheet" href="/styles/stage.css">
 	<style>
 		body {
@@ -47,6 +53,7 @@ export function getNonActiveStageTemplate(): string {
 export function NonActiveStageTemplateMiddleware(req: Restify.Request, res: Restify.Response, next: Restify.Next) {
 	const html = getNonActiveStageTemplate();
 	res.writeHead(200, {
+		"Cache-Control": "no-cache, must-revalidate, proxy-revalidate",
 		"Content-Length": Buffer.byteLength(html),
 		"Content-Type": "text/html; charset=utf-8",
 	});

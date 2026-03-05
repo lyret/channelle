@@ -12,7 +12,9 @@ let ipcCreatedAt: IpcStatus["createdAt"] = new Date();
 let ipcEndedAt: IpcStatus["endedAt"] = CONFIG.runtime.notUsed ? new Date() : undefined;
 
 /** Inter-process communication channel */
-const _cliChannel = new BroadcastChannel<{ type: "rebuild-with-show-id"; data: { showId: number; slug: string } }>(CONFIG.ipc.secret);
+const _cliChannel = new BroadcastChannel<{ type: "rebuild-with-show-id"; data: { showId: number; showName: string; showDescription: string; slug: string } }>(
+	CONFIG.ipc.secret,
+);
 
 // Event emitter for server management events
 export const ipcServerEmitter = new Emittery<{
@@ -102,7 +104,10 @@ export async function rebuildWithNewShow(showId: number): Promise<boolean> {
 
 		console.log(`[IPC] Rebuilding with new show ID: ${showId}`);
 		// Message the CLI process to rewrite the environment with the new show ID
-		_cliChannel.postMessage({ type: "rebuild-with-show-id", data: { showId, slug: generateUrlSlug(show) } });
+		_cliChannel.postMessage({
+			type: "rebuild-with-show-id",
+			data: { showId, showName: show.name, showDescription: show.description, slug: generateUrlSlug(show) },
+		});
 		return true;
 	} catch (error) {
 		console.error("[IPC] Error when rebuilding with new show:", error.message);

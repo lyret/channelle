@@ -1,5 +1,6 @@
 import Chalk from "chalk";
 import Esbuild from "esbuild";
+import Handlebars from "handlebars";
 import { copy as EsbuildCopy } from "esbuild-plugin-copy";
 import EsbuildSVG from "esbuild-plugin-svg";
 import { sassPlugin as EsbuildSass } from "esbuild-sass-plugin";
@@ -16,7 +17,7 @@ import fs from "node:fs/promises";
  * Creates the build context for building the stage-interface code using the given config
  * @param {CONFIG} CONFIG - The runtime context
  */
-export async function createStageInterfaceBuildContext(CONFIG, callback) {
+export async function createStageInterfaceBuildContext(CONFIG, htmlTemplateData, callback) {
 	const { default: EsbuildHtml } = await import("@chialab/esbuild-plugin-html");
 
 	const context = await Esbuild.context({
@@ -48,7 +49,17 @@ export async function createStageInterfaceBuildContext(CONFIG, callback) {
 		},
 		plugins: [
 			EsbuildSVG(),
-			EsbuildHtml(),
+			EsbuildHtml({
+				preprocess: async (html, path) => {
+					const template = Handlebars.compile(html);
+					return template({
+						SHOW_NAME: "Scenen",
+						SHOW_DESCRIPTION: "En föreställningsplats på Channelle",
+						OG_IMAGE: `${CONFIG.ipc.theaterServerUrl}/opengraph.jpg`,
+						...htmlTemplateData,
+					});
+				},
+			}),
 			EsbuildSass({
 				logger: !CONFIG.runtime.verbose && Sass.Logger.silent,
 				verbose: false,

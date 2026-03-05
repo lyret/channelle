@@ -39,7 +39,7 @@ if (CONFIG.runtime.theater) {
 	// Theater Interface
 	if (CONFIG.runtime.watch) {
 		try {
-			const theaterInterfaceContext = await createTheaterInterfaceBuildContext(CONFIG, (results) => {
+			const theaterInterfaceContext = await createTheaterInterfaceBuildContext(CONFIG, {}, (results) => {
 				if (CONFIG.runtime.start && CONFIG.runtime.debug && results.metafile) {
 					_cliChannel.postMessage({
 						type: "new-build-available",
@@ -96,7 +96,7 @@ if (CONFIG.runtime.theater) {
 	// Stage Interface
 	if (CONFIG.runtime.watch) {
 		try {
-			const stageInterfaceContext = await createStageInterfaceBuildContext(CONFIG, (results) => {
+			const stageInterfaceContext = await createStageInterfaceBuildContext(CONFIG, {}, (results) => {
 				if (CONFIG.runtime.start && CONFIG.runtime.debug && results.metafile) {
 					_cliChannel.postMessage({
 						type: "new-build-available",
@@ -169,9 +169,20 @@ if (CONFIG.ipc.secret && !CONFIG.runtime.theater) {
 				if (data.slug) {
 					REPLACEMENT_CONFIG.runtime.slug = data.slug;
 				}
+				// Set the given name as the default, for any edge cases
+				if (data.showName) {
+					CONFIG.backstage.showDefaults.name = showName;
+				}
+
+				// Set the html template data for the given show
+				const htmlTemplateData = {
+					SHOW_NAME: data.showName || undefined,
+					SHOW_URL: data.slug ? `${CONFIG.ipc.theaterServerUrl}/f/${data.slug}` : undefined,
+					SHOW_DESCRIPTION: data.showDescription || "En föreställning på Channelle",
+				};
 
 				// Rebuild stage files
-				const stageInterfaceContext = await createStageInterfaceBuildContext(REPLACEMENT_CONFIG);
+				const stageInterfaceContext = await createStageInterfaceBuildContext(REPLACEMENT_CONFIG, htmlTemplateData);
 				const stageServerContext = await createStageServerBuildContext(REPLACEMENT_CONFIG);
 				await stageInterfaceContext.rebuild();
 				await stageServerContext.rebuild();

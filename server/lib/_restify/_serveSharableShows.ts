@@ -35,6 +35,7 @@ export async function serveSharableShows(server: Restify.Server): Promise<void> 
 					// Always use root path for social sharing template
 					const html = getShowSocialTemplate(matchingShow, slug);
 					res.writeHead(200, {
+						"Cache-Control": "no-cache, must-revalidate, proxy-revalidate",
 						"Content-Length": Buffer.byteLength(html),
 						"Content-Type": "text/html; charset=utf-8",
 					});

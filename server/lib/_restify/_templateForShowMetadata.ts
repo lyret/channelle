@@ -6,7 +6,8 @@ export function getShowSocialTemplate(show: { id: number; name: string; descript
 	show.name = escapeHtml(show.name);
 	show.description = escapeHtml(show.description);
 
-	const showUrl = `${CONFIG.web.host}/${slug}`;
+	const showUrl = `${CONFIG.ipc.theaterServerUrl}/f/${slug}`;
+	const imageUrl = `${CONFIG.ipc.theaterServerUrl}/opengraph.jpg`;
 
 	return `<!DOCTYPE html>
 <html lang="en">
@@ -15,17 +16,13 @@ export function getShowSocialTemplate(show: { id: number; name: string; descript
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>${show.name} - Channelle</title>
 
-	<!-- OpenGraph / Facebook -->
+	<!-- Open Graph -->
 	<meta property="og:type" content="website">
 	<meta property="og:url" content="${showUrl}">
 	<meta property="og:title" content="${show.name}">
 	<meta property="og:description" content="${show.description || "En föreställning på Channelle"}">
 	<meta property="og:site_name" content="Channelle">
-
-	<!-- Twitter -->
-	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="${show.name}">
-	<meta name="twitter:description" content="${show.description || "En föreställning på Channelle"}">
+	<meta property="og:image" content="${CONFIG.ipc.theaterServerUrl}/opengraph.jpg">
 
 	<link rel="stylesheet" href="/styles/stage.css">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/1.0.4/css/bulma.min.css">
