@@ -12,13 +12,13 @@
 	<div class="hero-body has-text-centered">
 		<div class="container" in:blur={{ delay: 500, duration: 1000 }}>
 			{#if $showMetadataStore.theme != "minimal"}
-			<div class="decorations">
-				<img src={stageLightsGif} alt="Stage lights" class="stage-lights" />
-				<img src={stageLightsGif} alt="Stage lights" class="stage-lights" />
-				<img src={stageLightsGif} alt="Stage lights" class="stage-lights" />
-				<img src={stageLightsGif} alt="Stage lights" class="stage-lights" />
-				<img src={stageLightsGif} alt="Stage lights" class="stage-lights" />
-			</div>
+				<div class="decorations">
+					<img src={stageLightsGif} alt="Stage lights" class="stage-lights" />
+					<img src={stageLightsGif} alt="Stage lights" class="stage-lights" />
+					<img src={stageLightsGif} alt="Stage lights" class="stage-lights" />
+					<img src={stageLightsGif} alt="Stage lights" class="stage-lights" />
+					<img src={stageLightsGif} alt="Stage lights" class="stage-lights" />
+				</div>
 			{/if}
 		</div>
 		{#if !minimal}
@@ -31,10 +31,6 @@
 {/if}
 
 <style lang="scss">
-	section {
-		background-color: #000000 !important;
-	}
-
 	.logo {
 		margin-top: 1rem;
 		max-width: 400px;
