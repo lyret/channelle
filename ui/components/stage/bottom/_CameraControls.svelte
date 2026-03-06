@@ -60,14 +60,13 @@
 	}
 </script>
 
-{#if mediaState?.isActor || mediaState?.isManager || mediaState?.visitorVideoEnabled}
+{#if (mediaState?.isOnStage && (mediaState.isActor || mediaState.isManager)) || mediaState?.visitorVideoEnabled}
 	<button
 		type="button"
 		class="button is-small"
 		class:is-loading={isProcessing}
-		class:is-success={isCameraOn && !mediaState.videoMuted}
-		class:is-info={!isCameraOn && mediaState.videoAllowed && !mediaState.videoMuted}
-		class:is-light={mediaState.videoMuted || (!isCameraOn && !mediaState.videoAllowed)}
+		class:is-light={!isCameraOn}
+		class:is-primary={isCameraOn && !mediaState.videoMuted}
 		disabled={isProcessing || mediaState.videoMuted}
 		transition:blur
 		on:click={handleClick}
@@ -82,17 +81,13 @@
 		{#if !minimal}
 			<span>
 				{#if errorMessage}
-					{errorMessage}
+					KAMERA ({errorMessage})
 				{:else if isProcessing}
 					Ansluter...
-				{:else if isCameraOn && !mediaState.videoMuted}
-					Aktiv
 				{:else if mediaState.videoMuted}
-					Blockerad (DB)
-				{:else if mediaState.videoAllowed}
-					Tillåten
+					KAMERA (blockad)
 				{:else}
-					Av
+					KAMERA
 				{/if}
 			</span>
 		{/if}
@@ -100,17 +95,18 @@
 {/if}
 
 <style lang="scss">
+	.button.is-light {
+		background-color: var(--channelle-black-background);
+		color: var(--channelle-menu-text-color);
+	}
 	.button {
 		border-radius: 0;
 		border: none;
 		padding: 12px;
-		background-color: var(--channelle-menu-bg-color);
-		color: var(--channelle-menu-text-color);
 		position: relative;
 		transition:
 			opacity 0.2s ease,
 			background-color 0.2s ease;
-
 		&:disabled {
 			opacity: 0.5;
 			cursor: not-allowed;

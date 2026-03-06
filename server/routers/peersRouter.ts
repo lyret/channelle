@@ -5,7 +5,15 @@ import { Op } from "sequelize";
 import { trpc } from "../lib";
 import { Peer, peerEmitter } from "../models/Peer";
 import { withConfigProcedure } from "./backstageRouter";
-import { withAuthenticatedPeerMiddleware, withAuthenticatedAdminMiddleware, getPeerConnectionInfo, updatePeerInformationInSessions } from "./authRouter";
+import {
+	withAuthenticatedPeerMiddleware,
+	withAuthenticatedAdminMiddleware,
+	getPeerConnectionInfo,
+	updatePeerInformationInSessions,
+	onlineSessions,
+	deauthenticate,
+} from "./authRouter";
+import { closeMediaPeer } from "./stageRouter";
 
 // Get the trpc router constructor and default procedure
 const { router, procedure } = trpc();
@@ -114,6 +122,12 @@ export const peersRouter = router({
 				// Update peer's banned status
 				if (banned !== undefined) {
 					updates.banned = banned;
+
+					// If peer is being banned, automatically mute them and close their media
+					if (banned === true) {
+						updates.audioMuted = true;
+						updates.videoMuted = true;
+					}
 				}
 
 				// Update peer's mute status
@@ -131,6 +145,31 @@ export const peersRouter = router({
 
 			// Update the in-memory session storage if peer is online
 			updatePeerInformationInSessions(peer.id, peer);
+
+			// If peer was banned, close their media connections and disconnect them
+			if (banned === true && updates.banned === true) {
+				// Close media peer (this will close all their producers/consumers)
+				try {
+					closeMediaPeer(peer.id);
+				} catch (e) {
+					console.error(`[Peers] Error closing media peer for banned peer ${peer.id}:`, e);
+				}
+
+				// Disconnect all WebSocket connections for this peer
+				for (const [connectionId, session] of Object.entries(onlineSessions)) {
+					if (session.peer.id === peer.id) {
+						try {
+							// Note: We can't directly close WebSocket connections here
+							// The client should detect the ban state and disconnect itself
+
+							// Clean up the session
+							deauthenticate(connectionId, session.routeType, peer.id);
+						} catch (e) {
+							console.error(`[Peers] Error disconnecting banned peer ${peer.id} connection ${connectionId}:`, e);
+						}
+					}
+				}
+			}
 
 			return updatedPeer;
 		}),

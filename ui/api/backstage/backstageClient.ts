@@ -60,9 +60,10 @@ export const showSceneSettingsStore = derived(_localConfigStore, ($config) => {
 			false,
 		visitorAudioEnabled:
 			$config.visitorAudioEnabledOverride == 1 || ($config.visitorAudioEnabledOverride == 0 && $config.selectedScene?.visitorAudioEnabled) || false,
-		visitorVideoEnabled: $config.selectedScene?.visitorVideoEnabled
-			? $config.visitorVideoEnabledOverride == 1 || $config.visitorVideoEnabledOverride == 0
-			: false,
+		visitorVideoEnabled:
+			$config.selectedScene?.name === "Alla" && $config.selectedScene?.visitorVideoEnabled
+				? $config.visitorVideoEnabledOverride == 1 || $config.visitorVideoEnabledOverride == 0
+				: false,
 	};
 });
 

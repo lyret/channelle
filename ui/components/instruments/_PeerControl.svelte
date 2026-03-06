@@ -8,15 +8,12 @@
 	import IconMonitor from "../icons/Icon-monitor.svelte";
 	import IconSmartphone from "../icons/Icon-smartphone.svelte";
 	import IconLock from "../icons/Icon-lock.svelte";
-	import IconMic from "../icons/Icon-mic.svelte";
-	import IconMicOff from "../icons/Icon-mic-off.svelte";
 	import IconToggleLeft from "../icons/Icon-toggle-left.svelte";
 	import IconToggleRight from "../icons/Icon-toggle-right.svelte";
 	import IconType from "../icons/Icon-type.svelte";
 	import IconUnlock from "../icons/Icon-unlock.svelte";
-	import IconVideo from "../icons/Icon-video.svelte";
-	import IconVideoOff from "../icons/Icon-video-off.svelte";
 	import IconXCircle from "../icons/Icon-x-circle.svelte";
+	import PeerMultimediaControls from "./_PeerMultimediaControls.svelte";
 	import { updatePeer } from "~/api/peers";
 	import { getPeerMediaStateStore } from "~/api/stage";
 
@@ -50,6 +47,7 @@
 
 	async function copyInviteLink(peerId: string) {
 		const url = new URL(window.location.href);
+		url.pathname = "/";
 		url.searchParams.set("peerId", peerId);
 
 		try {
@@ -95,78 +93,9 @@
 				{/if}
 			</button>
 			<div class="buttons">
-				{#if mediaState.isActor || mediaState.isManager}
-					<button
-						class="button is-small"
-						class:is-light={mediaState.videoMuted ||
-							(!mediaState.isCurrentPeer && !mediaState.isReceivingVideo && !mediaState.isTransmittingVideo) ||
-							(mediaState.isCurrentPeer && !mediaState.videoAllowed && !mediaState.hasLocalVideoTrack)}
-						class:is-success={(mediaState.isCurrentPeer && !mediaState.videoMuted && mediaState.hasLocalVideoTrack) ||
-							(!mediaState.isCurrentPeer && !mediaState.videoMuted && mediaState.isReceivingVideo)}
-						class:is-info={mediaState.isCurrentPeer && !mediaState.videoMuted && mediaState.videoAllowed && !mediaState.hasLocalVideoTrack}
-						class:is-warning={!mediaState.isCurrentPeer && !mediaState.videoMuted && mediaState.isTransmittingVideo && !mediaState.isReceivingVideo}
-						disabled={loading || (!mediaState.videoAllowed && !mediaState.videoMuted)}
-						title={mediaState.videoMuted
-							? "Video avstängd - klicka för att sätta på"
-							: mediaState.isCurrentPeer
-								? !mediaState.videoAllowed
-									? "Video ej tillåten i denna scen"
-									: mediaState.hasLocalVideoTrack
-										? mediaState.isTransmittingVideo
-											? "Video aktiv och sänds"
-											: "Video aktiv (lokal)"
-										: "Video tillåten men inte aktiv"
-								: mediaState.isReceivingVideo
-									? "Video tas emot"
-									: mediaState.isTransmittingVideo
-										? "Video sänds men tas ej emot här"
-										: "Video inte aktiv"}
-						on:click={() => doUpdate(peer, { videoMuted: !mediaState.videoMuted })}
-					>
-						<span class="icon">
-							{#if mediaState.videoMuted}
-								<IconVideoOff />
-							{:else}
-								<IconVideo />
-							{/if}
-						</span>
-					</button>
+				{#if !CONFIG.runtime.theater}
+					<PeerMultimediaControls {peer} {mediaState} {loading} {doUpdate} />
 				{/if}
-				<button
-					class="button is-small"
-					class:is-light={mediaState.audioMuted ||
-						(!mediaState.isCurrentPeer && !mediaState.isReceivingAudio && !mediaState.isTransmittingAudio) ||
-						(mediaState.isCurrentPeer && !mediaState.audioAllowed && !mediaState.hasLocalAudioTrack)}
-					class:is-success={(mediaState.isCurrentPeer && !mediaState.audioMuted && mediaState.hasLocalAudioTrack) ||
-						(!mediaState.isCurrentPeer && !mediaState.audioMuted && mediaState.isReceivingAudio)}
-					class:is-info={mediaState.isCurrentPeer && !mediaState.audioMuted && mediaState.audioAllowed && !mediaState.hasLocalAudioTrack}
-					class:is-warning={!mediaState.isCurrentPeer && !mediaState.audioMuted && mediaState.isTransmittingAudio && !mediaState.isReceivingAudio}
-					disabled={loading || (!mediaState.audioAllowed && !mediaState.audioMuted)}
-					title={mediaState.audioMuted
-						? "Ljud avstängt - klicka för att sätta på"
-						: mediaState.isCurrentPeer
-							? !mediaState.audioAllowed
-								? "Ljud ej tillåtet i denna scen"
-								: mediaState.hasLocalAudioTrack
-									? mediaState.isTransmittingAudio
-										? "Ljud aktivt och sänds"
-										: "Ljud aktivt (lokal)"
-									: "Ljud tillåtet men inte aktivt"
-							: mediaState.isReceivingAudio
-								? "Ljud tas emot"
-								: mediaState.isTransmittingAudio
-									? "Ljud sänds men tas ej emot här"
-									: "Ljud inte aktivt"}
-					on:click={() => doUpdate(peer, { audioMuted: !mediaState.audioMuted })}
-				>
-					<span class="icon">
-						{#if mediaState.audioMuted}
-							<IconMicOff />
-						{:else}
-							<IconMic />
-						{/if}
-					</span>
-				</button>
 				<button class="button is-small" on:click={() => (active = !active)}>
 					<span class="icon">
 						{#if active}
@@ -181,9 +110,9 @@
 		{#if active}
 			<div class="accordion-content">
 				<!-- COPY INVITE LINK -->
-				{#if !CONFIG.runtime.theater}
+				{#if !CONFIG.runtime.theater && mediaState.isActor}
 					<button class="dropdown-item" on:click={() => copyInviteLink(peer.id)}>
-						<span class="icon is-small"><IconCopy /></span> Kopiera inbjudningslänk till backstage
+						<span class="icon is-small"><IconCopy /></span> Kopiera skådespelarens inbjudningslänk
 					</button>
 				{/if}
 				<!-- MAKE ACTOR -->

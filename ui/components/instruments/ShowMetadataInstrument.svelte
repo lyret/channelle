@@ -4,15 +4,16 @@
 	import { themes, DEFAULT_THEME } from "~/api/theme";
 	import IconSave from "../icons/Icon-save.svelte";
 	import IconX from "../icons/Icon-x.svelte";
+	import type { ThemeName } from "~/types/serverSideTypes";
 
 	let nameInput = "";
 	let descriptionInput = "";
 	let nomenclatureInput = "";
-	let themeInput = DEFAULT_THEME;
+	let themeInput: string = DEFAULT_THEME;
 	let originalName = "";
 	let originalDescription = "";
 	let originalNomenclature = "";
-	let originalTheme = DEFAULT_THEME;
+	let originalTheme: string = DEFAULT_THEME;
 	let isLoading = false;
 	let errorMessage = "";
 	let success = false;
@@ -30,7 +31,8 @@
 	const descriptionMaxLength = 1000;
 	const nomenclatureMaxLength = 100;
 
-	$: hasChanges = nameInput !== originalName || descriptionInput !== originalDescription || nomenclatureInput !== originalNomenclature || themeInput !== originalTheme;
+	$: hasChanges =
+		nameInput !== originalName || descriptionInput !== originalDescription || nomenclatureInput !== originalNomenclature || themeInput !== originalTheme;
 	$: canSave = hasChanges && nameInput.trim().length > 0 && !isLoading;
 
 	let isInitialized = false;
@@ -50,7 +52,7 @@
 					(originalName !== newOriginalName && nameInput === originalName) ||
 					(originalDescription !== newOriginalDescription && descriptionInput === originalDescription) ||
 					(originalNomenclature !== newOriginalNomenclature && nomenclatureInput === originalNomenclature) ||
-					(originalTheme !== newOriginalTheme)
+					originalTheme !== newOriginalTheme
 				) {
 					originalName = newOriginalName;
 					originalDescription = newOriginalDescription;
@@ -97,7 +99,7 @@
 
 		try {
 			// Only include fields that have actually changed
-			const metadata: { name?: string; description?: string; nomenclature?: string; theme?: string } = {};
+			const metadata: { name?: string; description?: string; nomenclature?: string; theme?: ThemeName } = {};
 
 			if (nameInput.trim() !== originalName) {
 				metadata.name = nameInput.trim();
@@ -267,7 +269,7 @@
 				<div class="select">
 					<select bind:value={themeInput}>
 						{#each Object.keys(themes) as name (name)}
-								<option value={name}>{name}</option>
+							<option value={name}>{name}</option>
 						{/each}
 					</select>
 				</div>

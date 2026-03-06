@@ -65,9 +65,8 @@
 		type="button"
 		class="button is-small"
 		class:is-loading={isProcessing}
-		class:is-success={isMicOn && !mediaState.audioMuted}
-		class:is-info={!isMicOn && mediaState.audioAllowed && !mediaState.audioMuted}
-		class:is-light={mediaState.audioMuted || (!isMicOn && !mediaState.audioAllowed)}
+		class:is-light={!isMicOn}
+		class:is-primary={isMicOn && !mediaState.audioMuted}
 		disabled={isProcessing || mediaState.audioMuted}
 		transition:blur
 		on:click={handleClick}
@@ -82,17 +81,13 @@
 		{#if !minimal}
 			<span>
 				{#if errorMessage}
-					{errorMessage}
+					MIKROFON ({errorMessage})
 				{:else if isProcessing}
 					Ansluter...
-				{:else if isMicOn && !mediaState.audioMuted}
-					Aktiv
 				{:else if mediaState.audioMuted}
-					Blockerad (DB)
-				{:else if mediaState.audioAllowed}
-					Tillåten
+					MIKROFON (blockerad)
 				{:else}
-					Av
+					MIKROFON
 				{/if}
 			</span>
 		{/if}
@@ -100,17 +95,18 @@
 {/if}
 
 <style lang="scss">
+	.button.is-light {
+		background-color: var(--channelle-black-background);
+		color: var(--channelle-menu-text-color);
+	}
 	.button {
 		border-radius: 0;
 		border: none;
 		padding: 12px;
-		background-color: var(--channelle-menu-bg-color);
-		color: var(--channelle-menu-text-color);
 		position: relative;
 		transition:
 			opacity 0.2s ease,
 			background-color 0.2s ease;
-
 		&:disabled {
 			opacity: 0.5;
 			cursor: not-allowed;

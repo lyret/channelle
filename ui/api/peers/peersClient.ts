@@ -1,4 +1,5 @@
 import { peersClient } from "../_trpcClient";
+import { getCurrentShowId } from "../backstage";
 
 /**
  * Update a peer's information
@@ -36,6 +37,7 @@ export async function createPeer(
 ): Promise<{ success: true; peer: any } | { success: false; error: string }> {
 	try {
 		const peer = await peersClient.createPeer.mutate({
+			showId: getCurrentShowId(),
 			name,
 			actor,
 			manager,

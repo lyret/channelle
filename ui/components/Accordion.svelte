@@ -27,7 +27,7 @@
 	</button>
 
 	{#if isOpen}
-		<div class="accordion-content box mt-2">
+		<div class="accordion-content box mb-4">
 			<slot />
 		</div>
 	{/if}

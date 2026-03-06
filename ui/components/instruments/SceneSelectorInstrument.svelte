@@ -28,7 +28,7 @@
 		curtains: false,
 		gratitudeEffectsEnabled: false,
 		criticalEffectsEnabled: false,
-		visitorAudioEnabled: false,
+		visitorAudioEnabled: true,
 		visitorVideoEnabled: true,
 		layout: [],
 	};

@@ -154,6 +154,9 @@ export const isLoadingStore = derived(roomState, ($state) => $state.isLoading);
  */
 export const errorStore = derived(roomState, ($state) => $state.error);
 
+/** Store for connection status */
+export const roomConnection = derived(roomState, ($state) => $state.isConnected);
+
 /**
  * Join the media room and start processing events
  */
