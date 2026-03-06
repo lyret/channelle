@@ -8,7 +8,7 @@
 	import ParticipantsInstrument from "~/components/instruments/ParticipantsInstrument.svelte";
 	import SceneSelectorInstrument from "~/components/instruments/SceneSelectorInstrument.svelte";
 	import ScriptInstrument from "~/components/instruments/ScriptInstrument.svelte";
-	import MediaInputSelector from "./_MediaInputSelector.svelte";
+	import MediaInputSelector from "./MediaDeviceSelector.svelte";
 	import Accordion from "~/components/Accordion.svelte";
 	import ForcedSettingsContent from "~/components/instruments/_ForcedSettingsContent.svelte";
 
@@ -36,7 +36,6 @@
 <img src={logoSrc} class="logo" />
 <MediaInputSelector />
 {#if $currentPeerStore.manager}
-	<p class="label">Snabbval för dig som tekniker</p>
 	<div class="mb-4">
 		<Accordion title="Sceninställningar" isOpen={false}>
 			<ForcedSettingsContent />
@@ -97,7 +96,6 @@
 					</span>
 					<span>{$fullscreen ? "Avsluta fullskärm" : "Fullskärm"}</span>
 				</button>
-
 			{/if}
 			<button class="button is-fullwidth mb-4 is-small" on:click={() => ($focusedInstrument = "access")}
 				><span class="icon is-size-5"><IconAccess /></span>

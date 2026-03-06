@@ -3,6 +3,8 @@
 	import IconVideoOff from "~/components/icons/Icon-camera-off.svelte";
 	import IconVideo from "~/components/icons/Icon-camera.svelte";
 	import { enableCamera, disableCamera, localPeerMediaState } from "~/api/stage";
+	import { selectedVideoDeviceId } from "~/stores/deviceSelection";
+	import { get } from "svelte/store";
 
 	export let minimal: boolean = false;
 
@@ -39,7 +41,12 @@
 				isCameraOn = false;
 			} else {
 				// Turn on camera
-				await enableCamera();
+				const deviceId = get(selectedVideoDeviceId);
+				if (deviceId) {
+					await enableCamera(deviceId);
+				} else {
+					await enableCamera();
+				}
 				isCameraOn = true;
 			}
 		} catch (error: any) {

@@ -3,6 +3,8 @@
 	import IconMicOff from "~/components/icons/Icon-mic-off.svelte";
 	import IconMic from "~/components/icons/Icon-mic.svelte";
 	import { enableMicrophone, disableMicrophone, localPeerMediaState } from "~/api/stage";
+	import { selectedAudioDeviceId } from "~/stores/deviceSelection";
+	import { get } from "svelte/store";
 
 	export let minimal: boolean = false;
 
@@ -39,7 +41,12 @@
 				isMicOn = false;
 			} else {
 				// Turn on microphone
-				await enableMicrophone();
+				const deviceId = get(selectedAudioDeviceId);
+				if (deviceId) {
+					await enableMicrophone(deviceId);
+				} else {
+					await enableMicrophone();
+				}
 				isMicOn = true;
 			}
 		} catch (error: any) {

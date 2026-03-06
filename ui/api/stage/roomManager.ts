@@ -518,8 +518,8 @@ async function createSendTransport(): Promise<void> {
 /**
  * Enable local camera
  */
-export async function enableCamera(): Promise<void> {
-	console.log("[RoomManager] Enabling camera");
+export async function enableCamera(deviceId: string = ""): Promise<void> {
+	console.log("[RoomManager] Enabling camera with deviceId:", deviceId);
 
 	const state = get(roomState);
 
@@ -527,6 +527,8 @@ export async function enableCamera(): Promise<void> {
 	if (state.producers.has("cam-video")) {
 		console.log("[RoomManager] Cleaning up existing camera producer");
 		await disableCamera();
+		// Add delay to ensure proper cleanup
+		await new Promise((resolve) => setTimeout(resolve, 200));
 	}
 
 	// Ensure device is initialized first
@@ -542,14 +544,26 @@ export async function enableCamera(): Promise<void> {
 		await createSendTransport();
 	}
 
-	// Get user media
-	const stream = await navigator.mediaDevices.getUserMedia({
-		video: true,
+	// Get user media with specific device if provided
+	const constraints: MediaStreamConstraints = {
+		video: deviceId ? { deviceId: { exact: deviceId } } : true,
 		audio: false,
-	});
+	};
+
+	console.log("[RoomManager] Camera constraints:", JSON.stringify(constraints, null, 2));
+	const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
 	const videoTrack = stream.getVideoTracks()[0];
 	if (!videoTrack) throw new Error("No video track");
+
+	// Verify the track is from the correct device
+	const trackSettings = videoTrack.getSettings();
+	console.log("[RoomManager] Video track device ID:", trackSettings.deviceId);
+	console.log("[RoomManager] Video track label:", videoTrack.label);
+
+	if (deviceId && trackSettings.deviceId !== deviceId) {
+		console.warn(`[RoomManager] WARNING: Requested device ${deviceId} but got ${trackSettings.deviceId}`);
+	}
 
 	// Get fresh state after transport creation
 	const currentState = get(roomState);
@@ -620,8 +634,8 @@ export async function disableCamera(): Promise<void> {
 /**
  * Enable local microphone
  */
-export async function enableMicrophone(): Promise<void> {
-	console.log("[RoomManager] Enabling microphone");
+export async function enableMicrophone(deviceId: string = ""): Promise<void> {
+	console.log("[RoomManager] Enabling microphone with deviceId:", deviceId);
 
 	const state = get(roomState);
 
@@ -629,6 +643,8 @@ export async function enableMicrophone(): Promise<void> {
 	if (state.producers.has("mic-audio")) {
 		console.log("[RoomManager] Cleaning up existing microphone producer");
 		await disableMicrophone();
+		// Add delay to ensure proper cleanup
+		await new Promise((resolve) => setTimeout(resolve, 200));
 	}
 
 	// Ensure device is initialized first
@@ -644,14 +660,26 @@ export async function enableMicrophone(): Promise<void> {
 		await createSendTransport();
 	}
 
-	// Get user media
-	const stream = await navigator.mediaDevices.getUserMedia({
+	// Get user media with specific device if provided
+	const constraints: MediaStreamConstraints = {
 		video: false,
-		audio: true,
-	});
+		audio: deviceId ? { deviceId: { exact: deviceId } } : true,
+	};
+
+	console.log("[RoomManager] Microphone constraints:", JSON.stringify(constraints, null, 2));
+	const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
 	const audioTrack = stream.getAudioTracks()[0];
 	if (!audioTrack) throw new Error("No audio track");
+
+	// Verify the track is from the correct device
+	const trackSettings = audioTrack.getSettings();
+	console.log("[RoomManager] Audio track device ID:", trackSettings.deviceId);
+	console.log("[RoomManager] Audio track label:", audioTrack.label);
+
+	if (deviceId && trackSettings.deviceId !== deviceId) {
+		console.warn(`[RoomManager] WARNING: Requested device ${deviceId} but got ${trackSettings.deviceId}`);
+	}
 
 	// Get fresh state after transport creation
 	const currentState = get(roomState);

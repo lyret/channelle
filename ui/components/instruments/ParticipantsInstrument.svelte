@@ -4,12 +4,12 @@
 	import PeerControl from "./_PeerControl.svelte";
 	import PicolPlus from "../picol/icons/Picol-plus.svelte";
 
-	$: peers = Object.values($showPeersStore).filter((p) => p.name && !p.banned);
-	$: managers = peers.filter((p) => p.manager);
-	$: actors = peers.filter((p) => p.actor && !p.manager);
-	$: visitors = peers.filter((p) => !p.manager && !p.actor && !p.banned);
-	$: blocked = peers.filter((p) => p.banned && p.name);
-	$: online = peers.filter((p) => p.online);
+	$: unbannedPeersWithNames = Object.values($showPeersStore).filter((p) => p.name && !p.banned);
+	$: managers = unbannedPeersWithNames.filter((p) => p.manager);
+	$: actors = unbannedPeersWithNames.filter((p) => p.actor && !p.manager);
+	$: visitors = unbannedPeersWithNames.filter((p) => !p.manager && !p.actor);
+	$: blocked = Object.values($showPeersStore).filter((p) => p.banned && p.name);
+	$: online = unbannedPeersWithNames.filter((p) => p.online);
 
 	let filter: string = "Deltagare online";
 	let createError = "";

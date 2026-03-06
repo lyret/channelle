@@ -15,7 +15,7 @@
 	import IconType from "../icons/Icon-type.svelte";
 	import IconUnlock from "../icons/Icon-unlock.svelte";
 	import IconVideo from "../icons/Icon-video.svelte";
-	import IconVideoOff from "../icons/Icon-camera-off.svelte";
+	import IconVideoOff from "../icons/Icon-video-off.svelte";
 	import IconXCircle from "../icons/Icon-x-circle.svelte";
 	import { updatePeer } from "~/api/peers";
 	import { getPeerMediaStateStore } from "~/api/stage";
@@ -64,9 +64,16 @@
 {#if mediaState}
 	<div class="list-item" use:clickOutside on:click_outside={() => (active = false)}>
 		<div class="accordion-header" class:is-loading={loading}>
-			<button class="button name pr-7 has-background-menu" class:is-strikethrough={mediaState.isBanned} on:click={() => (active = !active)}>
-				<span class="icon mr-1" class:has-text-grey-light={!mediaState.isOnline} class:has-text-success={mediaState.isOnline}>
-					{#if mediaState.isManager}
+			<button class="button name pr-7 has-background-menu" on:click={() => (active = !active)}>
+				<span
+					class="icon mr-1"
+					class:has-text-grey-light={!mediaState.isOnline}
+					class:has-text-success={mediaState.isOnline}
+					class:has-text-danger={mediaState.isBanned}
+				>
+					{#if mediaState.isBanned}
+						<IconLock />
+					{:else if mediaState.isManager}
 						<IconBriefcase />
 					{:else if mediaState.isActor}
 						<IconAward />
@@ -98,7 +105,7 @@
 							(!mediaState.isCurrentPeer && !mediaState.videoMuted && mediaState.isReceivingVideo)}
 						class:is-info={mediaState.isCurrentPeer && !mediaState.videoMuted && mediaState.videoAllowed && !mediaState.hasLocalVideoTrack}
 						class:is-warning={!mediaState.isCurrentPeer && !mediaState.videoMuted && mediaState.isTransmittingVideo && !mediaState.isReceivingVideo}
-						disabled={loading || !mediaState.videoAllowed}
+						disabled={loading || (!mediaState.videoAllowed && !mediaState.videoMuted)}
 						title={mediaState.videoMuted
 							? "Video avstängd - klicka för att sätta på"
 							: mediaState.isCurrentPeer
@@ -134,7 +141,7 @@
 						(!mediaState.isCurrentPeer && !mediaState.audioMuted && mediaState.isReceivingAudio)}
 					class:is-info={mediaState.isCurrentPeer && !mediaState.audioMuted && mediaState.audioAllowed && !mediaState.hasLocalAudioTrack}
 					class:is-warning={!mediaState.isCurrentPeer && !mediaState.audioMuted && mediaState.isTransmittingAudio && !mediaState.isReceivingAudio}
-					disabled={loading || !mediaState.audioAllowed}
+					disabled={loading || (!mediaState.audioAllowed && !mediaState.audioMuted)}
 					title={mediaState.audioMuted
 						? "Ljud avstängt - klicka för att sätta på"
 						: mediaState.isCurrentPeer
@@ -176,7 +183,7 @@
 				<!-- COPY INVITE LINK -->
 				{#if !CONFIG.runtime.theater}
 					<button class="dropdown-item" on:click={() => copyInviteLink(peer.id)}>
-						<span class="icon is-small"><IconCopy /></span> Kopiera inbjudningslänk
+						<span class="icon is-small"><IconCopy /></span> Kopiera inbjudningslänk till backstage
 					</button>
 				{/if}
 				<!-- MAKE ACTOR -->

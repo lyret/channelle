@@ -34,14 +34,15 @@
 	$: hasEnteredName = $hasAutenticated && $currentPeerStore.name;
 	$: needsToBeManager = lockedToManager && !($hasAutenticated && $currentPeerStore.manager);
 	$: needsInviteKey = lockedToInviteKey && !$isStagePasswordOkStore;
-	$: renderMessages =
+	$: renderMessages = !!(
 		!$hasAutenticated ||
 		!hasEnteredName ||
 		!hasInteractedWithTheDocument ||
 		$currentPeerIsBannedStore ||
 		needsInviteKey ||
 		needsToBeManager ||
-		$currentPeerIsRejected;
+		$currentPeerIsRejected
+	);
 	$: renderContent = !renderMessages;
 </script>
 
@@ -57,7 +58,7 @@
 
 {#if renderMessages}
 	<div class="overlay">
-		{#if !$currentPeerIsRejected && $hasAutenticated && (!hasEnteredName || !hasInteractedWithTheDocument)}
+		{#if !$currentPeerIsRejected && $hasAutenticated && !$currentPeerIsBannedStore && (!hasEnteredName || !hasInteractedWithTheDocument)}
 			{#if $showMetadataStore.theme != "minimal"}
 				<FloatingImage src={rosesSrc} alt="two roses shining" zIndex={9993} />
 				<FloatingImage src={rosesSrc} alt="two roses shining" zIndex={9993} />
