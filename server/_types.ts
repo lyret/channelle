@@ -2,8 +2,6 @@ import type * as MediaSoup from "mediasoup";
 import type { CustomAppData, TransportDirection } from "./lib/mediaSoup";
 import type { ShowAttributes, PeerAttributes } from "./models";
 
-// TODO: Create a types folder maybe ?
-
 /** A forcable setting for overriding how the stage behaves, possibly overriding the current scene */
 export enum SceneSetting {
 	/** Use the value from the current scene */

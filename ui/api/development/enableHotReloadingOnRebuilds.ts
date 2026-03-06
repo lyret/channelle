@@ -17,7 +17,7 @@ export async function enableHotReloadingOnRebuilds() {
 			if (buildCounter > _localBuildCounter && _localBuildCounter != -1) {
 				console.log("[Dev Router] Reloading...");
 				window.location.reload();
-				// TODO: Only reload CSS code if possible, requries some more tinkering
+				// NOTE: It could be possible to only reload CSS code when appropriate, requries some more tinkering
 				// to get working
 				// for (const link of Array.from(document.querySelectorAll('link'))) {
 				// 	const url = new URL(link.href);

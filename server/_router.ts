@@ -89,7 +89,6 @@ export async function createAppRouter() {
 
 				// If the user turned offline then also close its media peers
 				if (isOffline) {
-					// FIXME: is this correct?
 					closeMediaPeer(peerId);
 				}
 			});

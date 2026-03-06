@@ -341,7 +341,7 @@ export const stageRouter = router({
 			// Monitor audio level of this producer. we call addProducer() here,
 			// but we don't ever need to call removeProducer() because the core
 			// AudioLevelObserver code automatically removes closed producers
-			// TODO: re-add
+			// NOTE: Current speaker could be re-added in the future
 			// if (producer.kind === "audio") {
 			// 	audioLevelObserver.addProducer({ producerId: producer.id });
 			// }

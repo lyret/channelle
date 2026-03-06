@@ -148,26 +148,21 @@ export const peersRouter = router({
 
 			// If peer was banned, close their media connections and disconnect them
 			if (banned === true && updates.banned === true) {
-				// Close media peer (this will close all their producers/consumers)
-				try {
-					closeMediaPeer(peer.id);
-				} catch (e) {
-					console.error(`[Peers] Error closing media peer for banned peer ${peer.id}:`, e);
-				}
-
-				// Disconnect all WebSocket connections for this peer
+				// Disconnect all ongoing connections for this peer
 				for (const [connectionId, session] of Object.entries(onlineSessions)) {
 					if (session.peer.id === peer.id) {
 						try {
-							// Note: We can't directly close WebSocket connections here
-							// The client should detect the ban state and disconnect itself
-
-							// Clean up the session
 							deauthenticate(connectionId, session.routeType, peer.id);
 						} catch (e) {
 							console.error(`[Peers] Error disconnecting banned peer ${peer.id} connection ${connectionId}:`, e);
 						}
 					}
+				}
+				// Close media peer (this will close all their producers/consumers)
+				try {
+					closeMediaPeer(peer.id);
+				} catch (e) {
+					console.error(`[Peers] Error closing media peer for banned peer ${peer.id}:`, e);
 				}
 			}
 

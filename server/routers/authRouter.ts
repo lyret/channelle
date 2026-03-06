@@ -105,7 +105,7 @@ export function deauthenticate(connectionId: string, routeType: string, peerId: 
 	// Only proceed with deauthentication when no connections remain
 	if (onlineSessions[connectionId]) {
 		const peer = onlineSessions[connectionId].peer;
-		delete onlineSessions[peerId];
+		delete onlineSessions[connectionId];
 		const connectionCount = _getOnlineSessionCount(peerId);
 		console.log(`[Auth] Logout successful for peer ${peerId}. Online connections: ${connectionCount}`);
 
