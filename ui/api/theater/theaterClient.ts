@@ -65,7 +65,7 @@ export const remoteServerStatusStore: RemoteServerStatusStore = (() => {
 export async function updateRemoteServerStatus() {
 	try {
 		remoteServerStatusError.set(null);
-		const status = (await theaterClient.status.query()) as RemoteServerStatusValue;
+		const status = ((await theaterClient.status.query()) as RemoteServerStatusValue) || null;
 		remoteServerStatusStore.set(status);
 	} catch (error) {
 		remoteServerStatusIsLoading.set(false);

@@ -6,9 +6,6 @@ export function getShowSocialTemplate(show: { id: number; name: string; descript
 	show.name = escapeHtml(show.name);
 	show.description = escapeHtml(show.description);
 
-	const showUrl = `${CONFIG.ipc.theaterServerUrl}/f/${slug}`;
-	const imageUrl = `${CONFIG.ipc.theaterServerUrl}/opengraph.jpg`;
-
 	return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,7 +15,7 @@ export function getShowSocialTemplate(show: { id: number; name: string; descript
 
 	<!-- Open Graph -->
 	<meta property="og:type" content="website">
-	<meta property="og:url" content="${showUrl}">
+	<meta property="og:url" content="${CONFIG.ipc.theaterServerUrl}/f/${slug}}">
 	<meta property="og:title" content="${show.name}">
 	<meta property="og:description" content="${show.description || "En föreställning på Channelle"}">
 	<meta property="og:site_name" content="Channelle">
