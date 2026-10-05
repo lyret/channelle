@@ -1,4 +1,5 @@
 import * as Restify from "restify";
+import { rejectInvalidPaths } from "./_rejectInvalidPaths";
 import { setupIpcEndpoints } from "./_setupIpcEndpoints";
 import { serveNonActiveTemplateOnly } from "./_serveNonActiveTemplateOnly";
 import { serveStaticFiles } from "./_serveStaticFiles";
@@ -17,6 +18,9 @@ export async function createNotUsedServer(): Promise<Restify.Server> {
 			},
 		},
 	});
+
+	// Reject paths that would crash the static file handler
+	rejectInvalidPaths(restify);
 
 	// Configure server options
 	restify.use(

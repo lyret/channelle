@@ -1,4 +1,5 @@
 import * as Restify from "restify";
+import { rejectInvalidPaths } from "./_rejectInvalidPaths";
 import { serveStaticFiles } from "./_serveStaticFiles";
 import { serveSharableShows } from "./_serveSharableShows";
 import { serveBuildOutputFiles } from "./_serveBuildOutputs";
@@ -17,6 +18,9 @@ export async function createTheaterServer(): Promise<Restify.Server> {
 			},
 		},
 	});
+
+	// Reject paths that would crash the static file handler
+	rejectInvalidPaths(restify);
 
 	// Configure server options
 	restify.use(

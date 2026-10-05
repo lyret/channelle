@@ -14,6 +14,9 @@ let RUNNING_STAGE_SERVER;
  */
 let RUNNING_STAGE_SERVER_PROMISE;
 
+/** Delay before relaunching a crashed stage-server, in milliseconds */
+const RELAUNCH_DELAY = 2000;
+
 /**
  * Creates a abortable child process executing the built version of the stage-server code
  * @param {CONFIG} CONFIG - The runtime context
@@ -52,23 +55,33 @@ export async function runStageServerCode(CONFIG) {
 			args.push(Path.resolve(process.cwd(), CONFIG.build.serverOutput + "/index.mjs"));
 
 			// Spawn the stage-server
-			RUNNING_STAGE_SERVER = ChildProcess.spawn("node", args);
+			const child = ChildProcess.spawn("node", args);
+			RUNNING_STAGE_SERVER = child;
 
-			RUNNING_STAGE_SERVER.stdout.on("data", (data) => {
+			child.stdout.on("data", (data) => {
 				process.stdout.write(data);
 			});
 
-			RUNNING_STAGE_SERVER.stderr.on("data", (data) => {
+			child.stderr.on("data", (data) => {
 				process.stderr.write(data);
 			});
 
-			RUNNING_STAGE_SERVER.on("close", (code) => {
+			child.on("close", (code, signal) => {
 				if (code) {
 					console.log("\n💥", Chalk.white.bgRed(`[${CONFIG.package.name.toUpperCase()}]`), Chalk.bold(`Exited with code ${code}\n`));
 					resolve(code);
 				} else {
 					console.log("\n🪁", Chalk.white.bgMagenta(`[${CONFIG.package.name.toUpperCase()}]`), Chalk.bold("Exited\n"));
 					resolve(undefined);
+				}
+
+				// Relaunch on crash or external kill, unless this process was replaced or stopped on purpose
+				if ((code || signal) && RUNNING_STAGE_SERVER === child) {
+					setTimeout(() => {
+						if (RUNNING_STAGE_SERVER === child) {
+							runStageServerCode(CONFIG);
+						}
+					}, RELAUNCH_DELAY);
 				}
 			});
 		});

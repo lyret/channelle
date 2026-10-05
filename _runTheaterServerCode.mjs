@@ -14,6 +14,9 @@ let RUNNING_THEATER_SERVER;
  */
 let RUNNING_THEATER_SERVER_PROMISE;
 
+/** Delay before relaunching a crashed theater-server, in milliseconds */
+const RELAUNCH_DELAY = 2000;
+
 /**
  * Creates a abortable child process executing the built version of the theater-server code
  * @param {CONFIG} CONFIG - The runtime context
@@ -49,23 +52,33 @@ export async function runTheaterServerCode(CONFIG) {
 			args.push(Path.resolve(process.cwd(), CONFIG.build.serverOutput + "/index.mjs"));
 
 			// Spawn the theater-server process
-			RUNNING_THEATER_SERVER = ChildProcess.spawn("node", args);
+			const child = ChildProcess.spawn("node", args);
+			RUNNING_THEATER_SERVER = child;
 
-			RUNNING_THEATER_SERVER.stdout.on("data", (data) => {
+			child.stdout.on("data", (data) => {
 				process.stdout.write(data);
 			});
 
-			RUNNING_THEATER_SERVER.stderr.on("data", (data) => {
+			child.stderr.on("data", (data) => {
 				process.stderr.write(data);
 			});
 
-			RUNNING_THEATER_SERVER.on("close", (code) => {
+			child.on("close", (code, signal) => {
 				if (code) {
 					console.log("\n💥", Chalk.white.bgRed("[THEATER-SERVER]"), Chalk.bold(`Exited with code ${code}\n`));
 					resolve(code);
 				} else {
 					console.log("\n🎭", Chalk.white.bgMagenta("[THEATER-SERVER]"), Chalk.bold("Exited\n"));
 					resolve(undefined);
+				}
+
+				// Relaunch on crash or external kill, unless this process was replaced or stopped on purpose
+				if ((code || signal) && RUNNING_THEATER_SERVER === child) {
+					setTimeout(() => {
+						if (RUNNING_THEATER_SERVER === child) {
+							runTheaterServerCode(CONFIG);
+						}
+					}, RELAUNCH_DELAY);
 				}
 			});
 		});
